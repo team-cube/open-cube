@@ -658,7 +658,7 @@ namespace game
 
     void drawicon(int icon, float x, float y, float sz)
     {
-        settexture("media/hud/items.png");
+        settexture("media/interface/hud/items.png");
         float tsz = 0.25f, tx = tsz*(icon%4), ty = tsz*(icon/4);
         gle::defvertex(2);
         gle::deftexcoord0();

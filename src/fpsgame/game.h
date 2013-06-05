@@ -416,6 +416,7 @@ static const char * const teamnames[1+MAXTEAMS] = { "", "azul", "rojo" };
 static const char * const teamtextcode[1+MAXTEAMS] = { "\f0", "\f1", "\f3" };
 static const int teamtextcolor[1+MAXTEAMS] = { 0x1EC850, 0x6496FF, 0xFF4B19 };
 static const int teamscoreboardcolor[1+MAXTEAMS] = { 0, 0x3030C0, 0xC03030 };
+static const char * const teamblipcolor[1+MAXTEAMS] = { "_neutral", "_blue", "_red" };
 static inline int teamnumber(const char *name) { loopi(MAXTEAMS) if(!strcmp(teamnames[1+i], name)) return 1+i; return 0; }
 #define validteam(n) ((n) >= 1 && (n) <= MAXTEAMS)
 #define teamname(n) (teamnames[validteam(n) ? (n) : 0])

@@ -359,9 +359,7 @@ struct ctfclientmode : clientmode
     void drawblip(fpsent *d, float x, float y, float s, int i, bool flagblip)
     {
         flag &f = flags[i];
-        settexture(f.team==1 ?
-                     (flagblip ? "media/hud/blip_blue_flag.png" : "media/hud/blip_blue.png") :
-                     (flagblip ? "media/hud/blip_red_flag.png" : "media/hud/blip_red.png"), 3);
+        setbliptex(f.team, flagblip ? "_flag" : "");
         drawblip(d, x, y, s, flagblip ? (f.owner ? f.owner->o : (f.droptime ? f.droploc : f.spawnloc)) : f.spawnloc, flagblip);
     }
 
@@ -391,10 +389,10 @@ struct ctfclientmode : clientmode
         if(minimapalpha >= 1) glEnable(GL_BLEND);
         gle::colorf(1, 1, 1);
         float margin = 0.04f, roffset = s*margin, rsize = s + 2*roffset;
-        settexture("media/hud/radar.png", 3);
+        setradartex();
         drawradar(x - roffset, y - roffset, rsize);
         #if 0
-        settexture("media/hud/compass.png", 3);
+        settexture("media/interface/radar/compass.png", 3);
         pushhudmatrix();
         hudmatrix.translate(x - roffset + 0.5f*rsize, y - roffset + 0.5f*rsize, 0);
         hudmatrix.rotate_around_z((camera1->yaw + 180)*-RAD);

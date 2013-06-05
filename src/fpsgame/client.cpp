@@ -30,6 +30,11 @@ namespace game
         gle::end();
     }
 
+    void setradartex()
+    {
+        settexture("media/interface/radar/radar.png", 3);
+    }
+
     void drawradar(float x, float y, float s)
     {
         gle::defvertex(2);
@@ -60,6 +65,12 @@ namespace game
         gle::attribf(bx - bs*v.y, by + bs*v.x); gle::attribf(0, 1);
     }
 
+    void setbliptex(int team, const char *type = "")
+    {
+        defformatstring(blipname)("media/interface/radar/blip%s%s.png", teamblipcolor[validteam(team) ? team : 0], type);
+        settexture(blipname, 3);
+    }
+
     void drawteammates(fpsent *d, float x, float y, float s)
     {
         if(!radarteammates) return;
@@ -72,7 +83,7 @@ namespace game
             {
                 if(!alive++) 
                 {
-                    settexture(d->team == 1 ? "media/hud/blip_blue_alive.png" : "media/hud/blip_red_alive.png");
+                    setbliptex(d->team, "_alive");
                     gle::defvertex(2);
                     gle::deftexcoord0();
                     gle::begin(GL_QUADS);
@@ -88,7 +99,7 @@ namespace game
             {
                 if(!dead++) 
                 {
-                    settexture(d->team == 1 ? "media/hud/blip_blue_dead.png" : "media/hud/blip_red_dead.png");
+                    setbliptex(d->team, "_dead");
                     gle::defvertex(2);
                     gle::deftexcoord0();
                     gle::begin(GL_QUADS);
