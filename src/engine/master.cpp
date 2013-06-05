@@ -345,7 +345,7 @@ void addgameserver(client &c)
     }
     gameserver &s = *gameservers.add(new gameserver);
     s.address.host = c.address.host;
-    s.address.port = c.servport+1;
+    s.address.port = c.servport;
     copystring(s.ip, hostname);
     s.port = c.servport;
     s.numpings = 0;
