@@ -1,8 +1,5 @@
 #ifndef PARSEMESSAGES
 
-#define collectteambase(s) (!strcmp(s, "azul") ? 1 : (!strcmp(s, "rojo") ? 2 : 0))
-#define collectbaseteam(i) (i==1 ? "azul" : (i==2 ? "rojo" : NULL))
-
 #ifdef SERVMODE
 struct collectservmode : servmode
 #else
@@ -64,7 +61,7 @@ struct collectclientmode : clientmode
     };
 
     vector<base> bases;
-    int scores[2];
+    int scores[MAXTEAMS];
     vector<token> tokens;
 #ifdef SERVMODE
     int nexttoken;
@@ -74,7 +71,7 @@ struct collectclientmode : clientmode
     {
         bases.shrink(0);
         tokens.shrink(0);
-        loopk(2) scores[k] = 0;
+        loopk(MAXTEAMS) scores[k] = 0;
         tokens.shrink(0);
 #ifdef SERVMODE
         nexttoken = 0;
@@ -136,31 +133,31 @@ struct collectclientmode : clientmode
 
     int totalscore(int team)
     {
-        return team >= 1 && team <= 2 ? scores[team-1] : 0;
+        return validteam(team) ? scores[team-1] : 0;
     }
 
     int setscore(int team, int score)
     {
-        if(team >= 1 && team <= 2) return scores[team-1] = score;
+        if(validteam(team)) return scores[team-1] = score;
         return 0;
     }
 
     int addscore(int team, int score)
     {
-        if(team >= 1 && team <= 2) return scores[team-1] += score;
+        if(validteam(team)) return scores[team-1] += score;
         return 0;
     }
 
     bool hidefrags() { return true; }
 
-    int getteamscore(const char *team)
+    int getteamscore(int team)
     {
-        return totalscore(collectteambase(team));
+        return totalscore(team);
     }
 
     void getteamscores(vector<teamscore> &tscores)
     {
-        loopk(2) if(scores[k]) tscores.add(teamscore(collectbaseteam(k+1), scores[k]));
+        loopk(MAXTEAMS) if(scores[k]) tscores.add(teamscore(k+1, scores[k]));
     }
 
     bool insidebase(const base &b, const vec &o)
@@ -192,7 +189,7 @@ struct collectclientmode : clientmode
         loopv(ments)
         {
             entity &e = ments[i];
-            if(e.type != FLAG || e.attr2 < 1 || e.attr2 > 2) continue;
+            if(e.type != FLAG || !validteam(e.attr2)) continue;
             if(!addbase(bases.length(), e.o, e.attr2)) break;
         }
         notgotbases = false;
@@ -215,7 +212,7 @@ struct collectclientmode : clientmode
     void droptokens(clientinfo *ci, bool penalty = false)
     {
         if(notgotbases) return;
-        int team = collectteambase(ci->team), totalenemy = penalty ? 0 : ci->state.tokens, totalfriendly = 1, expired = 0;
+        int team = ci->team, totalenemy = penalty ? 0 : ci->state.tokens, totalfriendly = 1, expired = 0;
         packetbuf p(300, ENET_PACKET_FLAG_RELIABLE);
         loopvrev(tokens)
         {
@@ -252,7 +249,7 @@ struct collectclientmode : clientmode
         ci->state.tokens = 0;
         if(disconnecting)
         {
-            int team = collectteambase(ci->team), totalfriendly = 0, totalenemy = 0;
+            int team = ci->team, totalfriendly = 0, totalenemy = 0;
             loopvrev(tokens)
             {
                 token &t = tokens[i];
@@ -290,21 +287,21 @@ struct collectclientmode : clientmode
         return connecting || !ci->state.lastdeath || gamemillis+curtime-ci->state.lastdeath >= RESPAWNSECS*1000;
     }
 
-    bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam)
+    bool canchangeteam(clientinfo *ci, int oldteam, int newteam)
     {
-        return collectteambase(newteam) > 0;
+        return true;
     }
 
-    void changeteam(clientinfo *ci, const char *oldteam, const char *newteam)
+    void changeteam(clientinfo *ci, int oldteam, int newteam)
     {
     }
 
     void deposittokens(clientinfo *ci, int basenum)
     {
-        if(notgotbases || !bases.inrange(basenum) || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        if(notgotbases || !bases.inrange(basenum) || ci->state.state!=CS_ALIVE || !ci->team) return;
         base &b = bases[basenum];
-        if(!collectbaseteam(b.team)) return;
-        int team = collectteambase(ci->team);
+        if(!validteam(b.team)) return;
+        int team = ci->team;
         if(b.team==team) return;
         if(ci->state.tokens > 0)
         {
@@ -333,10 +330,10 @@ struct collectclientmode : clientmode
 
     void taketoken(clientinfo *ci, int id)
     {
-        if(notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        if(notgotbases || ci->state.state!=CS_ALIVE || !ci->team) return;
         token *t = findtoken(id);
         if(!t) return;
-        int team = collectteambase(ci->team);
+        int team = ci->team;
         if(t->team != team && (t->team > 0 || -t->team == team) && ci->state.tokens < TOKENLIMIT) ci->state.tokens++;
         sendf(-1, 1, "ri4", N_TAKETOKEN, ci->clientnum, id, ci->state.tokens);  
     }
@@ -430,7 +427,7 @@ struct collectclientmode : clientmode
     void drawbaseblip(fpsent *d, float x, float y, float s, int i)
     {
         base &b = bases[i];
-        settexture(b.team==collectteambase(player1->team) ? "media/hud/blip_blue.png" : "media/hud/blip_red.png", 3);
+        settexture(b.team==1 ? "media/hud/blip_blue.png" : "media/hud/blip_red.png", 3);
         drawblip(d, x, y, s, b.o);
     }
 
@@ -475,15 +472,14 @@ struct collectclientmode : clientmode
         loopv(bases)
         {
             base &b = bases[i];
-            if(!collectbaseteam(b.team)) continue;
+            if(!validteam(b.team)) continue;
             drawbaseblip(d, x, y, s, i);
         }
-        int team = collectteambase(d->team);
-        settexture(team == collectteambase(player1->team) ? "media/hud/blip_red_skull.png" : "media/hud/blip_blue_skull.png", 3);
+        settexture(d->team != 1 ? "media/hud/blip_blue_skull.png" : "media/hud/blip_red_skull.png", 3);
         loopv(players)
         {
             fpsent *o = players[i];
-            if(o != d && o->state == CS_ALIVE && o->tokens > 0 && collectteambase(o->team) != team)
+            if(o != d && o->state == CS_ALIVE && o->tokens > 0 && o->team != d->team)
                 drawblip(d, x, y, s, o->o, 0.07f);
         }
         drawteammates(d, x, y, s);
@@ -504,31 +500,30 @@ struct collectclientmode : clientmode
 
     void rendergame()
     {
-        int team = collectteambase(player1->team);
         vec theight(0, 0, 0);
         abovemodel(theight, "skull/red");
         loopv(bases)
         {
             base &b = bases[i];
-            const char *basename = b.team==team ? "base/blue" : "base/red";
+            const char *basename = b.team==1 ? "base/blue" : "base/red";
             rendermodel(basename, ANIM_MAPMODEL|ANIM_LOOP, b.o, 0, 0, 0, MDL_CULL_VFC | MDL_CULL_OCCLUDED);
             float fradius = 1.0f, fheight = 0.5f;
-            regular_particle_flame(PART_FLAME, vec(b.tokenpos.x, b.tokenpos.y, b.tokenpos.z - 4.5f), fradius, fheight, b.team==team ? 0x2020FF : 0x802020, 3, 2.0f);
+            regular_particle_flame(PART_FLAME, vec(b.tokenpos.x, b.tokenpos.y, b.tokenpos.z - 4.5f), fradius, fheight, b.team==1 ? 0x2020FF : 0x802020, 3, 2.0f);
             vec tokenpos(b.tokenpos);
             tokenpos.z -= theight.z/2 + sinf(lastmillis/100.0f)/20;
             float alpha = player1->state == CS_ALIVE && player1->tokens <= 0 && lastmillis < b.laststeal + STEALTOKENTIME ? 0.5f : 1.0f;
-            rendermodel(b.team==team ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, tokenpos, lastmillis/10.0f, 0, 0, MDL_CULL_VFC | MDL_CULL_OCCLUDED, NULL, NULL, 0, 0, alpha);
+            rendermodel(b.team==1 ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, tokenpos, lastmillis/10.0f, 0, 0, MDL_CULL_VFC | MDL_CULL_OCCLUDED, NULL, NULL, 0, 0, alpha);
             formatstring(b.info)("%d", totalscore(b.team));
             vec above(b.tokenpos);
             above.z += TOKENHEIGHT;
-            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, b.team==team ? 0x6496FF : 0xFF4B19, 2.0f);
+            if(b.info[0]) particle_text(above, b.info, PART_TEXT, 1, teamtextcolor[b.team], 2.0f);
         }
         loopv(tokens)
         {
             token &t = tokens[i];
             vec p = t.o;
             p.z += 1+sinf(lastmillis/100.0+t.o.x+t.o.y)/20;
-            rendermodel(t.team == team || (t.team < 0 && -t.team != team) ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, p, lastmillis/10.0f, 0, 0, MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
+            rendermodel(t.team == 1 || (t.team < 0 && -t.team != 1) ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, p, lastmillis/10.0f, 0, 0, MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
         }
         fpsent *exclude = isthirdperson() ? NULL : hudplayer();
         loopv(players)
@@ -536,10 +531,9 @@ struct collectclientmode : clientmode
             fpsent *d = players[i];
             if(d->state != CS_ALIVE || d->tokens <= 0 || d == exclude) continue;
             vec pos = d->abovehead().add(vec(0, 0, 1));
-            int dteam = collectteambase(d->team);
             loopj(d->tokens)
             {
-                rendermodel(dteam != team ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, pos, d->yaw, 0, 0, MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
+                rendermodel(d->team != 1 ? "skull/blue" : "skull/red", ANIM_MAPMODEL|ANIM_LOOP, pos, d->yaw, 0, 0, MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
                 pos.z += TOKENHEIGHT + 1;
             }
         }        
@@ -628,7 +622,7 @@ struct collectclientmode : clientmode
     {
         int fcolor;
         vec color;
-        if(team==collectteambase(player1->team)) { fcolor = 0x2020FF; color = vec(0.25f, 0.25f, 1); }
+        if(team==1) { fcolor = 0x2020FF; color = vec(0.25f, 0.25f, 1); }
         else { fcolor = 0x802020; color = vec(1, 0.25f, 0.25f); }
         particle_fireball(loc, 30, PART_EXPLOSION, -1, fcolor, 4.8f);
         adddynlight(loc, 35, color, 900, 100);
@@ -640,7 +634,7 @@ struct collectclientmode : clientmode
         if(showfrom) baseexplosion(i, team, from);
         if(from==to) return;
         if(showto) baseexplosion(i, team, to);
-        particle_flare(from, to, 600, PART_LIGHTNING, team==collectteambase(player1->team) ? 0x2222FF : 0xFF2222, 1.0f);
+        particle_flare(from, to, 600, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
     }
 
     void expiretoken(int id)
@@ -653,11 +647,10 @@ struct collectclientmode : clientmode
 
     void taketoken(fpsent *d, int id, int total)
     {
-        int team = collectteambase(d->team);
         token *t = findtoken(id);
         if(t) 
         {
-            playsound(t->team == team || (t->team < 0 && -t->team != team) ? S_ITEMAMMO : S_ITEMHEALTH, d!=player1 ? &d->o : NULL);
+            playsound(t->team == d->team || (t->team < 0 && -t->team != d->team) ? S_ITEMAMMO : S_ITEMHEALTH, d!=player1 ? &d->o : NULL);
             removetoken(id);
         }
         d->tokens = total;
@@ -673,10 +666,10 @@ struct collectclientmode : clientmode
         {
             if(!n)
             {
-                particle_fireball(d->o, 4.8f, PART_EXPLOSION, 500, team==collectteambase(player1->team) ? 0x2020FF : 0x802020, 4.8f);
-                particle_splash(PART_SPARK, 50, 250, d->o, team==collectteambase(player1->team) ? 0x2020FF : 0x802020, 0.24f);
+                particle_fireball(d->o, 4.8f, PART_EXPLOSION, 500, team==1 ? 0x2020FF : 0x802020, 4.8f);
+                particle_splash(PART_SPARK, 50, 250, d->o, team==1 ? 0x2020FF : 0x802020, 0.24f);
             }
-            particle_flare(d->o, vec(t.o.x, t.o.y, t.o.z + 0.5f*(TOKENHEIGHT + 1)), 500, PART_LIGHTNING, team==collectteambase(player1->team) ? 0x2222FF : 0xFF2222, 1.0f);
+            particle_flare(d->o, vec(t.o.x, t.o.y, t.o.z + 0.5f*(TOKENHEIGHT + 1)), 500, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
         }
         return &t;
     }
@@ -691,10 +684,10 @@ struct collectclientmode : clientmode
             if(!n)
             {
                 b.laststeal = lastmillis;
-                conoutf(CON_GAMEINFO, "%s stole a skull from %s", teamcolorname(d), teamcolor("your team", collectbaseteam(enemyteam), "the enemy team"));
+                conoutf(CON_GAMEINFO, "%s stole a skull from %s", teamcolorname(d), teamcolor("team ", "", enemyteam, "a team"));
                 playsound(S_FLAGDROP, &b.tokenpos);
             }
-            if(t) particle_flare(b.tokenpos, vec(t->o.x, t->o.y, t->o.z + 0.5f*(TOKENHEIGHT + 1)), 500, PART_LIGHTNING, team==collectteambase(player1->team) ? 0x2222FF : 0xFF2222, 1.0f);
+            if(t) particle_flare(b.tokenpos, vec(t->o.x, t->o.y, t->o.z + 0.5f*(TOKENHEIGHT + 1)), 500, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
         }
     }
 
@@ -716,10 +709,10 @@ struct collectclientmode : clientmode
         d->flags = flags;
         setscore(team, score);
 
-        conoutf(CON_GAMEINFO, "%s collected %d %s for %s", teamcolorname(d), deposited, deposited==1 ? "skull" : "skulls", teamcolor("your team", collectbaseteam(team), "the enemy team"));
-        playsound(team==collectteambase(player1->team) ? S_FLAGSCORE : S_FLAGFAIL);
+        conoutf(CON_GAMEINFO, "%s collected %d %s for %s", teamcolorname(d), deposited, deposited==1 ? "skull" : "skulls", teamcolor("team ", "", team, "a team"));
+        playsound(team==player1->team ? S_FLAGSCORE : S_FLAGFAIL);
 
-        if(score >= SCORELIMIT) conoutf(CON_GAMEINFO, "%s collected %d skulls", teamcolor("your team", collectbaseteam(team), "the enemy team"), score);
+        if(score >= SCORELIMIT) conoutf(CON_GAMEINFO, "%s collected %d skulls", teamcolor("team ", "", team, "a team"), score);
     }
 
     void checkitems(fpsent *d)
@@ -728,11 +721,10 @@ struct collectclientmode : clientmode
         vec o = d->feetpos();
         if(d->tokens > 0 || o != d->lastcollect) 
         {
-            int team = collectteambase(d->team);
             loopv(bases)
             {
                 base &b = bases[i];
-                if(!collectbaseteam(b.team) || b.team == team) continue;
+                if(!validteam(b.team) || b.team == d->team) continue;
                 if(insidebase(b, o) && (d->tokens > 0 || !insidebase(b, d->lastcollect)))
                 {
                     addmsg(N_DEPOSITTOKENS, "rci", d, i);
@@ -756,20 +748,20 @@ struct collectclientmode : clientmode
 
     void pickspawn(fpsent *d)
     {
-        findplayerspawn(d, -1, collectteambase(d->team));
+        findplayerspawn(d, -1, d->team);
     }
 
     bool aicheck(fpsent *d, ai::aistate &b)
     {
         if(ai::badhealth(d)) return false;
-        int team = collectteambase(d->team), best = -1;
+        int best = -1;
         float bestdist = 1e16f;
         if(d->tokens > 0)
         {
             loopv(bases)
             {
                 base &b = bases[i];
-                if(b.team == team) continue;
+                if(b.team == d->team) continue;
                 float dist = d->o.dist(b.o);
                 if(best < 0 || dist < bestdist) { best = i; bestdist = dist; }
             }
@@ -781,7 +773,7 @@ struct collectclientmode : clientmode
             loopv(tokens)
             {
                 token &t = tokens[i];
-                float dist = d->o.dist(t.o)/(t.team != team && (t.team > 0 || -t.team == team) ? 10.0f : 1.0f);
+                float dist = d->o.dist(t.o)/(t.team != d->team && (t.team > 0 || -t.team == d->team) ? 10.0f : 1.0f);
                 if(best < 0 || dist < bestdist) { best = i; bestdist = dist; } 
             }
             if(best < 0 || !ai::makeroute(d, b, tokens[best].o)) return false;
@@ -793,13 +785,12 @@ struct collectclientmode : clientmode
     void aifind(fpsent *d, ai::aistate &b, vector<ai::interest> &interests)
     {
         vec pos = d->feetpos();
-        int team = collectteambase(d->team);
         if(d->tokens > 0)
         {
             loopv(bases)
             {
                 base &b = bases[i];
-                if(b.team == team) continue;
+                if(b.team == d->team) continue;
                 ai::interest &n = interests.add();
                 n.state = ai::AI_S_PURSUE;
                 n.node = ai::closestwaypoint(b.o, ai::SIGHTMIN, true);
@@ -816,7 +807,7 @@ struct collectclientmode : clientmode
             n.node = ai::closestwaypoint(t.o, ai::SIGHTMIN, true);
             n.target = t.id;
             n.targtype = ai::AI_T_AFFINITY;
-            n.score = pos.squaredist(t.o)/(t.team != team && (t.team > 0 || -t.team == team) ? 10.0f : 1.0f);
+            n.score = pos.squaredist(t.o)/(t.team != d->team && (t.team > 0 || -t.team == d->team) ? 10.0f : 1.0f);
         } 
     }
             
@@ -826,7 +817,7 @@ struct collectclientmode : clientmode
         {
             if(d->tokens <= 0 || !bases.inrange(-(b.target+1))) return false;
             base &g = bases[-(b.target+1)];
-            if(g.team == collectteambase(d->team)) return false;
+            if(g.team == d->team) return false;
             return ai::makeroute(d, b, g.o);
         }
         else if(b.target > 0)

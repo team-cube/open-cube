@@ -3,7 +3,7 @@
 namespace game
 {      
     vector<fpsent *> bestplayers;
-    vector<const char *> bestteams;
+    vector<int> bestteams;
 
     VARP(ragdoll, 0, 1, 1);
     VARP(ragdollmillis, 0, 10000, 300000);
@@ -48,7 +48,7 @@ namespace game
 
     static const playermodelinfo playermodels[1] =
     {
-        { "player", "player/blue", "player/red", "player/hudguns", NULL, { "player/armor/blue", "player/armor/green", "player/armor/yellow" }, "player", "player_blue", "player_red", true }
+        { { "player", "player/blue", "player/red" }, { "player/hudguns", "player/hudguns/blue", "player/hudguns/red" }, NULL, { "player/armor/blue", "player/armor/green", "player/armor/yellow" }, { "player", "player_blue", "player_red" }, true }
     };
 
     int chooserandomplayermodel(int seed)
@@ -106,18 +106,14 @@ namespace game
             if(i != playermodel && (!multiplayer(false) || forceplayermodels)) continue;
             if(m_teammode)
             {
-                preloadmodel(mdl->blueteam);
-                preloadmodel(mdl->redteam);
+                loopj(MAXTEAMS) preloadmodel(mdl->model[1+j]);
             }
-            else preloadmodel(mdl->ffa);
+            else preloadmodel(mdl->model[0]);
             if(mdl->vwep) preloadmodel(mdl->vwep);
             loopj(3) if(mdl->armour[j]) preloadmodel(mdl->armour[j]);
         }
     }
     
-    VAR(testarmour, 0, 0, 1);
-    VAR(testteam, 0, 0, 3);
-
     void renderplayer(fpsent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
     {
         int lastaction = d->lastaction, hold = mdl.vwep || d->gunselect==GUN_PISTOL ? 0 : (ANIM_HOLD1+d->gunselect)|ANIM_LOOP, attack = ANIM_ATTACK1+d->gunselect, delay = mdl.vwep ? 300 : guns[d->gunselect].attackdelay+50;
@@ -149,7 +145,7 @@ namespace game
         }
         if(d->state==CS_ALIVE)
         {
-            if(testarmour || d->armour)
+            if(d->armour)
             {
                 int type = clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW);
                 if(mdl.armour[type])
@@ -161,16 +157,9 @@ namespace game
             d->muzzle = vec(-1, -1, -1);
             a[ai++] = modelattach("tag_muzzle", &d->muzzle);
         }
-        const char *mdlname = mdl.ffa;
-        switch(testteam ? testteam-1 : team)
-        {
-            case 1: mdlname = mdl.blueteam; break;
-            case 2: mdlname = mdl.redteam; break;
-        }
+        const char *mdlname = mdl.model[validteam(team) ? team : 0];
         renderclient(d, mdlname, a[0].tag ? a : NULL, hold, attack, delay, lastaction, intermission && d->state!=CS_DEAD ? 0 : d->lastpain, fade, ragdoll && mdl.ragdoll);
     }
-
-    VARP(teamskins, 0, 0, 1);
 
     void rendergame()
     {
@@ -189,24 +178,21 @@ namespace game
         {
             fpsent *d = players[i];
             if(d == player1 || d->state==CS_SPECTATOR || d->state==CS_SPAWNING || d->lifesequence < 0 || d == exclude || (d->state==CS_DEAD && hidedead)) continue;
-            int team = 0;
-            if(teamskins || m_teammode) team = isteam(player1->team, d->team) ? 1 : 2;
+            int team = m_teammode && validteam(d->team) ? d->team : 0;
             renderplayer(d, getplayermodelinfo(d), team, 1);
             copystring(d->info, colorname(d));
-            if(d->maxhealth>100) { defformatstring(sn)(" +%d", d->maxhealth-100); concatstring(d->info, sn); }
-            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, PART_TEXT, 1, team ? (team==1 ? 0x6496FF : 0xFF4B19) : 0x1EC850, 2.0f);
+            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, PART_TEXT, 1, teamtextcolor[team], 2.0f);
         }
         loopv(ragdolls)
         {
             fpsent *d = ragdolls[i];
-            int team = 0;
-            if(teamskins || m_teammode) team = isteam(player1->team, d->team) ? 1 : 2;
             float fade = 1.0f;
             if(ragdollmillis && ragdollfade) 
                 fade -= clamp(float(lastmillis - (d->lastupdate + max(ragdollmillis - ragdollfade, 0)))/min(ragdollmillis, ragdollfade), 0.0f, 1.0f);
+            int team = m_teammode && validteam(d->team) ? d->team : 0;
             renderplayer(d, getplayermodelinfo(d), team, fade);
         } 
-        if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead)) renderplayer(player1, getplayermodelinfo(player1), teamskins || m_teammode ? 1 : 0, 1);
+        if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead)) renderplayer(player1, getplayermodelinfo(player1), player1->team, 1);
         entities::renderentities();
         renderbouncers();
         renderprojectiles();
@@ -215,9 +201,7 @@ namespace game
 
     VARP(hudgun, 0, 1, 1);
     VARP(hudgunsway, 0, 1, 1);
-    VARP(teamhudguns, 0, 1, 1);
     VARP(chainsawhudgun, 0, 1, 1);
-    VAR(testhudgun, 0, 0, 1);
 
     FVAR(swaystep, 1, 35.0f, 100);
     FVAR(swayside, 0, 0.04f, 1);
@@ -258,8 +242,6 @@ namespace game
         hudent() { type = ENT_CAMERA; }
     } guninterp;
 
-    SVARP(hudgunsdir, "");
-
     void drawhudmodel(fpsent *d, int anim, float speed = 0, int base = 0)
     {
         if(d->gunselect>GUN_PISTOL) return;
@@ -273,11 +255,7 @@ namespace game
         if(!hudgunsway) sway = d->o;
 
         const playermodelinfo &mdl = getplayermodelinfo(d);
-        defformatstring(gunname)("%s/%s", hudgunsdir[0] ? hudgunsdir : mdl.hudguns, guns[d->gunselect].file);
-        if((m_teammode || teamskins) && teamhudguns)
-            concatstring(gunname, d==player1 || isteam(d->team, player1->team) ? "/blue" : "/red");
-        else if(testteam > 1)
-            concatstring(gunname, testteam==2 ? "/blue" : "/red");
+        defformatstring(gunname)("%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], guns[d->gunselect].file);
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);
@@ -288,7 +266,7 @@ namespace game
             base = 0;
             interp = &guninterp;
         }
-        rendermodel(gunname, anim, sway, testhudgun ? 0 : d->yaw, testhudgun ? 0 : d->pitch, 0, MDL_NOBATCH, interp, a, base, (int)ceil(speed));
+        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, interp, a, base, (int)ceil(speed));
         if(d->muzzle.x >= 0) d->muzzle = calcavatarpos(d->muzzle, 12);
     }
 
@@ -330,7 +308,7 @@ namespace game
         previewent->yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;
-        renderplayer(previewent, *mdlinfo, team >= 0 && team <= 2 ? team : 0, 1, false);
+        renderplayer(previewent, *mdlinfo, validteam(team) ? team : 0, 1, false);
     }
 
     vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d)
@@ -366,14 +344,17 @@ namespace game
             const char *file = guns[i].file;
             if(!file) continue;
             string fname;
-            if((m_teammode || teamskins) && teamhudguns)
+            if(m_teammode)
             {
-                formatstring(fname)("%s/%s/blue", hudgunsdir[0] ? hudgunsdir : mdl.hudguns, file);
-                preloadmodel(fname);
+                loopj(MAXTEAMS)
+                { 
+                    formatstring(fname)("%s/%s", mdl.hudguns[1+j], file);
+                    preloadmodel(fname);
+                }
             }
             else
             {
-                formatstring(fname)("%s/%s", hudgunsdir[0] ? hudgunsdir : mdl.hudguns, file);
+                formatstring(fname)("%s/%s", mdl.hudguns[0], file);
                 preloadmodel(fname);
             }
             formatstring(fname)("vwep/%s", file);

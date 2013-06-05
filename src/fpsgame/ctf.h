@@ -1,8 +1,5 @@
 #ifndef PARSEMESSAGES
 
-#define ctfteamflag(s) (!strcmp(s, "azul") ? 1 : (!strcmp(s, "rojo") ? 2 : 0))
-#define ctfflagteam(i) (i==1 ? "azul" : (i==2 ? "rojo" : NULL))
-
 #ifdef SERVMODE
 VAR(ctftkpenalty, 0, 1, 1);
 
@@ -64,12 +61,12 @@ struct ctfclientmode : clientmode
     };
 
     vector<flag> flags;
-    int scores[2];
+    int scores[MAXTEAMS];
 
     void resetflags()
     {
         flags.shrink(0);
-        loopk(2) scores[k] = 0;
+        loopk(MAXTEAMS) scores[k] = 0;
     }
 
 #ifdef SERVMODE
@@ -146,31 +143,31 @@ struct ctfclientmode : clientmode
 
     int totalscore(int team)
     {
-        return team >= 1 && team <= 2 ? scores[team-1] : 0;
+        return validteam(team) ? scores[team-1] : 0;
     }
 
     int setscore(int team, int score)
     {
-        if(team >= 1 && team <= 2) return scores[team-1] = score;
+        if(validteam(team)) return scores[team-1] = score;
         return 0;
     }
 
     int addscore(int team, int score)
     {
-        if(team >= 1 && team <= 2) return scores[team-1] += score;
+        if(validteam(team)) return scores[team-1] += score;
         return 0;
     }
 
     bool hidefrags() { return true; }
 
-    int getteamscore(const char *team)
+    int getteamscore(int team)
     {
-        return totalscore(ctfteamflag(team));
+        return totalscore(team);
     }
 
     void getteamscores(vector<teamscore> &tscores)
     {
-        loopk(2) if(scores[k]) tscores.add(teamscore(ctfflagteam(k+1), scores[k]));
+        loopk(MAXTEAMS) if(scores[k]) tscores.add(teamscore(k+1, scores[k]));
     }
 
 #ifdef SERVMODE
@@ -198,7 +195,7 @@ struct ctfclientmode : clientmode
         loopv(ments)
         {
             entity &e = ments[i];
-            if(e.type != FLAG || e.attr2 < 1 || e.attr2 > 2) continue;
+            if(e.type != FLAG || !validteam(e.attr2)) continue;
             if(!addflag(flags.length(), e.o, e.attr2)) break;
         }
         notgotflags = false;
@@ -238,12 +235,12 @@ struct ctfclientmode : clientmode
         return connecting || !ci->state.lastdeath || gamemillis+curtime-ci->state.lastdeath >= RESPAWNSECS*1000;
     }
 
-    bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam)
+    bool canchangeteam(clientinfo *ci, int oldteam, int newteam)
     {
-        return ctfteamflag(newteam) > 0;
+        return true;
     }
 
-    void changeteam(clientinfo *ci, const char *oldteam, const char *newteam)
+    void changeteam(clientinfo *ci, int oldteam, int newteam)
     {
         dropflag(ci);
     }
@@ -252,18 +249,17 @@ struct ctfclientmode : clientmode
     {
         returnflag(relay >= 0 ? relay : goal);
         ci->state.flags++;
-        int team = ctfteamflag(ci->team), score = addscore(team, 1);
+        int team = ci->team, score = addscore(team, 1);
         sendf(-1, 1, "ri9", N_SCOREFLAG, ci->clientnum, relay, relay >= 0 ? ++flags[relay].version : -1, goal, ++flags[goal].version, team, score, ci->state.flags);
         if(score >= FLAGLIMIT) startintermission();
     }
 
     void takeflag(clientinfo *ci, int i, int version)
     {
-        if(notgotflags || !flags.inrange(i) || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        if(notgotflags || !flags.inrange(i) || ci->state.state!=CS_ALIVE || !ci->team) return;
         flag &f = flags[i];
-        if(!ctfflagteam(f.team) || f.owner>=0 || f.version != version || (f.droptime && f.dropper == ci->clientnum && f.dropcount >= 1)) return;
-        int team = ctfteamflag(ci->team);
-        if(f.team!=team)
+        if(!validteam(f.team) || f.owner>=0 || f.version != version || (f.droptime && f.dropper == ci->clientnum && f.dropcount >= 1)) return;
+        if(f.team!=ci->team)
         {
             loopvj(flags) if(flags[j].owner==ci->clientnum) return;
             ownflag(i, ci->clientnum, lastmillis);
@@ -363,7 +359,7 @@ struct ctfclientmode : clientmode
     void drawblip(fpsent *d, float x, float y, float s, int i, bool flagblip)
     {
         flag &f = flags[i];
-        settexture(f.team==ctfteamflag(player1->team) ?
+        settexture(f.team==1 ?
                      (flagblip ? "media/hud/blip_blue_flag.png" : "media/hud/blip_blue.png") :
                      (flagblip ? "media/hud/blip_red_flag.png" : "media/hud/blip_red.png"), 3);
         drawblip(d, x, y, s, flagblip ? (f.owner ? f.owner->o : (f.droptime ? f.droploc : f.spawnloc)) : f.spawnloc, flagblip);
@@ -381,7 +377,7 @@ struct ctfclientmode : clientmode
             loopv(flags) if(flags[i].owner == d)
             {
                 int x = HICON_X + 3*HICON_STEP;
-                drawicon(flags[i].team==ctfteamflag(player1->team) ? HICON_BLUE_FLAG : HICON_RED_FLAG, x, HICON_Y);
+                drawicon(flags[i].team==1 ? HICON_BLUE_FLAG : HICON_RED_FLAG, x, HICON_Y);
                 break;
             }
         }
@@ -409,7 +405,7 @@ struct ctfclientmode : clientmode
         loopv(flags)
         {
             flag &f = flags[i];
-            if(!ctfflagteam(f.team)) continue;
+            if(!validteam(f.team)) continue;
             if(f.owner)
             {
                 if(lastmillis%1000 >= 500) continue;
@@ -467,7 +463,7 @@ struct ctfclientmode : clientmode
         {
             flag &f = flags[i];
             if(!f.owner && f.droptime && f.droploc.x < 0) continue;
-            const char *flagname = f.team==ctfteamflag(player1->team) ? "flags/blue" : "flags/red";
+            const char *flagname = f.team==1 ? "flags/blue" : "flags/red";
             float angle;
             vec pos = interpflagpos(f, angle);
             rendermodel(flagname, ANIM_MAPMODEL|ANIM_LOOP,
@@ -482,8 +478,7 @@ struct ctfclientmode : clientmode
         loopv(entities::ents)
         {
             extentity *e = entities::ents[i];
-            if(e->type!=FLAG) continue;
-            if(e->attr2<1 || e->attr2>2) continue;
+            if(e->type!=FLAG || !validteam(e->attr2)) continue;
             int index = flags.length();
             if(!addflag(index, e->o, e->attr2)) continue;
             flags[index].spawnangle = e->attr1;
@@ -550,7 +545,7 @@ struct ctfclientmode : clientmode
 
     const char *teamcolorflag(flag &f)
     {
-        return teamcolor("your flag", ctfflagteam(f.team), "the enemy flag");
+        return teamcolor("", "'s flag", f.team, "a flag");
     }
 
     void dropflag(fpsent *d, int i, int version, const vec &droploc)
@@ -576,8 +571,7 @@ struct ctfclientmode : clientmode
     {
         int fcolor;
         vec color;
-        if(!team) { fcolor = 0xFF8080; color = vec(1, 0.75f, 0.5f); }
-        else if(team==ctfteamflag(player1->team)) { fcolor = 0x2020FF; color = vec(0.25f, 0.25f, 1); }
+        if(team==1) { fcolor = 0x2020FF; color = vec(0.25f, 0.25f, 1); }
         else { fcolor = 0x802020; color = vec(1, 0.25f, 0.25f); }
         particle_fireball(loc, 30, PART_EXPLOSION, -1, fcolor, 4.8f);
         adddynlight(loc, 35, color, 900, 100);
@@ -599,7 +593,7 @@ struct ctfclientmode : clientmode
             flagexplosion(i, team, toexp);
         }
         if(from.x >= 0 && to.x >= 0)
-            particle_flare(fromexp, toexp, 600, PART_LIGHTNING, !team ? 0xFFC0A0 : (team==ctfteamflag(player1->team) ? 0x2222FF : 0xFF2222), 1.0f);
+            particle_flare(fromexp, toexp, 600, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
     }
 
     void returnflag(fpsent *d, int i, int version)
@@ -644,16 +638,12 @@ struct ctfclientmode : clientmode
             d->flagpickup &= ~(1<<f.id);
             if(d->feetpos().dist(f.spawnloc) < FLAGRADIUS) d->flagpickup |= 1<<f.id;
         }
-        if(d!=player1)
-        {
-            defformatstring(ds)("%d", score);
-            particle_textcopy(d->abovehead(), ds, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
-        }
+        if(d!=player1) particle_textcopy(d->abovehead(), tempformatstring("%d", score), PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
         d->flags = dflags;
-        conoutf(CON_GAMEINFO, "%s scored for %s", teamcolorname(d), teamcolor("your team", ctfflagteam(team), "the enemy team"));
-        playsound(team==ctfteamflag(player1->team) ? S_FLAGSCORE : S_FLAGFAIL);
+        conoutf(CON_GAMEINFO, "%s scored for %s", teamcolorname(d), teamcolor("team ", "", team, "a team"));
+        playsound(team==player1->team ? S_FLAGSCORE : S_FLAGFAIL);
 
-        if(score >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s captured %d flags", teamcolor("your team", ctfflagteam(team), "the enemy team"), score);
+        if(score >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s captured %d flags", teamcolor("team ", "", team, "a team"), score);
     }
 
     void takeflag(fpsent *d, int i, int version)
@@ -675,7 +665,7 @@ struct ctfclientmode : clientmode
         loopv(flags)
         {
             flag &f = flags[i];
-            if(!ctfflagteam(f.team) || f.owner || (f.droptime && f.droploc.x<0)) continue;
+            if(!validteam(f.team) || f.owner || (f.droptime && f.droploc.x<0)) continue;
             const vec &loc = f.droptime ? f.droploc : f.spawnloc;
             if(o.dist(loc) < FLAGRADIUS)
             {
@@ -695,7 +685,7 @@ struct ctfclientmode : clientmode
         loopv(flags)
         {
             flag &f = flags[i];
-            if(!ctfflagteam(f.team) || f.owner || (f.droptime && f.droploc.x<0)) continue;
+            if(!validteam(f.team) || f.owner || (f.droptime && f.droploc.x<0)) continue;
             if(o.dist(f.droptime ? f.droploc : f.spawnloc) < FLAGRADIUS) d->flagpickup |= 1<<f.id;
        }
     }
@@ -707,7 +697,7 @@ struct ctfclientmode : clientmode
 
     void pickspawn(fpsent *d)
     {
-        findplayerspawn(d, -1, ctfteamflag(d->team));
+        findplayerspawn(d, -1, d->team);
     }
 
 	bool aihomerun(fpsent *d, ai::aistate &b)
@@ -719,7 +709,7 @@ struct ctfclientmode : clientmode
             loopv(flags)
             {
                 flag &g = flags[i];
-                if(g.team == ctfteamflag(d->team) && (k || (!g.owner && !g.droptime)) &&
+                if(g.team == d->team && (k || (!g.owner && !g.droptime)) &&
                     (!flags.inrange(goal) || g.pos().squaredist(pos) < flags[goal].pos().squaredist(pos)))
                 {
                     goal = i;
@@ -748,7 +738,7 @@ struct ctfclientmode : clientmode
         {
             flag &g = flags[i];
             if(g.owner == d) return aihomerun(d, b);
-            else if(g.team == ctfteamflag(d->team) && ((g.owner && g.team != ctfteamflag(g.owner->team)) || g.droptime))
+            else if(g.team == d->team && ((g.owner && g.team != g.owner->team) || g.droptime))
                 takenflags.add(i);
         }
         if(!ai::badhealth(d) && !takenflags.empty())
@@ -770,7 +760,7 @@ struct ctfclientmode : clientmode
 			{
 				static vector<int> targets; // build a list of others who are interested in this
 				targets.setsize(0);
-				bool home = f.team == ctfteamflag(d->team);
+				bool home = f.team == d->team;
 				ai::checkothers(targets, d, home ? ai::AI_S_DEFEND : ai::AI_S_PURSUE, ai::AI_T_AFFINITY, j, true);
 				fpsent *e = NULL;
 				loopi(numdynents()) if((e = (fpsent *)iterdynents(i)) && !e->ai && e->state == CS_ALIVE && isteam(d->team, e->team))
@@ -782,7 +772,7 @@ struct ctfclientmode : clientmode
 				if(home)
 				{
 					bool guard = false;
-					if((f.owner && f.team != ctfteamflag(f.owner->team)) || f.droptime || targets.empty()) guard = true;
+					if((f.owner && f.team != f.owner->team) || f.droptime || targets.empty()) guard = true;
 					else if(d->hasammo(d->ai->weappref))
 					{ // see if we can relieve someone who only has a piece of crap
 						fpsent *t;
@@ -877,7 +867,7 @@ struct ctfclientmode : clientmode
 				flag &g = flags[i];
 				if(pos.squaredist(g.pos()) <= mindist)
 				{
-					if(g.owner && !strcmp(g.owner->team, d->team)) walk = 1;
+					if(g.owner && g.owner->team == d->team) walk = 1;
 					if(g.droptime && ai::makeroute(d, b, g.pos())) return true;
 				}
 			}
@@ -892,7 +882,7 @@ struct ctfclientmode : clientmode
 		{
 			flag &f = flags[b.target];
             if(f.owner == d) return aihomerun(d, b);
-			if(f.team == ctfteamflag(d->team))
+			if(f.team == d->team)
 			{
 				if(f.droptime) return ai::makeroute(d, b, f.pos());
 				if(f.owner) return ai::violence(d, b, f.owner, 4);

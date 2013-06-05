@@ -137,7 +137,7 @@ namespace ai
         if(d->ai) DELETEP(d->ai);
     }
 
-    void init(fpsent *d, int at, int ocn, int sk, int bn, int pm, const char *name, const char *team)
+    void init(fpsent *d, int at, int ocn, int sk, int bn, int pm, const char *name, int team)
     {
         loadwaypoints();
 
@@ -163,7 +163,7 @@ namespace ai
         }
 
         copystring(d->name, name, MAXNAMELEN+1);
-        copystring(d->team, team, MAXTEAMLEN+1);
+        d->team = validteam(team) ? team : 0;
         d->ownernum = ocn;
         d->skill = sk;
         d->playermodel = chooserandomplayermodel(pm);

@@ -212,8 +212,8 @@ namespace server
     struct clientinfo
     {
         int clientnum, ownernum, connectmillis, sessionid, overflow;
-        string name, team, mapvote;
-        int playermodel;
+        string name, mapvote;
+        int team, playermodel;
         int modevote;
         int privilege;
         bool connected, local, timesync;
@@ -332,7 +332,8 @@ namespace server
 
         void reset()
         {
-            name[0] = team[0] = 0;
+            name[0] = 0;
+            team = 0;
             playermodel = -1;
             privilege = PRIV_NONE;
             connected = local = false;
@@ -750,6 +751,8 @@ namespace server
     }
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", N_SERVMSG, s); }
+
+    void sendservmsgf(const char *fmt, ...) PRINTFARGS(1, 2);
     void sendservmsgf(const char *fmt, ...)
     {
          defvformatstring(s, fmt, fmt);
@@ -827,8 +830,8 @@ namespace server
             return 1;
         }
         virtual void died(clientinfo *victim, clientinfo *actor) {}
-        virtual bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam) { return true; }
-        virtual void changeteam(clientinfo *ci, const char *oldteam, const char *newteam) {}
+        virtual bool canchangeteam(clientinfo *ci, int oldteam, int newteam) { return true; }
+        virtual void changeteam(clientinfo *ci, int oldteam, int newteam) {}
         virtual void initclient(clientinfo *ci, packetbuf &p, bool connecting) {}
         virtual void update() {}
         virtual void cleanup() {}
@@ -836,9 +839,9 @@ namespace server
         virtual void newmap() {}
         virtual void intermission() {}
         virtual bool hidefrags() { return false; }
-        virtual int getteamscore(const char *team) { return 0; }
+        virtual int getteamscore(int team) { return 0; }
         virtual void getteamscores(vector<teamscore> &scores) {}
-        virtual bool extinfoteam(const char *team, ucharbuf &p) { return false; }
+        virtual bool extinfoteam(int team, ucharbuf &p) { return false; }
     };
 
     #define SERVMODE 1
@@ -895,35 +898,11 @@ namespace server
         return true;
     }
 
-    static hashset<teaminfo> teaminfos;
+    static teaminfo teaminfos[MAXTEAMS];
 
     void clearteaminfo()
     {
-        teaminfos.clear();
-    }
-
-    bool teamhasplayers(const char *team) { loopv(clients) if(!strcmp(clients[i]->team, team)) return true; return false; }
-
-    bool pruneteaminfo()
-    {
-        int oldteams = teaminfos.numelems;
-        enumerates(teaminfos, teaminfo, old,
-            if(!old.frags && !teamhasplayers(old.team)) teaminfos.remove(old.team);
-        );
-        return teaminfos.numelems < oldteams;
-    }
-
-    teaminfo *addteaminfo(const char *team)
-    {
-        teaminfo *t = teaminfos.access(team);
-        if(!t)
-        {
-            if(teaminfos.numelems >= MAXTEAMS && !pruneteaminfo()) return NULL;
-            t = &teaminfos[team];
-            copystring(t->team, team, sizeof(t->team));
-            t->frags = 0;
-        }
-        return t;
+        loopi(MAXTEAMS) teaminfos[i].reset();
     }
 
     clientinfo *choosebestclient(float &bestrank)
@@ -942,9 +921,8 @@ namespace server
 
     void autoteam()
     {
-        static const char * const teamnames[2] = {"azul", "rojo"};
-        vector<clientinfo *> team[2];
-        float teamrank[2] = {0, 0};
+        vector<clientinfo *> team[MAXTEAMS];
+        float teamrank[MAXTEAMS] = {0};
         for(int round = 0, remaining = clients.length(); remaining>=0; round++)
         {
             int first = round&1, second = (round+1)&1, selected = 0;
@@ -964,49 +942,40 @@ namespace server
             if(!selected) break;
             remaining -= selected;
         }
-        loopi(sizeof(team)/sizeof(team[0]))
+        loopi(MAXTEAMS) loopvj(team[i])
         {
-            addteaminfo(teamnames[i]);
-            loopvj(team[i])
-            {
-                clientinfo *ci = team[i][j];
-                if(!strcmp(ci->team, teamnames[i])) continue;
-                copystring(ci->team, teamnames[i], MAXTEAMLEN+1);
-                sendf(-1, 1, "riisi", N_SETTEAM, ci->clientnum, teamnames[i], -1);
-            }
+            clientinfo *ci = team[i][j];
+            if(ci->team == 1+i) continue;
+            ci->team = 1+i;
+            sendf(-1, 1, "riiii", N_SETTEAM, ci->clientnum, ci->team, -1);
         }
     }
 
     struct teamrank
     {
-        const char *name;
         float rank;
         int clients;
 
-        teamrank(const char *name) : name(name), rank(0), clients(0) {}
+        teamrank() : rank(0), clients(0) {}
     };
 
-    const char *chooseworstteam(const char *suggest = NULL, clientinfo *exclude = NULL)
+    int chooseworstteam(clientinfo *exclude = NULL)
     {
-        teamrank teamranks[2] = { teamrank("azul"), teamrank("rojo") };
-        const int numteams = sizeof(teamranks)/sizeof(teamranks[0]);
+        teamrank teamranks[MAXTEAMS];
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci==exclude || ci->state.aitype!=AI_NONE || ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
+            if(ci==exclude || ci->state.aitype!=AI_NONE || ci->state.state==CS_SPECTATOR || !validteam(ci->team)) continue;
+
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             ci->state.lasttimeplayed = lastmillis;
 
-            loopj(numteams) if(!strcmp(ci->team, teamranks[j].name))
-            {
-                teamrank &ts = teamranks[j];
-                ts.rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
-                ts.clients++;
-                break;
-            }
+            teamrank &ts = teamranks[ci->team-1];
+            ts.rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
+            ts.clients++;
         }
-        teamrank *worst = &teamranks[numteams-1];
-        loopi(numteams-1)
+        teamrank *worst = &teamranks[0];
+        for(int i = 1; i < MAXTEAMS; i++)
         {
             teamrank &ts = teamranks[i];
             if(smode && smode->hidefrags())
@@ -1015,7 +984,7 @@ namespace server
             }
             else if(ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
         }
-        return worst->name;
+        return 1+int(worst-teamranks);
     }
 
     void prunedemos(int extra = 0)
@@ -1721,15 +1690,15 @@ namespace server
             putint(p, ci->state.aitype);
             putint(p, ci->state.skill);
             putint(p, ci->playermodel);
+            putint(p, ci->team);
             sendstring(ci->name, p);
-            sendstring(ci->team, p);
         }
         else
         {
             putint(p, N_INITCLIENT);
             putint(p, ci->clientnum);
             sendstring(ci->name, p);
-            sendstring(ci->team, p);
+            putint(p, ci->team);
             putint(p, ci->playermodel);
         }
     }
@@ -1807,16 +1776,17 @@ namespace server
         if(m_teammode)
         {
             putint(p, N_TEAMINFO);
-            enumerates(teaminfos, teaminfo, t,
-                if(t.frags) { sendstring(t.team, p); putint(p, t.frags); }
-            );
-            sendstring("", p);
+            loopi(MAXTEAMS)
+            {
+                teaminfo &t = teaminfos[i];
+                putint(p, t.frags);
+            }
         } 
         if(ci)
         {
             putint(p, N_SETTEAM);
             putint(p, ci->clientnum);
-            sendstring(ci->team, p);
+            putint(p, ci->team);
             putint(p, -1);
         }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
@@ -2111,18 +2081,18 @@ namespace server
             if(fragvalue>0)
             {
                 int friends = 0, enemies = 0; // note: friends also includes the fragger
-                if(m_teammode) loopv(clients) if(strcmp(clients[i]->team, actor->team)) enemies++; else friends++;
+                if(m_teammode) loopv(clients) if(clients[i]->team != actor->team) enemies++; else friends++;
                 else { friends = 1; enemies = clients.length()-1; }
                 actor->state.effectiveness += fragvalue*friends/float(max(enemies, 1));
             }
-            teaminfo *t = m_teammode ? teaminfos.access(actor->team) : NULL;
+            teaminfo *t = m_teammode && validteam(actor->team) ? &teaminfos[actor->team] : NULL;
             if(t) t->frags += fragvalue; 
             sendf(-1, 1, "ri5", N_DIED, target->clientnum, actor->clientnum, actor->state.frags, t ? t->frags : 0);
             target->position.setsize(0);
             if(smode) smode->died(target, actor);
             ts.state = CS_DEAD;
             ts.lastdeath = gamemillis;
-            if(actor!=target && isteam(actor->team, target->team)) 
+            if(actor!=target && m_teammode && actor->team == target->team)
             {
                 actor->state.teamkills++;
                 addteamkill(actor, target, 1);
@@ -2140,7 +2110,7 @@ namespace server
         int fragvalue = smode ? smode->fragvalue(ci, ci) : -1;
         ci->state.frags += fragvalue;
         ci->state.deaths++;
-        teaminfo *t = m_teammode ? teaminfos.access(ci->team) : NULL;
+        teaminfo *t = m_teammode && validteam(ci->team) ? &teaminfos[ci->team] : NULL;
         if(t) t->frags += fragvalue;
         sendf(-1, 1, "ri5", N_DIED, ci->clientnum, ci->clientnum, gs.frags, t ? t->frags : 0);
         ci->position.setsize(0);
@@ -2714,8 +2684,7 @@ namespace server
         if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
         ci->state.lasttimeplayed = lastmillis;
 
-        const char *worst = m_teammode ? chooseworstteam(NULL, ci) : NULL;
-        copystring(ci->team, worst ? worst : "azul", MAXTEAMLEN+1);
+        ci->team = m_teammode ? chooseworstteam(ci) : 0;
 
         sendwelcome(ci);
         if(restorescore(ci)) sendresume(ci);
@@ -3057,14 +3026,14 @@ namespace server
             case N_SAYTEAM:
             {
                 getstring(text, p);
-                if(!ci || !cq || (ci->state.state==CS_SPECTATOR && !ci->local && !ci->privilege) || !m_teammode || !cq->team[0]) break;
+                if(!ci || !cq || (ci->state.state==CS_SPECTATOR && !ci->local && !ci->privilege) || !m_teammode || !validteam(cq->team)) break;
                 loopv(clients)
                 {
                     clientinfo *t = clients[i];
-                    if(t==cq || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(cq->team, t->team)) continue;
+                    if(t==cq || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE || cq->team != t->team) continue;
                     sendf(t->clientnum, 1, "riis", N_SAYTEAM, cq->clientnum, text);
                 }
-                if(isdedicatedserver()) logoutf("%s <%s>: %s", colorname(cq), cq->team, text);
+                if(isdedicatedserver()) logoutf("%s <%s>: %s", colorname(cq), teamnames[cq->team], text);
                 break;
             }
 
@@ -3087,14 +3056,13 @@ namespace server
 
             case N_SWITCHTEAM:
             {
-                getstring(text, p);
-                filtertext(text, text, false, MAXTEAMLEN);
-                if(m_teammode && text[0] && strcmp(ci->team, text) && (!smode || smode->canchangeteam(ci, ci->team, text)) && addteaminfo(text))
+                int team = getint(p);
+                if(m_teammode && validteam(team) && ci->team != team && (!smode || smode->canchangeteam(ci, ci->team, team)))
                 {
                     if(ci->state.state==CS_ALIVE) suicide(ci);
-                    copystring(ci->team, text);
+                    ci->team = team;
                     aiman::changeteam(ci);
-                    sendf(-1, 1, "riisi", N_SETTEAM, sender, ci->team, ci->state.state==CS_SPECTATOR ? -1 : 0);
+                    sendf(-1, 1, "riiii", N_SETTEAM, sender, ci->team, ci->state.state==CS_SPECTATOR ? -1 : 0);
                 }
                 break;
             }
@@ -3198,8 +3166,7 @@ namespace server
                     }
                     else
                     {
-                        defformatstring(s)("mastermode %d is disabled on this server", mm);
-                        sendf(sender, 1, "ris", N_SERVMSG, s);
+                        sendf(sender, 1, "ris", N_SERVMSG, tempformatstring("mastermode %d is disabled on this server", mm));
                     }
                 }
                 break;
@@ -3254,19 +3221,17 @@ namespace server
 
             case N_SETTEAM:
             {
-                int who = getint(p);
-                getstring(text, p);
-                filtertext(text, text, false, MAXTEAMLEN);
+                int who = getint(p), team = getint(p);
                 if(!ci->privilege && !ci->local) break;
                 clientinfo *wi = getinfo(who);
-                if(!m_teammode || !text[0] || !wi || !strcmp(wi->team, text)) break;
-                if((!smode || smode->canchangeteam(wi, wi->team, text)) && addteaminfo(text))
+                if(!m_teammode || !validteam(team) || wi->team == team) break;
+                if(!smode || smode->canchangeteam(wi, wi->team, team))
                 {
                     if(wi->state.state==CS_ALIVE) suicide(wi);
-                    copystring(wi->team, text, MAXTEAMLEN+1);
+                    wi->team = team;
                 }
                 aiman::changeteam(wi);
-                sendf(-1, 1, "riisi", N_SETTEAM, who, wi->team, 1);
+                sendf(-1, 1, "riiii", N_SETTEAM, who, wi->team, 1);
                 break;
             }
 

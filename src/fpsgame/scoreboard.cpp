@@ -11,18 +11,18 @@ namespace game
     VARP(highlightscore, 0, 1, 1);
     VARP(showconnecting, 0, 0, 1);
 
-    static hashset<teaminfo> teaminfos;
+    static teaminfo teaminfos[MAXTEAMS];
 
     void clearteaminfo()
     {
-        teaminfos.clear();
+        loopi(MAXTEAMS) teaminfos[i].reset();
     }
 
-    void setteaminfo(const char *team, int frags)
+    void setteaminfo(int team, int frags)
     {
-        teaminfo *t = teaminfos.access(team);
-        if(!t) { t = &teaminfos[team]; copystring(t->team, team, sizeof(t->team)); }
-        t->frags = frags;
+        if(!validteam(team)) return; 
+        teaminfo &t = teaminfos[team-1];
+        t.frags = frags;
     }
             
     static inline bool playersort(const fpsent *a, const fpsent *b)
@@ -54,7 +54,7 @@ namespace game
         while(best.length() > 1 && best.last()->frags < best[0]->frags) best.drop();
     }
 
-    void getbestteams(vector<const char *> &best)
+    void getbestteams(vector<int> &best)
     {
         if(cmode && cmode->hidefrags()) 
         {
@@ -67,13 +67,16 @@ namespace game
         else 
         {
             int bestfrags = INT_MIN;
-            enumerates(teaminfos, teaminfo, t, bestfrags = max(bestfrags, t.frags));
-            if(bestfrags <= 0) loopv(players)
+            loopi(MAXTEAMS)
             {
-                fpsent *o = players[i];
-                if(o->state!=CS_SPECTATOR && !teaminfos.access(o->team) && best.htfind(o->team) < 0) { bestfrags = 0; best.add(o->team); } 
+                teaminfo &t = teaminfos[i];
+                bestfrags = max(bestfrags, t.frags);
             }
-            enumerates(teaminfos, teaminfo, t, if(t.frags >= bestfrags) best.add(t.team));
+            loopi(MAXTEAMS)
+            {
+                teaminfo &t = teaminfos[i];
+                if(t.frags >= bestfrags) best.add(1+i);
+            }
         }
     }
 
@@ -95,7 +98,7 @@ namespace game
         if(x->score < y->score) return false;
         if(x->players.length() > y->players.length()) return true;
         if(x->players.length() < y->players.length()) return false;
-        return x->team && y->team && strcmp(x->team, y->team) < 0;
+        return x->team < y->team;
     }
 
     static int groupplayers()
@@ -107,12 +110,12 @@ namespace game
             fpsent *o = players[i];
             if(!showconnecting && !o->name[0]) continue;
             if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
-            const char *team = m_teammode && o->team[0] ? o->team : NULL;
+            int team = m_teammode && validteam(o->team) ? o->team : 0;
             bool found = false;
             loopj(numgroups)
             {
                 scoregroup &g = *groups[j];
-                if(team!=g.team && (!team || !g.team || strcmp(team, g.team))) continue;
+                if(team!=g.team) continue;
                 g.players.add(o);
                 found = true;
             }
@@ -122,7 +125,7 @@ namespace game
             g.team = team;
             if(!team) g.score = 0;
             else if(cmode && cmode->hidefrags()) g.score = cmode->getteamscore(o->team);
-            else { teaminfo *ti = teaminfos.access(team); g.score = ti ? ti->frags : 0; }
+            else { teaminfo &t = teaminfos[team-1]; g.score = t.frags; }
             g.players.setsize(0);
             g.players.add(o);
         }
@@ -179,7 +182,7 @@ namespace game
             if((k%2)==0) g.pushlist(); // horizontal
             
             scoregroup &sg = *groups[k];
-            int bgcolor = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? 0x3030C0 : 0xC03030) : 0,
+            int bgcolor = sg.team && m_teammode ? teamscoreboardcolor[sg.team] : 0,
                 fgcolor = 0xFFFF80;
 
             g.pushlist(); // vertical
@@ -209,7 +212,7 @@ namespace game
                     g.background(0x808080, numgroups>1 ? 3 : 5);
                 }
                 const playermodelinfo &mdl = getplayermodelinfo(o);
-                const char *icon = sg.team && m_teammode ? (isteam(player1->team, sg.team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
+                const char *icon = sg.team && m_teammode ? mdl.icon[sg.team] : mdl.icon[0];
                 g.text("", 0, icon);
                 if(o==player1 && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1)) g.poplist();
             });
@@ -219,8 +222,8 @@ namespace game
             {
                 g.pushlist(); // vertical
 
-                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
-                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
+                if(sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, teamnames[sg.team]);
+                else g.textf("%s: %d", fgcolor, NULL, teamnames[sg.team], sg.score);
 
                 g.pushlist(); // horizontal
             }

@@ -102,7 +102,7 @@ static struct gamemodeinfo
 #define m_collect      (m_check(gamemode, M_COLLECT))
 #define m_teammode     (m_check(gamemode, M_TEAM))
 #define m_overtime     (m_check(gamemode, M_OVERTIME))
-#define isteam(a,b)    (m_teammode && strcmp(a, b)==0)
+#define isteam(a,b)    (m_teammode && a==b)
 
 #define m_demo         (m_check(gamemode, M_DEMO))
 #define m_edit         (m_check(gamemode, M_EDIT))
@@ -219,7 +219,6 @@ struct demoheader
 };
 
 #define MAXNAMELEN 15
-#define MAXTEAMLEN 4
 
 enum
 {
@@ -412,6 +411,15 @@ struct fpsstate
     }
 };
 
+#define MAXTEAMS 2
+static const char * const teamnames[1+MAXTEAMS] = { "", "azul", "rojo" };
+static const char * const teamtextcode[1+MAXTEAMS] = { "\f0", "\f1", "\f3" };
+static const int teamtextcolor[1+MAXTEAMS] = { 0x1EC850, 0x6496FF, 0xFF4B19 };
+static const int teamscoreboardcolor[1+MAXTEAMS] = { 0, 0x3030C0, 0xC03030 };
+static inline int teamnumber(const char *name) { loopi(MAXTEAMS) if(!strcmp(teamnames[1+i], name)) return 1+i; return 0; }
+#define validteam(n) ((n) >= 1 && (n) <= MAXTEAMS)
+#define teamname(n) (teamnames[validteam(n) ? (n) : 0])
+
 struct fpsent : dynent, fpsstate
 {
     int weight;                         // affects the effectiveness of hitpush
@@ -430,16 +438,16 @@ struct fpsent : dynent, fpsstate
     float deltayaw, deltapitch, deltaroll, newyaw, newpitch, newroll;
     int smoothmillis;
 
-    string name, team, info;
-    int playermodel;
+    string name, info;
+    int team, playermodel;
     ai::aiinfo *ai;
     int ownernum, lastnode;
 
     vec muzzle;
 
-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
+    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
     {
-        name[0] = team[0] = info[0] = 0;
+        name[0] = info[0] = 0;
         respawn();
     }
     ~fpsent()
@@ -491,32 +499,29 @@ struct fpsent : dynent, fpsstate
 
 struct teamscore
 {
-    const char *team;
-    int score;
+    int team, score;
     teamscore() {}
-    teamscore(const char *s, int n) : team(s), score(n) {}
+    teamscore(int team, int n) : team(team), score(n) {}
 
     static bool compare(const teamscore &x, const teamscore &y)
     {
         if(x.score > y.score) return true;
         if(x.score < y.score) return false;
-        return strcmp(x.team, y.team) < 0;
+        return x.team < y.team;
     }
 };
 
 static inline uint hthash(const teamscore &t) { return hthash(t.team); }
-static inline bool htcmp(const char *key, const teamscore &t) { return htcmp(key, t.team); }
-
-#define MAXTEAMS 128
+static inline bool htcmp(int team, const teamscore &t) { return team == t.team; }
 
 struct teaminfo
 {
-    char team[MAXTEAMLEN+1];
     int frags;
-};
 
-static inline uint hthash(const teaminfo &t) { return hthash(t.team); }
-static inline bool htcmp(const char *team, const teaminfo &t) { return !strcmp(team, t.team); }
+    teaminfo() { reset(); }
+
+    void reset() { frags = 0; }    
+};
 
 namespace entities
 {
@@ -560,7 +565,7 @@ namespace game
         virtual void removeplayer(fpsent *d) {}
         virtual void gameover() {}
         virtual bool hidefrags() { return false; }
-        virtual int getteamscore(const char *team) { return 0; }
+        virtual int getteamscore(int team) { return 0; }
         virtual void getteamscores(vector<teamscore> &scores) {}
         virtual void aifind(fpsent *d, ai::aistate &b, vector<ai::interest> &interests) {}
         virtual bool aicheck(fpsent *d, ai::aistate &b) { return false; }
@@ -587,10 +592,9 @@ namespace game
     extern bool clientoption(const char *arg);
     extern fpsent *getclient(int cn);
     extern fpsent *newclient(int cn);
-    extern const char *colorname(fpsent *d, const char *name = NULL, const char *prefix = "", const char *suffix = "", const char *alt = NULL);
+    extern const char *colorname(fpsent *d, const char *name = NULL, const char *alt = NULL, const char *color = "");
     extern const char *teamcolorname(fpsent *d, const char *alt = "you");
-    extern const char *teamcolor(const char *name, bool sameteam, const char *alt = NULL);
-    extern const char *teamcolor(const char *name, const char *team, const char *alt = NULL);
+    extern const char *teamcolor(const char *prefix, const char *suffix, int team, const char *alt);
     extern fpsent *pointatplayer();
     extern fpsent *hudplayer();
     extern fpsent *followingplayer();
@@ -655,16 +659,16 @@ namespace game
     // scoreboard
     extern void showscores(bool on);
     extern void getbestplayers(vector<fpsent *> &best);
-    extern void getbestteams(vector<const char *> &best);
+    extern void getbestteams(vector<int> &best);
     extern void clearteaminfo();
-    extern void setteaminfo(const char *team, int frags);
+    extern void setteaminfo(int team, int frags);
 
     // render
     struct playermodelinfo
     {
-        const char *ffa, *blueteam, *redteam, *hudguns,
+        const char *model[1+MAXTEAMS], *hudguns[1+MAXTEAMS],
                    *vwep, *armour[3],
-                   *ffaicon, *blueicon, *redicon;
+                   *icon[1+MAXTEAMS];
         bool ragdoll;
     };
 

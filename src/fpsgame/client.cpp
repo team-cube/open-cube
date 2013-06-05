@@ -68,11 +68,11 @@ namespace game
         loopv(players) 
         {
             fpsent *o = players[i];
-            if(o != d && o->state == CS_ALIVE && isteam(o->team, d->team))
+            if(o != d && o->state == CS_ALIVE && o->team == d->team)
             {
                 if(!alive++) 
                 {
-                    settexture(isteam(d->team, player1->team) ? "media/hud/blip_blue_alive.png" : "media/hud/blip_red_alive.png");
+                    settexture(d->team == 1 ? "media/hud/blip_blue_alive.png" : "media/hud/blip_red_alive.png");
                     gle::defvertex(2);
                     gle::deftexcoord0();
                     gle::begin(GL_QUADS);
@@ -84,11 +84,11 @@ namespace game
         loopv(players) 
         {
             fpsent *o = players[i];
-            if(o != d && o->state == CS_DEAD && isteam(o->team, d->team))
+            if(o != d && o->state == CS_DEAD && o->team == d->team)
             {
                 if(!dead++) 
                 {
-                    settexture(isteam(d->team, player1->team) ? "media/hud/blip_blue_dead.png" : "media/hud/blip_red_dead.png");
+                    settexture(d->team == 1 ? "media/hud/blip_blue_dead.png" : "media/hud/blip_red_dead.png");
                     gle::defvertex(2);
                     gle::deftexcoord0();
                     gle::begin(GL_QUADS);
@@ -139,13 +139,17 @@ namespace game
     {
         if(team[0])
         {
-            if(player1->clientnum < 0) filtertext(player1->team, team, false, MAXTEAMLEN);
-            else addmsg(N_SWITCHTEAM, "rs", team);
+            int num = isdigit(team[0]) ? parseint(team) : teamnumber(team);
+            if(!validteam(num)) return;    
+            if(player1->clientnum < 0) player1->team = num;
+            else addmsg(N_SWITCHTEAM, "ri", num);
         }
-        else conoutf("your team is: %s", player1->team);
+        else if((player1->clientnum >= 0 && !m_teammode) || !validteam(player1->team)) conoutf("you are not in a team");
+        else conoutf("your team is: \fs%s%s\fr", teamtextcode[player1->team], teamnames[player1->team]);
     }
     ICOMMAND(team, "s", (char *s), switchteam(s));
-    ICOMMAND(getteam, "", (), result(player1->team));
+    ICOMMAND(getteam, "", (), intret(m_teammode && validteam(player1->team) ? player1->team : 0));
+    ICOMMAND(getteamname, "i", (int *num), result(teamname(*num))); 
 
     void switchplayermodel(int playermodel)
     {
@@ -263,12 +267,12 @@ namespace game
     }
     ICOMMAND(getclientname, "i", (int *cn), result(getclientname(*cn)));
 
-    const char *getclientteam(int cn)
+    int getclientteam(int cn)
     {
         fpsent *d = getclient(cn);
-        return d ? d->team : "";
+        return m_teammode && d && validteam(d->team) ? d->team : 0;
     }
-    ICOMMAND(getclientteam, "i", (int *cn), result(getclientteam(*cn)));
+    ICOMMAND(getclientteam, "i", (int *cn), intret(getclientteam(*cn)));
 
     int getclientmodel(int cn)
     {
@@ -282,7 +286,7 @@ namespace game
         fpsent *d = getclient(cn);
         if(!d || d->state==CS_SPECTATOR) return "spectator";
         const playermodelinfo &mdl = getplayermodelinfo(d);
-        return m_teammode ? (isteam(player1->team, d->team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
+        return m_teammode && validteam(d->team) ? mdl.icon[d->team] : mdl.icon[0];
     }
     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
 
@@ -520,11 +524,7 @@ namespace game
     ICOMMAND(timeremaining, "i", (int *formatted), 
     {
         int val = max(maplimit - lastmillis, 0)/1000;
-        if(*formatted)
-        {
-            defformatstring(str)("%d:%02d", val/60, val%60);
-            result(str);
-        }
+        if(*formatted) result(tempformatstring("%d:%02d", val/60, val%60));
         else intret(val);
     });
     ICOMMANDS("m_noitems", "i", (int *mode), { int gamemode = *mode; intret(m_noitems); });
@@ -833,10 +833,10 @@ namespace game
         }
     }
 
-    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", colorname(player1), text); addmsg(N_TEXT, "rcs", player1, text); }
+    void toserver(char *text) { conoutf(CON_CHAT, "%s:%s %s", colorname(player1), teamtextcode[0], text); addmsg(N_TEXT, "rcs", player1, text); }
     COMMANDN(say, toserver, "C");
 
-    void sayteam(char *text) { conoutf(CON_TEAMCHAT, "%s:\f1 %s", colorname(player1), text); addmsg(N_SAYTEAM, "rcs", player1, text); }
+    void sayteam(char *text) { if(!m_teammode || !validteam(player1->team)) return; conoutf(CON_TEAMCHAT, "%s:%s %s", colorname(player1), teamtextcode[player1->team], text); addmsg(N_SAYTEAM, "rcs", player1, text); }
     COMMAND(sayteam, "C");
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
@@ -1239,7 +1239,7 @@ namespace game
                 if(isignored(d->clientnum)) break;
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
-                conoutf(CON_CHAT, "%s:\f0 %s", colorname(d), text);
+                conoutf(CON_CHAT, "%s:%s %s", colorname(d), teamtextcode[0], text);
                 break;
             }
 
@@ -1250,9 +1250,10 @@ namespace game
                 getstring(text, p);
                 filtertext(text, text);
                 if(!t || isignored(t->clientnum)) break;
+                int team = validteam(t->team) ? t->team : 0;
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
-                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, 0x6496FF, 4.0f, -8);
-                conoutf(CON_TEAMCHAT, "%s:\f1 %s", colorname(t), text);
+                    particle_textcopy(t->abovehead(), text, PART_TEXT, 2000, teamtextcolor[team], 4.0f, -8);
+                conoutf(CON_TEAMCHAT, "%s:%s %s", colorname(t), teamtextcode[team], text);
                 break;
             }
 
@@ -1316,8 +1317,8 @@ namespace game
                     if(needclipboard >= 0) needclipboard++;
                 }
                 copystring(d->name, text, MAXNAMELEN+1);
-                getstring(text, p);
-                filtertext(d->team, text, false, MAXTEAMLEN);
+                d->team = getint(p);
+                if(!validteam(d->team)) d->team = 0;
                 d->playermodel = getint(p);
                 break;
             }
@@ -1455,23 +1456,17 @@ namespace game
                 actor->frags = frags;
                 if(m_teammode) setteaminfo(actor->team, tfrags);
                 if(actor!=player1 && (!cmode || !cmode->hidefrags()))
-                {
-                    defformatstring(ds)("%d", actor->frags);
-                    particle_textcopy(actor->abovehead(), ds, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
-                }
+                    particle_textcopy(actor->abovehead(), tempformatstring("%d", actor->frags), PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
                 if(!victim) break;
                 killed(victim, actor);
                 break;
             }
 
             case N_TEAMINFO:
-                for(;;)
+                loopi(MAXTEAMS)
                 {
-                    getstring(text, p);
-                    if(p.overread() || !text[0]) break;
                     int frags = getint(p);
-                    if(p.overread()) break;
-                    if(m_teammode) setteaminfo(text, frags);
+                    if(m_teammode) setteaminfo(1+i, frags);
                 }
                 break;
 
@@ -1737,15 +1732,13 @@ namespace game
 
             case N_SETTEAM:
             {
-                int wn = getint(p);
-                getstring(text, p);
-                int reason = getint(p);
+                int wn = getint(p), team = getint(p), reason = getint(p);
                 fpsent *w = getclient(wn);
                 if(!w) return;
-                filtertext(w->team, text, false, MAXTEAMLEN);
+                w->team = validteam(team) ? team : 0;
                 static const char *fmt[2] = { "%s switched to team %s", "%s forced to team %s"};
                 if(reason >= 0 && size_t(reason) < sizeof(fmt)/sizeof(fmt[0]))
-                    conoutf(fmt[reason], colorname(w), w->team);
+                    conoutf(fmt[reason], colorname(w), teamnames[w->team]);
                 break;
             }
 
@@ -1793,12 +1786,10 @@ namespace game
 
             case N_INITAI:
             {
-                int bn = getint(p), on = getint(p), at = getint(p), sk = clamp(getint(p), 1, 101), pm = getint(p);
-                string name, team;
+                int bn = getint(p), on = getint(p), at = getint(p), sk = clamp(getint(p), 1, 101), pm = getint(p), team = getint(p);
+                string name;
                 getstring(text, p);
                 filtertext(name, text, false, MAXNAMELEN);
-                getstring(text, p);
-                filtertext(team, text, false, MAXTEAMLEN);
                 fpsent *b = newclient(bn);
                 if(!b) break;
                 ai::init(b, at, on, sk, bn, pm, name, team);

@@ -2255,12 +2255,12 @@ COMMAND(writecfg, "s");
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
-static string retbuf[3];
+static string retbuf[4];
 static int retidx = 0;
 
 const char *intstr(int v)
 {
-    retidx = (retidx + 1)%3;
+    retidx = (retidx + 1)%4;
     formatstring(retbuf[retidx])("%d", v);
     return retbuf[retidx];
 }
@@ -2272,7 +2272,7 @@ void intret(int v)
 
 const char *floatstr(float v)
 {
-    retidx = (retidx + 1)%3;
+    retidx = (retidx + 1)%4;
     formatstring(retbuf[retidx])(v==int(v) ? "%.1f" : "%.7g", v);
     return retbuf[retidx];
 }

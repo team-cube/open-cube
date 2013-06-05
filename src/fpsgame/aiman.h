@@ -7,20 +7,19 @@ namespace aiman
 
     void calcteams(vector<teamscore> &teams)
     {
-        static const char * const defaults[2] = { "azul", "rojo" };
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
+            if(ci->state.state==CS_SPECTATOR || !validteam(ci->team)) continue;
             teamscore *t = NULL;
-            loopvj(teams) if(!strcmp(teams[j].team, ci->team)) { t = &teams[j]; break; }
+            loopvj(teams) if(teams[j].team == ci->team) { t = &teams[j]; break; }
             if(t) t->score++;
             else teams.add(teamscore(ci->team, 1));
         }
         teams.sort(teamscore::compare);
-        if(teams.length() < int(sizeof(defaults)/sizeof(defaults[0])))
+        if(teams.length() < MAXTEAMS)
         {
-            loopi(sizeof(defaults)/sizeof(defaults[0])) if(teams.htfind(defaults[i]) < 0) teams.add(teamscore(defaults[i], 0));
+            loopi(MAXTEAMS) if(teams.htfind(1+i) < 0) teams.add(teamscore(1+i, 0));
         }
     }
 
@@ -34,7 +33,7 @@ namespace aiman
         {
             teamscore &t = teams.last();
             clientinfo *bot = NULL;
-            loopv(reassign) if(reassign[i] && !strcmp(reassign[i]->team, teams[0].team))
+            loopv(reassign) if(reassign[i] && reassign[i]->team != teams[0].team)
             {
                 bot = reassign.removeunordered(i);
                 teams[0].score--;
@@ -49,18 +48,18 @@ namespace aiman
             if(bot)
             {
                 if(smode && bot->state.state==CS_ALIVE) smode->changeteam(bot, bot->team, t.team);
-                copystring(bot->team, t.team, MAXTEAMLEN+1);
+                bot->team = t.team;
                 sendf(-1, 1, "riisi", N_SETTEAM, bot->clientnum, bot->team, 0);
             }
             else teams.remove(0, 1);
         }
     }
 
-    const char *chooseteam()
+    int chooseteam()
     {
         vector<teamscore> teams;
         calcteams(teams);
-        return teams.length() ? teams.last().team : "";
+        return teams.length() ? teams.last().team : 0;
     }
 
     static inline bool validaiclient(clientinfo *ci)
@@ -105,7 +104,7 @@ namespace aiman
             }
         }
         else { cn = bots.length(); bots.add(NULL); }
-        const char *team = m_teammode ? chooseteam() : "";
+        int team = m_teammode ? chooseteam() : 0;
         if(!bots[cn]) bots[cn] = new clientinfo;
         clientinfo *ci = bots[cn];
 		ci->clientnum = MAXCLIENTS + cn;
@@ -118,7 +117,7 @@ namespace aiman
 		ci->state.lasttimeplayed = lastmillis;
 		copystring(ci->name, "bot", MAXNAMELEN+1);
 		ci->state.state = CS_DEAD;
-        copystring(ci->team, team, MAXTEAMLEN+1);
+        ci->team = team;
         ci->playermodel = rnd(128);
 		ci->aireinit = 2;
 		ci->connected = true;
