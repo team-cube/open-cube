@@ -66,7 +66,7 @@ void mdlellipsecollide(int *collide)
     
 COMMAND(mdlellipsecollide, "i");
 
-void mdlspec(int *percent)
+void mdlspec(float *percent)
 {
     checkmdl;
     float spec = 1.0f; 
@@ -75,9 +75,9 @@ void mdlspec(int *percent)
     loadingmodel->setspec(spec);
 }
 
-COMMAND(mdlspec, "i");
+COMMAND(mdlspec, "f");
 
-void mdlambient(int *percent)
+void mdlambient(float *percent)
 {
     checkmdl;
     float ambient = 0.3f;
@@ -86,7 +86,7 @@ void mdlambient(int *percent)
     loadingmodel->setambient(ambient);
 }
 
-COMMAND(mdlambient, "i");
+COMMAND(mdlambient, "f");
 
 void mdlalphatest(float *cutoff)
 {   
@@ -104,7 +104,7 @@ void mdldepthoffset(int *offset)
 
 COMMAND(mdldepthoffset, "i");
 
-void mdlglow(int *percent, int *delta, float *pulse)
+void mdlglow(float *percent, float *delta, float *pulse)
 {
     checkmdl;
     float glow = 3.0f, glowdelta = *delta/100.0f, glowpulse = *pulse > 0 ? *pulse/1000.0f : 0;
@@ -114,7 +114,7 @@ void mdlglow(int *percent, int *delta, float *pulse)
     loadingmodel->setglow(glow, glowdelta, glowpulse);
 }
 
-COMMAND(mdlglow, "iif");
+COMMAND(mdlglow, "fff");
 
 void mdlglare(float *specglare, float *glowglare)
 {
@@ -158,7 +158,7 @@ void mdlspin(float *yaw, float *pitch, float *roll)
 
 COMMAND(mdlspin, "fff");
 
-void mdlscale(int *percent)
+void mdlscale(float *percent)
 {
     checkmdl;
     float scale = 0.3f;
@@ -167,7 +167,7 @@ void mdlscale(int *percent)
     loadingmodel->scale = scale;
 }  
 
-COMMAND(mdlscale, "i");
+COMMAND(mdlscale, "f");
 
 void mdltrans(float *x, float *y, float *z)
 {
