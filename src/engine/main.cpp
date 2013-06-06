@@ -155,11 +155,6 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
 
     static int lastupdate = -1, lastw = -1, lasth = -1;
     static float backgroundu = 0, backgroundv = 0;
-#if 0
-    static float detailu = 0, detailv = 0;
-    static int numdecals = 0;
-    static struct decal { float x, y, size; int side; } decals[12];
-#endif
     if((renderedframe && !mainmenu && lastupdate != lastmillis) || lastw != w || lasth != h)
     {
         lastupdate = lastmillis;
@@ -168,18 +163,6 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
 
         backgroundu = rndscale(1);
         backgroundv = rndscale(1);
-#if 0
-        detailu = rndscale(1);
-        detailv = rndscale(1);
-        numdecals = sizeof(decals)/sizeof(decals[0]);
-        numdecals = numdecals/3 + rnd((numdecals*2)/3 + 1);
-        float maxsize = min(w, h)/16.0f;
-        loopi(numdecals)
-        {
-            decal d = { rndscale(w), rndscale(h), maxsize/2 + rndscale(maxsize/2), rnd(2) };
-            decals[i] = d;
-        }
-#endif
     }
     else if(lastupdate != lastmillis) lastupdate = lastmillis;
 
@@ -330,7 +313,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
 
     gle::colorf(1, 1, 1);
 
-	glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     float fh = 0.075f*min(w, h), fw = fh*10,
