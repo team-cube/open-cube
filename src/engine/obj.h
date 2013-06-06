@@ -209,7 +209,7 @@ struct obj : vertmodel, vertloader<obj>
             loading = NULL;
             if(!loaddefaultparts()) return false;
         }
-        scale /= 4;
+        scale /= 1;
         translate.y = -translate.y;
         loopv(parts) parts[i]->meshes->shared++;
         return loaded = true;
