@@ -276,7 +276,6 @@ struct md2 : vertmodel, vertloader<md2>
         }
         identflags |= IDF_PERSIST;
         loading = 0;
-        scale /= 4;
         translate.y = -translate.y;
         loopv(parts) parts[i]->meshes->shared++;
         return loaded = true;
