@@ -98,6 +98,7 @@ enum
     SHADER_REFRACT    = 1<<2,
     SHADER_OPTION     = 1<<3,
     SHADER_DYNAMIC    = 1<<4,
+    SHADER_TRIPLANAR  = 1<<5,
 
     SHADER_INVALID    = 1<<8,
     SHADER_DEFERRED   = 1<<9

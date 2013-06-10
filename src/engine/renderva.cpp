@@ -1025,8 +1025,9 @@ struct renderstate
     VSlot *vslot, *texgenvslot;
     vec2 texgenscroll;
     int texgenorient, texgenmillis;
+    VSlot *triplanar;
 
-    renderstate() : colormask(true), depthmask(true), alphaing(0), vbuf(0), vattribs(false), vquery(false), colorscale(1, 1, 1), alphascale(0), refractscale(0), refractcolor(1, 1, 1), blendx(-1), blendy(-1), slot(NULL), texgenslot(NULL), vslot(NULL), texgenvslot(NULL), texgenscroll(0, 0), texgenorient(-1), texgenmillis(lastmillis)
+    renderstate() : colormask(true), depthmask(true), alphaing(0), vbuf(0), vattribs(false), vquery(false), colorscale(1, 1, 1), alphascale(0), refractscale(0), refractcolor(1, 1, 1), blendx(-1), blendy(-1), slot(NULL), texgenslot(NULL), vslot(NULL), texgenvslot(NULL), texgenscroll(0, 0), texgenorient(-1), texgenmillis(lastmillis), triplanar(NULL)
     {
         loopk(4) color[k] = 1;
         loopk(7) textures[k] = 0;
@@ -1269,11 +1270,18 @@ static void changeslottmus(renderstate &cur, int pass, Slot &slot, VSlot &vslot)
 {
     if(pass==RENDERPASS_GBUFFER || pass==RENDERPASS_RSM)
     {
-        GLuint diffusetex = slot.sts.empty() ? notexture->id : slot.sts[0].t->id;
-        if(cur.textures[0]!=diffusetex)
-            glBindTexture(GL_TEXTURE_2D, cur.textures[0] = diffusetex);
+        Texture *diffuse = slot.sts.empty() ? notexture : slot.sts[0].t;
+        if(cur.textures[0] != diffuse->id)
+            glBindTexture(GL_TEXTURE_2D, cur.textures[0] = diffuse->id);
 
         if(msaasamples && pass == RENDERPASS_GBUFFER) GLOBALPARAMF(hashid, (vslot.index));
+        
+        if(slot.shader->type&SHADER_TRIPLANAR && cur.triplanar != &vslot)
+        {
+            cur.triplanar = &vslot;
+            float scale = TEX_SCALE/vslot.scale;
+            GLOBALPARAMF(triplanarscale, (scale/diffuse->xs, scale/diffuse->ys)); 
+        }     
     }
 
     if(cur.alphaing)
