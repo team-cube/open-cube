@@ -1715,14 +1715,14 @@ void mpeditvslot(VSlot &ds, int allfaces, selinfo &sel, bool local)
     }
 }
 
-void vdelta(char *body)
+void vdelta(uint *body)
 {
     if(noedit() || (nompedit && multiplayer())) return;
     usevdelta++;
     execute(body);
     usevdelta--;
 }
-COMMAND(vdelta, "s");
+COMMAND(vdelta, "e");
 
 void vrotate(int *n)
 {

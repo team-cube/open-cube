@@ -936,7 +936,7 @@ Shader *useshaderbyname(const char *name)
 void shader(int *type, char *name, char *vs, char *ps)
 {
     if(lookupshaderbyname(name)) return;
-   
+  
     defformatstring(info)("shader %s", name);
     renderprogress(loadprogress, info);
     vector<char> vsbuf, psbuf, vsbak, psbak;
