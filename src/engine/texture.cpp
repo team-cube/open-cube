@@ -2097,7 +2097,7 @@ Texture *loadthumbnail(Slot &slot)
         texturedata(s, NULL, &slot.sts[0], false);
         if(glow >= 0) texturedata(g, NULL, &slot.sts[glow], false);
         if(layer) texturedata(l, NULL, &layer->slot->sts[0], false);
-        if(decal) texturedata(l, NULL, &decal->slot->sts[0], false);
+        if(decal) texturedata(d, NULL, &decal->slot->sts[0], false);
         if(!s.data) t = slot.thumbnail = notexture;
         else
         {
