@@ -1521,6 +1521,7 @@ static void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = f
         dst.refractscale = src.refractscale;
         dst.refractcolor = src.refractcolor;
     }
+    if(diff & (1<<VSLOT_DECAL)) dst.decal = src.decal;
 }
 
 static void propagatevslot(VSlot *root, int changed)
@@ -1576,6 +1577,7 @@ static void mergevslot(VSlot &dst, const VSlot &src, int diff, Slot *slot = NULL
         dst.refractscale *= src.refractscale;
         dst.refractcolor.mul(src.refractcolor);
     }
+    if(diff & (1<<VSLOT_DECAL)) dst.decal = src.decal;
 }
 
 void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta)
@@ -1624,6 +1626,7 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     if(diff & (1<<VSLOT_ALPHA) && (dst.alphafront != src.alphafront || dst.alphaback != src.alphaback)) return false;
     if(diff & (1<<VSLOT_COLOR) && dst.colorscale != src.colorscale) return false;
     if(diff & (1<<VSLOT_REFRACT) && (dst.refractscale != src.refractscale || dst.refractcolor != src.refractcolor)) return false;
+    if(diff & (1<<VSLOT_DECAL) && dst.decal != src.decal) return false;
     return true;
 }
 
@@ -1698,7 +1701,6 @@ const struct slottex
 
     {"c", TEX_DIFFUSE},
     {"u", TEX_UNKNOWN},
-    {"d", TEX_DECAL},
     {"n", TEX_NORMAL},
     {"g", TEX_GLOW},
     {"s", TEX_SPEC},
@@ -1801,6 +1803,15 @@ void texlayer(int *layer)
     propagatevslot(s.variants, 1<<VSLOT_LAYER);
 }
 COMMAND(texlayer, "i");
+
+void texdecal(int *decal)
+{
+    if(slots.empty()) return;
+    Slot &s = *slots.last();
+    s.variants->decal = *decal < 0 ? max(slots.length()-1+*decal, 0) : *decal;
+    propagatevslot(s.variants, 1<<VSLOT_DECAL);
+}
+COMMAND(texdecal, "i");
 
 void texalpha(float *front, float *back)
 {
@@ -2023,6 +2034,20 @@ void linkslotshaders()
     }
 }
 
+static void blitthumbnail(ImageData &d, ImageData &s, int x, int y)
+{
+    forcergbimage(d);
+    forcergbimage(s);
+    uchar *dstrow = &d.data[d.pitch*y + d.bpp*x], *srcrow = s.data;
+    loop(y, s.h)
+    {
+        for(uchar *dst = dstrow, *src = srcrow, *end = &srcrow[s.w*s.bpp]; src < end; dst += d.bpp, src += s.bpp)
+        loopk(3) dst[k] = src[k];
+        dstrow += d.pitch;
+        srcrow += s.pitch;
+    }
+}
+
 Texture *loadthumbnail(Slot &slot)
 {
     if(slot.thumbnail) return slot.thumbnail;
@@ -2057,19 +2082,22 @@ Texture *loadthumbnail(Slot &slot)
         if(layer->colorscale == vec(1, 1, 1)) addname(name, *layer->slot, layer->slot->sts[0], true, "<layer>");
         else
         {
-            defformatstring(prefix)("<layer:%.2f/%.2f/%.2f>", vslot.colorscale.x, vslot.colorscale.y, vslot.colorscale.z);
+            defformatstring(prefix)("<layer:%.2f/%.2f/%.2f>", layer->colorscale.x, layer->colorscale.y, layer->colorscale.z);
             addname(name, *layer->slot, layer->slot->sts[0], true, prefix);
         }
     }
+    VSlot *decal = vslot.decal ? &lookupvslot(vslot.decal, false) : NULL;
+    if(decal) addname(name, *decal->slot, decal->slot->sts[0], true, "<decal>");
     name.add('\0');
     Texture *t = textures.access(path(name.getbuf()));
     if(t) slot.thumbnail = t;
     else
     {
-        ImageData s, g, l;
+        ImageData s, g, l, d;
         texturedata(s, NULL, &slot.sts[0], false);
         if(glow >= 0) texturedata(g, NULL, &slot.sts[glow], false);
         if(layer) texturedata(l, NULL, &layer->slot->sts[0], false);
+        if(decal) texturedata(l, NULL, &decal->slot->sts[0], false);
         if(!s.data) t = slot.thumbnail = notexture;
         else
         {
@@ -2085,16 +2113,13 @@ Texture *loadthumbnail(Slot &slot)
             {
                 if(layer->colorscale != vec(1, 1, 1)) texmad(l, layer->colorscale, vec(0, 0, 0));
                 if(l.w != s.w/2 || l.h != s.h/2) scaleimage(l, s.w/2, s.h/2);
-                forcergbimage(s);
-                forcergbimage(l); 
-                uchar *dstrow = &s.data[s.pitch*l.h + s.bpp*l.w], *srcrow = l.data;
-                loop(y, l.h) 
-                {
-                    for(uchar *dst = dstrow, *src = srcrow, *end = &srcrow[l.w*l.bpp]; src < end; dst += s.bpp, src += l.bpp)
-                        loopk(3) dst[k] = src[k]; 
-                    dstrow += s.pitch;
-                    srcrow += l.pitch;
-                }
+                blitthumbnail(s, l, s.w-l.w, s.h-l.h);
+            }
+            if(d.data)
+            {
+                if(vslot.colorscale != vec(1, 1, 1)) texmad(d, vslot.colorscale, vec(0, 0, 0));
+                if(d.w != s.w/2 || d.h != s.h/2) scaleimage(d, s.w/2, s.h/2);
+                blitthumbnail(s, d, 0, 0);
             }
             t = newtexture(NULL, name.getbuf(), s, 0, false, false, true);
             t->xs = xs;

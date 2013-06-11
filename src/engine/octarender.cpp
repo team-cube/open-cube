@@ -1439,7 +1439,18 @@ void precachetextures()
     loopv(valist)
     {
         vtxarray *va = valist[i];
-        loopj(va->texs + va->blends) if(texs.find(va->eslist[j].texture) < 0) texs.add(va->eslist[j].texture);
+        loopj(va->texs + va->blends) 
+        {
+            int tex = va->eslist[j].texture;
+            if(texs.find(tex) < 0) 
+            {
+                texs.add(tex);
+
+                VSlot &vslot = lookupvslot(tex, false);
+                if(vslot.layer && texs.find(vslot.layer) < 0) texs.add(vslot.layer);
+                if(vslot.decal && texs.find(vslot.decal) < 0) texs.add(vslot.decal);
+            }
+        }
     }
     loopv(texs)
     {

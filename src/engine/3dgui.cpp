@@ -623,8 +623,8 @@ struct gui : g3d_gui
     {
         Slot &slot = *vslot.slot;
         if(slot.sts.empty()) return;
-        VSlot *layer = NULL;
-        Texture *t = NULL, *glowtex = NULL, *layertex = NULL;
+        VSlot *layer = NULL, *decal = NULL;
+        Texture *t = NULL, *glowtex = NULL, *layertex = NULL, *decaltex = NULL;
         if(slot.loaded)
         {
             t = slot.sts[0].t;
@@ -635,6 +635,11 @@ struct gui : g3d_gui
             {
                 layer = &lookupvslot(vslot.layer);
                 if(!layer->slot->sts.empty()) layertex = layer->slot->sts[0].t;
+            }
+            if(vslot.decal)
+            {
+                decal = &lookupvslot(vslot.decal);
+                if(!decal->slot->sts.empty()) decaltex = decal->slot->sts[0].t;
             }
         }
         else if(slot.thumbnail && slot.thumbnail != notexture) t = slot.thumbnail;
@@ -668,6 +673,16 @@ struct gui : g3d_gui
         gle::attribf(x,    y+ys); gle::attrib(tc[3]);
         gle::attribf(x+xs, y+ys); gle::attrib(tc[2]);
         gle::end();
+        if(decaltex)
+        {
+            glBindTexture(GL_TEXTURE_2D, decaltex->id);
+            gle::begin(GL_TRIANGLE_STRIP);
+            gle::attribf(x,      y);      gle::attrib(tc[0]);
+            gle::attribf(x+xs/2, y);      gle::attrib(tc[1]);
+            gle::attribf(x,      y+ys/2); gle::attrib(tc[3]);
+            gle::attribf(x+xs/2, y+ys/2); gle::attrib(tc[2]);
+            gle::end();
+        }
         if(glowtex)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
