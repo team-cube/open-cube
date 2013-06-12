@@ -312,9 +312,9 @@ struct decalrenderer
         decaltangent.orthogonal(dir);
 #else
         decaltangent = vec(dir.z, -dir.x, dir.y);
-        decaltangent.sub(vec(dir).mul(decaltangent.dot(dir)));
+        decaltangent.project(dir);
 #endif
-        if(flags&DF_ROTATE) decaltangent.rotate(rnd(360)*RAD, dir);
+        if(flags&DF_ROTATE) decaltangent.rotate(sincos360[rnd(360)], dir);
         decaltangent.normalize();
         decalbitangent.cross(decaltangent, dir);
         if(flags&DF_RND4)
@@ -446,9 +446,7 @@ struct decalrenderer
             ft.normalize();
             fb.cross(ft, n);
             vec pt = vec(ft).mul(ft.dot(decaltangent)).add(vec(fb).mul(fb.dot(decaltangent))).normalize(),
-                pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).normalize();
-            // orthonormalize projected bitangent to prevent streaking
-            pb.sub(vec(pt).mul(pt.dot(pb))).normalize();
+                pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).project(pt).normalize();
             vec v1[MAXFACEVERTS+4], v2[MAXFACEVERTS+4];
             float ptc = pt.dot(pcenter), pbc = pb.dot(pcenter);
             int numv;

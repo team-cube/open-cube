@@ -662,7 +662,7 @@ void addcubeverts(VSlot &vslot, int orient, int size, vec *pos, int convex, usho
         if(vinfo && vinfo[k].norm)
         {
             vec n = decodenormal(vinfo[k].norm), t = orientation_tangent[vslot.rotation][orient];
-            t.sub(vec(n).mul(n.dot(t))).normalize();
+            t.project(n).normalize();
             v.norm = bvec(n);
             v.tangent = bvec(t);
             v.bitangent = orientation_bitangent[vslot.rotation][orient].scalartriple(n, t) < 0 ? 0 : 255;
@@ -672,7 +672,7 @@ void addcubeverts(VSlot &vslot, int orient, int size, vec *pos, int convex, usho
             if(!k) guessnormals(pos, numverts, normals);
             const vec &n = normals[k];
             vec t = orientation_tangent[vslot.rotation][orient];
-            t.sub(vec(n).mul(n.dot(t))).normalize();
+            t.project(n).normalize();
             v.norm = bvec(n);
             v.tangent = bvec(t);
             v.bitangent = orientation_bitangent[vslot.rotation][orient].scalartriple(n, t) < 0 ? 0 : 255;
