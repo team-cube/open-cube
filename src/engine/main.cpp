@@ -193,11 +193,6 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
         settexture((maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize) >= 1024 && (screenw > 1280 || screenh > 800) ? "<premul>media/interface/logo_1024.png" : "<premul>media/interface/logo.png", 3);
         bgquad(lx, ly, lw, lh);
 
-        float bh = 0.1f*min(w, h), bw = bh*2,
-              bx = w - 1.1f*bw, by = h - 1.1f*bh;
-        settexture("<premul>media/interface/cube2badge.png", 3);
-        bgquad(bx, by, bw, bh);
-
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if(caption)
         {
@@ -629,7 +624,6 @@ void resetgl()
     if(!reloadtexture(*notexture) ||
        !reloadtexture("<premul>media/interface/logo.png") ||
        !reloadtexture("<premul>media/interface/logo_1024.png") || 
-       !reloadtexture("<premul>media/interface/cube2badge.png") ||
        !reloadtexture("media/interface/background.png") ||
        !reloadtexture("media/interface/shadow.png") ||
        !reloadtexture("media/interface/mapshot_frame.png") ||
