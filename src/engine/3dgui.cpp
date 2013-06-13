@@ -650,7 +650,6 @@ struct gui : g3d_gui
             hudnotextureshader->set();
             gle::colorf(0, 0, 0, 0.75f);
             rect_(x+SHADOW, y+SHADOW, xs, ys);
-            hudshader->set();	
         }
         SETSHADER(hudrgb);
         const vec &color = hit ? vec(1, 0.5f, 0.5f) : vec(1, 1, 1);

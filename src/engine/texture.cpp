@@ -1064,8 +1064,8 @@ void scaleimage(ImageData &s, int w, int h)
             { \
                 switch(t.bpp) \
                 { \
-                    case 1: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
-                    case 2: dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[1]; break; \
+                    case 1: \
+                    case 2: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
                 } \
                 body; \
             }); \
@@ -1080,8 +1080,8 @@ void forcergbimage(ImageData &s)
     readwritetex(d, s,
         switch(s.bpp)
         {
-            case 1: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
-            case 2: dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[1]; break;
+            case 1:
+            case 2: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
         }
     );
     s.replace(d);
@@ -1097,8 +1097,8 @@ void forcergbimage(ImageData &s)
             { \
                 switch(t.bpp) \
                 { \
-                    case 1: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
-                    case 2: dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[1]; break; \
+                    case 1: \
+                    case 2: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
                     case 3: dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[2]; break; \
                 } \
                 body; \
@@ -1114,8 +1114,8 @@ void forcergbaimage(ImageData &s)
     readwritetex(d, s,
         switch(s.bpp)
         {
-            case 1: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
-            case 2: dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[1]; break;
+            case 1: 
+            case 2: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
             case 3: dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; break;
         }
     );
@@ -2121,6 +2121,7 @@ Texture *loadthumbnail(Slot &slot)
                 if(d.w != s.w/2 || d.h != s.h/2) scaleimage(d, s.w/2, s.h/2);
                 blitthumbnail(s, d, 0, 0);
             }
+            if(s.bpp < 3) forcergbimage(s);
             t = newtexture(NULL, name.getbuf(), s, 0, false, false, true);
             t->xs = xs;
             t->ys = ys;
