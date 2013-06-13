@@ -169,7 +169,7 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
     }
 }
 
-#define writetex(t, body) \
+#define writetex(t, body) do \
     { \
         uchar *dstrow = t.data; \
         loop(y, t.h) \
@@ -180,9 +180,9 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
             } \
             dstrow += t.pitch; \
         } \
-    }
+    } while(0)
 
-#define readwritetex(t, s, body) \
+#define readwritetex(t, s, body) do \
     { \
         uchar *dstrow = t.data, *srcrow = s.data; \
         loop(y, t.h) \
@@ -194,9 +194,9 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
             dstrow += t.pitch; \
             srcrow += s.pitch; \
         } \
-    }
+    } while(0)
 
-#define read2writetex(t, s1, src1, s2, src2, body) \
+#define read2writetex(t, s1, src1, s2, src2, body) do \
     { \
         uchar *dstrow = t.data, *src1row = s1.data, *src2row = s2.data; \
         loop(y, t.h) \
@@ -209,7 +209,7 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
             src1row += s1.pitch; \
             src2row += s2.pitch; \
         } \
-    }
+    } while(0)
 
 void texreorient(ImageData &s, bool flipx, bool flipy, bool swapxy, int type = TEX_DIFFUSE)
 {
@@ -1056,19 +1056,11 @@ void scaleimage(ImageData &s, int w, int h)
 
 #define readwritergbtex(t, s, body) \
     { \
-        if(t.bpp >= 3) { readwritetex(t, s, body); } \
+        if(t.bpp >= 3) readwritetex(t, s, body); \
         else \
         { \
             ImageData rgb(t.w, t.h, 3); \
-            read2writetex(rgb, t, orig, s, src, \
-            { \
-                switch(t.bpp) \
-                { \
-                    case 1: \
-                    case 2: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
-                } \
-                body; \
-            }); \
+            read2writetex(rgb, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
             t.replace(rgb); \
         } \
     }
@@ -1077,13 +1069,7 @@ void forcergbimage(ImageData &s)
 {
     if(s.bpp >= 3) return;
     ImageData d(s.w, s.h, 3);
-    readwritetex(d, s,
-        switch(s.bpp)
-        {
-            case 1:
-            case 2: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
-        }
-    );
+    readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
     s.replace(d);
 }
 
@@ -1093,16 +1079,8 @@ void forcergbimage(ImageData &s)
         else \
         { \
             ImageData rgba(t.w, t.h, 4); \
-            read2writetex(rgba, t, orig, s, src, \
-            { \
-                switch(t.bpp) \
-                { \
-                    case 1: \
-                    case 2: dst[0] = orig[0]; dst[1] = orig[0]; dst[2] = orig[0]; break; \
-                    case 3: dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[2]; break; \
-                } \
-                body; \
-            }); \
+            if(t.bpp==3) read2writetex(rgba, t, orig, s, src, { dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[2]; body; }); \
+            else read2writetex(rgba, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
             t.replace(rgba); \
         } \
     }
@@ -1111,14 +1089,8 @@ void forcergbaimage(ImageData &s)
 {
     if(s.bpp >= 4) return;
     ImageData d(s.w, s.h, 4);
-    readwritetex(d, s,
-        switch(s.bpp)
-        {
-            case 1: 
-            case 2: dst[0] = src[0]; dst[1] = src[0]; dst[2] = src[0]; break;
-            case 3: dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; break;
-        }
-    );
+    if(s.bpp==3) readwritetex(d, s, { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; });
+    else readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
     s.replace(d);
 }
 
@@ -1891,27 +1863,12 @@ static void addglow(ImageData &c, ImageData &g, const vec &glowcolor)
     }
 }
 
-static void mergespec(ImageData &c, ImageData &s, bool envmap = false)
+static void mergespec(ImageData &c, ImageData &s)
 {
     if(s.bpp < 3)
     {
-        if(envmap)
-        {
-            readwritergbatex(c, s,
-                dst[3] = int(dst[3])*int(src[0])/255;
-            );
-        }
-        else
-        {
-            readwritergbatex(c, s,
-                dst[3] = src[0];
-            );
-        }
-    }
-    else if(envmap)
-    {
         readwritergbatex(c, s,
-            dst[3] = int(dst[3])*(int(src[0]) + int(src[1]) + int(src[2]))/(3*255);
+            dst[3] = src[0];
         );
     }
     else
@@ -1972,7 +1929,6 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                 if(a.combined!=index) continue;
                 ImageData as;
                 if(!texturedata(as, NULL, &a)) continue;
-                //if(ts.bpp!=4) forcergbaimage(ts);
                 if(as.w!=ts.w || as.h!=ts.h) scaleimage(as, ts.w, ts.h);
                 switch(a.type)
                 {
@@ -1981,7 +1937,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                 }
                 break; // only one combination
             }
-            if(ts.bpp < 3) forcergbimage(ts);
+            if(ts.bpp < 3) swizzleimage(ts);
             break;
     }
     t.t = newtexture(NULL, key.getbuf(), ts, 0, true, true, true, compress);
@@ -2241,7 +2197,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
     }
     else 
     {
-        if(hasTRG && surface[0].bpp < 3) loopi(6) swizzleimage(surface[0]);
+        if(hasTRG && surface[0].bpp < 3) loopi(6) swizzleimage(surface[i]);
         format = texformat(surface[0].bpp);
         t->bpp = surface[0].bpp;
     }
