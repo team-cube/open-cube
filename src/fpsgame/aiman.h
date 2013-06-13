@@ -49,7 +49,7 @@ namespace aiman
             {
                 if(smode && bot->state.state==CS_ALIVE) smode->changeteam(bot, bot->team, t.team);
                 bot->team = t.team;
-                sendf(-1, 1, "riisi", N_SETTEAM, bot->clientnum, bot->team, 0);
+                sendf(-1, 1, "riiii", N_SETTEAM, bot->clientnum, bot->team, 0);
             }
             else teams.remove(0, 1);
         }
@@ -153,7 +153,7 @@ namespace aiman
 		if(ci->ownernum < 0) deleteai(ci);
 		else if(ci->aireinit >= 1)
 		{
-			sendf(-1, 1, "ri6ss", N_INITAI, ci->clientnum, ci->ownernum, ci->state.aitype, ci->state.skill, ci->playermodel, ci->name, ci->team);
+			sendf(-1, 1, "ri7s", N_INITAI, ci->clientnum, ci->ownernum, ci->state.aitype, ci->state.skill, ci->playermodel, ci->team, ci->name);
 			if(ci->aireinit == 2)
             {
                 ci->reassign();

@@ -438,10 +438,13 @@ namespace game
     ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
-    void setteam(const char *arg1, const char *arg2)
+    void setteam(const char *who, const char *team)
     {
-        int i = parseplayer(arg1);
-        if(i>=0) addmsg(N_SETTEAM, "ris", i, arg2);
+        int i = parseplayer(who);
+        if(i < 0) return;
+        int num = isdigit(team[0]) ? parseint(team) : teamnumber(team);
+        if(!validteam(num)) return;
+        addmsg(N_SETTEAM, "rii", i, num);
     }
     COMMAND(setteam, "ss");
 
