@@ -529,7 +529,7 @@ struct Texture
 
     Texture() : alphamask(NULL) {}
 
-    int swizzle() const { extern bool hasTRG; return hasTRG ? (bpp==1 ? 0 : (bpp==2 ? 1 : -1)) : -1; } 
+    int swizzle() const { extern bool hasTRG, hasTSW; return hasTRG && !hasTSW ? (bpp==1 ? 0 : (bpp==2 ? 1 : -1)) : -1; } 
 };
 
 #define SETSWIZZLE(name, tex) SETVARIANT(name, (tex) ? (tex)->swizzle() : -1, 0)

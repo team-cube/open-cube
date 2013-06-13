@@ -680,7 +680,7 @@ static void gengenericvariant(Shader &s, const char *sname, const char *vs, cons
 
 static void genswizzle(Shader &s, const char *sname, const char *ps, int row = 0)
 {
-    if(!hasTRG) return;
+    if(!hasTRG || hasTSW) return;
     static const int pragmalen = strlen("#pragma CUBE2_swizzle");
     const char *pspragma = strstr(ps, "#pragma CUBE2_swizzle");
     if(!pspragma) return;

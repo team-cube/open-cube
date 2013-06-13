@@ -22,9 +22,7 @@ enum
     DF_INVMOD     = 1<<2,
     DF_OVERBRIGHT = 1<<3,
     DF_ADD        = 1<<4,
-    DF_SATURATE   = 1<<5,
-    DF_GREY       = 1<<6,
-    DF_GREYALPHA  = 1<<7
+    DF_SATURATE   = 1<<5
 };
 
 VARFP(maxdecaltris, 1, 1024, 16384, initdecals());
@@ -243,7 +241,7 @@ struct decalrenderer
         if(flags&DF_OVERBRIGHT) 
         {
             glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR); 
-            SETVARIANT(overbrightdecal, hasTRG ? (flags&DF_GREY ? 0 : (flags&DF_GREYALPHA ? 1 : -1)) : -1, 0);
+            SETSWIZZLE(overbrightdecal, tex);
         }
         else 
         {
@@ -251,7 +249,7 @@ struct decalrenderer
             else if(flags&DF_ADD) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
             else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            SETVARIANT(decal, hasTRG ? (flags&DF_GREY ? 0 : (flags&DF_GREYALPHA ? 1 : -1)) : -1, 0);
+            SETSWIZZLE(decal, tex);
             float colorscale = flags&DF_SATURATE ? 2 : 1; 
             LOCALPARAMF(colorscale, (colorscale, colorscale, colorscale, 1));
         }
@@ -571,9 +569,9 @@ struct decalrenderer
 
 decalrenderer decals[] =
 {
-    decalrenderer("<grey>media/particle/scorch.png", DF_GREYALPHA|DF_ROTATE, 500),
-    decalrenderer("<grey>media/particle/blood.png", DF_GREY|DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<grey>media/particle/bullet.png", DF_GREY|DF_OVERBRIGHT)
+    decalrenderer("<grey>media/particle/scorch.png", DF_ROTATE, 500),
+    decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
+    decalrenderer("<grey>media/particle/bullet.png", DF_OVERBRIGHT)
 };
 
 void initdecals()
