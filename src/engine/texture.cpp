@@ -2339,9 +2339,9 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur)
                 yaw = 90; pitch = 0; break;
             case GL_TEXTURE_CUBE_MAP_POSITIVE_X: // rt
                 yaw = 270; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: // ft
+            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: // bk
                 yaw = 180; pitch = 0; break;
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: // bk
+            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: // ft
                 yaw = 0; pitch = 0; break;
             case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: // dn
                 yaw = 270; pitch = -90; break;
@@ -2356,7 +2356,7 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur)
             scaletexture(src, rendersize, rendersize, 3, 3*rendersize, dst, texsize, texsize);
             swap(src, dst);
         }      
-        reorienttexture(src, texsize, texsize, 3, 3*texsize, dst, !side.flipx, !side.flipy, side.swapxy);
+        reorienttexture(src, texsize, texsize, 3, 3*texsize, dst, side.flipx, !side.flipy, side.swapxy);
         if(blur > 0)
         {
             swap(src, dst);
