@@ -1122,6 +1122,22 @@ void forcergbaimage(ImageData &s)
     s.replace(d);
 }
 
+void swizzleimage(ImageData &s)
+{
+    if(s.bpp==2)
+    {
+        ImageData d(s.w, s.h, 4);
+        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; dst[3] = src[1]; });
+        s.replace(d);
+    }
+    else if(s.bpp==1)
+    {
+        ImageData d(s.w, s.h, 3);
+        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
+        s.replace(d);
+    }
+}
+
 bool canloadsurface(const char *name)
 {
     stream *f = openfile(name, "rb");
@@ -2225,6 +2241,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
     }
     else 
     {
+        if(hasTRG && surface[0].bpp < 3) loopi(6) swizzleimage(surface[0]);
         format = texformat(surface[0].bpp);
         t->bpp = surface[0].bpp;
     }
