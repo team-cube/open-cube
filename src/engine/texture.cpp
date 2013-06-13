@@ -2154,7 +2154,7 @@ void forcecubemapload(GLuint tex)
     if(depthtest) glEnable(GL_DEPTH_TEST);
 }
 
-cubemapside cubemapsides[6] =
+extern const cubemapside cubemapsides[6] =
 {
     { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "lf", false, true,  true  },
     { GL_TEXTURE_CUBE_MAP_POSITIVE_X, "rt", true,  false, true  },
@@ -2247,7 +2247,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
     loopi(6)
     {
         ImageData &s = surface[i];
-        cubemapside &side = cubemapsides[i];
+        const cubemapside &side = cubemapsides[i];
         texreorient(s, side.flipx, side.flipy, side.swapxy);
         if(s.compressed)
         {

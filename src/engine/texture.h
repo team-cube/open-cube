@@ -700,7 +700,7 @@ struct cubemapside
     bool flipx, flipy, swapxy;
 };
 
-extern cubemapside cubemapsides[6];
+extern const cubemapside cubemapsides[6];
 extern Texture *notexture;
 extern Shader *nullshader, *hudshader, *hudnotextureshader, *nocolorshader, *foggedshader, *foggednotextureshader, *ldrshader, *ldrnotextureshader, *stdworldshader, *rsmworldshader;
 extern int maxvsuniforms, maxfsuniforms;
