@@ -2743,6 +2743,10 @@ void gendds(char *infile, char *outfile)
         case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: fourcc = FOURCC_DXT1; conoutf("compressed as DXT1a"); break;
         case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: fourcc = FOURCC_DXT3; conoutf("compressed as DXT3"); break;
         case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: fourcc = FOURCC_DXT5; conoutf("compressed as DXT5"); break;
+        case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+        case GL_COMPRESSED_RED_RGTC1: fourcc = FOURCC_ATI1; conoutf("compressed as ATI1"); break;
+        case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+        case GL_COMPRESSED_RG_RGTC2: fourcc = FOURCC_ATI2; conoutf("compressed as ATI2"); break;
         default:
             conoutf(CON_ERROR, "failed compressing %s: unknown format: 0x%X", infile, format); break;
             return;
@@ -2781,7 +2785,7 @@ void gendds(char *infile, char *outfile)
     d.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_LINEARSIZE | DDSD_MIPMAPCOUNT;
     d.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
     d.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    d.ddpfPixelFormat.dwFlags = DDPF_FOURCC | (format!=GL_COMPRESSED_RGB_S3TC_DXT1_EXT ? DDPF_ALPHAPIXELS : 0);
+    d.ddpfPixelFormat.dwFlags = DDPF_FOURCC | (alphaformat(uncompressedformat(format)) ? DDPF_ALPHAPIXELS : 0);
     d.ddpfPixelFormat.dwFourCC = fourcc;
    
     uchar *data = new uchar[csize], *dst = data;
