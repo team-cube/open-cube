@@ -55,6 +55,10 @@ CLIENT_LIBS= -Lenet/.libs -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lS
 endif
 ifeq ($(PLATFORM),Linux)
 CLIENT_LIBS+= -lrt
+else
+ifneq (,$(findstring GNU,$(PLATFORM))) 
+CLIENT_LIBS+= -lrt 
+endif 
 endif
 CLIENT_OBJS= \
 	shared/crypto.o \
