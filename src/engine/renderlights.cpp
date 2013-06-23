@@ -3373,7 +3373,7 @@ void rendershadowmaps()
         findshadowmms();
 
         shadowmaskbatchedmodels(!(l.flags&L_NODYNSHADOW) && smdynshadow);
-        batchshadowmapmodels();
+        batchshadowmapmodels(mesh != NULL);
 
         shadowcacheval *cached = NULL;
         int cachemask = 0;
