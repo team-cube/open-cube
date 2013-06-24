@@ -209,6 +209,14 @@ void mdlshadow(int *shadow)
 
 COMMAND(mdlshadow, "i");
 
+void mdlalphashadow(int *alphashadow)
+{
+    checkmdl;
+    loadingmodel->alphashadow = *alphashadow!=0;
+}
+
+COMMAND(mdlalphashadow, "i");
+
 void mdlbb(float *rad, float *h, float *eyeheight)
 {
     checkmdl;

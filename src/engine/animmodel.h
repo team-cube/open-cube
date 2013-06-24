@@ -166,7 +166,7 @@ struct animmodel : model
 
             if(as->cur.anim&ANIM_NOSKIN)
             {
-                if(alphatest > 0 && s->type&Texture::ALPHA)
+                if(alphatest > 0 && s->type&Texture::ALPHA && owner->model->alphashadow)
                 {
                     if(s!=lasttex)
                     {
