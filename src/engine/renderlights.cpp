@@ -2726,11 +2726,8 @@ void viewlightscissor()
 static inline bool calclightscissor(lightinfo &l)
 {
     float sx1 = -1, sy1 = -1, sx2 = 1, sy2 = 1, sz1 = -1, sz2 = 1;
-    if(l.radius > 0)
-    {
-        if(l.spot > 0) calcspotscissor(l.o, l.radius, l.dir, l.spot, l.spotx, l.spoty, sx1, sy1, sx2, sy2, sz1, sz2);
-        else calcspherescissor(l.o, l.radius, sx1, sy1, sx2, sy2, sz1, sz2);
-    }
+    if(l.spot > 0) calcspotscissor(l.o, l.radius, l.dir, l.spot, l.spotx, l.spoty, sx1, sy1, sx2, sy2, sz1, sz2);
+    else calcspherescissor(l.o, l.radius, sx1, sy1, sx2, sy2, sz1, sz2);
     l.sx1 = sx1;
     l.sx2 = sx2;
     l.sy1 = sy1;
@@ -2747,9 +2744,9 @@ void collectlights()
     if(!editmode || !fullbright) loopv(ents)
     {
         extentity *e = ents[i];
-        if(e->type != ET_LIGHT) continue;
+        if(e->type != ET_LIGHT || e->attr1 <= 0) continue;
 
-        if(e->attr1 > 0 && smviscull)
+        if(smviscull)
         {
             if(isfoggedsphere(e->attr1, e->o)) continue;
             if(pvsoccludedsphere(e->o, e->attr1)) continue;
@@ -2762,7 +2759,7 @@ void collectlights()
         l.query = NULL;
         l.o = e->o;
         l.color = vec(e->attr2, e->attr3, e->attr4);
-        l.radius = e->attr1 > 0 ? e->attr1 : 2*worldsize;
+        l.radius = e->attr1;
         if(e->attached && e->attached->type == ET_SPOTLIGHT)
         {
             l.calcspot(vec(e->attached->o).sub(e->o).normalize(), clamp(int(e->attached->attr1), 1, 89));
@@ -3292,10 +3289,10 @@ void rendercsmshadowmaps()
 
 int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &spotloc, int &spotangle, float &bias)
 {
-    if(e.attr5&L_NOSHADOW || (e.attr1 > 0 && e.attr1 <= smminradius)) return SM_NONE;
+    if(e.attr5&L_NOSHADOW || e.attr1 <= smminradius) return SM_NONE;
 
     origin = e.o;
-    radius = e.attr1 > 0 ? e.attr1 : 2*worldsize;
+    radius = e.attr1;
     int type, w, border;
     float lod;
     if(e.attached && e.attached->type == ET_SPOTLIGHT)

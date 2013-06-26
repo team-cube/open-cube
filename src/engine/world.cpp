@@ -623,6 +623,7 @@ void renderentradius(extentity &e, bool color)
     switch(e.type)
     {
         case ET_LIGHT:
+            if(e.attr1 <= 0) break;
             if(color) gle::colorf(e.attr2/255.0f, e.attr3/255.0f, e.attr4/255.0f);
             renderentsphere(e, e.attr1);
             break;
@@ -632,7 +633,7 @@ void renderentradius(extentity &e, bool color)
             {
                 if(color) gle::colorf(0, 1, 1);
                 float radius = e.attached->attr1;
-                if(!radius) radius = 2*e.o.dist(e.attached->o);
+                if(radius <= 0) break;
                 vec dir = vec(e.o).sub(e.attached->o).normalize();
                 float angle = clamp(int(e.attr1), 1, 89);
                 renderentattachment(e);
