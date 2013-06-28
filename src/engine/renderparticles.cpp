@@ -131,7 +131,7 @@ struct particle
     float size;
     union
     {
-        const char *text;         // will call delete[] on this only if it starts with an @
+        const char *text;
         float val;
         physent *owner;
         struct
