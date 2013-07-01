@@ -10,15 +10,15 @@ VARP(particlesize, 20, 100, 500);
 VARP(softparticles, 0, 1, 1);
 VARP(softparticleblend, 1, 8, 64);
     
-// Check emit_particles() to limit the rate that paricles can be emitted for models/sparklies
+// Check canemitparticles() to limit the rate that paricles can be emitted for models/sparklies
 // Automatically stops particles being emitted when paused or in reflective drawing
 VARP(emitmillis, 1, 17, 1000);
 static int lastemitframe = 0, emitoffset = 0;
 static bool canemit = false, regenemitters = false;
 
-static bool emit_particles()
+static bool canemitparticles()
 {
-    return (canemit || emitoffset) && !minimized;
+    return canemit || emitoffset;
 }
 
 VARP(showparticles, 0, 1, 1);
@@ -1029,7 +1029,7 @@ static void splash(int type, int color, int radius, int num, int fade, const vec
 
 static void regularsplash(int type, int color, int radius, int num, int fade, const vec &p, float size, int gravity, int delay = 0) 
 {
-    if(!emit_particles() || (delay > 0 && rnd(delay) != 0)) return;
+    if(!canemitparticles() || (delay > 0 && rnd(delay) != 0)) return;
     splash(type, color, radius, num, fade, p, size, gravity);
 }
 
@@ -1146,7 +1146,7 @@ static inline int colorfromattr(int attr)
  */
 void regularshape(int type, int radius, int color, int dir, int num, int fade, const vec &p, float size, int gravity, int vel = 200)
 {
-    if(!emit_particles()) return;
+    if(!canemitparticles()) return;
     
     int basetype = parts[type]->type&0xFF;
     bool flare = (basetype == PT_TAPE) || (basetype == PT_LIGHTNING),
@@ -1244,7 +1244,7 @@ void regularshape(int type, int radius, int color, int dir, int num, int fade, c
 
 static void regularflame(int type, const vec &p, float radius, float height, int color, int density = 3, float scale = 2.0f, float speed = 200.0f, float fade = 600.0f, int gravity = -15) 
 {
-    if(!emit_particles()) return;
+    if(!canemitparticles()) return;
     
     float size = scale * min(radius, height);
     vec v(0, 0, min(1.0f, height)*speed);
@@ -1387,9 +1387,9 @@ void seedparticles()
 
 void updateparticles()
 {
-    if(minimized) return;
-
     if(regenemitters) addparticleemitters();
+
+    if(minimized) { canemit = false; return; }
 
     if(lastmillis - lastemitframe >= emitmillis)
     {
