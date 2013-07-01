@@ -582,7 +582,12 @@ void initdecals()
 {
     if(initing) return;
     loopi(sizeof(decals)/sizeof(decals[0])) decals[i].init(maxdecaltris);
-    loopi(sizeof(decals)/sizeof(decals[0])) decals[i].preload();
+    loopi(sizeof(decals)/sizeof(decals[0])) 
+    {
+        loadprogress = float(i+1)/(sizeof(decals)/sizeof(decals[0]));
+        decals[i].preload();
+    }
+    loadprogress = 0;
 }
 
 void cleardecals()
