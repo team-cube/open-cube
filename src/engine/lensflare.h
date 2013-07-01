@@ -28,7 +28,6 @@ struct flare
     bool sparkle;
 };
 
-VAR(flarelights, 0, 0, 1);
 VARP(flarecutoff, 0, 1000, 10000);
 VARP(flaresize, 20, 100, 500);
 
@@ -88,39 +87,10 @@ struct flarerenderer : partrenderer
         newflare(o, center, r, g, b, mod, size, sun, sparkle);
     }
 
-    void makelightflares()
+    void update()
     {
         numflares = 0; //regenerate flarelist each frame
         shinetime = lastmillis/10;
-
-        if(editmode || !flarelights) return;
-
-        const vector<extentity *> &ents = entities::getents();
-        const vector<int> &lights = checklightcache(int(camera1->o.x), int(camera1->o.y));
-        loopv(lights)
-        {
-            entity &e = *ents[lights[i]];
-            if(e.type != ET_LIGHT) continue;
-            bool sun = (e.attr1==0);
-            float radius = float(e.attr1);
-            vec flaredir = vec(e.o).sub(camera1->o);
-            float len = flaredir.magnitude();
-            if(!sun && (len > radius)) continue;
-            if(isvisiblesphere(0.0f, e.o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) continue;
-            vec center = vec(camdir).mul(flaredir.dot(camdir)).add(camera1->o);
-            float mod, size;
-            if(sun) //fixed size
-            {
-                mod = 1.0;
-                size = len * flaresize / 100.0f;
-            }
-            else
-            {
-                mod = (radius-len)/radius;
-                size = flaresize / 5.0f;
-            }
-            newflare(e.o, center, e.attr2, e.attr3, e.attr4, mod, size, sun, sun);
-        }
     }
 
     int count()

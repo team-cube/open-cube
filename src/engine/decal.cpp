@@ -65,10 +65,14 @@ struct decalrenderer
         }
         decals = new decalinfo[tris];
         maxdecals = tris;
-        tex = textureload(texname, 3);
         maxverts = tris*3 + 3;
         availverts = maxverts - 3; 
         verts = new decalvert[maxverts];
+    }
+
+    void preload()
+    {
+        tex = textureload(texname, 3);
     }
 
     int hasdecals()
@@ -578,6 +582,7 @@ void initdecals()
 {
     if(initing) return;
     loopi(sizeof(decals)/sizeof(decals[0])) decals[i].init(maxdecaltris);
+    loopi(sizeof(decals)/sizeof(decals[0])) decals[i].preload();
 }
 
 void cleardecals()

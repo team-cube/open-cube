@@ -770,7 +770,7 @@ struct varenderer : partrenderer
         }
     }
 
-    void update()
+    void genvbo()
     {
         if(lastmillis == lastupdate && vbo) return;
         lastupdate = lastmillis;
@@ -786,8 +786,10 @@ struct varenderer : partrenderer
     
     void render()
     {   
-        glBindTexture(GL_TEXTURE_2D, tex->id);
+        genvbo();
 
+        glBindTexture(GL_TEXTURE_2D, tex->id);
+ 
         glBindBuffer_(GL_ARRAY_BUFFER, vbo);
         const partvert *ptr = 0;
         gle::vertexpointer(sizeof(partvert), &ptr->pos);
@@ -851,10 +853,10 @@ static partrenderer *parts[] =
     &flares                                                                                        // lens flares - must be done last
 };
 
-VARFP(maxparticles, 10, 4000, 10000, particleinit());
-VARFP(fewparticles, 10, 100, 10000, particleinit());
+VARFP(maxparticles, 10, 4000, 10000, initparticles());
+VARFP(fewparticles, 10, 100, 10000, initparticles());
 
-void particleinit() 
+void initparticles() 
 {
     if(initing) return;
     if(!particleshader) particleshader = lookupshaderbyname("particle");
@@ -862,6 +864,7 @@ void particleinit()
     if(!particlesoftshader) particlesoftshader = lookupshaderbyname("particlesoft");
     if(!particletextshader) particletextshader = lookupshaderbyname("particletext");
     loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->init(parts[i]->type&PT_FEW ? min(fewparticles, maxparticles) : maxparticles);
+    loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->preload();
 }
 
 void clearparticles()
@@ -913,11 +916,6 @@ void renderparticles()
         glEnable(GL_DEPTH_TEST);
     }
 
-    loopi(sizeof(parts)/sizeof(parts[0])) 
-    {
-        parts[i]->update();
-    }
-    
     bool rendered = false;
     uint lastflags = PT_LERP|PT_SHADER, flagmask = PT_LERP|PT_MOD|PT_BRIGHT|PT_NOTEX|PT_SOFT|PT_SHADER;
     int lastswizzle = -1;
@@ -940,8 +938,6 @@ void renderparticles()
             glActiveTexture_(GL_TEXTURE0);
         }
         
-        p->preload();
-
         uint flags = p->type & flagmask, changedbits = flags ^ lastflags;
         int swizzle = p->tex ? p->tex->swizzle() : -1;
         if(swizzle != lastswizzle) changedbits |= PT_SWIZZLE;
@@ -1397,8 +1393,11 @@ void updateparticles()
         lastemitframe = lastmillis - (lastmillis%emitmillis);
     }
     else canemit = false;
-   
-    flares.makelightflares();
+  
+    loopi(sizeof(parts)/sizeof(parts[0]))
+    {
+        parts[i]->update();
+    }
 
     if(!editmode || showparticles) 
     {
