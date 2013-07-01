@@ -1672,7 +1672,7 @@ static shadowmapinfo *addshadowmap(ushort x, ushort y, int size, int &idx)
 VARF(csmmaxsize, 256, 768, 2048, clearshadowcache());
 VARF(csmsplits, 1, 3, CSM_MAXSPLITS, { cleardeferredlightshaders(); clearshadowcache(); });
 FVAR(csmsplitweight, 0.20f, 0.75f, 0.95f);
-VARF(csmshadowmap, 0, 1, 1, cleardeferredlightshaders());
+VARF(csmshadowmap, 0, 1, 1, { cleardeferredlightshaders(); clearshadowcache(); });
 
 // cascaded shadow maps
 struct cascadedshadowmap
