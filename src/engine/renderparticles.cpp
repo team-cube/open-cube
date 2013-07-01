@@ -829,28 +829,28 @@ static partrenderer *parts[] =
 {
     new quadrenderer("<grey>media/particle/blood.png", PT_PART|PT_FLIP|PT_MOD|PT_RND4, DECAL_BLOOD), // blood spats (note: rgb is inverted) 
     new trailrenderer("media/particle/base.png", PT_TRAIL|PT_LERP),                            // water, entity
-    new quadrenderer("<grey>media/particle/smoke.png", PT_PART|PT_FLIP|PT_LERP),  // smoke
-    new quadrenderer("<grey>media/particle/steam.png", PT_PART|PT_FLIP),               // steam
-    new quadrenderer("<grey>media/particle/flames.png", PT_PART|PT_HFLIP|PT_RND4|PT_BRIGHT),   // flame on - no flipping please, they have orientation
+    new quadrenderer("<grey>media/particle/smoke.png", PT_PART|PT_FLIP|PT_LERP),               // smoke
+    new quadrenderer("<grey>media/particle/steam.png", PT_PART|PT_FLIP),                       // steam
+    new quadrenderer("<grey>media/particle/flames.png", PT_PART|PT_HFLIP|PT_RND4|PT_BRIGHT),   // flame
     new quadrenderer("media/particle/ball1.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball1
     new quadrenderer("media/particle/ball2.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball2
     new quadrenderer("media/particle/ball3.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball3
     new taperenderer("media/particle/flare.jpg", PT_TAPE|PT_BRIGHT),                           // streak
-    &lightnings,                                                                                   // lightning
-    &fireballs,                                                                                    // explosion fireball
-    &bluefireballs,                                                                                // bluish explosion fireball
+    &lightnings,                                                                               // lightning
+    &fireballs,                                                                                // explosion fireball
+    &bluefireballs,                                                                            // bluish explosion fireball
     new quadrenderer("media/particle/spark.png", PT_PART|PT_FLIP|PT_BRIGHT),                   // sparks
     new quadrenderer("media/particle/base.png",  PT_PART|PT_FLIP|PT_BRIGHT),                   // edit mode entities
     new quadrenderer("media/particle/snow.png", PT_PART|PT_FLIP|PT_RND4, -1),                  // colliding snow
     new quadrenderer("media/particle/muzzleflash1.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
     new quadrenderer("media/particle/muzzleflash2.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
     new quadrenderer("media/particle/muzzleflash3.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
-    new quadrenderer("media/hud/items.png", PT_PART|PT_FEW|PT_ICON),                            // hud icon
-    new quadrenderer("<colorify:1/1/1>media/hud/items.png", PT_PART|PT_FEW|PT_ICON),    // grey hud icon
-    &texts,                                                                                        // text
-    &meters,                                                                                       // meter
-    &metervs,                                                                                      // meter vs.
-    &flares                                                                                        // lens flares - must be done last
+    new quadrenderer("media/interface/hud/items.png", PT_PART|PT_FEW|PT_ICON),                 // hud icon
+    new quadrenderer("<colorify:1/1/1>media/interface/hud/items.png", PT_PART|PT_FEW|PT_ICON), // grey hud icon
+    &texts,                                                                                    // text
+    &meters,                                                                                   // meter
+    &metervs,                                                                                  // meter vs.
+    &flares                                                                                    // lens flares - must be done last
 };
 
 VARFP(maxparticles, 10, 4000, 10000, initparticles());
