@@ -4,7 +4,6 @@ namespace game
 {
     bool intermission = false;
     int maptime = 0, maprealtime = 0, maplimit = -1;
-    int respawnent = -1;
     int lasthit = 0, lastspawnattempt = 0;
 
     int following = -1, followdir = 0;
@@ -247,7 +246,7 @@ namespace game
     void spawnplayer(fpsent *d)   // place at random spawn
     {
         if(cmode) cmode->pickspawn(d);
-        else findplayerspawn(d, d==player1 && respawnent>=0 ? respawnent : -1);
+        else findplayerspawn(d, -1, m_teammode ? d->team : 0);
         spawnstate(d);
         if(d==player1)
         {
@@ -550,9 +549,8 @@ namespace game
         ai::savewaypoints();
         ai::clearwaypoints(true);
 
-        respawnent = -1; // so we don't respawn at an old spot
         if(!m_mp(gamemode)) spawnplayer(player1);
-        else findplayerspawn(player1, -1);
+        else findplayerspawn(player1, -1, m_teammode ? player1->team : 0);
         entities::resetspawns();
         copystring(clientmap, name ? name : "");
         

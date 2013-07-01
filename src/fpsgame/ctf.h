@@ -693,11 +693,6 @@ struct ctfclientmode : clientmode
         return max(0, RESPAWNSECS-(lastmillis-d->lastpain)/1000);
     }
 
-    void pickspawn(fpsent *d)
-    {
-        findplayerspawn(d, -1, d->team);
-    }
-
 	bool aihomerun(fpsent *d, ai::aistate &b)
 	{
         vec pos = d->feetpos();

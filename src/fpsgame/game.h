@@ -549,6 +549,8 @@ namespace entities
 
 namespace game
 {
+    extern int gamemode;
+
     struct clientmode
     {
         virtual ~clientmode() {}
@@ -561,7 +563,7 @@ namespace game
         virtual void setup() {}
         virtual void checkitems(fpsent *d) {}
         virtual int respawnwait(fpsent *d) { return 0; }
-        virtual void pickspawn(fpsent *d) { findplayerspawn(d); }
+        virtual void pickspawn(fpsent *d) { findplayerspawn(d, -1, m_teammode ? d->team : 0); }
         virtual void senditems(packetbuf &p) {}
         virtual void removeplayer(fpsent *d) {}
         virtual void gameover() {}
@@ -578,7 +580,7 @@ namespace game
     extern void setclientmode();
 
     // fps
-    extern int gamemode, nextmode;
+    extern int nextmode;
     extern string clientmap;
     extern bool intermission;
     extern int maptime, maprealtime, maplimit;
@@ -586,7 +588,6 @@ namespace game
     extern vector<fpsent *> players, clients;
     extern int lastspawnattempt;
     extern int lasthit;
-    extern int respawnent;
     extern int following;
     extern int smoothmove, smoothdist;
 

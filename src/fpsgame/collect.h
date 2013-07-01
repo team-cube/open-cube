@@ -753,11 +753,6 @@ struct collectclientmode : clientmode
         return max(0, RESPAWNSECS-(lastmillis-d->lastpain)/1000);
     }
 
-    void pickspawn(fpsent *d)
-    {
-        findplayerspawn(d, -1, d->team);
-    }
-
     bool aicheck(fpsent *d, ai::aistate &b)
     {
         if(ai::badhealth(d)) return false;
