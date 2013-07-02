@@ -21,7 +21,6 @@ namespace game
         r->lastupdate = ragdollfade && lastmillis > d->lastpain + max(ragdollmillis - ragdollfade, 0) ? lastmillis - max(ragdollmillis - ragdollfade, 0) : d->lastpain;
         r->edit = NULL;
         r->ai = NULL;
-        r->attackchan = r->idlechan = -1;
         if(d==player1) r->playermodel = playermodel;
         ragdolls.add(r);
         d->ragdoll = NULL;   
@@ -201,7 +200,6 @@ namespace game
 
     VARP(hudgun, 0, 1, 1);
     VARP(hudgunsway, 0, 1, 1);
-    VARP(chainsawhudgun, 0, 1, 1);
 
     FVAR(swaystep, 1, 35.0f, 100);
     FVAR(swayside, 0, 0.04f, 1);
@@ -259,14 +257,7 @@ namespace game
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);
-        dynent *interp = NULL;
-        if(d->gunselect==GUN_FIST && chainsawhudgun)
-        {
-            anim |= ANIM_LOOP;
-            base = 0;
-            interp = &guninterp;
-        }
-        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, interp, a, base, (int)ceil(speed));
+        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, NULL, a, base, (int)ceil(speed));
         if(d->muzzle.x >= 0) d->muzzle = calcavatarpos(d->muzzle, 12);
     }
 

@@ -424,7 +424,6 @@ struct fpsent : dynent, fpsstate
     int lastpain;
     int lastaction, lastattackgun;
     bool attacking;
-    int attacksound, attackchan, idlesound, idlechan;
     int lasttaunt;
     int lastpickup, lastpickupmillis, flagpickup;
     int frags, flags, deaths, totaldamage, totalshots;
@@ -439,7 +438,7 @@ struct fpsent : dynent, fpsstate
 
     vec muzzle;
 
-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), attacksound(-1), attackchan(-1), idlesound(-1), idlechan(-1), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
+    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
     {
         name[0] = info[0] = 0;
         respawn();
@@ -447,8 +446,6 @@ struct fpsent : dynent, fpsstate
     ~fpsent()
     {
         freeeditinfo(edit);
-        if(attackchan >= 0) stopsound(attacksound, attackchan);
-        if(idlechan >= 0) stopsound(idlesound, idlechan);
         if(ai) delete ai;
     }
 
@@ -457,18 +454,6 @@ struct fpsent : dynent, fpsstate
         vec push(dir);
         push.mul((actor==this && guns[gun].exprad ? EXP_SELFPUSH : 1.0f)*guns[gun].hitpush*damage/weight);
         vel.add(push);
-    }
-
-    void stopattacksound()
-    {
-        if(attackchan >= 0) stopsound(attacksound, attackchan, 250);
-        attacksound = attackchan = -1;
-    }
-
-    void stopidlesound()
-    {
-        if(idlechan >= 0) stopsound(idlesound, idlechan, 100);
-        idlesound = idlechan = -1;
     }
 
     void respawn()
@@ -483,7 +468,6 @@ struct fpsent : dynent, fpsstate
         lastpickup = -1;
         lastpickupmillis = 0;
         flagpickup = 0;
-        stopattacksound();
         lastnode = -1;
     }
 };

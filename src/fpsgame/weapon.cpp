@@ -521,8 +521,6 @@ namespace game
         }
     }
 
-    extern int chainsawhudgun;
-
     VARP(muzzleflash, 0, 1, 1);
     VARP(muzzlelight, 0, 1, 1);
 
@@ -532,7 +530,6 @@ namespace game
         switch(gun)
         {
             case GUN_FIST:
-                if(d->type==ENT_PLAYER && chainsawhudgun) sound = S_CHAINSAW_ATTACK;
                 break;
 
             case GUN_SG:
@@ -591,18 +588,7 @@ namespace game
                 break;
         }
 
-        if(d->attacksound >= 0 && d->attacksound != sound) d->stopattacksound();
-        if(d->idlesound >= 0) d->stopidlesound();
-        switch(sound)
-        {
-            case S_CHAINSAW_ATTACK:
-                d->attacksound = sound;
-                d->attackchan = playsound(sound, d==hudplayer() ? NULL : &d->o, NULL, 0, -1, 100, d->attackchan);
-                break;
-            default:
-                playsound(sound, d==hudplayer() ? NULL : &d->o);
-                break;
-        }
+        playsound(sound, d==hudplayer() ? NULL : &d->o);
     }
 
     void particletrack(physent *owner, vec &o, vec &d)
@@ -843,56 +829,6 @@ namespace game
         }
     }
 
-    void checkattacksound(fpsent *d, bool local)
-    {
-        int gun = -1;
-        switch(d->attacksound)
-        {
-            case S_CHAINSAW_ATTACK:
-                if(chainsawhudgun) gun = GUN_FIST;
-                break;
-            default:
-                return;
-        }
-        if(gun >= 0 && gun < NUMGUNS &&
-           d->clientnum >= 0 && d->state == CS_ALIVE &&
-           d->lastattackgun == gun && lastmillis - d->lastaction < guns[gun].attackdelay + 50)
-        {
-            d->attackchan = playsound(d->attacksound, local ? NULL : &d->o, NULL, 0, -1, -1, d->attackchan);
-            if(d->attackchan < 0) d->attacksound = -1;
-        }
-        else d->stopattacksound();
-    }
-
-    void checkidlesound(fpsent *d, bool local)
-    {
-        int sound = -1, radius = 0;
-        if(d->clientnum >= 0 && d->state == CS_ALIVE) switch(d->gunselect)
-        {
-            case GUN_FIST:
-                if(chainsawhudgun && d->attacksound < 0)
-                {
-                    sound = S_CHAINSAW_IDLE;
-                    radius = 50;
-                }
-                break;
-        }
-        if(d->idlesound != sound)
-        {
-            if(d->idlesound >= 0) d->stopidlesound();
-            if(sound >= 0)
-            {
-                d->idlechan = playsound(sound, local ? NULL : &d->o, NULL, 0, -1, 100, d->idlechan, radius);
-                if(d->idlechan >= 0) d->idlesound = sound;
-            }
-        }
-        else if(sound >= 0)
-        {
-            d->idlechan = playsound(sound, local ? NULL : &d->o, NULL, 0, -1, -1, d->idlechan, radius);
-            if(d->idlechan < 0) d->idlesound = -1;
-        }
-    }
-
     void removeweapons(fpsent *d)
     {
         removebouncers(d);
@@ -904,14 +840,6 @@ namespace game
         updateprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) shoot(player1, worldpos); // only shoot when connected to server
         updatebouncers(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
-        fpsent *following = followingplayer();
-        if(!following) following = player1;
-        loopv(players)
-        {
-            fpsent *d = players[i];
-            checkattacksound(d, d==following);
-            checkidlesound(d, d==following);
-        }
     }
 
     void avoidweapons(ai::avoidset &obstacles, float radius)
