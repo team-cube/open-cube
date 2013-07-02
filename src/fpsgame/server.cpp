@@ -1644,8 +1644,6 @@ namespace server
         putint(p, gs.lifesequence);
         putint(p, gs.health);
         putint(p, gs.maxhealth);
-        putint(p, gs.armour);
-        putint(p, gs.armourtype);
         putint(p, gs.gunselect);
         loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
     }
@@ -1661,9 +1659,8 @@ namespace server
     {
         gamestate &gs = ci->state;
         spawnstate(ci);
-        sendf(ci->ownernum, 1, "rii7v", N_SPAWNSTATE, ci->clientnum, gs.lifesequence,
+        sendf(ci->ownernum, 1, "rii5v", N_SPAWNSTATE, ci->clientnum, gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.armour, gs.armourtype,
             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
         gs.lastspawn = gamemillis;
     }
@@ -1845,11 +1842,10 @@ namespace server
     void sendresume(clientinfo *ci)
     {
         gamestate &gs = ci->state;
-        sendf(-1, 1, "ri3i8vi", N_RESUME, ci->clientnum,
+        sendf(-1, 1, "ri3i6vi", N_RESUME, ci->clientnum,
             gs.state, gs.frags, gs.flags,
             gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.armour, gs.armourtype,
             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
     }
 
@@ -2059,7 +2055,7 @@ namespace server
         gamestate &ts = target->state;
         ts.dodamage(damage);
         if(target!=actor && !isteam(target->team, actor->team)) actor->state.damage += damage;
-        sendf(-1, 1, "ri6", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health);
+        sendf(-1, 1, "ri5", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.health);
         if(target==actor) target->setpushed();
         else if(!hitpush.iszero())
         {

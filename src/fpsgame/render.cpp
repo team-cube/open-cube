@@ -47,7 +47,7 @@ namespace game
 
     static const playermodelinfo playermodels[1] =
     {
-        { { "player", "player/blue", "player/red" }, { "player/hudguns", "player/hudguns/blue", "player/hudguns/red" }, NULL, { "player/armor/blue", "player/armor/green", "player/armor/yellow" }, { "player", "player_blue", "player_red" }, true }
+        { { "player", "player/blue", "player/red" }, { "player/hudguns", "player/hudguns/blue", "player/hudguns/red" }, { "player", "player_blue", "player_red" }, true }
     };
 
     int chooserandomplayermodel(int seed)
@@ -108,14 +108,12 @@ namespace game
                 loopj(MAXTEAMS) preloadmodel(mdl->model[1+j]);
             }
             else preloadmodel(mdl->model[0]);
-            if(mdl->vwep) preloadmodel(mdl->vwep);
-            loopj(3) if(mdl->armour[j]) preloadmodel(mdl->armour[j]);
         }
     }
     
     void renderplayer(fpsent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
     {
-        int lastaction = d->lastaction, hold = mdl.vwep || d->gunselect==GUN_PISTOL ? 0 : (ANIM_HOLD1+d->gunselect)|ANIM_LOOP, attack = ANIM_ATTACK1+d->gunselect, delay = mdl.vwep ? 300 : guns[d->gunselect].attackdelay+50;
+        int lastaction = d->lastaction, hold = d->gunselect==GUN_PISTOL ? 0 : (ANIM_HOLD1+d->gunselect)|ANIM_LOOP, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
         if(intermission && d->state!=CS_DEAD)
         {
             lastaction = 0;
@@ -132,7 +130,7 @@ namespace game
         modelattach a[5];
         static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         int ai = 0;
-        if((!mdl.vwep || d->gunselect!=GUN_FIST) && d->gunselect<=GUN_PISTOL)
+        if(d->gunselect<=GUN_PISTOL)
         {
             int vanim = ANIM_VWEP_IDLE|ANIM_LOOP, vtime = 0;
             if(lastaction && d->lastattackgun==d->gunselect && lastmillis < lastaction + delay)
@@ -140,16 +138,7 @@ namespace game
                 vanim = ANIM_VWEP_SHOOT;
                 vtime = lastaction;
             }
-            a[ai++] = modelattach("tag_weapon", mdl.vwep ? mdl.vwep : vweps[d->gunselect], vanim, vtime);
-        }
-        if(d->state==CS_ALIVE)
-        {
-            if(d->armour)
-            {
-                int type = clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW);
-                if(mdl.armour[type])
-                    a[ai++] = modelattach("tag_shield", mdl.armour[type], ANIM_SHIELD|ANIM_LOOP, 0);
-            }
+            a[ai++] = modelattach("tag_weapon", vweps[d->gunselect], vanim, vtime);
         }
         if(mainpass)
         {

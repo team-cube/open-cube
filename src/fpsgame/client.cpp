@@ -1152,8 +1152,6 @@ namespace game
         d->lifesequence = getint(p);
         d->health = getint(p);
         d->maxhealth = getint(p);
-        d->armour = getint(p);
-        d->armourtype = getint(p);
         if(resume && d==player1)
         {
             getint(p);
@@ -1435,12 +1433,10 @@ namespace game
                 int tcn = getint(p),
                     acn = getint(p),
                     damage = getint(p),
-                    armour = getint(p),
                     health = getint(p);
                 fpsent *target = getclient(tcn),
                        *actor = getclient(acn);
                 if(!target || !actor) break;
-                target->armour = armour;
                 target->health = health;
                 if(target->state == CS_ALIVE && actor != player1) target->lastpain = lastmillis;
                 damaged(damage, target, actor, false);

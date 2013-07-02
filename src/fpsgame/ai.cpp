@@ -412,13 +412,6 @@ namespace ai
             case I_HEALTH:
                 if(d->health < min(d->skill, 75)) score = 1e3f;
                 break;
-            case I_GREENARMOUR: case I_YELLOWARMOUR:
-            {
-                int atype = A_GREEN + e.type - I_GREENARMOUR;
-                if(atype > d->armourtype) score = atype == A_YELLOW ? 1e2f : 1e1f;
-                else if(d->armour < 50) score = 1e1f;
-                break;
-            }
             default:
             {
                 if(e.type >= I_SHELLS && e.type <= I_CARTRIDGES && !d->hasmaxammo(e.type))

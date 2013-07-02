@@ -45,7 +45,6 @@ struct fpsentity : extentity
 };
 
 enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, NUMGUNS };
-enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 
 enum
 {
@@ -175,8 +174,8 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
 {
     N_CONNECT, 0, N_SERVINFO, 0, N_WELCOME, 1, N_INITCLIENT, 0, N_POS, 0, N_TEXT, 0, N_SOUND, 2, N_CDIS, 2,
     N_SHOOT, 0, N_EXPLODE, 0, N_SUICIDE, 1,
-    N_DIED, 5, N_DAMAGE, 6, N_HITPUSH, 7, N_SHOTFX, 10, N_EXPLODEFX, 4,
-    N_TRYSPAWN, 1, N_SPAWNSTATE, 14, N_SPAWN, 3, N_FORCEDEATH, 2,
+    N_DIED, 5, N_DAMAGE, 5, N_HITPUSH, 7, N_SHOTFX, 10, N_EXPLODEFX, 4,
+    N_TRYSPAWN, 1, N_SPAWNSTATE, 12, N_SPAWN, 3, N_FORCEDEATH, 2,
     N_GUNSELECT, 2, N_TAUNT, 1,
     N_MAPCHANGE, 0, N_MAPVOTE, 0, N_TEAMINFO, 0, N_ITEMSPAWN, 2, N_ITEMPICKUP, 2, N_ITEMACC, 3,
     N_PING, 2, N_PONG, 2, N_CLIENTPING, 2,
@@ -254,9 +253,7 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
     {5,     15,    S_ITEMAMMO,   "RI", HICON_RIFLE, GUN_RIFLE},
     {10,    30,    S_ITEMAMMO,   "GL", HICON_GL, GUN_GL},
     {30,    120,   S_ITEMAMMO,   "PI", HICON_PISTOL, GUN_PISTOL},
-    {25,    100,   S_ITEMHEALTH, "H", HICON_HEALTH},
-    {100,   100,   S_ITEMARMOUR, "GA", HICON_GREEN_ARMOUR, A_GREEN},
-    {200,   200,   S_ITEMARMOUR, "YA", HICON_YELLOW_ARMOUR, A_YELLOW}
+    {25,    100,   S_ITEMHEALTH, "H", HICON_HEALTH}
 };
 
 #define MAXRAYS 20
@@ -281,7 +278,6 @@ static const struct guninfo { int sound, attackdelay, damage, spread, projspeed,
 struct fpsstate
 {
     int health, maxhealth;
-    int armour, armourtype;
     int gunselect, gunwait;
     int ammo[NUMGUNS];
     int aitype, skill;
@@ -312,10 +308,6 @@ struct fpsstate
         switch(type)
         {
             case I_HEALTH: return health<maxhealth;
-            case I_GREENARMOUR:
-                // (100h/100g only absorbs 200 damage)
-                if(armourtype==A_YELLOW && armour>=100) return false;
-            case I_YELLOWARMOUR: return !armourtype || armour<is.max;
             default: return ammo[is.info]<is.max;
         }
     }
@@ -329,11 +321,6 @@ struct fpsstate
             case I_HEALTH:
                 health = min(health+is.add, maxhealth);
                 break;
-            case I_GREENARMOUR:
-            case I_YELLOWARMOUR:
-                armour = min(armour+is.add, is.max);
-                armourtype = is.info;
-                break;
             default:
                 ammo[is.info] = min(ammo[is.info]+is.add, is.max);
                 break;
@@ -343,8 +330,6 @@ struct fpsstate
     void respawn()
     {
         health = maxhealth;
-        armour = 0;
-        armourtype = A_BLUE;
         gunselect = GUN_PISTOL;
         gunwait = 0;
         loopi(NUMGUNS) ammo[i] = 0;
@@ -359,30 +344,23 @@ struct fpsstate
         }
         else if(m_insta)
         {
-            armour = 0;
             health = 1;
             gunselect = GUN_RIFLE;
             ammo[GUN_RIFLE] = 100;
         }
         else if(m_efficiency)
         {
-            armourtype = A_GREEN;
-            armour = 100;
             loopi(5) baseammo(i+1);
             gunselect = GUN_CG;
             ammo[GUN_CG] /= 2;
         }
         else if(m_ctf)
         {
-            armourtype = A_BLUE;
-            armour = 50;
             ammo[GUN_PISTOL] = 40;
             ammo[GUN_GL] = 1;
         }
         else
         {
-            armourtype = A_BLUE;
-            armour = 25;
             ammo[GUN_PISTOL] = 40;
             ammo[GUN_GL] = 1;
         }
@@ -391,10 +369,6 @@ struct fpsstate
     // just subtract damage here, can set death, etc. later in code calling this
     int dodamage(int damage)
     {
-        int ad = damage*(armourtype+1)*25/100; // let armour absorb when possible
-        if(ad>armour) ad = armour;
-        armour -= ad;
-        damage -= ad;
         health -= damage;
         return damage;
     }
@@ -643,7 +617,6 @@ namespace game
     struct playermodelinfo
     {
         const char *model[1+MAXTEAMS], *hudguns[1+MAXTEAMS],
-                   *vwep, *armour[3],
                    *icon[1+MAXTEAMS];
         bool ragdoll;
     };
