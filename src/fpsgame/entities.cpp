@@ -63,15 +63,6 @@ namespace entities
     {
         loopi(MAXENTTYPES)
         {
-            switch(i)
-            {
-                case I_SHELLS: case I_BULLETS: case I_ROCKETS: case I_ROUNDS: case I_GRENADES: case I_CARTRIDGES:
-                    if(m_noammo) continue;
-                    break;
-                case I_HEALTH: case I_GREENARMOUR: case I_YELLOWARMOUR:
-                    if(m_noitems) continue;
-                    break;
-            }
             const char *mdl = entmdlname(i);
             if(!mdl) continue;
             preloadmodel(mdl);
@@ -300,7 +291,7 @@ namespace entities
     void putitems(packetbuf &p)            // puts items in network stream and also spawns them locally
     {
         putint(p, N_ITEMLIST);
-        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR && (!m_noammo || ents[i]->type<I_SHELLS || ents[i]->type>I_CARTRIDGES))
+        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR)
         {
             putint(p, i);
             putint(p, ents[i]->type);
@@ -312,8 +303,7 @@ namespace entities
 
     void spawnitems(bool force)
     {
-        if(m_noitems) return;
-        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR && (!m_noammo || ents[i]->type<I_SHELLS || ents[i]->type>I_CARTRIDGES))
+        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR)
         {
             ents[i]->spawned = force || !server::delayspawn(ents[i]->type);
         }

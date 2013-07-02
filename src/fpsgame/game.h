@@ -49,17 +49,12 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, NUMG
 enum
 {
     M_TEAM       = 1<<0,
-    M_NOITEMS    = 1<<1,
-    M_NOAMMO     = 1<<2,
-    M_INSTA      = 1<<3,
-    M_EFFICIENCY = 1<<4,
-    M_CTF        = 1<<5,
-    M_OVERTIME   = 1<<6,
-    M_EDIT       = 1<<7,
-    M_DEMO       = 1<<8,
-    M_LOCAL      = 1<<9,
-    M_LOBBY      = 1<<10,
-    M_COLLECT    = 1<<11
+    M_CTF        = 1<<1,
+    M_OVERTIME   = 1<<2,
+    M_EDIT       = 1<<3,
+    M_DEMO       = 1<<4,
+    M_LOCAL      = 1<<5,
+    M_LOBBY      = 1<<6
 };
 
 static struct gamemodeinfo
@@ -73,13 +68,7 @@ static struct gamemodeinfo
     { "coop edit", M_EDIT, "Cooperative Editing: Edit maps with multiple players simultaneously." },
     { "ffa", M_LOBBY, "Free For All: Collect items for ammo. Frag everyone to score points." },
     { "teamplay", M_TEAM, "Teamplay: Collect items for ammo. Frag \fs\f3the enemy team\fr to score points for \fs\f1your team\fr." },
-    { "instagib", M_NOITEMS | M_INSTA, "Instagib: You spawn with full rifle ammo and die instantly from one shot. There are no items. Frag everyone to score points." },
-    { "insta team", M_NOITEMS | M_INSTA | M_TEAM, "Instagib Team: You spawn with full rifle ammo and die instantly from one shot. There are no items. Frag \fs\f3the enemy team\fr to score points for \fs\f1your team\fr." },
-    { "efficiency", M_NOITEMS | M_EFFICIENCY, "Efficiency: You spawn with all weapons and armour. There are no items. Frag everyone to score points." },
-    { "effic team", M_NOITEMS | M_EFFICIENCY | M_TEAM, "Efficiency Team: You spawn with all weapons and armour. There are no items. Frag \fs\f3the enemy team\fr to score points for \fs\f1your team\fr." },
-    { "ctf", M_CTF | M_TEAM, "Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr. Collect items for ammo." },
-    { "insta ctf", M_NOITEMS | M_INSTA | M_CTF | M_TEAM, "Instagib Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr. You spawn with full rifle ammo and die instantly from one shot. There are no items." },
-    { "effic ctf", M_NOITEMS | M_EFFICIENCY | M_CTF | M_TEAM, "Efficiency Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr. You spawn with all weapons and armour. There are no items." }
+    { "ctf", M_CTF | M_TEAM, "Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr. Collect items for ammo." }
 };
 
 #define STARTGAMEMODE (-1)
@@ -90,10 +79,6 @@ static struct gamemodeinfo
 #define m_checknot(mode, flag) (m_valid(mode) && !(gamemodes[(mode) - STARTGAMEMODE].flags&(flag)))
 #define m_checkall(mode, flag) (m_valid(mode) && (gamemodes[(mode) - STARTGAMEMODE].flags&(flag)) == (flag))
 
-#define m_noitems      (m_check(gamemode, M_NOITEMS))
-#define m_noammo       (m_check(gamemode, M_NOAMMO|M_NOITEMS))
-#define m_insta        (m_check(gamemode, M_INSTA))
-#define m_efficiency   (m_check(gamemode, M_EFFICIENCY))
 #define m_ctf          (m_check(gamemode, M_CTF))
 #define m_teammode     (m_check(gamemode, M_TEAM))
 #define m_overtime     (m_check(gamemode, M_OVERTIME))
@@ -342,27 +327,11 @@ struct fpsstate
         {
             gunselect = GUN_FIST;
         }
-        else if(m_insta)
+        else
         {
             health = 1;
             gunselect = GUN_RIFLE;
             ammo[GUN_RIFLE] = 100;
-        }
-        else if(m_efficiency)
-        {
-            loopi(5) baseammo(i+1);
-            gunselect = GUN_CG;
-            ammo[GUN_CG] /= 2;
-        }
-        else if(m_ctf)
-        {
-            ammo[GUN_PISTOL] = 40;
-            ammo[GUN_GL] = 1;
-        }
-        else
-        {
-            ammo[GUN_PISTOL] = 40;
-            ammo[GUN_GL] = 1;
         }
     }
 

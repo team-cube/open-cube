@@ -847,7 +847,7 @@ namespace server
     ctfservmode ctfmode;
     servmode *smode = NULL;
 
-    bool canspawnitem(int type) { return !m_noitems && (type>=I_SHELLS && type<=I_YELLOWARMOUR && (!m_noammo || type<I_SHELLS || type>I_CARTRIDGES)); }
+    bool canspawnitem(int type) { return type>=I_SHELLS && type<=I_YELLOWARMOUR; }
 
     int spawntime(int type)
     {

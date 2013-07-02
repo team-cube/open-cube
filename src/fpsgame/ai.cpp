@@ -478,21 +478,18 @@ namespace ai
     {
         static vector<interest> interests;
         interests.setsize(0);
-        if(!m_noitems)
+        if(!hasgoodammo(d) || d->health < min(d->skill - 15, 75))
+            items(d, b, interests);
+        else
         {
-            if((!m_noammo && !hasgoodammo(d)) || d->health < min(d->skill - 15, 75))
-                items(d, b, interests);
-            else
+            static vector<int> nearby;
+            nearby.setsize(0);
+            findents(I_SHELLS, I_YELLOWARMOUR, false, d->feetpos(), vec(32, 32, 24), nearby);
+            loopv(nearby)
             {
-                static vector<int> nearby;
-                nearby.setsize(0);
-                findents(I_SHELLS, I_YELLOWARMOUR, false, d->feetpos(), vec(32, 32, 24), nearby);
-                loopv(nearby)
-                {
-                    int id = nearby[i];
-                    extentity &e = *(extentity *)entities::ents[id];
-                    if(d->canpickup(e.type)) tryitem(d, e, id, b, interests);
-                }
+                int id = nearby[i];
+                extentity &e = *(extentity *)entities::ents[id];
+                if(d->canpickup(e.type)) tryitem(d, e, id, b, interests);
             }
         }
         if(cmode) cmode->aifind(d, b, interests);
@@ -562,13 +559,8 @@ namespace ai
         d->ai->clearsetup();
         d->ai->reset(true);
         d->ai->lastrun = lastmillis;
-        if(m_insta) d->ai->weappref = GUN_RIFLE;
-        else
-        {
-        	if(forcegun >= 0 && forcegun < NUMGUNS) d->ai->weappref = forcegun;
-        	else if(m_noammo) d->ai->weappref = -1;
-			else d->ai->weappref = rnd(GUN_GL-GUN_SG+1)+GUN_SG;
-        }
+        if(forcegun >= 0 && forcegun < NUMGUNS) d->ai->weappref = forcegun;
+        else d->ai->weappref = rnd(GUN_GL-GUN_SG+1)+GUN_SG;
         vec dp = d->headpos();
         findorientation(dp, d->yaw, d->pitch, d->ai->target);
     }

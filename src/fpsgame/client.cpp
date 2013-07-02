@@ -538,10 +538,6 @@ namespace game
         if(*formatted) result(tempformatstring("%d:%02d", val/60, val%60));
         else intret(val);
     });
-    ICOMMANDS("m_noitems", "i", (int *mode), { int gamemode = *mode; intret(m_noitems); });
-    ICOMMANDS("m_noammo", "i", (int *mode), { int gamemode = *mode; intret(m_noammo); });
-    ICOMMANDS("m_insta", "i", (int *mode), { int gamemode = *mode; intret(m_insta); });
-    ICOMMANDS("m_efficiency", "i", (int *mode), { int gamemode = *mode; intret(m_efficiency); });
     ICOMMANDS("m_ctf", "i", (int *mode), { int gamemode = *mode; intret(m_ctf); });
     ICOMMANDS("m_teammode", "i", (int *mode), { int gamemode = *mode; intret(m_teammode); });
     ICOMMANDS("m_demo", "i", (int *mode), { int gamemode = *mode; intret(m_demo); });
@@ -950,8 +946,8 @@ namespace game
         }
         if(senditemstoserver)
         {
-            if(!m_noitems || cmode!=NULL) p.reliable();
-            if(!m_noitems) entities::putitems(p);
+            p.reliable();
+            entities::putitems(p);
             if(cmode) cmode->senditems(p);
             senditemstoserver = false;
         }
