@@ -38,7 +38,7 @@ namespace entities
 
     const char *entmdlname(int type)
     {
-        static const char *entmdlnames[] =
+        static const char * const entmdlnames[] =
         {
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             "ammo/shells", "ammo/bullets", "ammo/rockets", "ammo/rrounds", "ammo/grenades", "ammo/cartridges",
@@ -374,7 +374,7 @@ namespace entities
     const char *entnameinfo(entity &e) { return ""; }
     const char *entname(int i)
     {
-        static const char *entnames[] =
+        static const char * const entnames[] =
         {
             "none?", "light", "mapmodel", "playerstart", "envmap", "particles", "sound", "spotlight",
             "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
