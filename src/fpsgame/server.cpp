@@ -121,7 +121,7 @@ namespace server
         int lastdeath, deadflush, lastspawn, lifesequence;
         int lastshot;
         projectilestate<8> rockets, grenades;
-        int frags, flags, deaths, teamkills, shotdamage, damage, tokens;
+        int frags, flags, deaths, teamkills, shotdamage, damage;
         int lasttimeplayed, timeplayed;
         float effectiveness;
 
@@ -146,7 +146,7 @@ namespace server
 
             timeplayed = 0;
             effectiveness = 0;
-            frags = flags = deaths = teamkills = shotdamage = damage = tokens = 0;
+            frags = flags = deaths = teamkills = shotdamage = damage = 0;
 
             lastdeath = 0;
 
@@ -160,7 +160,6 @@ namespace server
             deadflush = 0;
             lastspawn = -1;
             lastshot = 0;
-            tokens = 0;
         }
 
         void reassign()
