@@ -438,7 +438,6 @@
     <ClInclude Include="..\shared\tools.h" />
     <ClInclude Include="..\fpsgame\ai.h" />
     <ClInclude Include="..\fpsgame\aiman.h" />
-    <ClInclude Include="..\fpsgame\collect.h" />
     <ClInclude Include="..\fpsgame\ctf.h" />
     <ClInclude Include="..\fpsgame\extinfo.h" />
     <ClInclude Include="..\fpsgame\game.h" />
