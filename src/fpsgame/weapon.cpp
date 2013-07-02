@@ -130,7 +130,7 @@ namespace game
         loopi(guns[gun].rays) offsetray(from, to, guns[gun].spread, guns[gun].range, rays[i]);
     }
 
-    enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS };
+    enum { BNC_GIBS, BNC_DEBRIS };
 
     struct bouncer : physent
     {
@@ -169,7 +169,6 @@ namespace game
 
         switch(type)
         {
-            case BNC_GRENADE: bnc.collidetype = COLLIDE_ELLIPSE; break;
             case BNC_DEBRIS: bnc.variant = rnd(4); break;
             case BNC_GIBS: bnc.variant = rnd(3); break;
         }
@@ -181,12 +180,7 @@ namespace game
 
         avoidcollision(&bnc, dir, owner, 0.1f);
 
-        if(type==BNC_GRENADE)
-        {
-            bnc.offset = hudgunorigin(GUN_GL, from, to, owner);
-            if(owner==hudplayer() && !isthirdperson()) bnc.offset.sub(owner->o).rescale(16).add(owner->o);
-        }
-        else bnc.offset = from;
+        bnc.offset = from;
         bnc.offset.sub(bnc.o);
         bnc.offsetmillis = OFFSETMILLIS;
 
@@ -207,36 +201,17 @@ namespace game
         loopv(bouncers)
         {
             bouncer &bnc = *bouncers[i];
-            if(bnc.bouncetype==BNC_GRENADE && bnc.vel.magnitude() > 50.0f)
-            {
-                vec pos(bnc.o);
-                pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
-                regular_particle_splash(PART_SMOKE, 1, 150, pos, 0x404040, 2.4f, 50, -20);
-            }
             vec old(bnc.o);
             bool stopped = false;
-            if(bnc.bouncetype==BNC_GRENADE) stopped = bounce(&bnc, 0.6f, 0.5f, 0.8f) || (bnc.lifetime -= time)<0;
-            else
+            // cheaper variable rate physics for debris, gibs, etc.
+            for(int rtime = time; rtime > 0;)
             {
-                // cheaper variable rate physics for debris, gibs, etc.
-                for(int rtime = time; rtime > 0;)
-                {
-                    int qtime = min(30, rtime);
-                    rtime -= qtime;
-                    if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f, 0.5f, 1)) { stopped = true; break; }
-                }
+                int qtime = min(30, rtime);
+                rtime -= qtime;
+                if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f, 0.5f, 1)) { stopped = true; break; }
             }
             if(stopped)
             {
-                if(bnc.bouncetype==BNC_GRENADE)
-                {
-                    hits.setsize(0);
-                    explode(bnc.local, bnc.owner, bnc.o, NULL, guns[GUN_GL].damage, GUN_GL);
-                    adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), guns[GUN_GL].exprad/2);
-                    if(bnc.local)
-                        addmsg(N_EXPLODE, "rci3iv", bnc.owner, lastmillis-maptime, GUN_GL, bnc.id-maptime,
-                                hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
-                }
                 delete bouncers.remove(i--);
             }
             else
@@ -438,21 +413,6 @@ namespace game
                     }
                 }
                 break;
-            case GUN_GL:
-                loopv(bouncers)
-                {
-                    bouncer &b = *bouncers[i];
-                    if(b.bouncetype == BNC_GRENADE && b.owner == d && b.id == id && !b.local)
-                    {
-                        vec pos(b.o);
-                        pos.add(vec(b.offset).mul(b.offsetmillis/float(OFFSETMILLIS)));
-                        explode(b.local, b.owner, pos, NULL, 0, GUN_GL);
-                        adddecal(DECAL_SCORCH, pos, vec(0, 0, 1), guns[gun].exprad/2);
-                        delete bouncers.remove(i);
-                        break;
-                    }
-                }
-                break;
             default:
                 break;
         }
@@ -565,18 +525,6 @@ namespace game
                 pspeed = guns[gun].projspeed;
                 newprojectile(from, to, (float)pspeed, local, id, d, gun);
                 break;
-
-            case GUN_GL:
-            {
-                float dist = from.dist(to);
-                vec up = to;
-                up.z += dist/8;
-                if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, 200, PART_MUZZLE_FLASH2, 0xFFFFFF, 1.5f, d);
-                if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 20, vec(1.0f, 0.75f, 0.5f), 100, 100, DL_FLASH, 0, vec(0, 0, 0), d);
-                newbouncer(from, up, local, id, d, BNC_GRENADE, guns[gun].ttl, guns[gun].projspeed);
-                break;
-            }
 
             case GUN_RIFLE:
                 particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
@@ -753,17 +701,9 @@ namespace game
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             adddynlight(pos, 20, vec(1, 0.75f, 0.5f));
         }
-        loopv(bouncers)
-        {
-            bouncer &bnc = *bouncers[i];
-            if(bnc.bouncetype!=BNC_GRENADE) continue;
-            vec pos(bnc.o);
-            pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
-            adddynlight(pos, 8, vec(0.25f, 1, 1));
-        }
     }
 
-    static const char * const projnames[2] = { "projectiles/grenade", "projectiles/rocket" };
+    static const char * const projnames[1] = { "projectiles/rocket" };
     static const char * const gibnames[3] = { "gibs/gib01", "gibs/gib02", "gibs/gib03" };
     static const char * const debrisnames[4] = { "debris/debris01", "debris/debris02", "debris/debris03", "debris/debris04" };
          
@@ -791,22 +731,17 @@ namespace game
                 bnc.lastyaw = yaw;
             }
             pitch = -bnc.roll;
-            if(bnc.bouncetype==BNC_GRENADE)
-                rendermodel("projectiles/grenade", ANIM_MAPMODEL|ANIM_LOOP, pos, yaw, pitch, 0, MDL_CULL_VFC|MDL_CULL_OCCLUDED);
-            else
+            const char *mdl = NULL;
+            int cull = MDL_CULL_VFC|MDL_CULL_DIST|MDL_CULL_OCCLUDED;
+            float fade = 1;
+            if(bnc.lifetime < 250) fade = bnc.lifetime/250.0f;
+            switch(bnc.bouncetype)
             {
-                const char *mdl = NULL;
-                int cull = MDL_CULL_VFC|MDL_CULL_DIST|MDL_CULL_OCCLUDED;
-                float fade = 1;
-                if(bnc.lifetime < 250) fade = bnc.lifetime/250.0f;
-                switch(bnc.bouncetype)
-                {
-                    case BNC_GIBS: mdl = gibnames[bnc.variant]; break;
-                    case BNC_DEBRIS: mdl = debrisnames[bnc.variant]; break;
-                    default: continue;
-                }
-                rendermodel(mdl, ANIM_MAPMODEL|ANIM_LOOP, pos, yaw, pitch, 0, cull, NULL, NULL, 0, 0, fade);
+                case BNC_GIBS: mdl = gibnames[bnc.variant]; break;
+                case BNC_DEBRIS: mdl = debrisnames[bnc.variant]; break;
+                default: continue;
             }
+            rendermodel(mdl, ANIM_MAPMODEL|ANIM_LOOP, pos, yaw, pitch, 0, cull, NULL, NULL, 0, 0, fade);
         }
     }
 
@@ -839,7 +774,7 @@ namespace game
     {
         updateprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) shoot(player1, worldpos); // only shoot when connected to server
-        updatebouncers(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
+        updatebouncers(curtime); // need to do this after the player shoots so bouncers don't end up inside player's BB next frame
     }
 
     void avoidweapons(ai::avoidset &obstacles, float radius)
@@ -848,12 +783,6 @@ namespace game
         {
             projectile &p = projs[i];
             obstacles.avoidnear(NULL, p.o.z + guns[p.gun].exprad + 1, p.o, radius + guns[p.gun].exprad);
-        }
-        loopv(bouncers)
-        {
-            bouncer &bnc = *bouncers[i];
-            if(bnc.bouncetype != BNC_GRENADE) continue;
-            obstacles.avoidnear(NULL, bnc.o.z + guns[GUN_GL].exprad + 1, bnc.o, radius + guns[GUN_GL].exprad);
         }
     }
 };
