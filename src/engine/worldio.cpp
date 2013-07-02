@@ -26,7 +26,7 @@ void getmapfilenames(const char *fname, const char *cname, char *pakname, char *
         copystring(cfgname, name);
     }
     if(strpbrk(fname, "/\\")) copystring(mapname, fname);
-    else formatstring(mapname)("map/%s", fname);
+    else nformatstring(mapname, MAXSTRLEN, "map/%s", fname);
     cutogz(mapname);
 }   
 
@@ -38,7 +38,7 @@ bool loadents(const char *fname, vector<entity> &ents, uint *crc)
 {
     string pakname, mapname, mcfgname, ogzname;
     getmapfilenames(fname, NULL, pakname, mapname, mcfgname);
-    formatstring(ogzname)("media/%s.ogz", mapname);
+    formatstring(ogzname, "media/%s.ogz", mapname);
     path(ogzname);
     stream *f = opengzfile(ogzname, "rb");
     if(!f) return false;
@@ -121,11 +121,11 @@ void setmapfilenames(const char *fname, const char *cname = 0)
     string pakname, mapname, mcfgname;
     getmapfilenames(fname, cname, pakname, mapname, mcfgname);
 
-    formatstring(ogzname)("media/%s.ogz", mapname);
-    if(savebak==1) formatstring(bakname)("media/%s.BAK", mapname);
-    else formatstring(bakname)("media/%s_%d.BAK", mapname, totalmillis);
-    formatstring(cfgname)("media/%s/%s.cfg", pakname, mcfgname);
-    formatstring(picname)("media/%s.jpg", mapname);
+    formatstring(ogzname, "media/%s.ogz", mapname);
+    if(savebak==1) formatstring(bakname, "media/%s.BAK", mapname);
+    else formatstring(bakname, "media/%s_%d.BAK", mapname, totalmillis);
+    formatstring(cfgname, "media/%s/%s.cfg", pakname, mcfgname);
+    formatstring(picname, "media/%s.jpg", mapname);
 
     path(ogzname);
     path(bakname);
@@ -140,7 +140,7 @@ void mapcfgname()
 
     string pakname, mapname, mcfgname;
     getmapfilenames(mname, NULL, pakname, mapname, mcfgname);
-    defformatstring(cfgname)("media/%s/%s.cfg", pakname, mcfgname);
+    defformatstring(cfgname, "media/%s/%s.cfg", pakname, mcfgname);
     path(cfgname);
     result(cfgname);
 }
@@ -894,11 +894,11 @@ COMMAND(savecurrentmap, "");
 
 void writeobj(char *name)
 {
-    defformatstring(fname)("%s.obj", name);
+    defformatstring(fname, "%s.obj", name);
     stream *f = openfile(path(fname), "w"); 
     if(!f) return;
     f->printf("# obj file of Cube 2 level\n\n");
-    defformatstring(mtlname)("%s.mtl", name);
+    defformatstring(mtlname, "%s.mtl", name);
     path(mtlname);
     f->printf("mtllib %s\n\n", mtlname); 
     extern vector<vtxarray *> valist;

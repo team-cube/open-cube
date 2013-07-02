@@ -242,7 +242,7 @@ namespace game
         if(!hudgunsway) sway = d->o;
 
         const playermodelinfo &mdl = getplayermodelinfo(d);
-        defformatstring(gunname)("%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], guns[d->gunselect].file);
+        defformatstring(gunname, "%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], guns[d->gunselect].file);
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);
@@ -328,16 +328,16 @@ namespace game
             {
                 loopj(MAXTEAMS)
                 { 
-                    formatstring(fname)("%s/%s", mdl.hudguns[1+j], file);
+                    formatstring(fname, "%s/%s", mdl.hudguns[1+j], file);
                     preloadmodel(fname);
                 }
             }
             else
             {
-                formatstring(fname)("%s/%s", mdl.hudguns[0], file);
+                formatstring(fname, "%s/%s", mdl.hudguns[0], file);
                 preloadmodel(fname);
             }
-            formatstring(fname)("vwep/%s", file);
+            formatstring(fname, "vwep/%s", file);
             preloadmodel(fname);
         }
     }

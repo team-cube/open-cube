@@ -248,7 +248,7 @@ namespace entities
                 if(d->lastpickup==ents[n]->type && lastmillis-d->lastpickupmillis<500) break;
                 if(ents[n]->attr3 > 0)
                 {
-                    defformatstring(hookname)("can_teleport_%d", ents[n]->attr3);
+                    defformatstring(hookname, "can_teleport_%d", ents[n]->attr3);
                     if(identexists(hookname) && !execute(hookname)) break;
                 }
                 d->lastpickup = ents[n]->type;
@@ -366,7 +366,7 @@ namespace entities
         }
     }
 
-    bool printent(extentity &e, char *buf)
+    bool printent(extentity &e, char *buf, int len)
     {
         return false;
     }

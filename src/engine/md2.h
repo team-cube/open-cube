@@ -216,11 +216,11 @@ struct md2 : vertmodel, vertloader<md2>
         mdl.model = this;
         mdl.index = 0;
         const char *pname = parentdir(loadname);
-        defformatstring(name1)("media/model/%s/tris.md2", loadname);
+        defformatstring(name1, "media/model/%s/tris.md2", loadname);
         mdl.meshes = sharemeshes(path(name1));
         if(!mdl.meshes)
         {
-            defformatstring(name2)("media/model/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
+            defformatstring(name2, "media/model/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
             mdl.meshes = sharemeshes(path(name2));
             if(!mdl.meshes) return false;
         }
@@ -230,10 +230,10 @@ struct md2 : vertmodel, vertloader<md2>
         if(tex==notexture) conoutf("could not load model skin for %s", name1);
         loading = this;
         identflags &= ~IDF_PERSIST;
-        defformatstring(name3)("media/model/%s/md2.cfg", loadname);
+        defformatstring(name3, "media/model/%s/md2.cfg", loadname);
         if(!execfile(name3, false))
         {
-            formatstring(name3)("media/model/%s/md2.cfg", pname);
+            formatstring(name3, "media/model/%s/md2.cfg", pname);
             execfile(name3, false);
         }
         identflags |= IDF_PERSIST;

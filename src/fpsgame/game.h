@@ -315,7 +315,7 @@ struct fpsstate
     void respawn()
     {
         health = maxhealth;
-        gunselect = GUN_PISTOL;
+        gunselect = GUN_FIST;
         gunwait = 0;
         loopi(NUMGUNS) ammo[i] = 0;
         ammo[GUN_FIST] = 1;
@@ -329,9 +329,10 @@ struct fpsstate
         }
         else
         {
-            health = 1;
+            health = 100;
             gunselect = GUN_RIFLE;
             ammo[GUN_RIFLE] = 100;
+            ammo[GUN_RL] = 100;
         }
     }
 
