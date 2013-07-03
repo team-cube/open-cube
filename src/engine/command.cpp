@@ -85,30 +85,6 @@ static inline void forcearg(tagval &v, int type)
     }
 }
 
-static inline ident *forceident(tagval &v)
-{
-    switch(v.type)
-    {
-        case VAL_IDENT: return v.id;
-        case VAL_MACRO: case VAL_CSTR:
-        {
-            ident *id = newident(v.s, IDF_UNKNOWN);
-            v.setident(id);
-            return id;
-        }
-        case VAL_STR: 
-        { 
-            ident *id = newident(v.s, IDF_UNKNOWN); 
-            delete[] v.s; 
-            v.setident(id); 
-            return id; 
-        }
-    }
-    freearg(v);
-    v.setident(dummyident);
-    return dummyident;
-}
-
 void tagval::cleanup()
 {
     freearg(*this);
@@ -363,20 +339,50 @@ static inline bool checknumber(const char *s)
         default: return false;
     }
 }
+static inline bool checknumber(const stringslice &s) { return checknumber(s.str); }
 
-ident *newident(const char *name, int flags)
+template<class T> static inline ident *newident(const T &name, int flags)
 {
     ident *id = idents.access(name);
     if(!id)
     {
         if(checknumber(name)) 
         {
-            debugcode("number %s is not a valid identifier name", name);
+            debugcode("number %.*s is not a valid identifier name", stringlen(name), stringptr(name));
             return dummyident;
         }
         id = addident(ident(ID_ALIAS, newstring(name), flags));
     }
     return id;
+}
+
+static inline ident *forceident(tagval &v)
+{
+    switch(v.type)
+    {
+        case VAL_IDENT: return v.id;
+        case VAL_MACRO: case VAL_CSTR:
+        {
+            ident *id = newident(v.s, IDF_UNKNOWN);
+            v.setident(id);
+            return id;
+        }
+        case VAL_STR:
+        {
+            ident *id = newident(v.s, IDF_UNKNOWN);
+            delete[] v.s;
+            v.setident(id);
+            return id;
+        }
+    }
+    freearg(v);
+    v.setident(dummyident);
+    return dummyident;
+}
+
+ident *newident(const char *name, int flags)
+{
+    return newident<const char *>(name, flags);
 }
 
 ident *writeident(const char *name, int flags)
@@ -730,6 +736,7 @@ int unescapestring(char *dst, const char *src, const char *end)
         }
         else *dst++ = c;
     }
+    *dst = '\0';
     return dst - start;
 }
 
@@ -834,16 +841,34 @@ static inline void skipcomments(const char *&p)
     }
 }
 
-static inline char *cutstring(const char *&p, int &len)
+static vector<char> strbuf[4];
+static int stridx = 0;
+ 
+static inline void cutstring(const char *&p, stringslice &s)
 {
     p++;
     const char *end = parsestring(p);
-    char *s = newstring(end - p);         
-    len = unescapestring(s, p, end);
-    s[len] = '\0';
+    int maxlen = int(end-p) + 1;
+
+    stridx = (stridx + 1)%4;
+    vector<char> &buf = strbuf[stridx];
+    if(buf.alen < maxlen) buf.growbuf(maxlen);
+
+    s.str = buf.buf;
+    s.len = unescapestring(buf.buf, p, end);
     p = end;
     if(*p=='\"') p++;
-    return s;
+}
+
+static inline char *cutstring(const char *&p)
+{
+    p++;
+    const char *end = parsestring(p);
+    char *buf = newstring(end-p);
+    unescapestring(buf, p, end);
+    p = end;
+    if(*p=='\"') p++;
+    return buf;
 }
 
 static inline const char *parseword(const char *p)
@@ -866,13 +891,18 @@ static inline const char *parseword(const char *p)
     return p;
 }
 
-static inline char *cutword(const char *&p, int &len)
+static inline void cutword(const char *&p, stringslice &s)
+{
+    s.str = p;
+    p = parseword(p);
+    s.len = int(p-s.str);
+}
+
+static inline char *cutword(const char *&p)
 {
     const char *word = p;
     p = parseword(p);
-    len = p-word;
-    if(!len) return NULL;
-    return newstring(word, len);
+    return p!=word ? newstring(word, p-word) : NULL;
 }
 
 #define retcode(type, defaultret) ((type) >= VAL_ANY ? ((type) == VAL_CSTR ? RET_STR : (defaultret)) : (type) << CODE_RET)
@@ -903,13 +933,11 @@ static inline void compilestr(vector<uint> &code, const char *word, int len, boo
     code.add(end.u);
 }
 
-static inline void compilestr(vector<uint> &code, const char *word = NULL)
-{
-    if(!word) { code.add(CODE_VALI|RET_STR); return; }
-    compilestr(code, word, int(strlen(word)));
-}
+static inline void compilestr(vector<uint> &code) { code.add(CODE_VALI|RET_STR); }
+static inline void compilestr(vector<uint> &code, const stringslice &word, bool macro = false) { compilestr(code, word.str, word.len, macro); }
+static inline void compilestr(vector<uint> &code, const char *word, bool macro = false) { compilestr(code, word, int(strlen(word)), macro); }
 
-static inline void compileint(vector<uint> &code, int i)
+static inline void compileint(vector<uint> &code, int i = 0)
 {
     if(i >= -0x800000 && i <= 0x7FFFFF)
         code.add(CODE_VALI|RET_INT|(i<<8));
@@ -934,22 +962,35 @@ static inline void compileblock(vector<uint> &code)
     code[start] |= uint(code.length() - (start + 1))<<8;
 }
 
-static inline void compileident(vector<uint> &code, ident *id)
+static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0');
+
+static inline const char *compileblock(vector<uint> &code, const char *p, int rettype = RET_NULL, int brak = '\0')
+{
+    int start = code.length();
+    code.add(CODE_BLOCK);
+    code.add(CODE_OFFSET|((start+2)<<8));
+    if(p) compilestatements(code, p, VAL_ANY, brak);
+    code.add(CODE_EXIT|rettype);
+    code[start] |= uint(code.length() - (start + 1))<<8;
+    return p;
+}
+
+static inline void compileident(vector<uint> &code, ident *id = dummyident)
 {
     code.add((id->index < MAXARGS ? CODE_IDENTARG : CODE_IDENT)|(id->index<<8));
 }
     
-static inline void compileident(vector<uint> &code, const char *word = NULL)
+static inline void compileident(vector<uint> &code, const stringslice &word)
 {
-    compileident(code, word ? newident(word, IDF_UNKNOWN) : dummyident);
+    compileident(code, newident(word, IDF_UNKNOWN));
 }
 
-static inline void compileint(vector<uint> &code, const char *word = NULL)
+static inline void compileint(vector<uint> &code, const stringslice &word)
 {
-    return compileint(code, word ? parseint(word) : 0);
+    return compileint(code, parseint(word.str));
 }
 
-static inline void compilefloat(vector<uint> &code, float f)
+static inline void compilefloat(vector<uint> &code, float f = 0.0f)
 {
     if(int(f) == f && f >= -0x800000 && f <= 0x7FFFFF) 
         code.add(CODE_VALI|RET_FLOAT|(int(f)<<8));
@@ -962,63 +1003,50 @@ static inline void compilefloat(vector<uint> &code, float f)
     }
 }
 
-static inline void compilefloat(vector<uint> &code, const char *word = NULL)
+static inline void compilefloat(vector<uint> &code, const stringslice &word)
 {
-    return compilefloat(code, word ? parsefloat(word) : 0.0f);
+    return compilefloat(code, parsefloat(word.str));
 }
 
 static bool compilearg(vector<uint> &code, const char *&p, int wordtype);
-static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0');
 
-static inline void compileval(vector<uint> &code, int wordtype, char *word, int wordlen)
+static inline void compileval(vector<uint> &code, int wordtype, const stringslice &word = stringslice(NULL, 0))
 {
     switch(wordtype)
     {
         case VAL_CANY:
-        case VAL_CSTR: compilestr(code, word, wordlen, true); break;
+        case VAL_CSTR: compilestr(code, word, true); break;
         case VAL_ANY:
-        case VAL_STR: compilestr(code, word, wordlen); break;
+        case VAL_STR: compilestr(code, word); break;
         case VAL_FLOAT: compilefloat(code, word); break;
         case VAL_INT: compileint(code, word); break;
-        case VAL_CODE: 
-        {
-            int start = code.length();
-            code.add(CODE_BLOCK);
-            code.add(CODE_OFFSET|((start+2)<<8));
-            const char *p = word;
-            compilestatements(code, p, VAL_ANY);
-            code.add(CODE_EXIT|RET_STR);
-            code[start] |= uint(code.length() - (start + 1))<<8;
-            break;
-        }
+        case VAL_CODE: compileblock(code, word.str, RET_STR); break;
         case VAL_IDENT: compileident(code, word); break;
-        default:
-            break;
+        default: break;
     }
 }
 
-static bool compileword(vector<uint> &code, const char *&p, int wordtype, char *&word, int &wordlen);
+static bool compileword(vector<uint> &code, const char *&p, int wordtype, stringslice &word);
 
 static void compilelookup(vector<uint> &code, const char *&p, int ltype)
 {
-    char *lookup = NULL;
-    int lookuplen = 0;
+    stringslice lookup;
     switch(*++p)
     {
         case '(':
         case '[':
-            if(!compileword(code, p, VAL_CSTR, lookup, lookuplen)) goto invalid;
+            if(!compileword(code, p, VAL_CSTR, lookup)) goto invalid;
             break;
         case '$':
             compilelookup(code, p, VAL_CSTR);
             break;
         case '\"':
-            lookup = cutstring(p, lookuplen);
+            cutstring(p, lookup);
             goto lookupid;
         default:
         {
-            lookup = cutword(p, lookuplen);
-            if(!lookup) goto invalid;
+            cutword(p, lookup);
+            if(!lookup.len) goto invalid;
         lookupid:
             ident *id = newident(lookup, IDF_UNKNOWN);
             if(id) switch(id->type)
@@ -1082,7 +1110,7 @@ static void compilelookup(vector<uint> &code, const char *&p, int ltype)
                 }
                 default: goto invalid;
             }
-            compilestr(code, lookup, lookuplen, true);
+            compilestr(code, lookup, true);
             break;
         }
     }
@@ -1099,7 +1127,6 @@ static void compilelookup(vector<uint> &code, const char *&p, int ltype)
         break;
     }
 done:
-    delete[] lookup;
     switch(ltype)
     {
         case VAL_CODE: code.add(CODE_COMPILE); break;
@@ -1110,7 +1137,7 @@ invalid:
     switch(ltype)
     {
         case VAL_NULL: case VAL_ANY: case VAL_CANY: compilenull(code); break;
-        default: compileval(code, ltype, NULL, 0); break;
+        default: compileval(code, ltype); break;
     }
 }
 
@@ -1157,8 +1184,7 @@ done:
 
 static bool compileblocksub(vector<uint> &code, const char *&p)
 {
-    char *lookup = NULL;
-    int lookuplen = 0;
+    stringslice lookup;
     switch(*p)
     {
         case '(':
@@ -1169,17 +1195,15 @@ static bool compileblocksub(vector<uint> &code, const char *&p)
             code.add(CODE_LOOKUPMU);
             break;
         case '\"':
-            lookup = cutstring(p, lookuplen);
+            cutstring(p, lookup);
             goto lookupid;
         default:
         {
-            {
-                const char *start = p;
-                while(iscubealnum(*p) || *p=='_') p++;
-                lookuplen = p-start;
-                if(!lookuplen) return false;
-                lookup = newstring(start, lookuplen);
-            }
+            
+            lookup.str = p;
+            while(iscubealnum(*p) || *p=='_') p++;
+            lookup.len = int(p-lookup.str);
+            if(!lookup.len) return false;
         lookupid:
             ident *id = newident(lookup, IDF_UNKNOWN);
             if(id) switch(id->type)
@@ -1189,17 +1213,16 @@ static bool compileblocksub(vector<uint> &code, const char *&p)
             case ID_SVAR: code.add(CODE_SVARM|(id->index<<8)); goto done;
             case ID_ALIAS: code.add((id->index < MAXARGS ? CODE_LOOKUPMARG : CODE_LOOKUPM)|(id->index<<8)); goto done;
             }
-            compilestr(code, lookup, lookuplen, true);
+            compilestr(code, lookup, true);
             code.add(CODE_LOOKUPMU);
         done:
-            delete[] lookup;
             break;
         }
     }
     return true;
 }
 
-static void compileblock(vector<uint> &code, const char *&p, int wordtype)
+static void compileblockmain(vector<uint> &code, const char *&p, int wordtype)
 {
     const char *line = p, *start = p;
     int concs = 0;
@@ -1249,23 +1272,11 @@ done:
         if(!concs) switch(wordtype)
         {
             case VAL_CODE:
-            {
-                p = start;
-                int inst = code.length();
-                code.add(CODE_BLOCK);
-                code.add(CODE_OFFSET|((inst+2)<<8));
-                compilestatements(code, p, VAL_ANY, ']');
-                code.add(CODE_EXIT);
-                code[inst] |= uint(code.length() - (inst + 1))<<8;
+                p = compileblock(code, start, RET_NULL, ']');
                 return;
-            }
             case VAL_IDENT:
-            {
-                char *name = newstring(start, p-1-start);
-                compileident(code, name);
-                delete[] name;
+                compileident(code, stringslice(start, p-1));
                 return;
-            }
         }
         switch(wordtype)
         {
@@ -1296,19 +1307,27 @@ done:
         default: 
             if(!concs) 
             {
-                if(p-1 <= start) compileval(code, wordtype, NULL, 0);
+                if(p-1 <= start) compileval(code, wordtype);
                 else code.add(CODE_FORCE|(wordtype<<CODE_RET));
             }
             break;
     }
 } 
     
-static bool compileword(vector<uint> &code, const char *&p, int wordtype, char *&word, int &wordlen)
+static bool compileword(vector<uint> &code, const char *&p, int wordtype, stringslice &word)
 {
     skipcomments(p);
     switch(*p)
     {
-        case '\"': word = cutstring(p, wordlen); break;
+        case '\"': 
+            if(wordtype == VAL_CODE)
+            {
+                char *s = cutstring(p);
+                compileblock(code, s, RET_STR);
+                delete[] s;
+            }
+            else cutstring(p, word);
+            return true;                    
         case '$': compilelookup(code, p, wordtype); return true;
         case '(':
             p++;
@@ -1323,39 +1342,45 @@ static bool compileword(vector<uint> &code, const char *&p, int wordtype, char *
             return true;        
         case '[':
             p++;
-            compileblock(code, p, wordtype);
+            compileblockmain(code, p, wordtype);
             return true;
-        default: word = cutword(p, wordlen); break;
+        default: 
+            if(wordtype == VAL_CODE)
+            {
+                char *s = cutword(p);
+                if(!s) return false; 
+                compileblock(code, s, RET_STR);
+                delete[] s;
+                return true;
+            }
+            else
+            {
+                cutword(p, word); 
+                return word.len!=0;
+            }
     }
-    return word!=NULL;
 }
 
 static inline bool compilearg(vector<uint> &code, const char *&p, int wordtype)
 {
-    char *word = NULL;
-    int wordlen = 0;
-    bool more = compileword(code, p, wordtype, word, wordlen);
+    stringslice word(NULL, 0);
+    bool more = compileword(code, p, wordtype, word);
     if(!more) return false;
-    if(word) 
-    {
-        compileval(code, wordtype, word, wordlen);
-        delete[] word;
-    }
+    if(word.str) compileval(code, wordtype, word);
     return true;
 }
 
 static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak)
 {
     const char *line = p;
-    char *idname = NULL;
-    int idlen = 0;
-    ident *id = NULL;
-    int numargs = 0;
+    stringslice idname;
+    ident *id;
+    int numargs;
     for(;;)
     {
         skipcomments(p);
-        idname = NULL;
-        bool more = compileword(code, p, VAL_ANY, idname, idlen);
+        idname.str = NULL;
+        bool more = compileword(code, p, VAL_ANY, idname);
         if(!more) goto endstatement;
         skipcomments(p);
         if(p[0] == '=') switch(p[1]) 
@@ -1364,18 +1389,18 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                 if(p[2] != '/') break;
             case ';': case ' ': case '\t': case '\r': case '\n': case '\0':
                 p++;
-                if(idname) 
+                if(idname.str) 
                 {
                     id = newident(idname, IDF_UNKNOWN);
-                    if(!id || id->type != ID_ALIAS) { compilestr(code, idname, idlen, true); id = NULL; }
-                    delete[] idname;
+                    if(!id || id->type != ID_ALIAS) { compilestr(code, idname, true); id = NULL; }
                 }
+                else id = NULL;
                 if(!(more = compilearg(code, p, VAL_ANY))) compilestr(code);
-                code.add(id && idname ? (id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8) : CODE_ALIASU);
+                code.add(id ? (id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8) : CODE_ALIASU);
                 goto endstatement;
         }
         numargs = 0;
-        if(!idname)
+        if(!idname.str)
         {
         noid:
             while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numargs++;
@@ -1386,10 +1411,10 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
             id = idents.access(idname);
             if(!id) 
             {
-                if(!checknumber(idname)) { compilestr(code, idname, idlen, true); delete[] idname; goto noid; }
-                char *end = idname;
-                int val = int(strtol(idname, &end, 0));
-                if(*end) compilestr(code, idname, idlen, rettype==VAL_CSTR);
+                if(!checknumber(idname)) { compilestr(code, idname, true); goto noid; }
+                char *end = (char *)idname.str;
+                int val = int(strtol(idname.str, &end, 0));
+                if(end < idname.end()) compilestr(code, idname, rettype==VAL_CSTR);
                 else compileint(code, val);    
                 code.add(CODE_RESULT);
             }
@@ -1469,7 +1494,6 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     }
                     break;
             }        
-            delete[] idname;
         }
     endstatement:
         if(more) while(compilearg(code, p, VAL_CANY)) code.add(CODE_POP); 
@@ -2275,9 +2299,7 @@ ICOMMAND(exec, "s", (char *file), execfile(file));
 
 const char *escapestring(const char *s)
 {
-    static vector<char> strbuf[3];
-    static int stridx = 0;
-    stridx = (stridx + 1)%3;
+    stridx = (stridx + 1)%4;
     vector<char> &buf = strbuf[stridx];
     buf.setsize(0);
     buf.add('"');
@@ -2299,7 +2321,7 @@ ICOMMAND(unescape, "s", (char *s),
 {
     int len = strlen(s);
     char *d = newstring(len);
-    d[unescapestring(d, s, &s[len])] = '\0';
+    unescapestring(d, s, &s[len]);
     stringret(d);
 });
 
