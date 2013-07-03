@@ -729,16 +729,14 @@ struct animmodel : model
 
             info.anim &= (1<<ANIM_SECONDARY)-1;
             info.anim |= anim&ANIM_FLAGS;
-            if((info.anim&ANIM_CLAMP) != ANIM_CLAMP)
+            if(info.anim&ANIM_LOOP)
             {
-                if(info.anim&(ANIM_LOOP|ANIM_START|ANIM_END))
+                info.anim &= ~ANIM_SETTIME;
+                if(!info.basetime) info.basetime = -((int)(size_t)d&0xFFF);
+
+                if(info.anim&ANIM_CLAMP)
                 {
-                    info.anim &= ~ANIM_SETTIME;
-                    if(!info.basetime) info.basetime = -((int)(size_t)d&0xFFF);
-                }
-                if(info.anim&(ANIM_START|ANIM_END))
-                {
-                    if(info.anim&ANIM_END) info.frame += info.range-1;
+                    if(info.anim&ANIM_REVERSE) info.frame += info.range-1;
                     info.range = 1;
                 }
             }
@@ -752,7 +750,7 @@ struct animmodel : model
             if(d && interp>=0)
             {
                 animinterpinfo &ai = d->animinterp[interp];
-                if((info.anim&ANIM_CLAMP)==ANIM_CLAMP) aitime = min(aitime, int(info.range*info.speed*0.5e-3f));
+                if((info.anim&(ANIM_LOOP|ANIM_CLAMP))==ANIM_CLAMP) aitime = min(aitime, int(info.range*info.speed*0.5e-3f));
                 void *ak = meshes->animkey();
                 if(d->ragdoll && !(anim&ANIM_RAGDOLL)) 
                 {
