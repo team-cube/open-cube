@@ -1008,8 +1008,6 @@ static inline void compilefloat(vector<uint> &code, const stringslice &word)
     return compilefloat(code, parsefloat(word.str));
 }
 
-static bool compilearg(vector<uint> &code, const char *&p, int wordtype);
-
 static inline void compileval(vector<uint> &code, int wordtype, const stringslice &word = stringslice(NULL, 0))
 {
     switch(wordtype)
@@ -1026,7 +1024,8 @@ static inline void compileval(vector<uint> &code, int wordtype, const stringslic
     }
 }
 
-static bool compileword(vector<uint> &code, const char *&p, int wordtype, stringslice &word);
+static stringslice unusedword(NULL, 0);
+static bool compilearg(vector<uint> &code, const char *&p, int wordtype, stringslice &word = unusedword);
 
 static void compilelookup(vector<uint> &code, const char *&p, int ltype)
 {
@@ -1035,7 +1034,7 @@ static void compilelookup(vector<uint> &code, const char *&p, int ltype)
     {
         case '(':
         case '[':
-            if(!compileword(code, p, VAL_CSTR, lookup)) goto invalid;
+            if(!compilearg(code, p, VAL_CSTR)) goto invalid;
             break;
         case '$':
             compilelookup(code, p, VAL_CSTR);
@@ -1136,7 +1135,7 @@ done:
 invalid:
     switch(ltype)
     {
-        case VAL_NULL: case VAL_ANY: case VAL_CANY: compilenull(code); break;
+        case VAL_NULL: case VAL_ANY: case VAL_CANY: case VAL_WORD: compilenull(code); break;
         default: compileval(code, ltype); break;
     }
 }
@@ -1301,7 +1300,7 @@ done:
         case VAL_CSTR: case VAL_CANY:
             if(!concs && p-1 <= start) compilestr(code, NULL, 0, true);
             break;
-        case VAL_STR: case VAL_NULL: case VAL_ANY:
+        case VAL_STR: case VAL_NULL: case VAL_ANY: case VAL_WORD:
             if(!concs && p-1 <= start) compilestr(code);
             break;
         default: 
@@ -1314,19 +1313,32 @@ done:
     }
 } 
     
-static bool compileword(vector<uint> &code, const char *&p, int wordtype, stringslice &word)
+static bool compilearg(vector<uint> &code, const char *&p, int wordtype, stringslice &word)
 {
     skipcomments(p);
     switch(*p)
     {
         case '\"': 
-            if(wordtype == VAL_CODE)
+            switch(wordtype)
             {
-                char *s = cutstring(p);
-                compileblock(code, s, RET_STR);
-                delete[] s;
+                case VAL_CODE:
+                {
+                    char *s = cutstring(p);
+                    compileblock(code, s, RET_STR);
+                    delete[] s;
+                    break;
+                }
+                case VAL_WORD:
+                    cutstring(p, word);
+                    break;
+                default:
+                {
+                    stringslice s;
+                    cutstring(p, s);
+                    compileval(code, wordtype, s);
+                    break; 
+                }
             }
-            else cutstring(p, word);
             return true;                    
         case '$': compilelookup(code, p, wordtype); return true;
         case '(':
@@ -1345,29 +1357,29 @@ static bool compileword(vector<uint> &code, const char *&p, int wordtype, string
             compileblockmain(code, p, wordtype);
             return true;
         default: 
-            if(wordtype == VAL_CODE)
+            switch(wordtype)
             {
-                char *s = cutword(p);
-                if(!s) return false; 
-                compileblock(code, s, RET_STR);
-                delete[] s;
-                return true;
-            }
-            else
-            {
-                cutword(p, word); 
-                return word.len!=0;
+                case VAL_CODE:
+                {
+                    char *s = cutword(p);
+                    if(!s) return false; 
+                    compileblock(code, s, RET_STR);
+                    delete[] s;
+                    return true;
+                }
+                case VAL_WORD:
+                    cutword(p, word);
+                    return word.len!=0;
+                default:
+                {
+                    stringslice s;
+                    cutword(p, s);
+                    if(!s.len) return false;
+                    compileval(code, wordtype, s);
+                    return true;
+                }
             }
     }
-}
-
-static inline bool compilearg(vector<uint> &code, const char *&p, int wordtype)
-{
-    stringslice word(NULL, 0);
-    bool more = compileword(code, p, wordtype, word);
-    if(!more) return false;
-    if(word.str) compileval(code, wordtype, word);
-    return true;
 }
 
 static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak)
@@ -1380,7 +1392,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
     {
         skipcomments(p);
         idname.str = NULL;
-        bool more = compileword(code, p, VAL_ANY, idname);
+        bool more = compilearg(code, p, VAL_WORD, idname);
         if(!more) goto endstatement;
         skipcomments(p);
         if(p[0] == '=') switch(p[1]) 
