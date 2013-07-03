@@ -942,9 +942,10 @@ static inline void compileunescapestring(vector<uint> &code, const char *&p, boo
     p++;
     const char *end = parsestring(p); 
     code.add(macro ? CODE_MACRO : CODE_VAL|RET_STR);
-    int len = unescapestring((char *)code.reserve(int(end-p)/sizeof(uint) + 1).buf, p, end);
+    char *buf = (char *)code.reserve(int(end-p)/sizeof(uint) + 1).buf;
+    int len = unescapestring(buf, p, end);
+    memset(&buf[len], 0, sizeof(uint) - len%sizeof(uint));
     code.last() |= len<<8;
-    memset((char *)&code[code.length()] + len, 0, sizeof(uint) - len%sizeof(uint));
     code.advance(len/sizeof(uint) + 1);
     p = end;
     if(*p == '\"') p++;
