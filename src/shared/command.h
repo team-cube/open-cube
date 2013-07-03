@@ -191,7 +191,8 @@ struct ident
     void getcval(tagval &v) const;
 };
 
-static inline bool htcmp(const char *key, const ident &id) { return !strcmp(key, id.name); }
+static inline bool htcmp(const char *key, const ident &id) { return htcmp(key, id.name); }
+static inline bool htcmp(const stringslice &key, const ident &id) { return htcmp(key, id.name); }
 
 extern void addident(ident *id);
 
