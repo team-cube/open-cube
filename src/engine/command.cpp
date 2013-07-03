@@ -916,7 +916,7 @@ static inline void compilestr(vector<uint> &code, const char *word, int len, boo
     if(len <= 3 && !macro)
     {
         uint op = CODE_VALI|RET_STR;
-        for(int i = 0; i < len; i++) op |= uint(uchar(word[i]))<<((i+1)*8);
+        loopi(len) op |= uint(uchar(word[i]))<<((i+1)*8);
         code.add(op);
         return;
     }
@@ -936,6 +936,19 @@ static inline void compilestr(vector<uint> &code, const char *word, int len, boo
 static inline void compilestr(vector<uint> &code) { code.add(CODE_VALI|RET_STR); }
 static inline void compilestr(vector<uint> &code, const stringslice &word, bool macro = false) { compilestr(code, word.str, word.len, macro); }
 static inline void compilestr(vector<uint> &code, const char *word, bool macro = false) { compilestr(code, word, int(strlen(word)), macro); }
+
+static inline void compileunescapestring(vector<uint> &code, const char *&p, bool macro = false)
+{
+    p++;
+    const char *end = parsestring(p); 
+    code.add(macro ? CODE_MACRO : CODE_VAL|RET_STR);
+    int len = unescapestring((char *)code.reserve(int(end-p)/sizeof(uint) + 1).buf, p, end);
+    code.last() |= len<<8;
+    memset((char *)&code[code.length()] + len, 0, sizeof(uint) - len%sizeof(uint));
+    code.advance(len/sizeof(uint) + 1);
+    p = end;
+    if(*p == '\"') p++;
+}
 
 static inline void compileint(vector<uint> &code, int i = 0)
 {
@@ -1330,6 +1343,14 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, strings
                 }
                 case VAL_WORD:
                     cutstring(p, word);
+                    break;
+                case VAL_ANY:
+                case VAL_STR:
+                    compileunescapestring(code, p);
+                    break;
+                case VAL_CANY:
+                case VAL_CSTR:
+                    compileunescapestring(code, p, true);
                     break;
                 default:
                 {
