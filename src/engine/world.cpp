@@ -149,7 +149,7 @@ vector<int> outsideents;
 
 static bool modifyoctaent(int flags, int id, extentity &e)
 {
-    if(flags&MODOE_ADD ? e.inoctanode : !e.inoctanode) return false;
+    if(flags&MODOE_ADD ? e.flags&EF_OCTA : !(e.flags&EF_OCTA)) return false;
 
     ivec o, r;
     if(!getentboundingbox(e, o, r)) return false;
@@ -171,7 +171,7 @@ static bool modifyoctaent(int flags, int id, extentity &e)
         if(diff && (limit > octaentsize/2 || diff < leafsize*2)) leafsize *= 2;
         modifyoctaentity(flags, id, e, worldroot, ivec(0, 0, 0), worldsize>>1, o, r, leafsize);
     }
-    e.inoctanode = flags&MODOE_ADD ? 1 : 0;
+    e.flags ^= EF_OCTA;
     if(e.type == ET_LIGHT) clearlightcache(id);
     else if(e.type == ET_PARTICLES) clearparticleemitters();
     return true;
@@ -214,7 +214,7 @@ static inline void findents(octaentities &oe, int low, int high, bool notspawned
     {
         int id = oe.other[i];
         extentity &e = *ents[id];
-        if(e.type >= low && e.type <= high && (e.spawned || notspawned) && vec(e.o).mul(radius).squaredlen() <= 1) found.add(id);
+        if(e.type >= low && e.type <= high && (e.spawned() || notspawned) && vec(e.o).mul(radius).squaredlen() <= 1) found.add(id);
     }
 }
 
@@ -899,8 +899,6 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     e.attr5 = v5;
     e.type = type;
     e.reserved = 0;
-    e.spawned = false;
-    e.inoctanode = false;
     if(local)
     {
         switch(type)
