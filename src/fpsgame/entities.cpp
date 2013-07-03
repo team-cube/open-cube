@@ -321,7 +321,6 @@ namespace entities
 
     void animatemapmodel(const extentity &e, int &anim, int &basetime)
     {
-        //const fpsentity &f = (const fpsentity &)e;
     }
 
     void fixentity(extentity &e)

@@ -3,6 +3,42 @@
 
 #include "cube.h"
 
+// animations
+
+enum
+{
+    ANIM_MAPMODEL = 0,
+    ANIM_DEAD, ANIM_DYING, ANIM_IDLE,
+    ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT,
+    ANIM_CROUCH, ANIM_CROUCH_FORWARD, ANIM_CROUCH_BACKWARD, ANIM_CROUCH_LEFT, ANIM_CROUCH_RIGHT,
+
+    ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3, ANIM_HOLD4, ANIM_HOLD5, ANIM_HOLD6, ANIM_HOLD7,
+    ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3, ANIM_ATTACK4, ANIM_ATTACK5, ANIM_ATTACK6, ANIM_ATTACK7,
+    ANIM_PAIN,
+    ANIM_JUMP, ANIM_SINK, ANIM_SWIM,
+    ANIM_CROUCH_JUMP, ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
+    ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE,
+    ANIM_GUN_IDLE, ANIM_GUN_SHOOT,
+    ANIM_VWEP_IDLE, ANIM_VWEP_SHOOT,
+    NUMANIMS
+};
+
+static const char * const animnames[] =
+{
+    "mapmodel",
+    "dead", "dying", "idle",
+    "forward", "backward", "left", "right",
+    "crouch", "crouch forward", "crouch backward", "crouch left", "crouch right",
+    "hold 1", "hold 2", "hold 3", "hold 4", "hold 5", "hold 6", "hold 7",
+    "attack 1", "attack 2", "attack 3", "attack 4", "attack 5", "attack 6", "attack 7",
+    "pain",
+    "jump", "sink", "swim",
+    "crouch jump", "crouch sink", "crouch swim",
+    "edit", "lag", "taunt", "win", "lose",
+    "gun idle", "gun shoot",
+    "vwep idle", "vwep shoot"
+};
+
 // console message types
 
 enum

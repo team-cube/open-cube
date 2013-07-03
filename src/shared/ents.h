@@ -20,8 +20,7 @@ struct extentity : entity                       // part of the entity that doesn
         F_NOVIS      = 1<<0,
         F_NOSHADOW   = 1<<1,
         F_NOCOLLIDE  = 1<<2,
-        F_ANIM       = 1<<3,
-        F_SHADOWMESH = 1<<4
+        F_SHADOWMESH = 1<<3
     };
 
     uchar spawned, inoctanode, visible, flags;  // the only dynamic state of a map entity
@@ -95,40 +94,6 @@ struct physent                                  // base entity type, can be affe
     vec headpos(float offset = 0) const { return vec(o).add(vec(0, 0, offset)); }
 
     bool maymove() const { return timeinair || physstate < PHYS_FLOOR || vel.squaredlen() > 1e-4f || deltapos.squaredlen() > 1e-4f; } 
-};
-
-enum
-{
-    ANIM_DEAD = 0, ANIM_DYING, ANIM_IDLE,
-    ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT,
-    ANIM_CROUCH, ANIM_CROUCH_FORWARD, ANIM_CROUCH_BACKWARD, ANIM_CROUCH_LEFT, ANIM_CROUCH_RIGHT,
-
-    ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3, ANIM_HOLD4, ANIM_HOLD5, ANIM_HOLD6, ANIM_HOLD7,
-    ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3, ANIM_ATTACK4, ANIM_ATTACK5, ANIM_ATTACK6, ANIM_ATTACK7,
-    ANIM_PAIN,
-    ANIM_JUMP, ANIM_SINK, ANIM_SWIM,
-    ANIM_CROUCH_JUMP, ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
-    ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE,
-    ANIM_GUN_IDLE, ANIM_GUN_SHOOT,
-    ANIM_VWEP_IDLE, ANIM_VWEP_SHOOT, ANIM_SHIELD, ANIM_POWERUP,
-    ANIM_MAPMODEL, ANIM_TRIGGER,
-    NUMANIMS
-};
-
-static const char * const animnames[] =
-{
-    "dead", "dying", "idle",
-    "forward", "backward", "left", "right",
-    "crouch", "crouch forward", "crouch backward", "crouch left", "crouch right",
-    "hold 1", "hold 2", "hold 3", "hold 4", "hold 5", "hold 6", "hold 7",
-    "attack 1", "attack 2", "attack 3", "attack 4", "attack 5", "attack 6", "attack 7",
-    "pain",
-    "jump", "sink", "swim",
-    "crouch jump", "crouch sink", "crouch swim",
-    "edit", "lag", "taunt", "win", "lose",
-    "gun idle", "gun shoot",
-    "vwep idle", "vwep shoot", "shield", "powerup",
-    "mapmodel", "trigger"
 };
 
 #define ANIM_ALL         0x1FF

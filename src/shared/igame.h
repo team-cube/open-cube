@@ -75,6 +75,8 @@ namespace game
     extern void rendergame();
     extern void renderavatar();
     extern void renderplayerpreview(int model, int team, int weap);
+    extern int numanims();
+    extern void findanims(const char *pattern, vector<int> &anims);
     extern void writegamedata(vector<char> &extras);
     extern void readgamedata(vector<char> &extras);
     extern int clipconsole(int w, int h);

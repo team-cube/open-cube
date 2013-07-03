@@ -110,15 +110,24 @@ namespace game
             else preloadmodel(mdl->model[0]);
         }
     }
-    
+   
+    int numanims() { return NUMANIMS; }
+
+    void findanims(const char *pattern, vector<int> &anims)
+    {
+        loopi(sizeof(animnames)/sizeof(animnames[0])) if(matchanim(animnames[i], pattern)) anims.add(i);
+    }
+
+    VAR(animoverride, -1, 0, NUMANIMS-1);
+    VAR(testanims, 0, 0, 1);
+    VAR(testpitch, -90, 0, 90);
+
     void renderplayer(fpsent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
     {
         int lastaction = d->lastaction, hold = d->gunselect==GUN_PISTOL ? 0 : (ANIM_HOLD1+d->gunselect)|ANIM_LOOP, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
         if(intermission && d->state!=CS_DEAD)
         {
-            lastaction = 0;
             hold = attack = ANIM_LOSE|ANIM_LOOP;
-            delay = 0;
             if(m_teammode ? bestteams.htfind(d->team)>=0 : bestplayers.find(d)>=0) hold = attack = ANIM_WIN|ANIM_LOOP;
         }
         else if(d->state==CS_ALIVE && d->lasttaunt && lastmillis-d->lasttaunt<1000 && lastmillis-d->lastaction>delay)
@@ -146,7 +155,65 @@ namespace game
             a[ai++] = modelattach("tag_muzzle", &d->muzzle);
         }
         const char *mdlname = mdl.model[validteam(team) ? team : 0];
-        renderclient(d, mdlname, a[0].tag ? a : NULL, hold, attack, delay, lastaction, intermission && d->state!=CS_DEAD ? 0 : d->lastpain, fade, ragdoll && mdl.ragdoll);
+        int anim = hold ? hold : ANIM_IDLE|ANIM_LOOP;
+        float yaw = testanims && d==player1 ? 0 : d->yaw,
+              pitch = testpitch && d==player1 ? testpitch : d->pitch;
+        vec o = d->feetpos();
+        int basetime = 0;
+        if(animoverride) anim = (animoverride<0 ? ANIM_ALL : animoverride)|ANIM_LOOP;
+        else if(d->state==CS_DEAD)
+        {
+            anim = ANIM_DYING|ANIM_NOPITCH;
+            basetime = d->lastpain;
+            if(ragdoll && mdl.ragdoll) anim |= ANIM_RAGDOLL;
+            else if(lastmillis-basetime>1000) anim = ANIM_DEAD|ANIM_LOOP|ANIM_NOPITCH;
+        }
+        else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) anim = ANIM_EDIT|ANIM_LOOP;
+        else if(d->state==CS_LAGGED)                            anim = ANIM_LAG|ANIM_LOOP;
+        else if(!intermission)
+        {
+            if(lastmillis-d->lastpain < 300)
+            {
+                anim = ANIM_PAIN;
+                basetime = d->lastpain;
+            }
+            else if(d->lastpain < lastaction && (attack < 0 || lastmillis-lastaction < delay))
+            {
+                anim = attack < 0 ? -attack : attack;
+                basetime = lastaction;
+            }
+
+            if(d->inwater && d->physstate<=PHYS_FALL) anim |= (((game::allowmove(d) && (d->move || d->strafe)) || d->vel.z+d->falling.z>0 ? ANIM_SWIM : ANIM_SINK)|ANIM_LOOP)<<ANIM_SECONDARY;
+            else if(d->timeinair>100) anim |= (ANIM_JUMP|ANIM_END)<<ANIM_SECONDARY;
+            else if(game::allowmove(d) && (d->move || d->strafe))
+            {
+                if(d->move>0) anim |= (ANIM_FORWARD|ANIM_LOOP)<<ANIM_SECONDARY;
+                else if(d->strafe) anim |= ((d->strafe>0 ? ANIM_LEFT : ANIM_RIGHT)|ANIM_LOOP)<<ANIM_SECONDARY;
+                else if(d->move<0) anim |= (ANIM_BACKWARD|ANIM_LOOP)<<ANIM_SECONDARY;
+            }
+
+            if(d->crouching) switch((anim>>ANIM_SECONDARY)&ANIM_INDEX)
+            {
+                case ANIM_IDLE: anim &= ~(ANIM_INDEX<<ANIM_SECONDARY); anim |= ANIM_CROUCH<<ANIM_SECONDARY; break;
+                case ANIM_JUMP: anim &= ~(ANIM_INDEX<<ANIM_SECONDARY); anim |= ANIM_CROUCH_JUMP<<ANIM_SECONDARY; break;
+                case ANIM_SWIM: anim &= ~(ANIM_INDEX<<ANIM_SECONDARY); anim |= ANIM_CROUCH_SWIM<<ANIM_SECONDARY; break;
+                case ANIM_SINK: anim &= ~(ANIM_INDEX<<ANIM_SECONDARY); anim |= ANIM_CROUCH_SINK<<ANIM_SECONDARY; break;
+                case 0: anim |= (ANIM_CROUCH|ANIM_LOOP)<<ANIM_SECONDARY; break;
+                case ANIM_FORWARD: case ANIM_BACKWARD: case ANIM_LEFT: case ANIM_RIGHT:
+                    anim += (ANIM_CROUCH_FORWARD - ANIM_FORWARD)<<ANIM_SECONDARY;
+                    break;
+            }
+
+            if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) anim >>= ANIM_SECONDARY;
+        }
+        if(!((anim>>ANIM_SECONDARY)&ANIM_INDEX)) anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY;
+        int flags = 0;
+        if(d!=player1) flags |= MDL_CULL_VFC | MDL_CULL_OCCLUDED | MDL_CULL_QUERY;
+        if(d->type==ENT_PLAYER) flags |= MDL_FULLBRIGHT;
+        else flags |= MDL_CULL_DIST;
+        if(!mainpass) flags &= ~(MDL_FULLBRIGHT | MDL_CULL_VFC | MDL_CULL_OCCLUDED | MDL_CULL_QUERY | MDL_CULL_DIST);
+        float trans = d->state == CS_LAGGED ? 0.3f : 1.0f;
+        rendermodel(mdlname, anim, o, yaw, pitch, 0, flags, d, a[0].tag ? a : NULL, basetime, 0, fade, trans);
     }
 
     void rendergame()

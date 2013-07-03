@@ -1610,7 +1610,7 @@ struct skelmodel : animmodel
 
             if(skel->shouldcleanup()) skel->cleanup();
 
-            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, as->cur.anim&ANIM_RAGDOLL || !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
+            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
 
             intersect(hitdata, p, sc, o, ray);
 
@@ -1655,7 +1655,7 @@ struct skelmodel : animmodel
                 return;
             }
 
-            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, as->cur.anim&ANIM_RAGDOLL || !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
+            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
             if(!(as->cur.anim&ANIM_NORENDER))
             {
                 int owner = &sc-&skel->skelcache[0];
@@ -1990,7 +1990,7 @@ template<class MDL> struct skelcommands : modelcommands<MDL, struct MDL::skelmes
         if(!MDL::loading || MDL::loading->parts.empty()) { conoutf("not loading an %s", MDL::formatname()); return; }
     
         vector<int> anims;
-        findanims(anim, anims);
+        game::findanims(anim, anims);
         if(anims.empty()) conoutf("could not find animation %s", anim);
         else
         {

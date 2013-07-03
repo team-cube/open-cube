@@ -634,7 +634,7 @@ void guimodelpreview(char *model, char *animspec, char *action, float *scale, in
         else
         {
             vector<int> anims;
-            findanims(animspec, anims);
+            game::findanims(animspec, anims);
             if(anims.length()) anim = anims[0];
         }
     }
