@@ -784,7 +784,7 @@ struct animmodel : model
 
         void intersect(int anim, int basetime, int basetime2, float pitch, const vec &axis, const vec &forward, dynent *d, const vec &o, const vec &ray, animstate *as)
         {
-            if(!(anim&ANIM_REUSE)) loopi(numanimparts)
+            if((anim&ANIM_REUSE) != ANIM_REUSE) loopi(numanimparts)
             {
                 animinfo info;
                 int interp = d && index+numanimparts<=MAXANIMPARTS ? index+i : -1, aitime = animationinterpolationtime;
@@ -835,7 +835,7 @@ struct animmodel : model
             intersectscale = resize;
             meshes->intersect(as, pitch, oaxis, oforward, d, this, oo, oray);
 
-            if(!(anim&ANIM_REUSE))
+            if((anim&ANIM_REUSE) != ANIM_REUSE)
             {
                 loopv(links)
                 {
@@ -870,7 +870,7 @@ struct animmodel : model
 
         void render(int anim, int basetime, int basetime2, float pitch, const vec &axis, const vec &forward, dynent *d, animstate *as)
         {
-            if(!(anim&ANIM_REUSE)) loopi(numanimparts)
+            if((anim&ANIM_REUSE) != ANIM_REUSE) loopi(numanimparts)
             {
                 animinfo info;
                 int interp = d && index+numanimparts<=MAXANIMPARTS ? index+i : -1, aitime = animationinterpolationtime;
@@ -935,7 +935,7 @@ struct animmodel : model
 
             meshes->render(as, pitch, oaxis, oforward, d, this);
 
-            if(!(anim&ANIM_REUSE)) 
+            if((anim&ANIM_REUSE) != ANIM_REUSE) 
             {
                 loopv(links)
                 {
