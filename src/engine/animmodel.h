@@ -535,7 +535,7 @@ struct animmodel : model
         int numanimparts;
         float pitchscale, pitchoffset, pitchmin, pitchmax;
 
-        part() : meshes(NULL), numanimparts(1), pitchscale(1), pitchoffset(0), pitchmin(0), pitchmax(0)
+        part(animmodel *model, int index = 0) : model(model), index(index), meshes(NULL), numanimparts(1), pitchscale(1), pitchoffset(0), pitchmin(0), pitchmax(0)
         {
             loopk(MAXANIMPARTS) anims[k] = NULL;
         }
@@ -549,6 +549,11 @@ struct animmodel : model
             if(meshes) meshes->cleanup();
         }
 
+        void disablepitch()
+        {
+            pitchscale = pitchoffset = pitchmin = pitchmax = 0;
+        }
+        
         void calcbb(vec &bbmin, vec &bbmax, const matrix3x4 &m)
         {
             matrix3x4 t = m;
@@ -1285,6 +1290,13 @@ struct animmodel : model
         loopv(parts) parts[i]->cleanup();
     }
 
+    part &addpart()
+    {
+        part *p = new part(this, parts.length());
+        parts.add(p);
+        return *p;
+    }
+    
     void initmatrix(matrix3x4 &m)
     {
         m.identity();
