@@ -1069,6 +1069,9 @@ inline char *newstring(const char *s)           { return newstring(s, strlen(s))
 inline char *newstringbuf(const char *s)        { return newstring(s, MAXSTRLEN-1); }
 inline char *newstring(const stringslice &s)    { return newstring(s.str, s.len); }
 
+inline size_t stringlength(const char *s) { return strlen(s); }
+inline size_t stringlength(const stringslice &s) { return s.len; }
+
 const int islittleendian = 1;
 #ifdef SDL_BYTEORDER
 #define endianswap16 SDL_Swap16
