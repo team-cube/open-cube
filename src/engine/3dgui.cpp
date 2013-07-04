@@ -541,22 +541,22 @@ struct gui : g3d_gui
         gle::defvertex(2);
         if(usetc >= 0) gle::deftexcoord0();
         gle::begin(lines ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
-        static const vec2 tc[4] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1) };
+        static const vec2 tc[5] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1), vec2(0, 0) };
         gle::attribf(x, y);
         if(usetc>=0) gle::attrib(tc[usetc]);
         gle::attribf(x + w, y);
-        if(usetc>=0) gle::attrib(tc[(usetc+1)%4]);
+        if(usetc>=0) gle::attrib(tc[usetc+1]);
         if(lines)
         {
             gle::attribf(x + w, y + h);
-            if(usetc>=0) gle::attrib(tc[(usetc+2)%4]);
+            if(usetc>=0) gle::attrib(tc[usetc+2]);
         }
         gle::attribf(x, y + h);
-        if(usetc>=0) gle::attrib(tc[(usetc+3)%4]);
+        if(usetc>=0) gle::attrib(tc[usetc+3]);
         if(!lines)
         {
             gle::attribf(x + w, y + h);
-            if(usetc>=0) gle::attrib(tc[(usetc+2)%4]);
+            if(usetc>=0) gle::attrib(tc[usetc+2]);
         }
         xtraverts += gle::end();
 
