@@ -107,6 +107,12 @@ struct physent                                  // base entity type, can be affe
     bool maymove() const { return timeinair || physstate < PHYS_FLOOR || vel.squaredlen() > 1e-4f || deltapos.squaredlen() > 1e-4f; } 
 };
 
+enum
+{
+    ANIM_MAPMODEL = 0,
+    ANIM_GAMESPECIFIC
+};
+
 #define ANIM_ALL         0x1FF
 #define ANIM_INDEX       0x1FF
 #define ANIM_LOOP        (1<<9)
