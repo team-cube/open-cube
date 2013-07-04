@@ -474,7 +474,7 @@ struct teaminfo
 
     teaminfo() { reset(); }
 
-    void reset() { frags = 0; }    
+    void reset() { frags = 0; }
 };
 
 namespace entities

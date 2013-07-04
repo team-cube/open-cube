@@ -80,7 +80,7 @@ namespace hemisphere
         xtraverts += numindices;
         glde++;
     }
-    
+
     void disable()
     {
         gle::disablevertex();
@@ -303,7 +303,7 @@ struct fireballrenderer : listrenderer
     void seedemitter(particleemitter &pe, const vec &o, const vec &d, int fade, float size, int gravity)
     {
         pe.maxfade = max(pe.maxfade, fade);
-        pe.extendbb(o, (size+1+pe.ent->attr2)*WOBBLE); 
+        pe.extendbb(o, (size+1+pe.ent->attr2)*WOBBLE);
     }
 
     void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts)

@@ -24,7 +24,7 @@ enum
     CODE_SVAR, CODE_SVARM, CODE_SVAR1,
     CODE_IVAR, CODE_IVAR1, CODE_IVAR2, CODE_IVAR3,
     CODE_FVAR, CODE_FVAR1,
-    CODE_LOOKUP, CODE_LOOKUPU, CODE_LOOKUPARG, 
+    CODE_LOOKUP, CODE_LOOKUPU, CODE_LOOKUPARG,
     CODE_LOOKUPM, CODE_LOOKUPMU, CODE_LOOKUPMARG,
     CODE_ALIAS, CODE_ALIASU, CODE_ALIASARG, CODE_CALL, CODE_CALLU, CODE_CALLARG,
     CODE_PRINT,
@@ -81,7 +81,7 @@ struct tagval : identval
 
     void cleanup();
 };
-        
+
 struct identstack
 {
     identval val;
@@ -128,7 +128,7 @@ struct ident
     };
     identfun fun; // ID_VAR, ID_FVAR, ID_SVAR, ID_COMMAND
     int flags, index;
-    
+
     ident() {}
     // ID_VAR
     ident(int t, const char *n, int m, int x, int *s, void *f = NULL, int flags = 0)
@@ -144,13 +144,13 @@ struct ident
     { storage.s = s; }
     // ID_ALIAS
     ident(int t, const char *n, char *a, int flags)
-        : type(t), name(n), valtype(VAL_STR), code(NULL), stack(NULL), flags(flags) 
+        : type(t), name(n), valtype(VAL_STR), code(NULL), stack(NULL), flags(flags)
     { val.s = a; }
     ident(int t, const char *n, int a, int flags)
-        : type(t), name(n), valtype(VAL_INT), code(NULL), stack(NULL), flags(flags)           
+        : type(t), name(n), valtype(VAL_INT), code(NULL), stack(NULL), flags(flags)
     { val.i = a; }
     ident(int t, const char *n, float a, int flags)
-        : type(t), name(n), valtype(VAL_FLOAT), code(NULL), stack(NULL), flags(flags)           
+        : type(t), name(n), valtype(VAL_FLOAT), code(NULL), stack(NULL), flags(flags)
     { val.f = a; }
     ident(int t, const char *n, int flags)
         : type(t), name(n), valtype(VAL_NULL), code(NULL), stack(NULL), flags(flags)
@@ -160,7 +160,7 @@ struct ident
     { val = v; }
     // ID_COMMAND
     ident(int t, const char *n, const char *args, uint argmask, void *f = NULL, int flags = 0)
-        : type(t), name(n), args(args), argmask(argmask), fun((identfun)f), flags(flags) 
+        : type(t), name(n), args(args), argmask(argmask), fun((identfun)f), flags(flags)
     {}
 
     void changed() { if(fun) fun(); }
@@ -170,13 +170,13 @@ struct ident
         valtype = v.type;
         val = v;
     }
-   
+
     void setval(const identstack &v)
     {
         valtype = v.valtype;
         val = v.val;
     }
- 
+
     void forcenull()
     {
         if(valtype==VAL_STR) delete[] val.s;
@@ -221,7 +221,7 @@ static inline float parsefloat(const char *s)
 static inline void intformat(char *buf, int v, int len = 20) { nformatstring(buf, len, "%d", v); }
 static inline void floatformat(char *buf, float v, int len = 20) { nformatstring(buf, len, v==int(v) ? "%.1f" : "%.7g", v); }
 
-static inline const char *getstr(const identval &v, int type) 
+static inline const char *getstr(const identval &v, int type)
 {
     switch(type)
     {
@@ -240,7 +240,7 @@ static inline int getint(const identval &v, int type)
     {
         case VAL_INT: return v.i;
         case VAL_FLOAT: return int(v.f);
-        case VAL_STR: case VAL_MACRO: case VAL_CSTR: return parseint(v.s); 
+        case VAL_STR: case VAL_MACRO: case VAL_CSTR: return parseint(v.s);
         default: return 0;
     }
 }
@@ -258,7 +258,7 @@ static inline float getfloat(const identval &v, int type)
     }
 }
 inline float tagval::getfloat() const { return ::getfloat(*this, type); }
-inline float ident::getfloat() const { return ::getfloat(val, valtype); } 
+inline float ident::getfloat() const { return ::getfloat(val, valtype); }
 
 static inline void getval(const identval &v, int type, tagval &r)
 {
@@ -363,4 +363,4 @@ inline void ident::getcval(tagval &v) const
 #define ICOMMAND(name, nargs, proto, b) ICOMMANDN(name, ICOMMANDNAME(name), nargs, proto, b)
 #define ICOMMANDSNAME _icmds_
 #define ICOMMANDS(name, nargs, proto, b) ICOMMANDNS(name, ICOMMANDSNAME, nargs, proto, b)
- 
+

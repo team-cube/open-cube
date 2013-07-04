@@ -72,9 +72,9 @@ struct selinfo
         extern int worldsize;
         if(grid <= 0 || grid >= worldsize) return false;
         if(o.x >= worldsize || o.y >= worldsize || o.z >= worldsize) return false;
-        if(o.x < 0) { s.x -= (grid - 1 - o.x)/grid; o.x = 0; } 
-        if(o.y < 0) { s.y -= (grid - 1 - o.y)/grid; o.y = 0; } 
-        if(o.z < 0) { s.z -= (grid - 1 - o.z)/grid; o.z = 0; } 
+        if(o.x < 0) { s.x -= (grid - 1 - o.x)/grid; o.x = 0; }
+        if(o.y < 0) { s.y -= (grid - 1 - o.y)/grid; o.y = 0; }
+        if(o.z < 0) { s.z -= (grid - 1 - o.z)/grid; o.z = 0; }
         s.x = clamp(s.x, 0, (worldsize - o.x)/grid);
         s.y = clamp(s.y, 0, (worldsize - o.y)/grid);
         s.z = clamp(s.z, 0, (worldsize - o.z)/grid);
@@ -187,13 +187,13 @@ extern int lookupmaterial(const vec &o);
 
 static inline bool insideworld(const vec &o)
 {
-	extern int worldsize;
+    extern int worldsize;
     return o.x>=0 && o.x<worldsize && o.y>=0 && o.y<worldsize && o.z>=0 && o.z<worldsize;
 }
 
 static inline bool insideworld(const ivec &o)
 {
-	extern int worldsize;
+    extern int worldsize;
     return uint(o.x)<uint(worldsize) && uint(o.y)<uint(worldsize) && uint(o.z)<uint(worldsize);
 }
 
@@ -490,15 +490,15 @@ struct g3d_gui
 
     virtual bool allowautotab(bool on) = 0;
     virtual bool shouldtab() { return false; }
-	virtual void tab(const char *name = NULL, int color = 0) = 0;
+    virtual void tab(const char *name = NULL, int color = 0) = 0;
     virtual int image(Texture *t, float scale, bool overlaid = false) = 0;
     virtual int texture(VSlot &vslot, float scale, bool overlaid = true) = 0;
     virtual int playerpreview(int model, int team, int weap, float scale, bool overlaid = false) { return 0; }
     virtual int modelpreview(const char *name, int anim, float scale, bool overlaid = false) { return 0; }
     virtual void slider(int &val, int vmin, int vmax, int color, const char *label = NULL) = 0;
     virtual void separator() = 0;
-	virtual void progress(float percent) = 0;
-	virtual void strut(float size) = 0;
+    virtual void progress(float percent) = 0;
+    virtual void strut(float size) = 0;
     virtual void space(float size) = 0;
     virtual void spring(int weight = 1) = 0;
     virtual void column(int col) = 0;

@@ -1,7 +1,7 @@
 #include "game.h"
 
 namespace game
-{      
+{
     vector<fpsent *> bestplayers;
     vector<int> bestteams;
 
@@ -23,7 +23,7 @@ namespace game
         r->ai = NULL;
         if(d==player1) r->playermodel = playermodel;
         ragdolls.add(r);
-        d->ragdoll = NULL;   
+        d->ragdoll = NULL;
     }
 
     void clearragdolls()
@@ -72,7 +72,7 @@ namespace game
     {
         if(player1->clientnum < 0) player1->playermodel = playermodel;
         if(player1->ragdoll) cleanragdoll(player1);
-        loopv(ragdolls) 
+        loopv(ragdolls)
         {
             fpsent *d = ragdolls[i];
             if(!d->ragdoll) continue;
@@ -110,7 +110,7 @@ namespace game
             else preloadmodel(mdl->model[0]);
         }
     }
-   
+
     int numanims() { return NUMANIMS; }
 
     void findanims(const char *pattern, vector<int> &anims)
@@ -242,11 +242,11 @@ namespace game
         {
             fpsent *d = ragdolls[i];
             float fade = 1.0f;
-            if(ragdollmillis && ragdollfade) 
+            if(ragdollmillis && ragdollfade)
                 fade -= clamp(float(lastmillis - (d->lastupdate + max(ragdollmillis - ragdollfade, 0)))/min(ragdollmillis, ragdollfade), 0.0f, 1.0f);
             int team = m_teammode && validteam(d->team) ? d->team : 0;
             renderplayer(d, getplayermodelinfo(d), team, fade);
-        } 
+        }
         if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead)) renderplayer(player1, getplayermodelinfo(player1), player1->team, 1);
         entities::renderentities();
         renderbouncers();
@@ -320,8 +320,8 @@ namespace game
     void drawhudgun()
     {
         fpsent *d = hudplayer();
-        if(d->state==CS_SPECTATOR || d->state==CS_EDITING || !hudgun || editmode) 
-        { 
+        if(d->state==CS_SPECTATOR || d->state==CS_EDITING || !hudgun || editmode)
+        {
             d->muzzle = player1->muzzle = vec(-1, -1, -1);
             return;
         }
@@ -394,7 +394,7 @@ namespace game
             if(m_teammode)
             {
                 loopj(MAXTEAMS)
-                { 
+                {
                     formatstring(fname, "%s/%s", mdl.hudguns[1+j], file);
                     preloadmodel(fname);
                 }

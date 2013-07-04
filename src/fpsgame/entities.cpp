@@ -151,7 +151,7 @@ namespace entities
         if(ents.inrange(tp) && ents[tp]->type == TELEPORT)
         {
             extentity &e = *ents[tp];
-            if(e.attr4 >= 0) 
+            if(e.attr4 >= 0)
             {
                 int snd = S_TELEPORT, flags = 0;
                 if(e.attr4 > 0) { snd = e.attr4; flags = SND_MAP; }
@@ -265,8 +265,8 @@ namespace entities
                 jumppadeffects(d, n, true);
                 vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
                 if(d->ai) d->ai->becareful = true;
-				d->falling = vec(0, 0, 0);
-				d->physstate = PHYS_FALL;
+                d->falling = vec(0, 0, 0);
+                d->physstate = PHYS_FALL;
                 d->timeinair = 1;
                 d->vel = v;
                 break;

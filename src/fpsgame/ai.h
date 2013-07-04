@@ -25,7 +25,7 @@ namespace ai
     {
         vec o;
         float curscore, estscore;
-		int weight;
+        int weight;
         ushort route, prev;
         ushort links[MAXWAYPOINTLINKS];
 
@@ -35,12 +35,12 @@ namespace ai
         int score() const { return int(curscore) + int(estscore); }
 
         int find(int wp)
-		{
-			loopi(MAXWAYPOINTLINKS) if(links[i] == wp) return i;
-			return -1;
-		}
+        {
+            loopi(MAXWAYPOINTLINKS) if(links[i] == wp) return i;
+            return -1;
+        }
 
-		bool haslinks() { return links[0]!=0; }
+        bool haslinks() { return links[0]!=0; }
     };
     extern vector<waypoint> waypoints;
 
@@ -52,7 +52,7 @@ namespace ai
     extern int showwaypoints, dropwaypoints;
     extern int closestwaypoint(const vec &pos, float mindist, bool links, fpsent *d = NULL);
     extern void findwaypointswithin(const vec &pos, float mindist, float maxdist, vector<int> &results);
-	extern void inferwaypoints(fpsent *d, const vec &o, const vec &v, float mindist = ai::CLOSEDIST);
+    extern void inferwaypoints(fpsent *d, const vec &o, const vec &v, float mindist = ai::CLOSEDIST);
 
     struct avoidset
     {
@@ -86,16 +86,16 @@ namespace ai
             waypoints.add(wp);
         }
 
-		void add(avoidset &avoid)
-		{
-			waypoints.put(avoid.waypoints.getbuf(), avoid.waypoints.length());
-			loopv(avoid.obstacles)
-			{
-				obstacle &o = avoid.obstacles[i];
-				if(obstacles.empty() || o.owner != obstacles.last().owner) add(o.owner, o.above);
-				obstacles.last().numwaypoints += o.numwaypoints;
-			}
-		}
+        void add(avoidset &avoid)
+        {
+            waypoints.put(avoid.waypoints.getbuf(), avoid.waypoints.length());
+            loopv(avoid.obstacles)
+            {
+                obstacle &o = avoid.obstacles[i];
+                if(obstacles.empty() || o.owner != obstacles.last().owner) add(o.owner, o.above);
+                obstacles.last().numwaypoints += o.numwaypoints;
+            }
+        }
 
         void avoidnear(void *owner, float above, const vec &pos, float limit);
 
@@ -200,21 +200,21 @@ namespace ai
         }
         ~aiinfo() {}
 
-		void clearsetup()
-		{
-         	weappref = GUN_PISTOL;
+        void clearsetup()
+        {
+             weappref = GUN_PISTOL;
             spot = target = vec(0, 0, 0);
             lastaction = lasthunt = lastcheck = enemyseen = enemymillis = blocktime = huntseq = blockseq = targtime = targseq = lastaimrnd = 0;
             lastrun = jumpseed = lastmillis;
             jumprand = lastmillis+5000;
             targnode = targlast = enemy = -1;
-		}
+        }
 
-		void clear(bool prev = false)
-		{
+        void clear(bool prev = false)
+        {
             if(prev) memset(prevnodes, -1, sizeof(prevnodes));
             route.setsize(0);
-		}
+        }
 
         void wipe(bool prev = false)
         {
@@ -267,20 +267,20 @@ namespace ai
             return state.last();
         }
 
-		aistate &switchstate(aistate &b, int t, int r = -1, int v = -1)
-		{
-			if((b.type == t && b.targtype == r) || (b.type == AI_S_INTEREST && b.targtype == AI_T_NODE))
-			{
-				b.millis = lastmillis;
-				b.target = v;
-				b.reset();
-				return b;
-			}
-			return addstate(t, r, v);
-		}
+        aistate &switchstate(aistate &b, int t, int r = -1, int v = -1)
+        {
+            if((b.type == t && b.targtype == r) || (b.type == AI_S_INTEREST && b.targtype == AI_T_NODE))
+            {
+                b.millis = lastmillis;
+                b.target = v;
+                b.reset();
+                return b;
+            }
+            return addstate(t, r, v);
+        }
     };
 
-	extern avoidset obstacles;
+    extern avoidset obstacles;
     extern vec aitarget;
 
     extern float viewdist(int x = 101);
@@ -306,10 +306,10 @@ namespace ai
     extern void assist(fpsent *d, aistate &b, vector<interest> &interests, bool all = false, bool force = false);
     extern bool parseinterests(fpsent *d, aistate &b, vector<interest> &interests, bool override = false, bool ignore = false);
 
-	extern void spawned(fpsent *d);
-	extern void damaged(fpsent *d, fpsent *e);
-	extern void killed(fpsent *d, fpsent *e);
-	extern void itemspawned(int ent);
+    extern void spawned(fpsent *d);
+    extern void damaged(fpsent *d, fpsent *e);
+    extern void killed(fpsent *d, fpsent *e);
+    extern void itemspawned(int ent);
 
     extern void render();
 }

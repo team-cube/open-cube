@@ -130,7 +130,7 @@ void modifyoctaentity(int flags, int id, extentity &e, cube *c, const ivec &cor,
                     oe.other.removeobj(id);
                     break;
             }
-            if(oe.mapmodels.empty() && oe.other.empty()) 
+            if(oe.mapmodels.empty() && oe.other.empty())
                 freeoctaentities(c[i]);
         }
         if(c[i].ext && c[i].ext->ents) c[i].ext->ents->query = NULL;
@@ -154,7 +154,7 @@ static bool modifyoctaent(int flags, int id, extentity &e)
     ivec o, r;
     if(!getentboundingbox(e, o, r)) return false;
 
-    if(!insideworld(e.o)) 
+    if(!insideworld(e.o))
     {
         int idx = outsideents.find(id);
         if(flags&MODOE_ADD)
@@ -223,7 +223,7 @@ static inline void findents(cube *c, const ivec &o, int size, const ivec &bo, co
     loopoctabox(o, size, bo, br)
     {
         if(c[i].ext && c[i].ext->ents) findents(*c[i].ext->ents, low, high, notspawned, pos, radius, found);
-        if(c[i].children && size > octaentsize) 
+        if(c[i].children && size > octaentsize)
         {
             ivec co(i, o.x, o.y, o.z, size);
             findents(c[i].children, co, size>>1, bo, br, low, high, notspawned, pos, radius, found);
@@ -367,8 +367,8 @@ void attachentity(extentity &e)
         if(a->attached) continue;
         switch(e.type)
         {
-            case ET_SPOTLIGHT: 
-                if(a->type!=ET_LIGHT) continue; 
+            case ET_SPOTLIGHT:
+                if(a->type!=ET_LIGHT) continue;
                 break;
 
             default:
@@ -431,8 +431,8 @@ undoblock *copyundoents(undoblock *u)
     loopi(u->numents)
         entadd(e[i].i);
     undoblock *c = newundoent();
-   	loopi(u->numents) if(e[i].e.type==ET_EMPTY)
-		entgroup.removeobj(e[i].i);
+       loopi(u->numents) if(e[i].e.type==ET_EMPTY)
+        entgroup.removeobj(e[i].i);
     return c;
 }
 
@@ -466,19 +466,19 @@ void entrotate(int *cw)
     );
 }
 
-void entselectionbox(const entity &e, vec &eo, vec &es) 
+void entselectionbox(const entity &e, vec &eo, vec &es)
 {
     model *m = NULL;
     const char *mname = entities::entmodel(e);
     if(mname && (m = loadmodel(mname)))
-    {   
+    {
         m->collisionbox(eo, es);
         if(es.x > es.y) es.y = es.x; else es.x = es.y; // square
         es.z = (es.z + eo.z + 1 + entselradius)/2; // enclose ent radius box and model box
         eo.x += e.o.x;
         eo.y += e.o.y;
         eo.z = e.o.z - entselradius + es.z;
-    } 
+    }
     else if(e.type == ET_MAPMODEL && (m = loadmodel(NULL, e.attr1)))
     {
         m->collisionbox(eo, es);
@@ -486,17 +486,17 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
         rotatebb(eo, es, e.attr2, e.attr3, e.attr4);
 #if 0
         if(m->collide)
-            eo.z -= player->aboveeye; // wacky but true. see physics collide                    
+            eo.z -= player->aboveeye; // wacky but true. see physics collide
         else
             es.div(2);  // cause the usual bb is too big...
 #endif
         eo.add(e.o);
-    }   
+    }
     else
     {
         es = vec(entselradius);
         eo = e.o;
-    }    
+    }
     eo.sub(es);
     es.mul(2);
 }
@@ -520,18 +520,18 @@ void entdrag(const vec &ray)
     int d = dimension(entorient),
         dc= dimcoord(entorient);
 
-    entfocus(entgroup.last(),        
+    entfocus(entgroup.last(),
         entselectionbox(e, eo, es);
 
-        editmoveplane(e.o, ray, d, eo[d] + (dc ? es[d] : 0), handle, v, initentdragging);        
+        editmoveplane(e.o, ray, d, eo[d] + (dc ? es[d] : 0), handle, v, initentdragging);
 
         ivec g(v);
         int z = g[d]&(~(sel.grid-1));
         g.add(sel.grid/2).mask(~(sel.grid-1));
         g[d] = z;
-        
+
         r = (entselsnap ? g[R[d]] : v[R[d]]) - e.o[R[d]];
-        c = (entselsnap ? g[C[d]] : v[C[d]]) - e.o[C[d]];       
+        c = (entselsnap ? g[C[d]] : v[C[d]]) - e.o[C[d]];
     );
 
     if(initentdragging) makeundoent();
@@ -602,7 +602,7 @@ void renderentcone(const extentity &e, const vec &dir, float radius, float angle
     spoke.orthogonal(dir);
     spoke.normalize();
     spoke.mul(radius*sinf(angle*RAD));
-    
+
     gle::defvertex();
 
     gle::begin(GL_LINES);
@@ -637,7 +637,7 @@ void renderentradius(extentity &e, bool color)
                 vec dir = vec(e.o).sub(e.attached->o).normalize();
                 float angle = clamp(int(e.attr1), 1, 89);
                 renderentattachment(e);
-                renderentcone(*e.attached, dir, radius, angle); 
+                renderentcone(*e.attached, dir, radius, angle);
             }
             break;
 
@@ -675,7 +675,7 @@ void renderentradius(extentity &e, bool color)
         }
 
         default:
-            if(e.type>=ET_GAMESPECIFIC) 
+            if(e.type>=ET_GAMESPECIFIC)
             {
                 if(color) gle::colorf(0, 1, 1);
                 entities::entradius(e, color);
@@ -685,12 +685,12 @@ void renderentradius(extentity &e, bool color)
 }
 
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
-{   
+{
     if(noentedit()) return;
     vec eo, es;
 
     gle::colorub(0, 40, 0);
-    loopv(entgroup) entfocus(entgroup[i],     
+    loopv(entgroup) entfocus(entgroup[i],
         entselectionbox(e, eo, es);
         boxs3D(eo, es, 1);
     );
@@ -703,8 +703,8 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
         {
             vec a, b;
             gle::colorub(20, 20, 20);
-            (a = eo).x = eo.x - fmod(eo.x, worldsize); (b = es).x = a.x + worldsize; boxs3D(a, b, 1);  
-            (a = eo).y = eo.y - fmod(eo.y, worldsize); (b = es).y = a.x + worldsize; boxs3D(a, b, 1);  
+            (a = eo).x = eo.x - fmod(eo.x, worldsize); (b = es).x = a.x + worldsize; boxs3D(a, b, 1);
+            (a = eo).y = eo.y - fmod(eo.y, worldsize); (b = es).y = a.x + worldsize; boxs3D(a, b, 1);
             (a = eo).z = eo.z - fmod(eo.z, worldsize); (b = es).z = a.x + worldsize; boxs3D(a, b, 1);
         }
         gle::colorub(200,0,0);
@@ -763,11 +763,11 @@ void entpush(int *dir)
     if(noentedit()) return;
     int d = dimension(entorient);
     int s = dimcoord(entorient) ? -*dir : *dir;
-    if(entmoving) 
+    if(entmoving)
     {
         groupeditpure(e.o[d] += float(s*sel.grid)); // editdrag supplies the undo
     }
-    else 
+    else
         groupedit(e.o[d] += float(s*sel.grid));
     if(entitysurf==1)
     {
@@ -777,7 +777,7 @@ void entpush(int *dir)
 }
 
 VAR(entautoviewdist, 0, 25, 100);
-void entautoview(int *dir) 
+void entautoview(int *dir)
 {
     if(!haveselent()) return;
     static int s = 0;
@@ -949,7 +949,7 @@ void entcopy()
     if(noentedit()) return;
     entcopygrid = sel.grid;
     entcopybuf.shrink(0);
-    loopv(entgroup) 
+    loopv(entgroup)
         entfocus(entgroup[i], entcopybuf.add(e).o.sub(sel.o.tovec()));
 }
 
@@ -999,9 +999,9 @@ void printent(extentity &e, char *buf, int len)
     switch(e.type)
     {
         case ET_PARTICLES:
-            if(printparticles(e, buf, len)) return; 
+            if(printparticles(e, buf, len)) return;
             break;
- 
+
         default:
             if(e.type >= ET_GAMESPECIFIC && entities::printent(e, buf, len)) return;
             break;
@@ -1027,8 +1027,8 @@ void nearestent()
         }
     }
     if(closest >= 0) entadd(closest);
-}    
-            
+}
+
 ICOMMAND(enthavesel,"",  (), addimplicit(intret(entgroup.length())));
 ICOMMAND(entselect, "e", (uint *body), if(!noentedit()) addgroup(e.type != ET_EMPTY && entgroup.find(n)<0 && executebool(body)));
 ICOMMAND(entloop,   "e", (uint *body), if(!noentedit()) addimplicit(groupeditloop(((void)e, execute(body)))));
@@ -1042,9 +1042,9 @@ void enttype(char *type, int *numargs)
 {
     if(*numargs >= 1)
     {
-        int typeidx = findtype(type);        
+        int typeidx = findtype(type);
         if(typeidx != ET_EMPTY) groupedit(e.type = typeidx);
-    }    
+    }
     else entfocus(efocus,
     {
         result(entities::entname(e.type));
@@ -1065,7 +1065,7 @@ void entattr(int *attr, int *val, int *numargs)
                     case 3: e.attr4 = *val; break;
                     case 4: e.attr5 = *val; break;
                 }
-            );        
+            );
     }
     else entfocus(efocus,
     {
@@ -1086,13 +1086,13 @@ COMMAND(entattr, "iiN");
 int findentity(int type, int index, int attr1, int attr2)
 {
     const vector<extentity *> &ents = entities::getents();
-    for(int i = index; i<ents.length(); i++) 
+    for(int i = index; i<ents.length(); i++)
     {
         extentity &e = *ents[i];
         if(e.type==type && (attr1<0 || e.attr1==attr1) && (attr2<0 || e.attr2==attr2))
             return i;
     }
-    loopj(min(index, ents.length())) 
+    loopj(min(index, ents.length()))
     {
         extentity &e = *ents[j];
         if(e.type==type && (attr1<0 || e.attr1==attr1) && (attr2<0 || e.attr2==attr2))
@@ -1128,7 +1128,7 @@ void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spaw
                 d->yaw = entities::getents()[attempt]->attr1;
                 entinmap(d);
                 break;
-            }    
+            }
         }
     }
     else
@@ -1175,7 +1175,7 @@ void startmap(const char *name)
 
 bool emptymap(int scale, bool force, const char *mname, bool usecfg)    // main empty world creation routine
 {
-    if(!force && !editmode) 
+    if(!force && !editmode)
     {
         conoutf(CON_ERROR, "newmap only allowed in edit mode");
         return false;
@@ -1185,7 +1185,7 @@ bool emptymap(int scale, bool force, const char *mname, bool usecfg)    // main 
 
     setvar("mapscale", scale<10 ? 10 : (scale>16 ? 16 : scale), true, false);
     setvar("mapsize", 1<<worldscale, true, false);
-    
+
     texmru.shrink(0);
     freeocta(worldroot);
     worldroot = newcubes(F_EMPTY);
@@ -1264,16 +1264,16 @@ void shrinkmap()
     cube *root = worldroot[octant].children;
     worldroot[octant].children = NULL;
     freeocta(worldroot);
-    worldroot = root; 
+    worldroot = root;
     worldscale--;
-    worldsize /= 2; 
+    worldsize /= 2;
 
     ivec offset(octant, 0, 0, 0, worldsize);
     vector<extentity *> &ents = entities::getents();
     loopv(ents) ents[i]->o.sub(offset.tovec());
 
     shrinkblendmap(octant);
- 
+
     allchanged();
 
     conoutf("shrunk map to size %d", worldscale);

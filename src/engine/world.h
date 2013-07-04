@@ -20,12 +20,12 @@ struct octaheader
     int numvars;
     int numvslots;
 };
-    
+
 #define WATER_AMPLITUDE 0.4f
 #define WATER_OFFSET 1.1f
 
-enum 
-{ 
+enum
+{
     MATSURF_NOT_VISIBLE = 0,
     MATSURF_VISIBLE,
     MATSURF_EDIT_ONLY
@@ -34,4 +34,4 @@ enum
 #define TEX_SCALE 16.0f
 
 struct vertex { vec pos; bvec norm; uchar reserved; vec2 tc; bvec tangent; uchar bitangent; };
- 
+

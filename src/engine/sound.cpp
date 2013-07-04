@@ -31,7 +31,7 @@ struct soundconfig
 
     bool hasslot(const soundslot *p, const vector<soundslot> &v) const
     {
-        return p >= v.getbuf() + slots && p < v.getbuf() + slots+numslots && slots+numslots < v.length(); 
+        return p >= v.getbuf() + slots && p < v.getbuf() + slots+numslots && slots+numslots < v.length();
     }
 
     int chooseslot() const
@@ -41,12 +41,12 @@ struct soundconfig
 };
 
 struct soundchannel
-{ 
+{
     int id;
     bool inuse;
-    vec loc; 
+    vec loc;
     soundslot *slot;
-    extentity *ent; 
+    extentity *ent;
     int radius, volume, pan, flags;
     bool dirty;
 
@@ -164,7 +164,7 @@ void initsound()
         if(sound) conoutf(CON_ERROR, "sound init failed (SDL_mixer): %s", Mix_GetError());
         return;
     }
-	Mix_AllocateChannels(soundchans);	
+    Mix_AllocateChannels(soundchans);
     Mix_ChannelFinished(freechannel);
     maxchannels = soundchans;
     nosound = false;
@@ -192,7 +192,7 @@ Mix_Music *loadmusic(const char *name)
         if(!musicrw) DELETEP(musicstream);
     }
     if(musicrw) music = Mix_LoadMUSType_RW(musicrw, MUS_NONE, 0);
-    else music = Mix_LoadMUS(findfile(name, "rb")); 
+    else music = Mix_LoadMUS(findfile(name, "rb"));
     if(!music)
     {
         if(musicrw) { SDL_FreeRW(musicrw); musicrw = NULL; }
@@ -200,7 +200,7 @@ Mix_Music *loadmusic(const char *name)
     }
     return music;
 }
- 
+
 void startmusic(char *name, char *cmd)
 {
     if(nosound) return;
@@ -222,7 +222,7 @@ void startmusic(char *name, char *cmd)
         else
         {
             conoutf(CON_ERROR, "could not play music: %s", file);
-            intret(0); 
+            intret(0);
         }
     }
 }
@@ -405,7 +405,7 @@ bool updatechannel(soundchannel &chan)
     chan.pan = pan;
     chan.dirty = true;
     return true;
-}  
+}
 
 void updatesounds()
 {
@@ -423,7 +423,7 @@ void updatesounds()
     if(dirty)
     {
         SDL_LockAudio(); // workaround for race conditions inside Mix_SetPanning
-        loopv(channels) 
+        loopv(channels)
         {
             soundchannel &chan = channels[i];
             if(chan.inuse && chan.dirty) syncchannel(chan);
@@ -448,7 +448,7 @@ static Mix_Chunk *loadwav(const char *name)
     if(z)
     {
         SDL_RWops *rw = z->rwops();
-        if(rw) 
+        if(rw)
         {
             c = Mix_LoadWAV_RW(rw, 0);
             SDL_FreeRW(rw);
@@ -475,7 +475,7 @@ static bool loadsoundslot(soundslot &slot, bool msg = false)
         if(slot.sample->chunk) return true;
     }
 
-    conoutf(CON_ERROR, "failed to load sample: media/sound/%s", slot.sample->name); 
+    conoutf(CON_ERROR, "failed to load sample: media/sound/%s", slot.sample->name);
     return false;
 }
 
@@ -505,7 +505,7 @@ void preloadmapsounds()
         if(e.type==ET_SOUND) preloadsound(mapsounds, mapslots, e.attr1);
     }
 }
- 
+
 int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int fade, int chanid, int radius, int expire)
 {
     if(nosound || !soundvol || minimized) return -1;
@@ -526,7 +526,7 @@ int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int f
                 Mix_HaltChannel(chanid);
                 freechannel(chanid);
             }
-            return -1;    
+            return -1;
         }
     }
 
@@ -561,7 +561,7 @@ int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int f
     if(!slot.sample->chunk && !loadsoundslot(slot)) return -1;
 
     if(dbgsound) conoutf("sound: %s", slot.sample->name);
- 
+
     chanid = -1;
     loopv(channels) if(!channels[i].inuse) { chanid = i; break; }
     if(chanid < 0 && channels.length() < maxchannels) chanid = channels.length();
@@ -577,13 +577,13 @@ int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int f
     soundchannel &chan = newchannel(chanid, &slot, loc, ent, flags, radius);
     updatechannel(chan);
     int playing = -1;
-    if(fade) 
+    if(fade)
     {
         Mix_Volume(chanid, chan.volume);
         playing = expire >= 0 ? Mix_FadeInChannelTimed(chanid, slot.sample->chunk, loops, fade, expire) : Mix_FadeInChannel(chanid, slot.sample->chunk, loops, fade);
     }
     else playing = expire >= 0 ? Mix_PlayChannelTimed(chanid, slot.sample->chunk, loops, expire) : Mix_PlayChannel(chanid, slot.sample->chunk, loops);
-    if(playing >= 0) syncchannel(chan); 
+    if(playing >= 0) syncchannel(chan);
     else freechannel(chanid);
     SDL_UnlockAudio();
     return playing;
@@ -610,8 +610,8 @@ bool stopsound(int n, int chanid, int fade)
     return true;
 }
 
-int playsoundname(const char *s, const vec *loc, int vol, int flags, int loops, int fade, int chanid, int radius, int expire) 
-{ 
+int playsoundname(const char *s, const vec *loc, int vol, int flags, int loops, int fade, int chanid, int radius, int expire)
+{
     if(!vol) vol = 100;
     int id = findsound(s, vol, gamesounds, gameslots);
     if(id < 0) id = addsound(s, vol, 0, gamesounds, gameslots);
@@ -623,7 +623,7 @@ ICOMMAND(playsound, "i", (int *n), playsound(*n));
 void resetsound()
 {
     clearchanges(CHANGE_SOUND);
-    if(!nosound) 
+    if(!nosound)
     {
         enumerate(samples, soundsample, s, s.cleanup());
         if(music)
@@ -693,7 +693,7 @@ static MumbleInfo *mumbleinfo = NULL;
 #define VALID_MUMBLELINK (mumblelink && mumbleinfo)
 #elif defined(_POSIX_SHARED_MEMORY_OBJECTS)
 static int mumblelink = -1;
-static MumbleInfo *mumbleinfo = (MumbleInfo *)-1; 
+static MumbleInfo *mumbleinfo = (MumbleInfo *)-1;
 #define VALID_MUMBLELINK (mumblelink >= 0 && mumbleinfo != (MumbleInfo *)-1)
 #endif
 
@@ -737,7 +737,7 @@ void closemumble()
     if(mumbleinfo) { UnmapViewOfFile(mumbleinfo); mumbleinfo = NULL; }
     if(mumblelink) { CloseHandle(mumblelink); mumblelink = NULL; }
 #elif defined(_POSIX_SHARED_MEMORY_OBJECTS)
-    if(mumbleinfo != (MumbleInfo *)-1) { munmap(mumbleinfo, sizeof(MumbleInfo)); mumbleinfo = (MumbleInfo *)-1; } 
+    if(mumbleinfo != (MumbleInfo *)-1) { munmap(mumbleinfo, sizeof(MumbleInfo)); mumbleinfo = (MumbleInfo *)-1; }
     if(mumblelink >= 0) { close(mumblelink); mumblelink = -1; }
 #endif
 }

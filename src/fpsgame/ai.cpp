@@ -93,19 +93,19 @@ namespace ai
         return !d->ai->becareful && d->ammo[d->gunselect] > 0 && lastmillis - d->lastaction >= d->gunwait;
     }
 
-	bool hastarget(fpsent *d, aistate &b, fpsent *e, float yaw, float pitch, float dist)
-	{ // add margins of error
+    bool hastarget(fpsent *d, aistate &b, fpsent *e, float yaw, float pitch, float dist)
+    { // add margins of error
         if(weaprange(d, d->gunselect, dist) || (d->skill <= 100 && !rnd(d->skill)))
         {
             if(d->gunselect == GUN_FIST) return true;
-			float skew = clamp(float(lastmillis-d->ai->enemymillis)/float((d->skill*guns[d->gunselect].attackdelay/200.f)), 0.f, guns[d->gunselect].projspeed ? 0.25f : 1e16f),
+            float skew = clamp(float(lastmillis-d->ai->enemymillis)/float((d->skill*guns[d->gunselect].attackdelay/200.f)), 0.f, guns[d->gunselect].projspeed ? 0.25f : 1e16f),
                 offy = yaw-d->yaw, offp = pitch-d->pitch;
             if(offy > 180) offy -= 360;
             else if(offy < -180) offy += 360;
             if(fabs(offy) <= d->ai->views[0]*skew && fabs(offp) <= d->ai->views[1]*skew) return true;
         }
         return false;
-	}
+    }
 
     vec getaimpos(fpsent *d, fpsent *e)
     {
@@ -226,15 +226,15 @@ namespace ai
     bool makeroute(fpsent *d, aistate &b, int node, bool changed, int retries)
     {
         if(!iswaypoint(d->lastnode)) return false;
-		if(changed && d->ai->route.length() > 1 && d->ai->route[0] == node) return true;
-		if(route(d, d->lastnode, node, d->ai->route, obstacles, retries))
-		{
-			b.override = false;
-			return true;
-		}
+        if(changed && d->ai->route.length() > 1 && d->ai->route[0] == node) return true;
+        if(route(d, d->lastnode, node, d->ai->route, obstacles, retries))
+        {
+            b.override = false;
+            return true;
+        }
         // retry fails: 0 = first attempt, 1 = try ignoring obstacles, 2 = try ignoring prevnodes too
-		if(retries <= 1) return makeroute(d, b, node, false, retries+1);
-		return false;
+        if(retries <= 1) return makeroute(d, b, node, false, retries+1);
+        return false;
     }
 
     bool makeroute(fpsent *d, aistate &b, const vec &pos, bool changed, int retries)
@@ -316,16 +316,16 @@ namespace ai
 
     bool defend(fpsent *d, aistate &b, const vec &pos, float guard, float wander, int walk)
     {
-		bool hasenemy = enemy(d, b, pos, wander, d->gunselect == GUN_FIST ? 1 : 0);
-		if(!walk)
-		{
-		    if(d->feetpos().squaredist(pos) <= guard*guard)
-		    {
+        bool hasenemy = enemy(d, b, pos, wander, d->gunselect == GUN_FIST ? 1 : 0);
+        if(!walk)
+        {
+            if(d->feetpos().squaredist(pos) <= guard*guard)
+            {
                 b.idle = hasenemy ? 2 : 1;
                 return true;
-		    }
-		    walk++;
-		}
+            }
+            walk++;
+        }
         return patrol(d, b, pos, guard, wander, walk);
     }
 
@@ -717,9 +717,9 @@ namespace ai
                     fpsent *e = getclient(b.target);
                     if(e && e->state == CS_ALIVE)
                     {
-                    	float guard = SIGHTMIN, wander = guns[d->gunselect].range;
-                    	if(d->gunselect == GUN_FIST) guard = 0.f;
-                    	return patrol(d, b, e->feetpos(), guard, wander) ? 1 : 0;
+                        float guard = SIGHTMIN, wander = guns[d->gunselect].range;
+                        if(d->gunselect == GUN_FIST) guard = 0.f;
+                        return patrol(d, b, e->feetpos(), guard, wander) ? 1 : 0;
                     }
                     break;
                 }
@@ -871,33 +871,33 @@ namespace ai
 
     void jumpto(fpsent *d, aistate &b, const vec &pos)
     {
-		vec off = vec(pos).sub(d->feetpos()), dir(off.x, off.y, 0);
+        vec off = vec(pos).sub(d->feetpos()), dir(off.x, off.y, 0);
         bool sequenced = d->ai->blockseq || d->ai->targseq, offground = d->timeinair && !d->inwater,
             jump = !offground && lastmillis >= d->ai->jumpseed && (sequenced || off.z >= JUMPMIN || lastmillis >= d->ai->jumprand);
-		if(jump)
-		{
-			vec old = d->o;
-			d->o = vec(pos).add(vec(0, 0, d->eyeheight));
-			if(!collide(d, vec(0, 0, 1))) jump = false;
-			d->o = old;
-			if(jump)
-			{
-				float radius = 18*18;
-				loopv(entities::ents) if(entities::ents[i]->type == JUMPPAD)
-				{
-					fpsentity &e = *(fpsentity *)entities::ents[i];
-					if(e.o.squaredist(pos) <= radius) { jump = false; break; }
-				}
-			}
-		}
-		if(jump)
-		{
-			d->jumping = true;
-			int seed = (111-d->skill)*(d->inwater ? 3 : 5);
-			d->ai->jumpseed = lastmillis+seed+rnd(seed);
-			seed *= b.idle ? 50 : 25;
-			d->ai->jumprand = lastmillis+seed+rnd(seed);
-		}
+        if(jump)
+        {
+            vec old = d->o;
+            d->o = vec(pos).add(vec(0, 0, d->eyeheight));
+            if(!collide(d, vec(0, 0, 1))) jump = false;
+            d->o = old;
+            if(jump)
+            {
+                float radius = 18*18;
+                loopv(entities::ents) if(entities::ents[i]->type == JUMPPAD)
+                {
+                    fpsentity &e = *(fpsentity *)entities::ents[i];
+                    if(e.o.squaredist(pos) <= radius) { jump = false; break; }
+                }
+            }
+        }
+        if(jump)
+        {
+            d->jumping = true;
+            int seed = (111-d->skill)*(d->inwater ? 3 : 5);
+            d->ai->jumpseed = lastmillis+seed+rnd(seed);
+            seed *= b.idle ? 50 : 25;
+            d->ai->jumprand = lastmillis+seed+rnd(seed);
+        }
     }
 
     void fixfullrange(float &yaw, float &pitch, float &roll, bool full)
@@ -997,7 +997,7 @@ namespace ai
             d->ai->spot = vec(0, 0, 0);
         }
 
-		if(!d->ai->dontmove) jumpto(d, b, d->ai->spot);
+        if(!d->ai->dontmove) jumpto(d, b, d->ai->spot);
 
         fpsent *e = getclient(d->ai->enemy);
         bool enemyok = e && targetable(d, e);
@@ -1144,8 +1144,8 @@ namespace ai
         return process(d, b) >= 2;
     }
 
-	void timeouts(fpsent *d, aistate &b)
-	{
+    void timeouts(fpsent *d, aistate &b)
+    {
         if(d->blocked)
         {
             d->ai->blocktime += lastmillis-d->ai->lastrun;
@@ -1205,7 +1205,7 @@ namespace ai
                 }
             }
         }
-	}
+    }
 
     void logic(fpsent *d, aistate &b, bool run)
     {
@@ -1223,8 +1223,8 @@ namespace ai
                 if(d->ragdoll) cleanragdoll(d);
                 moveplayer(d, 10, true);
                 if(allowmove && !b.idle) timeouts(d, b);
-				entities::checkitems(d);
-				if(cmode) cmode->checkitems(d);
+                entities::checkitems(d);
+                if(cmode) cmode->checkitems(d);
             }
         }
         else if(d->state == CS_DEAD)
@@ -1239,7 +1239,7 @@ namespace ai
         d->attacking = d->jumping = false;
     }
 
-	void avoid()
+    void avoid()
     {
         // guess as to the radius of ai and other critters relying on the avoid set for now
         float guessradius = player1->radius;
@@ -1250,9 +1250,9 @@ namespace ai
             if(d->state != CS_ALIVE) continue;
             obstacles.avoidnear(d, d->o.z + d->aboveeye + 1, d->feetpos(), guessradius + d->radius);
         }
-		extern avoidset wpavoid;
-		obstacles.add(wpavoid);
-		avoidweapons(obstacles, guessradius);
+        extern avoidset wpavoid;
+        obstacles.add(wpavoid);
+        avoidweapons(obstacles, guessradius);
     }
 
     void think(fpsent *d, bool run)

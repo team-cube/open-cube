@@ -76,12 +76,12 @@ namespace game
         if(!radarteammates) return;
         float scale = calcradarscale();
         int alive = 0, dead = 0;
-        loopv(players) 
+        loopv(players)
         {
             fpsent *o = players[i];
             if(o != d && o->state == CS_ALIVE && o->team == d->team)
             {
-                if(!alive++) 
+                if(!alive++)
                 {
                     setbliptex(d->team, "_alive");
                     gle::defvertex(2);
@@ -92,12 +92,12 @@ namespace game
             }
         }
         if(alive) gle::end();
-        loopv(players) 
+        loopv(players)
         {
             fpsent *o = players[i];
             if(o != d && o->state == CS_DEAD && o->team == d->team)
             {
-                if(!dead++) 
+                if(!dead++)
                 {
                     setbliptex(d->team, "_dead");
                     gle::defvertex(2);
@@ -109,7 +109,7 @@ namespace game
         }
         if(dead) gle::end();
     }
-        
+
     #include "ctf.h"
 
     clientmode *cmode = NULL;
@@ -148,7 +148,7 @@ namespace game
         if(team[0])
         {
             int num = isdigit(team[0]) ? parseint(team) : teamnumber(team);
-            if(!validteam(num)) return;    
+            if(!validteam(num)) return;
             if(player1->clientnum < 0) player1->team = num;
             else addmsg(N_SWITCHTEAM, "ri", num);
         }
@@ -157,7 +157,7 @@ namespace game
     }
     ICOMMAND(team, "s", (char *s), switchteam(s));
     ICOMMAND(getteam, "", (), intret(m_teammode && validteam(player1->team) ? player1->team : 0));
-    ICOMMAND(getteamname, "i", (int *num), result(teamname(*num))); 
+    ICOMMAND(getteamname, "i", (int *num), result(teamname(*num)));
 
     void switchplayermodel(int playermodel)
     {
@@ -401,7 +401,7 @@ namespace game
     {
         authkey *a = findauthkey(desc);
         int vn = parseplayer(victim);
-        if(a && vn>=0 && vn!=player1->clientnum) 
+        if(a && vn>=0 && vn!=player1->clientnum)
         {
             a->lastauth = lastmillis;
             addmsg(N_AUTHKICK, "rssis", a->desc, a->name, vn, reason);
@@ -432,7 +432,7 @@ namespace game
     bool isignored(int cn) { return ignores.find(cn) >= 0; }
 
     ICOMMAND(ignore, "s", (char *arg), ignore(parseplayer(arg)));
-    ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg))); 
+    ICOMMAND(unignore, "s", (char *arg), unignore(parseplayer(arg)));
     ICOMMAND(isignored, "s", (char *arg), intret(isignored(parseplayer(arg)) ? 1 : 0));
 
     void setteam(const char *who, const char *team)
@@ -465,7 +465,7 @@ namespace game
         }
         string hash = "";
         if(!arg[1] && isdigit(arg[0])) val = parseint(arg);
-        else 
+        else
         {
             if(cn != player1->clientnum) return;
             server::hashpassword(player1->clientnum, sessionid, arg, hash);
@@ -532,7 +532,7 @@ namespace game
     }
     ICOMMAND(mode, "i", (int *val), setmode(*val));
     ICOMMAND(getmode, "", (), intret(gamemode));
-    ICOMMAND(timeremaining, "i", (int *formatted), 
+    ICOMMAND(timeremaining, "i", (int *formatted),
     {
         int val = max(maplimit - lastmillis, 0)/1000;
         if(*formatted) result(tempformatstring("%d:%02d", val/60, val%60));
@@ -657,7 +657,7 @@ namespace game
                 int val = *id->storage.i;
                 string str;
                 if(val < 0)
-                    formatstring(str, "%d", val); 
+                    formatstring(str, "%d", val);
                 else if(id->flags&IDF_HEX && id->maxval==0xFFFFFF)
                     formatstring(str, "0x%.6X (%d, %d, %d)", val, (val>>16)&0xFF, (val>>8)&0xFF, val&0xFF);
                 else
@@ -703,10 +703,10 @@ namespace game
     }
     ICOMMAND(pausegame, "i", (int *val), pausegame(*val > 0));
     ICOMMAND(paused, "iN$", (int *val, int *numargs, ident *id),
-    { 
+    {
         if(*numargs > 0) pausegame(clampvar(id, *val, 0, 1) > 0);
         else if(*numargs < 0) intret(gamepaused ? 1 : 0);
-        else printvar(id, gamepaused ? 1 : 0); 
+        else printvar(id, gamepaused ? 1 : 0);
     });
 
     bool ispaused() { return gamepaused; }
@@ -1221,7 +1221,7 @@ namespace game
                 else conoutf("gamespeed is %d", val);
                 break;
             }
-                
+
             case N_CLIENT:
             {
                 int cn = getint(p), len = getuint(p);
@@ -1393,7 +1393,7 @@ namespace game
                     lasthit = 0;
                 }
                 if(cmode) cmode->respawned(s);
-				ai::spawned(s);
+                ai::spawned(s);
                 addmsg(N_SPAWN, "rcii", s, s->lifesequence, s->gunselect);
                 break;
             }

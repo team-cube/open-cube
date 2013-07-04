@@ -13,7 +13,7 @@ static int clipcacheversion = -2;
 static inline clipplanes &getclipplanes(const cube &c, const ivec &o, int size, bool collide = true, int offset = 0)
 {
     clipplanes &p = clipcache[int(&c - worldroot)&(MAXCLIPPLANES-1)];
-    if(p.owner != &c || p.version != clipcacheversion+offset) 
+    if(p.owner != &c || p.version != clipcacheversion+offset)
     {
         p.owner = &c;
         p.version = clipcacheversion+offset;
@@ -760,7 +760,7 @@ static bool fuzzycollideellipse(physent *d, const vec &dir, float cutoff, const 
             default:
             case 0: w = mdlvol.orient.c; dist = -radius.z; break;
             case 1: w = vec(mdlvol.orient.c).neg(); dist = -radius.z; break;
-            case 2: 
+            case 2:
             {
                 vec2 ln(mdlvol.orient.transform(entvol.center().sub(mdlvol.o)));
                 float r = ln.magnitude();
@@ -769,7 +769,7 @@ static bool fuzzycollideellipse(physent *d, const vec &dir, float cutoff, const 
                 w = mdlvol.orient.transposedtransform(lw);
                 dist = -vec2(ln.x*radius.x, ln.y*radius.y).dot(lw)/r;
                 break;
-            }   
+            }
         }
         vec pw = entvol.supportpoint(vec(w).neg());
         dist += w.dot(vec(pw).sub(mdlvol.o));
@@ -815,7 +815,7 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
                 if(m->ellipsecollide)
                 {
                     //if(!mmcollide<mpr::EntCylinder, mpr::ModelEllipse>(d, dir, e, center, radius, yaw, pitch, roll)) return false;
-                    if(pitch || roll) 
+                    if(pitch || roll)
                     {
                         if(!fuzzycollideellipse<mpr::EntCapsule>(d, dir, cutoff, e.o, center, radius, yaw, pitch, roll)) return false;
                     }
@@ -825,7 +825,7 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
                 else if(pitch || roll)
                 {
                     if(!fuzzycolliderect<mpr::EntCapsule>(d, dir, cutoff, e.o, center, radius, yaw, pitch, roll)) return false;
-                } 
+                }
                 else if(!ellipserectcollide(d, dir, e.o, center, yaw, radius.x, radius.y, radius.z, radius.z)) return false;
                 break;
             case COLLIDE_OBB:
@@ -912,7 +912,7 @@ static inline bool clampcollide(const clipplanes &p, const E &entvol, const plan
     }
     return false;
 }
-    
+
 template<class E>
 static bool fuzzycollideplanes(physent *d, const vec &dir, float cutoff, const cube &c, const ivec &co, int size) // collide with deformed cube geometry
 {
@@ -1352,7 +1352,7 @@ bool trystepdown(physent *d, vec &dir, float step, float xy, float z, bool init 
             stepfloor.normalize();
             if(d->physstate >= PHYS_SLOPE && d->floor != stepfloor)
             {
-                // prevent alternating step-down/step-up states if player would keep bumping into the same floor 
+                // prevent alternating step-down/step-up states if player would keep bumping into the same floor
                 vec stepped(d->o);
                 d->o.z -= 0.5f;
                 d->zmargin = -0.5f;
@@ -1672,15 +1672,15 @@ bool droptofloor(vec &o, float radius, float height)
 {
     static struct dropent : physent
     {
-        dropent() 
-        { 
-            type = ENT_CAMERA; 
-            //collidetype = COLLIDE_AABB; 
+        dropent()
+        {
+            type = ENT_CAMERA;
+            //collidetype = COLLIDE_AABB;
             vel = vec(0, 0, -1);
         }
     } d;
     d.o = o;
-    if(!insideworld(d.o)) 
+    if(!insideworld(d.o))
     {
         if(d.o.z < worldsize) return false;
         d.o.z = worldsize - 1e-3f;
