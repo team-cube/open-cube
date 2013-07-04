@@ -318,7 +318,7 @@ struct gui : g3d_gui
             {
                 hudnotextureshader->set();
                 gle::colorf(0, 0, 0, 0.75f);
-                rect_(xi+SHADOW, yi+SHADOW, xs, ys, -1);
+                rect_(xi+SHADOW, yi+SHADOW, xs, ys);
                 hudshader->set();
             }
             int x1 = int(floor(screenw*(xi*scale.x+origin.x))), y1 = int(floor(screenh*(1 - ((yi+ys)*scale.y+origin.y)))),
@@ -338,7 +338,7 @@ struct gui : g3d_gui
                     hudnotextureshader->set();
                     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
                     gle::colorf(1, 0.5f, 0.5f);
-                    rect_(xi, yi, xs, ys, -1);
+                    rect_(xi, yi, xs, ys);
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
@@ -364,7 +364,7 @@ struct gui : g3d_gui
             {
                 hudnotextureshader->set();
                 gle::colorf(0, 0, 0, 0.75f);
-                rect_(xi+SHADOW, yi+SHADOW, xs, ys, -1);
+                rect_(xi+SHADOW, yi+SHADOW, xs, ys);
                 hudshader->set();
             }
             int x1 = int(floor(screenw*(xi*scale.x+origin.x))), y1 = int(floor(screenh*(1 - ((yi+ys)*scale.y+origin.y)))),
@@ -393,7 +393,7 @@ struct gui : g3d_gui
                     hudnotextureshader->set();
                     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
                     gle::colorf(1, 0.5f, 0.5f);
-                    rect_(xi, yi, xs, ys, -1);
+                    rect_(xi, yi, xs, ys);
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     hudshader->set();
                 }
@@ -515,7 +515,7 @@ struct gui : g3d_gui
             glDisable(GL_BLEND);
             if(editing) gle::colorf(1, 0, 0);
             else gle::color(vec::hexcolor(color));
-            rect_(curx, cury, w, h, -1, true);
+            rect_(curx, cury, w, h, true);
             glEnable(GL_BLEND);
             hudshader->set();
         }
@@ -536,30 +536,29 @@ struct gui : g3d_gui
         return result;
     }
 
-    void rect_(float x, float y, float w, float h, int usetc = -1, bool lines = false)
+    void rect_(float x, float y, float w, float h, bool lines = false)
     {
         gle::defvertex(2);
-        if(usetc >= 0) gle::deftexcoord0();
         gle::begin(lines ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
-        static const vec2 tc[5] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1), vec2(0, 0) };
         gle::attribf(x, y);
-        if(usetc>=0) gle::attrib(tc[usetc]);
         gle::attribf(x + w, y);
-        if(usetc>=0) gle::attrib(tc[usetc+1]);
-        if(lines)
-        {
-            gle::attribf(x + w, y + h);
-            if(usetc>=0) gle::attrib(tc[usetc+2]);
-        }
+        if(lines) gle::attribf(x + w, y + h);
         gle::attribf(x, y + h);
-        if(usetc>=0) gle::attrib(tc[usetc+3]);
-        if(!lines)
-        {
-            gle::attribf(x + w, y + h);
-            if(usetc>=0) gle::attrib(tc[usetc+2]);
-        }
+        if(!lines) gle::attribf(x + w, y + h);
         xtraverts += gle::end();
+    }
 
+    void rect_(float x, float y, float w, float h, int usetc)
+    {
+        gle::defvertex(2);
+        gle::deftexcoord0();
+        gle::begin(GL_TRIANGLE_STRIP);
+        static const vec2 tc[5] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1), vec2(0, 0) };
+        gle::attribf(x, y); gle::attrib(tc[usetc]);
+        gle::attribf(x + w, y); gle::attrib(tc[usetc+1]);
+        gle::attribf(x, y + h); gle::attrib(tc[usetc+3]);
+        gle::attribf(x + w, y + h); gle::attrib(tc[usetc+2]);
+        xtraverts += gle::end();
     }
 
     void text_(const char *text, int x, int y, int color, bool shadow, bool force = false)
