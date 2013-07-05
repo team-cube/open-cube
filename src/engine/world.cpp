@@ -491,6 +491,7 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
         else
             es.div(2);  // cause the usual bb is too big...
 #endif
+        es.max(entselradius);
         eo.add(e.o);
     }
     else
