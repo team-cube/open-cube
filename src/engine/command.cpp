@@ -1001,7 +1001,7 @@ static inline void compileident(vector<uint> &code, const stringslice &word)
 
 static inline void compileint(vector<uint> &code, const stringslice &word)
 {
-    compileint(code, word.len ? sparseint(word.str) : 0);
+    compileint(code, word.len ? parseint(word.str) : 0);
 }
 
 static inline void compilefloat(vector<uint> &code, float f = 0.0f)
