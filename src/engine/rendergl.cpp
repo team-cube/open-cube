@@ -798,7 +798,6 @@ void gl_checkextensions()
     }
     else if(nvidia)
     {
-        lighttilestrip = 0;
     }
     else if(intel)
     {
