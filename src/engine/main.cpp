@@ -64,7 +64,7 @@ void fatal(const char *s, ...)    // failure exit
 }
 
 SDL_Window *screen = NULL;
-int screenw = 0, screenh = 0;
+int screenw = 0, screenh = 0, renderw = 0, renderh = 0;
 SDL_GLContext glcontext = NULL;
 
 int curtime = 0, totalmillis = 1, lastmillis = 1;
@@ -89,6 +89,8 @@ bool initwarning(const char *desc, int level, int type)
 #define SCR_MAXH 10000
 #define SCR_DEFAULTW 1024
 #define SCR_DEFAULTH 768
+VAR(desktopw, 1, 0, 0);
+VAR(desktoph, 1, 0, 0);
 VARFN(screenw, scr_w, SCR_MINW, -1, SCR_MAXW, initwarning("screen resolution"));
 VARFN(screenh, scr_h, SCR_MINH, -1, SCR_MAXH, initwarning("screen resolution"));
 
@@ -422,7 +424,9 @@ void inputgrab(bool on)
 void setfullscreen(bool enable)
 {
     if(!screen) return;
-    initwarning(enable ? "fullscreen" : "windowed");
+    //initwarning(enable ? "fullscreen" : "windowed");
+    SDL_SetWindowFullscreen(screen, enable ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    if(!enable) SDL_SetWindowSize(screen, scr_w, scr_h);
 }
 
 #ifdef _DEBUG
@@ -433,11 +437,20 @@ VARF(fullscreen, 0, 1, 1, setfullscreen(fullscreen!=0));
 
 void screenres(int w, int h)
 {
-    scr_w = clamp(w, SCR_MINW, SCR_MAXW);
-    scr_h = clamp(h, SCR_MINH, SCR_MAXH);
-    if(screen && SDL_GetWindowFlags(screen) & SDL_WINDOW_RESIZABLE)
+    scr_w = min(clamp(w, SCR_MINW, SCR_MAXW), desktopw);
+    scr_h = min(clamp(h, SCR_MINH, SCR_MAXH), desktoph);
+    if(screen)
     {
-        SDL_SetWindowSize(screen, scr_w, scr_h);
+        if(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN)
+        {
+            renderw = min(scr_w, screenw);
+            renderh = min(scr_h, screenh);
+            gl_resize();
+        }
+        else
+        {
+            SDL_SetWindowSize(screen, scr_w, scr_h);
+        }
     }
     else
     {
@@ -490,75 +503,27 @@ void setupscreen()
         screen = NULL;
     }
 
-    SDL_Rect desktop;
-    memset(&desktop, 0, sizeof(desktop));
-    SDL_GetDisplayBounds(0, &desktop);
+    SDL_DisplayMode desktop;
+    if(SDL_GetDesktopDisplayMode(0, &desktop) < 0) fatal("failed querying desktop display mode: %s", SDL_GetError());
+    desktopw = desktop.w;
+    desktoph = desktop.h;
 
-    int flags = SDL_WINDOW_RESIZABLE;
-    if(fullscreen) flags = SDL_WINDOW_FULLSCREEN;
-    int nummodes = SDL_GetNumDisplayModes(0);
-    vector<SDL_DisplayMode> modes;
-    loopi(nummodes) if(SDL_GetDisplayMode(0, i, &modes.add()) < 0) modes.drop();
-    if(modes.length())
-    {
-        int widest = -1, best = -1;
-        loopv(modes)
-        {
-            if(dbgmodes) conoutf(CON_DEBUG, "mode[%d]: %d x %d", i, modes[i].w, modes[i].h);
-            if(widest < 0 || modes[i].w > modes[widest].w || (modes[i].w == modes[widest].w && modes[i].h > modes[widest].h))
-                widest = i;
-        }
-        if(scr_w < 0 || scr_h < 0)
-        {
-            int w = scr_w, h = scr_h, ratiow = desktop.w, ratioh = desktop.h;
-            if(w < 0 && h < 0) { w = SCR_DEFAULTW; h = SCR_DEFAULTH; }
-            if(ratiow <= 0 || ratioh <= 0) { ratiow = modes[widest].w; ratioh = modes[widest].h; }
-            loopv(modes) if(modes[i].w*ratioh == modes[i].h*ratiow)
-            {
-                if(w <= modes[i].w && h <= modes[i].h && (best < 0 || modes[i].w < modes[best].w))
-                    best = i;
-            }
-        }
-        if(best < 0)
-        {
-            int w = scr_w, h = scr_h;
-            if(w < 0 && h < 0) { w = SCR_DEFAULTW; h = SCR_DEFAULTH; }
-            else if(w < 0) w = (h*SCR_DEFAULTW)/SCR_DEFAULTH;
-            else if(h < 0) h = (w*SCR_DEFAULTH)/SCR_DEFAULTW;
-            loopv(modes)
-            {
-                if(w <= modes[i].w && h <= modes[i].h && (best < 0 || modes[i].w < modes[best].w || (modes[i].w == modes[best].w && modes[i].h < modes[best].h)))
-                    best = i;
-            }
-        }
-        if(flags&SDL_WINDOW_FULLSCREEN)
-        {
-            if(best >= 0) { scr_w = modes[best].w; scr_h = modes[best].h; }
-            else if(desktop.w > 0 && desktop.h > 0) { scr_w = desktop.w; scr_h = desktop.h; }
-            else if(widest >= 0) { scr_w = modes[widest].w; scr_h = modes[widest].h; }
-        }
-        else if(best < 0)
-        {
-            scr_w = min(scr_w >= 0 ? scr_w : (scr_h >= 0 ? (scr_h*SCR_DEFAULTW)/SCR_DEFAULTH : SCR_DEFAULTW), (int)modes[widest].w);
-            scr_h = min(scr_h >= 0 ? scr_h : (scr_w >= 0 ? (scr_w*SCR_DEFAULTH)/SCR_DEFAULTW : SCR_DEFAULTH), (int)modes[widest].h);
-        }
-        if(dbgmodes) conoutf(CON_DEBUG, "selected %d x %d", scr_w, scr_h);
-    }
-    if(scr_w < 0 && scr_h < 0) { scr_w = SCR_DEFAULTW; scr_h = SCR_DEFAULTH; }
-    else if(scr_w < 0) scr_w = (scr_h*SCR_DEFAULTW)/SCR_DEFAULTH;
-    else if(scr_h < 0) scr_h = (scr_w*SCR_DEFAULTH)/SCR_DEFAULTW;
+    if(scr_h < 0) scr_h = SCR_DEFAULTH;
+    if(scr_w < 0) scr_w = (scr_h*desktopw)/desktoph;
+    scr_w = min(scr_w, desktopw);
+    scr_h = min(scr_h, desktoph);
+
+    int winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
+    if(fullscreen) { winw = desktopw; winh = desktoph; flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; }
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-    screen = SDL_CreateWindow("Tesseract", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scr_w, scr_h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
+    screen = SDL_CreateWindow("Tesseract", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, winw, winh, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
     if(!screen) fatal("failed to create OpenGL window: %s", SDL_GetError());
 
-    if(flags&SDL_WINDOW_RESIZABLE)
-    {
-        SDL_SetWindowMinimumSize(screen, SCR_MINW, SCR_MINH);
-        SDL_SetWindowMaximumSize(screen, SCR_MAXW, SCR_MAXH);
-    }
+    SDL_SetWindowMinimumSize(screen, SCR_MINW, SCR_MINH);
+    SDL_SetWindowMaximumSize(screen, SCR_MAXW, SCR_MAXH);
 
     static const struct { int major, minor; } coreversions[] = { { 3, 3 }, { 3, 2 }, { 3, 1 }, { 3, 0 } };
     loopi(sizeof(coreversions)/sizeof(coreversions[0]))
@@ -579,6 +544,8 @@ void setupscreen()
     }
 
     SDL_GetWindowSize(screen, &screenw, &screenh);
+    renderw = min(scr_w, screenw);
+    renderh = min(scr_h, screenh);
 
     restorevsync();
 }
@@ -615,7 +582,7 @@ void resetgl()
 
     inputgrab(grabinput);
 
-    gl_init(scr_w, scr_h);
+    gl_init();
 
     extern void reloadfonts();
     extern void reloadtextures();
@@ -794,14 +761,19 @@ void checkinput()
                         minimized = false;
                         break;
 
+                    case SDL_WINDOWEVENT_RESIZED:
+                        break;
+
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
-                        if(SDL_GetWindowFlags(screen) & SDL_WINDOW_RESIZABLE)
+                        SDL_GetWindowSize(screen, &screenw, &screenh);
+                        if(!(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN))
                         {
-                            SDL_GetWindowSize(screen, &screenw, &screenh);
                             scr_w = clamp(screenw, SCR_MINW, SCR_MAXH);
                             scr_h = clamp(screenh, SCR_MINW, SCR_MAXH);
-                            gl_resize(screenw, screenh);
                         }
+                        renderw = min(scr_w, screenw);
+                        renderh = min(scr_h, screenh);
+                        gl_resize();
                         break;
                 }
                 break;
@@ -1100,7 +1072,7 @@ int main(int argc, char **argv)
 
     logoutf("init: gl");
     gl_checkextensions();
-    gl_init(scr_w, scr_h);
+    gl_init();
     notexture = textureload("media/texture/notexture.png");
     if(!notexture) fatal("could not find core textures");
 
@@ -1214,11 +1186,11 @@ int main(int argc, char **argv)
 
         if(minimized) continue;
 
-        if(!mainmenu) setupframe(screenw, screenh);
+        if(!mainmenu) setupframe();
 
         inbetweenframes = false;
-        if(mainmenu) gl_drawmainmenu(screenw, screenh);
-        else gl_drawframe(screenw, screenh);
+        if(mainmenu) gl_drawmainmenu();
+        else gl_drawframe();
         swapbuffers();
         renderedframe = inbetweenframes = true;
     }

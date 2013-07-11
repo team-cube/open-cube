@@ -28,7 +28,7 @@ extern const uchar faceedgesidx[6][4];
 extern bool inbetweenframes, renderedframe;
 
 extern SDL_Window *screen;
-extern int screenw, screenh;
+extern int screenw, screenh, renderw, renderh;
 
 extern vector<int> entgroup;
 
@@ -136,11 +136,12 @@ extern void glerror(const char *file, int line, GLenum error);
 #define GLERROR do { if(glerr) { GLenum error = glGetError(); if(error != GL_NO_ERROR) glerror(__FILE__, __LINE__, error); } } while(0)
 
 extern void gl_checkextensions();
-extern void gl_init(int w, int h);
-extern void gl_resize(int w, int h);
+extern void gl_init();
+extern void gl_resize();
 extern void cleangl();
-extern void gl_drawframe(int w, int h);
-extern void gl_drawmainmenu(int w, int h);
+extern void gl_drawframe();
+extern void gl_drawmainmenu();
+extern void gl_drawhud();
 extern void drawminimap();
 extern void enablepolygonoffset(GLenum type);
 extern void disablepolygonoffset(GLenum type);
@@ -342,10 +343,10 @@ extern void renderao();
 extern void loadhdrshaders(int aa = AA_UNUSED);
 extern void processhdr(GLuint outfbo = 0, int aa = AA_UNUSED);
 extern void readhdr(int w, int h, GLenum format, GLenum type, void *dst, GLenum target = 0, GLuint tex = 0);
-extern void setupframe(int w, int h);
-extern void setupgbuffer(int w, int h);
+extern void setupframe();
+extern void setupgbuffer();
 extern GLuint shouldscale();
-extern void doscale(int w, int h);
+extern void doscale();
 extern bool debuglights();
 extern void cleanuplights();
 
