@@ -366,6 +366,8 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
     swapbuffers();
 }
 
+VARNP(relativemouse, userelativemouse, 0, 1, 1);
+
 bool grabinput = false, minimized = false, canrelativemouse = true, relativemouse = false;
 int keyrepeatmask = 0, textinputmask = 0;
 
@@ -394,7 +396,7 @@ void inputgrab(bool on)
     if(on)
     {
         SDL_ShowCursor(SDL_FALSE);
-        if(canrelativemouse)
+        if(canrelativemouse && userelativemouse)
         {
             if(SDL_SetRelativeMouseMode(SDL_TRUE) >= 0)
             {
