@@ -421,7 +421,7 @@ void inputgrab(bool on)
     }
 }
 
-bool initposition = false;
+bool initwindowpos = false;
 
 void setfullscreen(bool enable)
 {
@@ -431,10 +431,10 @@ void setfullscreen(bool enable)
     if(!enable) 
     {
         SDL_SetWindowSize(screen, scr_w, scr_h);
-        if(initposition)
+        if(initwindowpos)
         {
             SDL_SetWindowPosition(screen, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-            initposition = false;
+            initwindowpos = false;
         }
     }
 }
@@ -530,7 +530,7 @@ void setupscreen()
         winh = desktoph; 
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; 
 #ifdef WIN32
-        initposition = true;
+        initwindowpos = true;
 #endif
     }
 
