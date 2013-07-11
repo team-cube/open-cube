@@ -64,7 +64,7 @@ void fatal(const char *s, ...)    // failure exit
 }
 
 SDL_Window *screen = NULL;
-int screenw = 0, screenh = 0, renderw = 0, renderh = 0;
+int screenw = 0, screenh = 0, renderw = 0, renderh = 0, desktopw = 0, desktoph = 0;
 SDL_GLContext glcontext = NULL;
 
 int curtime = 0, totalmillis = 1, lastmillis = 1;
@@ -89,8 +89,6 @@ bool initwarning(const char *desc, int level, int type)
 #define SCR_MAXH 10000
 #define SCR_DEFAULTW 1024
 #define SCR_DEFAULTH 768
-VAR(desktopw, 1, 0, 0);
-VAR(desktoph, 1, 0, 0);
 VARFN(screenw, scr_w, SCR_MINW, -1, SCR_MAXW, initwarning("screen resolution"));
 VARFN(screenh, scr_h, SCR_MINH, -1, SCR_MAXH, initwarning("screen resolution"));
 
@@ -449,10 +447,12 @@ VARF(fullscreen, 0, 1, 1, setfullscreen(fullscreen!=0));
 
 void screenres(int w, int h)
 {
-    scr_w = min(clamp(w, SCR_MINW, SCR_MAXW), desktopw);
-    scr_h = min(clamp(h, SCR_MINH, SCR_MAXH), desktoph);
+    scr_w = clamp(w, SCR_MINW, SCR_MAXW);
+    scr_h = clamp(h, SCR_MINH, SCR_MAXH);
     if(screen)
     {
+        scr_w = min(scr_w, desktopw);
+        scr_h = min(scr_h, desktoph);
         if(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN)
         {
             renderw = min(scr_w, screenw);
