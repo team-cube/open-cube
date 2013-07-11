@@ -2070,7 +2070,7 @@ void gl_drawframe()
     GLuint scalefbo = shouldscale();
     if(scalefbo) { vieww = gw; viewh = gh; }
     else { vieww = screenw; viewh = screenh; }
-    aspect = forceaspect ? forceaspect : vieww/float(viewh);
+    aspect = forceaspect ? forceaspect : screenw/float(screenh);
     fovy = 2*atan2(tan(curfov/2*RAD), aspect)/RAD;
 
     float fogmargin = 1 + WATER_AMPLITUDE + nearplane;
