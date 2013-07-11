@@ -99,8 +99,8 @@ void writeinitcfg()
     f->printf("// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
     extern int fullscreen;
     f->printf("fullscreen %d\n", fullscreen);
-    f->printf("scr_w %d\n", scr_w);
-    f->printf("scr_h %d\n", scr_h);
+    f->printf("screenw %d\n", scr_w);
+    f->printf("screenh %d\n", scr_h);
     extern int sound, soundchans, soundfreq, soundbufferlen;
     f->printf("sound %d\n", sound);
     f->printf("soundchans %d\n", soundchans);
