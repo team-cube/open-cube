@@ -421,12 +421,22 @@ void inputgrab(bool on)
     }
 }
 
+bool initposition = false;
+
 void setfullscreen(bool enable)
 {
     if(!screen) return;
     //initwarning(enable ? "fullscreen" : "windowed");
     SDL_SetWindowFullscreen(screen, enable ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    if(!enable) SDL_SetWindowSize(screen, scr_w, scr_h);
+    if(!enable) 
+    {
+        SDL_SetWindowSize(screen, scr_w, scr_h);
+        if(initposition)
+        {
+            SDL_SetWindowPosition(screen, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+            initposition = false;
+        }
+    }
 }
 
 #ifdef _DEBUG
@@ -514,12 +524,20 @@ void setupscreen()
     scr_h = min(scr_h, desktoph);
 
     int winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
-    if(fullscreen) { winw = desktopw; winh = desktoph; flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; }
+    if(fullscreen) 
+    { 
+        winw = desktopw; 
+        winh = desktoph; 
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; 
+#ifdef WIN32
+        initposition = true;
+#endif
+    }
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-    screen = SDL_CreateWindow("Tesseract", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, winw, winh, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
+    screen = SDL_CreateWindow("Tesseract", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, winw, winh, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
     if(!screen) fatal("failed to create OpenGL window: %s", SDL_GetError());
 
     SDL_SetWindowMinimumSize(screen, SCR_MINW, SCR_MINH);
