@@ -794,7 +794,7 @@ void checkinput()
                         minimized = false;
                         break;
 
-                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
                         if(SDL_GetWindowFlags(screen) & SDL_WINDOW_RESIZABLE)
                         {
                             SDL_GetWindowSize(screen, &screenw, &screenh);
