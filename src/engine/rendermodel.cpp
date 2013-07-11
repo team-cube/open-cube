@@ -153,9 +153,8 @@ COMMAND(mdlspin, "fff");
 void mdlscale(float *percent)
 {
     checkmdl;
-    float scale = 0.3f;
+    float scale = 1.0f;
     if(*percent>0) scale = *percent/100.0f;
-    else if(*percent<0) scale = 0.0f;
     loadingmodel->scale = scale;
 }
 
