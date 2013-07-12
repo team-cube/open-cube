@@ -1661,7 +1661,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                 case ID_AND:
                 case ID_OR:
                     if(more) more = compilearg(code, p, VAL_COND);
-                    if(!more) compileint(code, id->type == ID_AND ? 1 : 0);
+                    if(!more) { compileint(code, id->type == ID_AND ? 1 : 0); code.add(CODE_RESULT | retcodeany(rettype)); }
                     else 
                     {
                         numargs++;
