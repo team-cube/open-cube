@@ -1660,14 +1660,12 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     break;
                 case ID_AND:
                 case ID_OR:
-                {
-                    int start1 = code.length();
                     if(more) more = compilearg(code, p, VAL_COND);
                     if(!more) compileint(code, id->type == ID_AND ? 1 : 0);
                     else 
                     {
                         numargs++;
-                        int start2 = code.length(), end = start2;
+                        int start = code.length(), end = start;
                         while(numargs < MAXARGS)
                         {
                             more = compilearg(code, p, VAL_COND);
@@ -1682,18 +1680,17 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                             uint op = id->type == ID_AND ? CODE_JUMP_RESULT_FALSE : CODE_JUMP_RESULT_TRUE;
                             code.add(op);
                             end = code.length();
-                            while(start2+1 < end)
+                            while(start+1 < end)
                             {
-                                uint len = code[start2]>>8;
-                                code[start2] = ((end-(start2+1))<<8) | op;
-                                code[start2+1] = CODE_ENTER;
-                                code[start2+len] = (code[start2+len]&~CODE_RET_MASK) | retcodeany(rettype);
-                                start2 += len+1;
+                                uint len = code[start]>>8;
+                                code[start] = ((end-(start+1))<<8) | op;
+                                code[start+1] = CODE_ENTER;
+                                code[start+len] = (code[start+len]&~CODE_RET_MASK) | retcodeany(rettype);
+                                start += len+1;
                             }
                         }
                     }
                     break;
-                }
                 case ID_VAR:
                     if(!(more = compilearg(code, p, VAL_INT))) code.add(CODE_PRINT|(id->index<<8));
                     else if(!(id->flags&IDF_HEX) || !(more = compilearg(code, p, VAL_INT))) code.add(CODE_IVAR1|(id->index<<8));
