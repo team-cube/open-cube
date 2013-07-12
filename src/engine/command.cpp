@@ -1609,11 +1609,9 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     code.add(CODE_LOCAL);
                     break;
                 case ID_DO:
-                {
                     if(more) more = compilearg(code, p, VAL_CODE);
                     code.add((more ? CODE_DO : CODE_NULL) | retcodeany(rettype)); 
                     break;
-                }
                 case ID_IF:
                     if(more) more = compilearg(code, p, VAL_CANY);
                     if(!more) code.add(CODE_NULL | retcodeany(rettype));
