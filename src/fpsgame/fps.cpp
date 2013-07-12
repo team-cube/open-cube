@@ -422,7 +422,7 @@ namespace game
             showscores(true);
             disablezoom();
 
-            if(identexists("intermission")) execute("intermission");
+            execident("intermission");
         }
     }
 
@@ -540,7 +540,7 @@ namespace game
         disablezoom();
         lasthit = 0;
 
-        if(identexists("mapstart")) execute("mapstart");
+        execident("mapstart");
     }
 
     void startmap(const char *name)   // called just after a map load

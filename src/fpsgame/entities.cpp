@@ -249,7 +249,7 @@ namespace entities
                 if(ents[n]->attr3 > 0)
                 {
                     defformatstring(hookname, "can_teleport_%d", ents[n]->attr3);
-                    if(identexists(hookname) && !execute(hookname)) break;
+                    if(!execidentbool(hookname, true)) break;
                 }
                 d->lastpickup = ents[n]->type;
                 d->lastpickupmillis = lastmillis;

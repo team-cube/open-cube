@@ -2493,7 +2493,7 @@ void gl_drawhud()
                 abovehud -= FONTH;
                 draw_textf("cube %s%d%s", FONTH/2, abovehud, selchildcount<0 ? "1/" : "", abs(selchildcount), showmat && selchildmat > 0 ? getmaterialdesc(selchildmat, ": ") : "");
 
-                char *editinfo = executestr("edithud");
+                char *editinfo = execidentstr("edithud");
                 if(editinfo)
                 {
                     if(editinfo[0])
@@ -2507,9 +2507,9 @@ void gl_drawhud()
                     DELETEA(editinfo);
                 }
             }
-            else if(identexists("gamehud"))
+            else
             {
-                char *gameinfo = executestr("gamehud");
+                char *gameinfo = execidentstr("gamehud");
                 if(gameinfo)
                 {
                     if(gameinfo[0])

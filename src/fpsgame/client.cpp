@@ -254,9 +254,7 @@ namespace game
             conoutf(CON_ERROR, "editing in multiplayer requires coop edit mode");
             return false;
         }
-        if(identexists("allowedittoggle") && !execute("allowedittoggle"))
-            return false;
-        return true;
+        return execidentbool("allowedittoggle", true);
     }
 
     void edittoggled(bool on)
@@ -538,11 +536,15 @@ namespace game
         if(*formatted) result(tempformatstring("%d:%02d", val/60, val%60));
         else intret(val);
     });
-    ICOMMANDS("m_ctf", "i", (int *mode), { int gamemode = *mode; intret(m_ctf); });
-    ICOMMANDS("m_teammode", "i", (int *mode), { int gamemode = *mode; intret(m_teammode); });
-    ICOMMANDS("m_demo", "i", (int *mode), { int gamemode = *mode; intret(m_demo); });
-    ICOMMANDS("m_edit", "i", (int *mode), { int gamemode = *mode; intret(m_edit); });
-    ICOMMANDS("m_lobby", "i", (int *mode), { int gamemode = *mode; intret(m_lobby); });
+
+#undef ICOMMANDNAME
+#define ICOMMANDNAME(name) _fpsclientcmd
+
+    ICOMMAND(m_ctf, "i", (int *mode), { int gamemode = *mode; intret(m_ctf); });
+    ICOMMAND(m_teammode, "i", (int *mode), { int gamemode = *mode; intret(m_teammode); });
+    ICOMMAND(m_demo, "i", (int *mode), { int gamemode = *mode; intret(m_demo); });
+    ICOMMAND(m_edit, "i", (int *mode), { int gamemode = *mode; intret(m_edit); });
+    ICOMMAND(m_lobby, "i", (int *mode), { int gamemode = *mode; intret(m_lobby); });
 
     void changemap(const char *name, int mode) // request map change, server may ignore
     {
@@ -1656,8 +1658,7 @@ namespace game
                 demoplayback = on!=0;
                 player1->clientnum = getint(p);
                 gamepaused = false;
-                const char *alias = on ? "demostart" : "demoend";
-                if(identexists(alias)) execute(alias);
+                execident(on ? "demostart" : "demoend");
                 break;
             }
 
