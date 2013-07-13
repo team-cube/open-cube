@@ -785,7 +785,7 @@ struct gui : g3d_gui
     static const int skinx[], skiny[];
     static const struct patch { ushort left, right, top, bottom; uchar flags; } patches[];
 
-    static void drawskin(int x, int y, int gapw, int gaph, int start, int n, float alpha = 0.80f)//int vleft, int vright, int vtop, int vbottom, int start, int n)
+    static void drawskin(float x, float y, int gapw, int gaph, int start, int n, float alpha = 0.80f)//int vleft, int vright, int vtop, int vbottom, int start, int n)
     {
         if(!skintex) skintex = textureload("media/interface/guiskin.png", 3);
         glBindTexture(GL_TEXTURE_2D, skintex->id);
@@ -823,29 +823,29 @@ struct gui : g3d_gui
 
             //multiple tiled quads if necessary rather than a single stretched one
             int ystep = bottom-top;
-            int yo = y+top;
+            int yo = top;
             while(ystep > 0)
             {
-                if(p.flags&0x10 && yo+ystep-(y+top) > gaph)
+                if(p.flags&0x10 && yo+ystep-top > gaph)
                 {
-                    ystep = gaph+y+top-yo;
+                    ystep = gaph+top-yo;
                     tbottom = ttop+ystep*hscale;
                 }
                 int xstep = right-left;
-                int xo = x+left;
+                int xo = left;
                 float tright2 = tright;
                 while(xstep > 0)
                 {
-                    if(p.flags&0x01 && xo+xstep-(x+left) > gapw)
+                    if(p.flags&0x01 && xo+xstep-left > gapw)
                     {
-                        xstep = gapw+x+left-xo;
+                        xstep = gapw+left-xo;
                         tright = tleft+xstep*wscale;
                     }
                     if(!quads) { quads = true; gle::defvertex(2); gle::deftexcoord0(); gle::begin(GL_QUADS); }
-                    gle::attribf(xo,       yo);       gle::attribf(tleft,  ttop);
-                    gle::attribf(xo+xstep, yo);       gle::attribf(tright, ttop);
-                    gle::attribf(xo+xstep, yo+ystep); gle::attribf(tright, tbottom);
-                    gle::attribf(xo,       yo+ystep); gle::attribf(tleft,  tbottom);
+                    gle::attribf(x+xo,       y+yo);       gle::attribf(tleft,  ttop);
+                    gle::attribf(x+xo+xstep, y+yo);       gle::attribf(tright, ttop);
+                    gle::attribf(x+xo+xstep, y+yo+ystep); gle::attribf(tright, tbottom);
+                    gle::attribf(x+xo,       y+yo+ystep); gle::attribf(tleft,  tbottom);
                     if(!(p.flags&0x01)) break;
                     xo += xstep;
                 }
@@ -1240,7 +1240,7 @@ void g3d_render()
     mousebuttons = 0;
 }
 
-void consolebox(int x1, int y1, int x2, int y2)
+void consolebox(float x1, float y1, float x2, float y2)
 {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     float bw = x2 - x1, bh = y2 - y1, aspect = bw/bh, sh = bh, sw = sh*aspect;

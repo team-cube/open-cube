@@ -2415,7 +2415,7 @@ void gl_drawhud()
 
     hudshader->set();
 
-    int conw = int(w/conscale), conh = int(h/conscale), abovehud = conh - FONTH, limitgui = abovehud;
+    float conw = w/conscale, conh = h/conscale, abovehud = conh - FONTH, limitgui = abovehud;
     if(!hidehud && !mainmenu)
     {
         if(!hidestats)
@@ -2531,13 +2531,13 @@ void gl_drawhud()
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             game::gameplayhud(w, h);
-            limitgui = abovehud = min(abovehud, int(conh*game::abovegameplayhud(w, h)));
+            limitgui = abovehud = min(abovehud, conh*game::abovegameplayhud(w, h));
         }
 
         rendertexturepanel(w, h);
     }
 
-    g3d_limitscale((2*limitgui - conh) / float(conh));
+    g3d_limitscale((2*limitgui - conh) / conh);
 
     pushhudmatrix();
     hudmatrix.scale(conscale, conscale, 1);

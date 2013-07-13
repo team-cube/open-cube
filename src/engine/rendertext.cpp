@@ -20,9 +20,29 @@ void newfont(char *name, char *tex, int *defaultw, int *defaulth)
     f->defaultw = *defaultw;
     f->defaulth = *defaulth;
     f->scale = f->defaulth;
+    f->bordermin = 0.49f;
+    f->bordermax = 0.5f;
+    f->outlinemin = -1;
+    f->outlinemax = 0;
 
     fontdef = f;
     fontdeftex = 0;
+}
+
+void fontborder(float *bordermin, float *bordermax)
+{
+    if(!fontdef) return;
+
+    fontdef->bordermin = *bordermin;
+    fontdef->bordermax = max(*bordermax, *bordermin+0.01f);
+}
+
+void fontoutline(float *outlinemin, float *outlinemax)
+{
+    if(!fontdef) return;
+
+    fontdef->outlinemin = min(*outlinemin, *outlinemax-0.01f);
+    fontdef->outlinemax = *outlinemax;
 }
 
 void fontoffset(char *c)
@@ -49,7 +69,7 @@ void fonttex(char *s)
     fontdef->texs.add(t);
 }
 
-void fontchar(int *x, int *y, int *w, int *h, int *offsetx, int *offsety, int *advance)
+void fontchar(float *x, float *y, float *w, float *h, float *offsetx, float *offsety, float *advance)
 {
     if(!fontdef) return;
 
@@ -70,15 +90,18 @@ void fontskip(int *n)
     loopi(max(*n, 1))
     {
         font::charinfo &c = fontdef->chars.add();
-        c.x = c.y = c.w = c.h = c.offsetx = c.offsety = c.advance = c.tex = 0;
+        c.x = c.y = c.w = c.h = c.offsetx = c.offsety = c.advance = 0;
+        c.tex = 0;
     }
 }
 
 COMMANDN(font, newfont, "ssii");
+COMMAND(fontborder, "ff");
+COMMAND(fontoutline, "ff");
 COMMAND(fontoffset, "s");
 COMMAND(fontscale, "i");
 COMMAND(fonttex, "s");
-COMMAND(fontchar, "iiiiiii");
+COMMAND(fontchar, "fffffff");
 COMMAND(fontskip, "i");
 
 void fontalias(const char *dst, const char *src)
@@ -163,7 +186,7 @@ void tabify(const char *str, int *numtabs)
 
 COMMAND(tabify, "si");
 
-void draw_textf(const char *fstr, int left, int top, ...)
+void draw_textf(const char *fstr, float left, float top, ...)
 {
     defvformatstring(str, top, fstr);
     draw_text(str, left, top);
@@ -185,10 +208,10 @@ static float draw_char(Texture *&tex, int c, float x, float y, float scale)
           y1 = y + scale*info.offsety,
           x2 = x + scale*(info.offsetx + info.w),
           y2 = y + scale*(info.offsety + info.h),
-          tx1 = info.x / float(tex->xs),
-          ty1 = info.y / float(tex->ys),
-          tx2 = (info.x + info.w) / float(tex->xs),
-          ty2 = (info.y + info.h) / float(tex->ys);
+          tx1 = info.x / tex->xs,
+          ty1 = info.y / tex->ys,
+          tx2 = (info.x + info.w) / tex->xs,
+          ty2 = (info.y + info.h) / tex->ys;
 
     if(textmatrix)
     {
@@ -238,7 +261,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
 }
 
 #define TEXTSKELETON \
-    float y = 0, x = 0, scale = curfont->scale/float(curfont->defaulth);\
+    float y = 0, x = 0, scale = curfont->scale/curfont->defaulth;\
     int i;\
     for(i = 0; str[i]; i++)\
     {\
@@ -346,7 +369,7 @@ void text_boundsf(const char *str, float &width, float &height, int maxwidth)
 
 Shader *textshader = NULL;
 
-void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor, int maxwidth)
+void draw_text(const char *str, float left, float top, int r, int g, int b, int a, int cursor, int maxwidth)
 {
     #define TEXTINDEX(idx) if(idx == cursor) { cx = x; cy = y; }
     #define TEXTWHITE(idx)
@@ -363,7 +386,8 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     if(a < 0) { usecolor = false; a = -a; }
     Texture *tex = curfont->texs[0];
     Shader *oldshader = Shader::lastshader;
-    (textshader ? textshader : hudshader)->setvariant(tex->swizzle(), 0);
+    (textshader ? textshader : hudtextshader)->set();
+    LOCALPARAMF(textparams, curfont->bordermin, curfont->bordermax, curfont->outlinemin, curfont->outlinemax);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, tex->id);
     gle::color(color, a);

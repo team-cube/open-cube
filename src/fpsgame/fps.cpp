@@ -771,12 +771,12 @@ namespace game
 
         if(player1->state==CS_SPECTATOR)
         {
-            int pw, ph, tw, th, fw, fh;
-            text_bounds("  ", pw, ph);
-            text_bounds("SPECTATOR", tw, th);
+            float pw, ph, tw, th, fw, fh;
+            text_boundsf("  ", pw, ph);
+            text_boundsf("SPECTATOR", tw, th);
             th = max(th, ph);
             fpsent *f = followingplayer();
-            text_bounds(f ? colorname(f) : " ", fw, fh);
+            text_boundsf(f ? colorname(f) : " ", fw, fh);
             fh = max(fh, ph);
             draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
             if(f)
@@ -801,7 +801,7 @@ namespace game
         pophudmatrix();
     }
 
-    int clipconsole(int w, int h)
+    float clipconsole(float w, float h)
     {
         if(cmode) return cmode->clipconsole(w, h);
         return 0;

@@ -426,7 +426,7 @@ void updatesounds()
     updatemumble();
     if(nosound) return;
     if(minimized) stopsounds();
-    else 
+    else
     {
         reclaimchannels();
         if(mainmenu) stopmapsounds();

@@ -17,7 +17,7 @@ enum
     CODE_MACRO,
     CODE_BOOL,
     CODE_BLOCK,
-    CODE_COMPILE, 
+    CODE_COMPILE,
     CODE_COND,
     CODE_FORCE,
     CODE_RESULT,
@@ -307,7 +307,7 @@ inline void ident::getcval(tagval &v) const
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure
 #define KEYWORD(name, type) static bool __dummy_##type = addcommand(#name, (identfun)NULL, NULL, type)
 #define COMMANDKN(name, type, fun, nargs) static bool __dummy_##fun = addcommand(#name, (identfun)fun, nargs, type)
-#define COMMANDK(name, type, nargs) COMMANDKN(name, type, name, nargs) 
+#define COMMANDK(name, type, nargs) COMMANDKN(name, type, name, nargs)
 #define COMMANDN(name, fun, nargs) COMMANDKN(name, ID_COMMAND, fun, nargs)
 #define COMMAND(name, nargs) COMMANDN(name, name, nargs)
 
@@ -374,5 +374,5 @@ inline void ident::getcval(tagval &v) const
 #define ICOMMANDNS(name, cmdname, nargs, proto, b) ICOMMANDKNS(name, ID_COMMAND, cmdname, nargs, proto, b)
 #define ICOMMANDN(name, cmdname, nargs, proto, b) ICOMMANDNS(#name, cmdname, nargs, proto, b)
 #define ICOMMAND(name, nargs, proto, b) ICOMMANDN(name, ICOMMANDNAME(name), nargs, proto, b)
-#define ICOMMANDS(name, nargs, proto, b) ICOMMANDNS(name, ICOMMANDSNAME, nargs, proto, b) 
+#define ICOMMANDS(name, nargs, proto, b) ICOMMANDNS(name, ICOMMANDSNAME, nargs, proto, b)
 

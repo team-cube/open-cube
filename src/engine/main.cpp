@@ -208,12 +208,11 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
         }
         if(mapshot || mapname)
         {
-            int infowidth = 12*FONTH;
-            float sz = 0.35f*min(w, h), msz = (0.75f*min(w, h) - sz)/(infowidth + FONTH), x = 0.5f*(w-sz), y = ly+lh - sz/15;
+            float infowidth = 12*FONTH, sz = 0.35f*min(w, h), msz = (0.75f*min(w, h) - sz)/(infowidth + FONTH), x = 0.5f*(w-sz), y = ly+lh - sz/15;
             if(mapinfo)
             {
-                int mw, mh;
-                text_bounds(mapinfo, mw, mh, infowidth);
+                float mw, mh;
+                text_boundsf(mapinfo, mw, mh, infowidth);
                 x -= 0.5f*(mw*msz + FONTH*msz);
             }
             if(mapshot && mapshot!=notexture)
@@ -223,8 +222,8 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
             }
             else
             {
-                int qw, qh;
-                text_bounds("?", qw, qh);
+                float qw, qh;
+                text_boundsf("?", qw, qh);
                 float qsz = sz*0.5f/max(qw, qh);
                 pushhudmatrix();
                 hudmatrix.translate(x + 0.5f*(sz - qw*qsz), y + 0.5f*(sz - qh*qsz), 0);
@@ -238,8 +237,8 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
             bgquad(x, y, sz, sz);
             if(mapname)
             {
-                int tw = text_width(mapname);
-                float tsz = sz/(8*FONTH),
+                float tw = text_widthf(mapname),
+                      tsz = sz/(8*FONTH),
                       tx = 0.9f*sz - tw*tsz, ty = 0.9f*sz - FONTH*tsz;
                 if(tx < 0.1f*sz) { tsz = 0.1f*sz/tw; tx = 0.1f; }
                 pushhudmatrix();
@@ -428,7 +427,7 @@ void setfullscreen(bool enable)
     if(!screen) return;
     //initwarning(enable ? "fullscreen" : "windowed");
     SDL_SetWindowFullscreen(screen, enable ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    if(!enable) 
+    if(!enable)
     {
         SDL_SetWindowSize(screen, scr_w, scr_h);
         if(initwindowpos)
@@ -526,11 +525,11 @@ void setupscreen()
     scr_h = min(scr_h, desktoph);
 
     int winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
-    if(fullscreen) 
-    { 
-        winw = desktopw; 
-        winh = desktoph; 
-        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP; 
+    if(fullscreen)
+    {
+        winw = desktopw;
+        winh = desktoph;
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 #ifdef WIN32
         initwindowpos = true;
 #endif

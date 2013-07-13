@@ -163,7 +163,7 @@ clean:
 	-$(RM) $(CLIENT_PCH) $(CLIENT_OBJS) $(SERVER_OBJS) $(MASTER_OBJS) tess_client tess_server tess_master
 
 fixspace:
-	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.cpp shared/*.h engine/*.cpp engine/*.h fpsgame/*.cpp fpsgame/*.h
+	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.c shared/*.cpp shared/*.h engine/*.cpp engine/*.h fpsgame/*.cpp fpsgame/*.h
 
 %.h.gch: %.h
 	$(CXX) $(CXXFLAGS) -o $(subst .h.gch,.tmp.h.gch,$@) $(subst .h.gch,.h,$@)
@@ -203,11 +203,11 @@ server:	libenet $(SERVER_OBJS)
 master: libenet $(MASTER_OBJS)
 	$(CXX) $(CXXFLAGS) -o tess_master $(MASTER_OBJS) $(MASTER_LIBS)  
 
-shared/cube2font.o: shared/cube2font.c
+shared/tessfont.o: shared/tessfont.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $< `freetype-config --cflags`
 
-cube2font: shared/cube2font.o
-	$(CXX) $(CXXFLAGS) -o cube2font shared/cube2font.o `freetype-config --libs` -lz
+tessfont: shared/tessfont.o
+	$(CXX) $(CXXFLAGS) -o tessfont shared/tessfont.o `freetype-config --libs` -lz
 
 install: all
 	cp -f tess_client	../bin_unix/$(PLATFORM_PREFIX)_client
