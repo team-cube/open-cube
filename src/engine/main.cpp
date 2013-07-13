@@ -763,10 +763,11 @@ void checkinput()
                         quit();
                         break;
 
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    case SDL_WINDOWEVENT_ENTER:
                         inputgrab(grabinput = true);
                         break;
 
+                    case SDL_WINDOWEVENT_LEAVE:
                     case SDL_WINDOWEVENT_FOCUS_LOST:
                         inputgrab(grabinput = false);
                         break;
