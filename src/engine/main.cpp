@@ -764,6 +764,9 @@ void checkinput()
                         break;
 
                     case SDL_WINDOWEVENT_ENTER:
+#ifdef WIN32
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+#endif
                         inputgrab(grabinput = true);
                         break;
 
