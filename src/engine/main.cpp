@@ -365,7 +365,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
 
 VARNP(relativemouse, userelativemouse, 0, 1, 1);
 
-bool grabinput = false, minimized = false, canrelativemouse = true, relativemouse = false;
+bool shouldgrab = false, grabinput = false, minimized = false, canrelativemouse = true, relativemouse = false;
 int keyrepeatmask = 0, textinputmask = 0;
 
 void keyrepeat(bool on, int mask)
@@ -418,6 +418,7 @@ void inputgrab(bool on)
             relativemouse = false;
         }
     }
+    shouldgrab = false;
 }
 
 bool initwindowpos = false;
@@ -763,10 +764,10 @@ void checkinput()
                         quit();
                         break;
 
-                    case SDL_WINDOWEVENT_ENTER:
-#ifdef WIN32
                     case SDL_WINDOWEVENT_FOCUS_GAINED:
-#endif
+                        shouldgrab = true;
+                        break;
+                    case SDL_WINDOWEVENT_ENTER:
                         inputgrab(grabinput = true);
                         break;
 
@@ -809,6 +810,7 @@ void checkinput()
                     if(!g3d_movecursor(dx, dy)) mousemove(dx, dy);
                     mousemoved = true;
                 }
+                else if(shouldgrab) inputgrab(grabinput = true);
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
