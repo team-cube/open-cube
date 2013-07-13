@@ -17,8 +17,6 @@ typedef unsigned int uint;
 static inline int imin(int a, int b) { return a < b ? a : b; }
 static inline int imax(int a, int b) { return a > b ? a : b; }
 static inline int iclamp(int n, int l, int h) { return imax(l, imin(n, h)); }
-static inline float fmin(float a, float b) { return a < b ? a : b; }
-static inline float fmax(float a, float b) { return a > b ? a : b; }
 static inline float fclamp(float n, float l, float h) { return fmax(l, fmin(n, h)); }
 
 void fatal(const char *fmt, ...)
@@ -321,7 +319,7 @@ foundabove0:
 #define SDF_MAXSCALE 8
 static int sdfscale = SDF_MAXSCALE;
 
-void gensdf(fontchar *c)
+void gensdf(struct fontchar *c)
 {
     int w = c->glyph->bitmap.width, h = c->glyph->bitmap.rows, radius = c->sdfradius*sdfscale;
     int dx, dy, dw = (w + 2*radius + sdfscale-1)/sdfscale, dh = (h + 2*radius + sdfscale-1)/sdfscale;
@@ -546,11 +544,11 @@ int main(int argc, char **argv)
         dst->tex = -1;
         dst->x = INT_MIN;
         dst->y = INT_MIN;
-        dst->w = b->bitmap.width/float(sdfscale);
-        dst->h = b->bitmap.rows/float(sdfscale);
-        dst->left = b->left/float(sdfscale);
-        dst->top = b->top/float(sdfscale);
-        dst->advance = offsetx + p->advance.x/float(sdfscale<<16) + advance;
+        dst->w = b->bitmap.width/(float)sdfscale;
+        dst->h = b->bitmap.rows/(float)sdfscale;
+        dst->left = b->left/(float)sdfscale;
+        dst->top = b->top/(float)sdfscale;
+        dst->advance = offsetx + p->advance.x/(float)(sdfscale<<16) + advance;
         dst->glyph = b;
         dst->sdfradius = radius;
         dst->sdf = NULL;
