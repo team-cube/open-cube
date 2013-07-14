@@ -9,7 +9,7 @@ static int fontdeftex = 0;
 font *curfont = NULL;
 int curfonttex = 0;
 
-void newfont(char *name, char *tex, int *defaultw, int *defaulth)
+void newfont(char *name, char *tex, int *defaultw, int *defaulth, int *scale)
 {
     font *f = &fonts[name];
     if(!f->name) f->name = newstring(name);
@@ -19,7 +19,7 @@ void newfont(char *name, char *tex, int *defaultw, int *defaulth)
     f->charoffset = '!';
     f->defaultw = *defaultw;
     f->defaulth = *defaulth;
-    f->scale = f->defaulth;
+    f->scale = *scale > 0 ? *scale : f->defaulth;
     f->bordermin = 0.49f;
     f->bordermax = 0.5f;
     f->outlinemin = -1;
@@ -95,7 +95,7 @@ void fontskip(int *n)
     }
 }
 
-COMMANDN(font, newfont, "ssii");
+COMMANDN(font, newfont, "ssiii");
 COMMAND(fontborder, "ff");
 COMMAND(fontoutline, "ff");
 COMMAND(fontoffset, "s");
@@ -261,7 +261,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
 }
 
 #define TEXTSKELETON \
-    float y = 0, x = 0, scale = curfont->scale/curfont->defaulth;\
+    float y = 0, x = 0, scale = curfont->scale/float(curfont->defaulth);\
     int i;\
     for(i = 0; str[i]; i++)\
     {\
