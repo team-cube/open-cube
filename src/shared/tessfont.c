@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <math.h>
+#include <time.h>
 #include <zlib.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -274,19 +275,63 @@ static inline void searchdist(int x, int y, int cx, int cy)
 static int sx1, ex1;
 static inline int search1(int x, int y, int w, int radius, int cy, uchar *src)
 {
-    int cx;
-    for(cx = imin(ex1, x)-1; cx >= sx1;)
+    int cx = imin(ex1, x)-1;
+    if(cx >= sx1)
     {
-        int bx = cx&~7, bits = src[cx>>3]>>(7-(cx&7));
-        if(bits == 0xFF) cx = bx-1;
-        else for(bx = imax(bx, sx1); cx >= bx; cx--, bits >>= 1) if(!(bits&1)) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow1; }
+        uchar *bsrc = &src[cx>>3];
+        int bx = cx&~7, bits = *bsrc;
+        if(bits==0xFF) cx = bx-1;
+        else
+        {
+            bits >>= 7-(cx&7);
+            if(bx <= sx1)
+            {
+                for(; cx >= sx1; cx--, bits >>= 1) if(!(bits&1)) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow1; }
+                goto foundbelow1;
+            }
+            else for(; cx >= bx; cx--, bits >>= 1) if(!(bits&1)) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow1; }
+        }
+        while(cx >= sx1)
+        {
+            bits = *--bsrc;
+            if(bits==0xFF) cx -= 8;
+            else if((bx = cx - 7) <= sx1)
+            {
+                for(; cx >= sx1; cx--, bits >>= 1) if(!(bits&1)) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow1; }
+                goto foundbelow1;
+            }
+            else for(; cx >= bx; cx--, bits >>= 1) if(!(bits&1)) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow1; }
+
+        }
     }
 foundbelow1:
-    for(cx = imax(sx1, x); cx < ex1;)
+    cx = imax(sx1, x);
+    if(cx < ex1)
     {
-        int bx = (cx&~7) + 8, bits = src[cx>>3]<<(cx&7);
-        if(bits == 0xFF) cx = bx;
-        else for(bx = imin(bx, ex1); cx < bx; cx++, bits <<= 1) if(!(bits&0x80)) { ex1 = cx-1; searchdist(x, y, cx, cy); goto foundabove1; }
+        uchar *bsrc = &src[cx>>3];
+        int bx = (cx&~7) + 8, bits = *bsrc;
+        if(bits==0xFF) cx = bx;
+        else 
+        {
+            bits <<= cx&7;
+            if(bx >= ex1)
+            {
+                for(; cx < ex1; cx++, bits <<= 1) if(!(bits&0x80)) { ex1 = cx-1; searchdist(x, y, cx, cy); goto foundabove1; }
+                goto foundabove1;
+            }
+            else for(; cx < bx; cx++, bits <<= 1) if(!(bits&0x80)) { ex1 = cx-1; searchdist(x, y, cx, cy); goto foundabove1; }
+        }
+        while(cx < ex1)
+        {
+            bits = *++bsrc;
+            if(bits==0xFF) cx += 8;
+            else if((bx = cx + 8) >= ex1)
+            {
+                for(; cx < ex1; cx++, bits <<= 1) if(!(bits&0x80)) { ex1 = cx-1; searchdist(x, y, cx, cy); goto foundabove1; }
+                goto foundabove1;
+            }
+            else for(; cx < bx; cx++, bits <<= 1) if(!(bits&0x80)) { ex1 = cx-1; searchdist(x, y, cx, cy); goto foundabove1; }
+        }
     }
 foundabove1:
     if(x - radius < 0) searchdist(x, y, -1, cy);
@@ -297,27 +342,70 @@ foundabove1:
 static int sx0, ex0;
 static inline int search0(int x, int y, int w, int radius, int cy, uchar *src)
 {
-    int cx;
-    for(cx = imin(ex0, x)-1; cx >= sx0;)
+    int cx = imin(ex0, x)-1;
+    if(cx >= sx0)
     {
-        int bx = cx&~7, bits = src[cx>>3]>>(7-(cx&7));
+        uchar *bsrc = &src[cx>>3];
+        int bx = cx&~7, bits = *bsrc;
         if(!bits) cx = bx-1;
-        else for(bx = imax(bx, sx0); cx >= bx; cx--, bits >>= 1) if(bits&1) { sx1 = cx+1; searchdist(x, y, cx, cy); goto foundbelow0; }
+        else 
+        {
+            bits >>= 7-(cx&7);
+            if(bx <= sx0)
+            {
+                for(; cx >= sx0; cx--, bits >>= 1) if(bits&1) { sx0 = cx+1; searchdist(x, y, cx, cy); goto foundbelow0; }
+                goto foundbelow0;
+            }
+            else for(; cx >= bx; cx--, bits >>= 1) if(bits&1) { sx0 = cx+1; searchdist(x, y, cx, cy); goto foundbelow0; }
+        }
+        while(cx >= sx0)
+        {
+            bits = *--bsrc;
+            if(!bits) cx -= 8;
+            else if((bx = cx - 7) <= sx0)
+            {
+                for(; cx >= sx0; cx--, bits >>= 1) if(bits&1) { sx0 = cx+1; searchdist(x, y, cx, cy); goto foundbelow0; }
+                goto foundbelow0;
+            }
+            else for(; cx >= bx; cx--, bits >>= 1) if(bits&1) { sx0 = cx+1; searchdist(x, y, cx, cy); goto foundbelow0; }
+        }
     }
 foundbelow0:
-    for(cx = imax(sx0, x); cx < ex0;)
+    cx = imax(sx0, x);
+    if(cx < ex0)
     {
-        int bx = (cx&~7) + 8, bits = src[cx>>3]<<(cx&7);
+        uchar *bsrc = &src[cx>>3];
+        int bx = (cx&~7) + 8, bits = *bsrc;
         if(!bits) cx = bx;
-        else for(bx = imin(bx, ex0); cx < bx; cx++, bits <<= 1) if(bits&0x80) { ex0 = cx-1; searchdist(x, y, cx, cy); goto foundabove0; }
+        else 
+        {
+            bits <<= cx&7;
+            if(bx >= ex0)
+            {
+                for(; cx < ex0; cx++, bits <<= 1) if(bits&0x80) { ex0 = cx-1; searchdist(x, y, cx, cy); goto foundabove0; }
+                goto foundabove0;
+            } 
+            else for(; cx < bx; cx++, bits <<= 1) if(bits&0x80) { ex0 = cx-1; searchdist(x, y, cx, cy); goto foundabove0; }
+        }
+        while(cx < ex0)
+        {
+            bits = *++bsrc;
+            if(!bits) cx += 8;
+            else if((bx = cx + 8) >= ex0)
+            {
+                for(; cx < ex0; cx++, bits <<= 1) if(bits&0x80) { ex0 = cx-1; searchdist(x, y, cx, cy); goto foundabove0; }
+                goto foundabove0;
+            }
+            else for(; cx < bx; cx++, bits <<= 1) if(bits&0x80) { ex0 = cx-1; searchdist(x, y, cx, cy); goto foundabove0; }
+        }
     }
 foundabove0:
     return sx0 < ex0;
 }
 
 #define SUPERSAMPLE_MIN 1
-#define SUPERSAMPLE_MAX 8
-static int supersample = SUPERSAMPLE_MAX;
+#define SUPERSAMPLE_MAX 32
+static int supersample = SUPERSAMPLE_MIN;
 
 void gensdf(struct fontchar *c)
 {
@@ -506,6 +594,7 @@ int main(int argc, char **argv)
     FT_Face f;
     int i, radius, pad, w, h, tw, th, c, numgen = 0, trial = -2, rw = 0, rh = 0, ry = 0, sw = 0, sh = 0;
     float advance, x1 = INT_MAX, x2 = INT_MIN, y1 = INT_MAX, y2 = INT_MIN, w2 = 0, h2 = 0;
+    time_t starttime, endtime;
     struct fontchar chars[256];
     struct fontchar *order[256];
     int numchars = 0, numtex = 0;
@@ -532,6 +621,7 @@ int main(int argc, char **argv)
        FT_Set_Pixel_Sizes(f, w*supersample, h*supersample))
         fatal("tessfont: failed loading font %s", argv[1]);
     setbuf(stdout, NULL);
+    starttime = time(NULL);
     for(c = 0; c < 256; c++) if(iscubeprint(c))
     {
         FT_Glyph p;
@@ -658,6 +748,7 @@ int main(int argc, char **argv)
     if(rh > 0) numtex++;
     if(sh <= 0) sh = (int)ceil(y2 - y1); 
     if(sw <= 0) sw = sh/3;
+    endtime = time(NULL);
     writetexs(argv[2], chars, numchars, numtex, tw, th);
     writecfg(argv[2], chars, numchars, x1, y1, x2, y2, sw, sh, argc, argv);
     for(i = 0; i < numchars; i++)
@@ -667,7 +758,7 @@ int main(int argc, char **argv)
         if(c->sdf) free(c->sdf);
     }
     FT_Done_FreeType(l);
-    printf("tessfont: (%g, %g) .. (%g, %g) = (%g, %g) / (%g, %g), %d texs\n", x1, y1, x2, y2, x2 - x1, y2 - y1, w2, h2, numtex);
+    printf("tessfont: (%g, %g) .. (%g, %g) = (%g, %g) / (%g, %g), %d texs, %d secs\n", x1, y1, x2, y2, x2 - x1, y2 - y1, w2, h2, numtex, (int)(endtime - starttime));
     return EXIT_SUCCESS;
 }
 
