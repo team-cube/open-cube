@@ -792,8 +792,8 @@ void checkinput()
                         SDL_GetWindowSize(screen, &screenw, &screenh);
                         if(!(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN))
                         {
-                            scr_w = clamp(screenw, SCR_MINW, SCR_MAXH);
-                            scr_h = clamp(screenh, SCR_MINW, SCR_MAXH);
+                            scr_w = clamp(screenw, SCR_MINW, SCR_MAXW);
+                            scr_h = clamp(screenh, SCR_MINH, SCR_MAXH);
                         }
                         renderw = min(scr_w, screenw);
                         renderh = min(scr_h, screenh);
