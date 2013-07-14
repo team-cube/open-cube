@@ -315,14 +315,14 @@ foundabove0:
     return sx0 < ex0;
 }
 
-#define SDF_MINSCALE 1
-#define SDF_MAXSCALE 8
-static int sdfscale = SDF_MAXSCALE;
+#define SUPERSAMPLE_MIN 1
+#define SUPERSAMPLE_MAX 8
+static int supersample = SUPERSAMPLE_MAX;
 
 void gensdf(struct fontchar *c)
 {
-    int w = c->glyph->bitmap.width, h = c->glyph->bitmap.rows, radius = c->sdfradius*sdfscale;
-    int dx, dy, dw = (w + 2*radius + sdfscale-1)/sdfscale, dh = (h + 2*radius + sdfscale-1)/sdfscale;
+    int w = c->glyph->bitmap.width, h = c->glyph->bitmap.rows, radius = c->sdfradius*supersample;
+    int dx, dy, dw = (w + 2*radius + supersample-1)/supersample, dh = (h + 2*radius + supersample-1)/supersample;
     int x, y, x1 = INT_MAX, y1 = INT_MAX, x2 = INT_MIN, y2 = INT_MIN;
     uchar *dst = (uchar *)malloc(dw*dh), *src;
     if(!dst) fatal("tessfont: failed allocating signed distance field");
@@ -332,8 +332,8 @@ void gensdf(struct fontchar *c)
     for(dx = 0; dx < dw; dx++)
     {
         double total = 0;
-        for(y = dy*sdfscale - radius; y < (dy+1)*sdfscale - radius; y++)
-        for(x = dx*sdfscale - radius; x < (dx+1)*sdfscale - radius; x++)             
+        for(y = dy*supersample - radius; y < (dy+1)*supersample - radius; y++)
+        for(x = dx*supersample - radius; x < (dx+1)*supersample - radius; x++)             
         {  
             int sx = imax(x - radius, 0), sy = imax(y - radius, 0), ex = imin(x + radius, w), ey = imin(y + radius, h), cy, val = 0;
             if(y >= 0 && y < h && x >= 0 && x < w)
@@ -365,7 +365,7 @@ void gensdf(struct fontchar *c)
             if(val) total += sqrt(sdist);
             else total -= sqrt(sdist);
         }
-        *dst = (uchar)iclamp((int)round(127.5 + (127.5/(sdfscale*sdfscale))*total/radius), 0, 255);
+        *dst = (uchar)iclamp((int)round(127.5 + (127.5/(supersample*supersample))*total/radius), 0, 255);
         if(*dst) 
         {  
             x1 = imin(x1, dx); 
@@ -417,6 +417,7 @@ void writetexs(const char *name, struct fontchar *chars, int numchars, int numte
 }
 
 static float offsetx = 0, offsety = 0, border = 0, border2 = 0, outline = 0, outline2 = 0;
+static int scale = 0;
 
 void writecfg(const char *name, struct fontchar *chars, int numchars, float x1, float y1, float x2, float y2, int sw, int sh, int argc, char **argv)
 {
@@ -432,6 +433,7 @@ void writecfg(const char *name, struct fontchar *chars, int numchars, float x1, 
         fprintf(f, " %s", argv[i]);
     fprintf(f, "\n");
     fprintf(f, "font \"%s\" \"%s\" %d %d\n", name, texname(name, 0), sw, sh);
+    if(scale > 0) fprintf(f, "fontscale %d\n", scale);
     if(border2) fprintf(f, "fontborder %g %g\n", border, border2);
     else if(border) fprintf(f, "fontborder %g\n", border);
     if(outline2) fprintf(f, "fontoutline %g %g\n", outline, outline2);
@@ -508,8 +510,8 @@ int main(int argc, char **argv)
     struct fontchar *order[256];
     int numchars = 0, numtex = 0;
     if(argc < 13)
-        fatal("Usage: tessfont infile outfile supersample border[:border2[:outline:outline2]] radius pad offsetx[:offsety] advance charwidth charheight texwidth texheight [spacewidth spaceheight texdir]");
-    sdfscale = iclamp(atoi(argv[3]), SDF_MINSCALE, SDF_MAXSCALE);
+        fatal("Usage: tessfont infile outfile supersample border[:border2[:outline:outline2]] radius pad offsetx[:offsety] advance charwidth charheight texwidth texheight [spacewidth spaceheight scale texdir]");
+    supersample = iclamp(atoi(argv[3]), SUPERSAMPLE_MIN, SUPERSAMPLE_MAX);
     sscanf(argv[4], "%f:%f:%f:%f", &border, &border2, &outline, &outline2);
     radius = atoi(argv[5]);
     pad = atoi(argv[6]);
@@ -521,12 +523,13 @@ int main(int argc, char **argv)
     th = atoi(argv[12]);
     if(argc > 13) sw = atoi(argv[13]);
     if(argc > 14) sh = atoi(argv[14]);
-    if(argc > 15) texdir = argv[15];
+    if(argc > 15) scale = atoi(argv[15]);
+    if(argc > 16) texdir = argv[16];
     if(FT_Init_FreeType(&l))
         fatal("tessfont: failed initing freetype");
     if(FT_New_Face(l, argv[1], 0, &f) ||
        FT_Set_Charmap(f, f->charmaps[0]) ||
-       FT_Set_Pixel_Sizes(f, w*sdfscale, h*sdfscale))
+       FT_Set_Pixel_Sizes(f, w*supersample, h*supersample))
         fatal("tessfont: failed loading font %s", argv[1]);
     setbuf(stdout, NULL);
     for(c = 0; c < 256; c++) if(iscubeprint(c))
@@ -544,11 +547,11 @@ int main(int argc, char **argv)
         dst->tex = -1;
         dst->x = INT_MIN;
         dst->y = INT_MIN;
-        dst->w = b->bitmap.width/(float)sdfscale;
-        dst->h = b->bitmap.rows/(float)sdfscale;
-        dst->left = b->left/(float)sdfscale;
-        dst->top = b->top/(float)sdfscale;
-        dst->advance = offsetx + p->advance.x/(float)(sdfscale<<16) + advance;
+        dst->w = b->bitmap.width/(float)supersample;
+        dst->h = b->bitmap.rows/(float)supersample;
+        dst->left = b->left/(float)supersample;
+        dst->top = b->top/(float)supersample;
+        dst->advance = offsetx + p->advance.x/(float)(supersample<<16) + advance;
         dst->glyph = b;
         dst->sdfradius = radius;
         dst->sdf = NULL;
