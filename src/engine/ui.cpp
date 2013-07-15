@@ -315,7 +315,7 @@ namespace UI
             }
             return false;
         }
-        
+
         #define DOSTATE(flags, func) \
             virtual void func(float cx, float cy) \
             { \
@@ -828,7 +828,7 @@ namespace UI
 
         static const char *typestr() { return "#Rectangle"; }
         const char *gettype() const { return typestr(); }
-        
+
         bool target(float cx, float cy)
         {
             return true;
@@ -1024,7 +1024,7 @@ namespace UI
         void draw(float sx, float sy)
         {
             glBindTexture(GL_TEXTURE_2D, tex->id);
-        
+
             gle::defvertex(2);
             gle::deftexcoord0();
             gle::begin(GL_QUADS);
@@ -1142,7 +1142,7 @@ namespace UI
         void draw(float sx, float sy)
         {
             float oldscale = textscale;
-            textscale = drawscale(); 
+            textscale = drawscale();
             draw_text(str, sx/textscale, sy/textscale, int(color.x*255), int(color.y*255), int(color.z*255));
             textscale = oldscale;
 
@@ -1170,7 +1170,7 @@ namespace UI
             clipw = clipw_;
             cliph = cliph_;
             virtw = virth = 0;
-        }        
+        }
 
         static const char *typestr() { return "#Clipper"; }
         const char *gettype() const { return typestr(); }
@@ -1418,7 +1418,7 @@ namespace UI
             scrollto(o->x + tox, o->y + toy - fromy);
         }
     };
-      
+
     struct SliderButton : Object
     {
         static const char *typestr() { return "#SliderButton"; }
@@ -1448,7 +1448,7 @@ namespace UI
         }
         if(onchange) execute(onchange);
     }
- 
+
     struct Slider : Object
     {
         ident *id;
@@ -1457,7 +1457,7 @@ namespace UI
 
         Slider() : id(NULL), val(0), vmin(0), vmax(0), vstep(0), changed(false) {}
 
-        void setup(ident *id_, double vmin_ = 0, double vmax_ = 0, double vstep_ = 1, uint *onchange = NULL) 
+        void setup(ident *id_, double vmin_ = 0, double vmax_ = 0, double vstep_ = 1, uint *onchange = NULL)
         {
             Object::setup();
             if(!vmin_ && !vmax_) switch(id_->type)
@@ -1467,7 +1467,7 @@ namespace UI
             }
             if(id != id_) changed = false;
             id = id_;
-            vmin = vmin_; 
+            vmin = vmin_;
             vmax = vmax_;
             vstep = vstep_ > 0 ? vstep_ : 1;
             if(changed)
@@ -1528,7 +1528,7 @@ namespace UI
         void press(float cx, float cy)
         {
             Object::press(cx, cy);
-            
+
             laststep = totalmillis + 2*steptime;
 
             Slider *slider = (Slider *)findsibling(Slider::typestr());
@@ -1807,7 +1807,7 @@ namespace UI
         if(window) { world->hide(window); windows.remove(name); delete window; }
         windows[name] = new Window(name, contents, onshow, onhide);
     });
- 
+
     bool showui(const char *name)
     {
         Window *window = windows.find(name, NULL);
@@ -1819,10 +1819,10 @@ namespace UI
         Window *window = windows.find(name, NULL);
         return window && world->hide(window);
     }
-         
+
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
-    
+
     #define DOSTATE(flags, func) \
         ICOMMANDNS("ui!" #func, uinot##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->hasstate(flags) ? t : f)); \
@@ -1845,15 +1845,15 @@ namespace UI
 
     ICOMMAND(uialign, "ii", (int *xalign, int *yalign),
     {
-        if(buildparent) 
-            buildparent->adjust = (buildparent->adjust & ~ALIGN_MASK) | 
-                ((clamp(*xalign, -1, 1)+2)<<ALIGN_HSHIFT) | 
+        if(buildparent)
+            buildparent->adjust = (buildparent->adjust & ~ALIGN_MASK) |
+                ((clamp(*xalign, -1, 1)+2)<<ALIGN_HSHIFT) |
                 ((clamp(*yalign, -1, 1)+2)<<ALIGN_VSHIFT);
     });
 
     ICOMMAND(uiclamp, "iiii", (int *left, int *right, int *bottom, int *top),
     {
-        if(buildparent) 
+        if(buildparent)
             buildparent->adjust = (buildparent->adjust & ~CLAMP_MASK) |
                 (*left ? CLAMP_LEFT : 0) |
                 (*right ? CLAMP_RIGHT : 0) |
@@ -1874,10 +1874,10 @@ namespace UI
     {
         for(Object *parent = buildparent; parent && !parent->istype<VerticalList>(); parent = parent->parent)
         {
-            if(parent->istype<HorizontalList>()) 
-            { 
-                BUILD(VerticalList, o, o->setup(*space), children); 
-                return; 
+            if(parent->istype<HorizontalList>())
+            {
+                BUILD(VerticalList, o, o->setup(*space), children);
+                return;
             }
         }
         BUILD(HorizontalList, o, o->setup(*space), children);
@@ -2016,11 +2016,11 @@ namespace UI
         case -2: action = isdown ? STATE_ALT_PRESS : STATE_ALT_RELEASE; hold = STATE_ALT_HOLD; break;
         case -3: action = isdown ? STATE_ESC_PRESS : STATE_ESC_RELEASE; hold = STATE_ESC_HOLD; break;
         case -4: action = STATE_SCROLL_UP; break;
-        case -5: action = STATE_SCROLL_DOWN; break; 
+        case -5: action = STATE_SCROLL_DOWN; break;
         }
         if(action >= 0)
         {
-            if(isdown) 
+            if(isdown)
             {
                 if(world->setstate(action, cursorx*world->w, cursory*world->h))
                 {
@@ -2049,7 +2049,7 @@ namespace UI
     {
         world = new World;
     }
-   
+
     void cleanup()
     {
         world->children.setsize(0);
