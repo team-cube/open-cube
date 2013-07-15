@@ -2176,7 +2176,7 @@ void gl_drawframe()
     renderpostfx(scalefbo);
     if(scalefbo) doscale();
 
-    g3d_render();
+    UI::render();
 
     gl_drawhud();
 }
@@ -2187,7 +2187,7 @@ void gl_drawmainmenu()
 
     renderbackground(NULL, NULL, NULL, NULL, true, true);
 
-    g3d_render();
+    UI::render();
 
     gl_drawhud();
 }
@@ -2340,7 +2340,7 @@ void writecrosshairs(stream *f)
 
 void drawcrosshair(int w, int h)
 {
-    bool windowhit = g3d_windowhit(true, false);
+    bool windowhit = UI::hascursor();
     if(!windowhit && (hidehud || mainmenu)) return; //(hidehud || player->state==CS_SPECTATOR || player->state==CS_DEAD)) return;
 
     float r = 1, g = 1, b = 1, cx = 0.5f, cy = 0.5f, chsize;
@@ -2351,7 +2351,7 @@ void drawcrosshair(int w, int h)
         if(!cursor) cursor = textureload("media/interface/guicursor.png", 3, true);
         crosshair = cursor;
         chsize = cursorsize*w/900.0f;
-        g3d_cursorpos(cx, cy);
+        UI::getcursorpos(cx, cy);
     }
     else
     {
@@ -2537,7 +2537,7 @@ void gl_drawhud()
         rendertexturepanel(w, h);
     }
 
-    g3d_limitscale((2*limitgui - conh) / conh);
+    //g3d_limitscale((2*limitgui - conh) / conh);
 
     pushhudmatrix();
     hudmatrix.scale(conscale, conscale, 1);

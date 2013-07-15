@@ -8,8 +8,8 @@
 
 #include "octa.h"
 #include "light.h"
-#include "bih.h"
 #include "texture.h"
+#include "bih.h"
 #include "model.h"
 
 extern dynent *player;
@@ -59,6 +59,7 @@ struct font
 extern font *curfont;
 extern Shader *textshader;
 extern const matrix3x4 *textmatrix;
+extern float textscale;
 
 // texture
 extern int hwtexsize, hwcubetexsize, hwmaxaniso, maxtexsize, hwtexunits, hwvtexunits;
@@ -672,17 +673,27 @@ extern void drawskybox(int farplane);
 extern bool limitsky();
 extern bool renderexplicitsky(bool outline = false);
 
-// 3dgui
-extern void g3d_render();
-extern bool g3d_windowhit(bool on, bool act);
-extern bool g3d_key(int code, bool isdown);
-extern bool g3d_input(const char *str, int len);
+// ui
+
+namespace UI
+{
+    bool hascursor();
+    void getcursorpos(float &x, float &y);
+    void resetcursor();
+    bool movecursor(int &dx, int &dy);
+    bool keypress(int code, bool isdown);
+    bool textinput(const char *str, int len);
+
+    void setup();
+    void update();
+    void render();
+    void cleanup();
+}
 
 // menus
 extern int mainmenu;
 
 extern void clearmainmenu();
-extern void g3d_mainmenu();
 
 // sound
 extern void clearmapsounds();

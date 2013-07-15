@@ -535,44 +535,6 @@ void refreshservers()
 
 serverinfo *selectedserver = NULL;
 
-const char *showservers(g3d_gui *cgui, uint *header, int pagemin, int pagemax)
-{
-    refreshservers();
-    if(servers.empty())
-    {
-        if(header) execute(header);
-        return NULL;
-    }
-    serverinfo *sc = NULL;
-    for(int start = 0; start < servers.length();)
-    {
-        if(start > 0) cgui->tab();
-        if(header) execute(header);
-        int end = servers.length();
-        cgui->pushlist();
-        loopi(10)
-        {
-            if(!game::serverinfostartcolumn(cgui, i)) break;
-            for(int j = start; j < end; j++)
-            {
-                if(!i && j+1 - start >= pagemin && (j+1 - start >= pagemax || cgui->shouldtab())) { end = j; break; }
-                serverinfo &si = *servers[j];
-                const char *sdesc = si.sdesc;
-                if(si.address.host == ENET_HOST_ANY) sdesc = "[unknown host]";
-                else if(si.ping == serverinfo::WAITING) sdesc = "[waiting for response]";
-                if(game::serverinfoentry(cgui, i, si.name, si.port, sdesc, si.map, sdesc == si.sdesc ? si.ping : -1, si.attr, si.numplayers))
-                    sc = &si;
-            }
-            game::serverinfoendcolumn(cgui, i);
-        }
-        cgui->poplist();
-        start = end;
-    }
-    if(selectedserver || !sc) return NULL;
-    selectedserver = sc;
-    return "connectselected";
-}
-
 void connectselected()
 {
     if(!selectedserver) return;

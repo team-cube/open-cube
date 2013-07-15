@@ -848,6 +848,7 @@ namespace game
         return crosshair;
     }
 
+#if 0
     bool serverinfostartcolumn(g3d_gui *g, int i)
     {
         static const char * const names[] = { "ping ", "players ", "mode ", "map ", "time ", "master ", "host ", "port ", "description " };
@@ -866,6 +867,7 @@ namespace game
         g->column(i);
         g->poplist();
     }
+#endif
 
     const char *mastermodecolor(int n, const char *unknown)
     {
@@ -877,6 +879,7 @@ namespace game
         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodeicons)/sizeof(mastermodeicons[0])) ? mastermodeicons[n-MM_START] : unknown;
     }
 
+#if 0
     bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
     {
         if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
@@ -967,6 +970,7 @@ namespace game
         }
         return false;
     }
+#endif
 
     // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.
     void writegamedata(vector<char> &extras) {}

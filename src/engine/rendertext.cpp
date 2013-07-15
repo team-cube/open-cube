@@ -193,6 +193,7 @@ void draw_textf(const char *fstr, float left, float top, ...)
 }
 
 const matrix3x4 *textmatrix = NULL;
+float textscale = 1;
 
 static float draw_char(Texture *&tex, int c, float x, float y, float scale)
 {
@@ -203,6 +204,10 @@ static float draw_char(Texture *&tex, int c, float x, float y, float scale)
         tex = curfont->texs[info.tex];
         glBindTexture(GL_TEXTURE_2D, tex->id);
     }
+
+    x *= textscale;
+    y *= textscale;
+    scale *= textscale;
 
     float x1 = x + scale*info.offsetx,
           y1 = y + scale*info.offsety,

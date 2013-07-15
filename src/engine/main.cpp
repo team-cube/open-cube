@@ -13,6 +13,7 @@ void cleanup()
     SDL_ShowCursor(SDL_TRUE);
     cleargamma();
     freeocta(worldroot);
+    UI::cleanup();
     extern void clear_command(); clear_command();
     extern void clear_console(); clear_console();
     extern void clear_mdls();    clear_mdls();
@@ -807,7 +808,7 @@ void checkinput()
                 {
                     int dx = event.motion.xrel, dy = event.motion.yrel;
                     checkmousemotion(dx, dy);
-                    if(!g3d_movecursor(dx, dy)) mousemove(dx, dy);
+                    if(!UI::movecursor(dx, dy)) mousemove(dx, dy);
                     mousemoved = true;
                 }
                 else if(shouldgrab) inputgrab(grabinput = true);
@@ -1106,6 +1107,8 @@ int main(int argc, char **argv)
     if(!execfile("config/font.cfg", false)) fatal("cannot find font definitions");
     if(!setfont("default")) fatal("no default font specified");
 
+    UI::setup();
+
     inbetweenframes = true;
     renderbackground("initializing...");
 
@@ -1192,6 +1195,7 @@ int main(int argc, char **argv)
         updatetime();
 
         checkinput();
+        UI::update();
         menuprocess();
         tryedit();
 

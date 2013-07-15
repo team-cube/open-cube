@@ -135,6 +135,7 @@ namespace game
         return numgroups;
     }
 
+#if 0
     void renderscoreboard(g3d_gui &g, bool firstpass)
     {
         const ENetAddress *address = connectedpeer();
@@ -401,11 +402,14 @@ namespace game
     }
 
     VARFN(scoreboard, showscoreboard, 0, 0, 1, scoreboard.show(showscoreboard!=0));
+#endif
 
     void showscores(bool on)
     {
+#if 0
         showscoreboard = on ? 1 : 0;
         scoreboard.show(on);
+#endif
     }
     ICOMMAND(showscores, "D", (int *down), showscores(*down!=0));
 }

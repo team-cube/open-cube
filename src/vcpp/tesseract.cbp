@@ -98,7 +98,6 @@
 		<VirtualTargets>
 			<Add alias="All" targets="client32;client64;" />
 		</VirtualTargets>
-		<Unit filename="..\engine\3dgui.cpp" />
 		<Unit filename="..\engine\aa.cpp" />
 		<Unit filename="..\engine\animmodel.h" />
 		<Unit filename="..\engine\bih.cpp" />
@@ -156,6 +155,7 @@
 		<Unit filename="..\engine\textedit.h" />
 		<Unit filename="..\engine\texture.cpp" />
 		<Unit filename="..\engine\texture.h" />
+		<Unit filename="..\engine\ui.cpp" />
 		<Unit filename="..\engine\vertmodel.h" />
 		<Unit filename="..\engine\water.cpp" />
 		<Unit filename="..\engine\world.cpp" />

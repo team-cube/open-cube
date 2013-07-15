@@ -145,8 +145,10 @@ float renderconsole(float w, float h, float abovehud)                   // rende
           conheight = min(fullconsole ? ((h*fullconsize/100)/FONTH)*FONTH : FONTH*consize, h - 2*(conpad + conoff)),
           conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
 
+#if 0
     extern void consolebox(float x1, float y1, float x2, float y2);
     if(fullconsole) consolebox(conpad, conpad, conwidth+conpad+2*conoff, conheight+conpad+2*conoff);
+#endif
 
     float y = drawconlines(conskip, fullconsole ? 0 : confade, conwidth, conheight, conpad+conoff, fullconsole ? fullconfilter : confilter);
     if(!fullconsole && (miniconsize && miniconwidth))
@@ -564,7 +566,7 @@ bool consolekey(int code, bool isdown)
 
 void processtextinput(const char *str, int len)
 {
-    if(!g3d_input(str, len))
+    if(!UI::textinput(str, len))
         consoleinput(str, len);
 }
 
@@ -572,7 +574,7 @@ void processkey(int code, bool isdown)
 {
     keym *haskey = keyms.access(code);
     if(haskey && haskey->pressed) execbind(*haskey, isdown); // allow pressed keys to release
-    else if(!g3d_key(code, isdown)) // 3D GUI mouse button intercept
+    else if(!UI::keypress(code, isdown)) // UI key intercept
     {
         if(!consolekey(code, isdown))
         {
