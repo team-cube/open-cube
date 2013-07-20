@@ -1633,7 +1633,11 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                                     code[start1+1] = CODE_ENTER_RESULT;
                                     code[start1+len1] = (code[start1+len1]&~CODE_RET_MASK) | retcodeany(rettype);
                                 }
-                                else code.add(CODE_COM|retcodeany(rettype)|(id->index<<8));
+                                else 
+                                {
+                                    compileblock(code);
+                                    code.add(CODE_COM|retcodeany(rettype)|(id->index<<8));
+                                }
                             }
                             else
                             {
