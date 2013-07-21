@@ -943,7 +943,7 @@ namespace UI
             hudnotextureshader->set();
             gle::color(color);
             gle::defvertex(2);
-            if(!thick)
+            if(thick <= 0)
             {
                 gle::begin(GL_LINE_LOOP);
                 gle::attribf(sx,   sy);
