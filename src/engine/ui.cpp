@@ -930,17 +930,29 @@ namespace UI
             hudnotextureshader->set();
             gle::color(color);
             gle::defvertex(2);
-            gle::begin(GL_QUADS);
-            float tw = min(thick, w/2), th = min(thick, h/2);
-            // top
-            gle::attribf(sx, sy); gle::attribf(sx+w, sy); gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+tw, sy+th);
-            // bottom
-            gle::attribf(sx+tw, sy+h-th); gle::attribf(sx+w-tw, sy+h-th); gle::attribf(sx+w, sy+h); gle::attribf(sx, sy+h);
-            // left
-            gle::attribf(sx, sy); gle::attribf(sx+tw, sy+th); gle::attribf(sx+tw, sy+h-th); gle::attribf(sx, sy+h);
-            // right
-            gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+w, sy); gle::attribf(sx+w, sy+h); gle::attribf(sx+w-tw, sy+h-th);
-            gle::end();
+            if(!thick)
+            {
+                gle::begin(GL_LINE_LOOP);
+                gle::attribf(sx,   sy);
+                gle::attribf(sx+w, sy);
+                gle::attribf(sx+w, sy+h);
+                gle::attribf(sx,   sy+h);
+                gle::end();
+            }
+            else
+            {
+                gle::begin(GL_QUADS);
+                float tw = min(thick, w/2), th = min(thick, h/2);
+                // top
+                gle::attribf(sx, sy); gle::attribf(sx+w, sy); gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+tw, sy+th);
+                // bottom
+                gle::attribf(sx+tw, sy+h-th); gle::attribf(sx+w-tw, sy+h-th); gle::attribf(sx+w, sy+h); gle::attribf(sx, sy+h);
+                // left
+                gle::attribf(sx, sy); gle::attribf(sx+tw, sy+th); gle::attribf(sx+tw, sy+h-th); gle::attribf(sx, sy+h);
+                // right
+                gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+w, sy); gle::attribf(sx+w, sy+h); gle::attribf(sx+w-tw, sy+h-th);
+                gle::end();
+            }
             gle::colorf(1, 1, 1);
             hudshader->set();
 
