@@ -1759,9 +1759,9 @@ namespace UI
                 if(edit) clearfocus();
                 edit = edit_;
             }
+            else if(isfocus() && !hasstate(STATE_HOVER)) commit(); 
+            if(initval && edit->mode == EDITORFOCUSED && !isfocus()) edit->init(initval);
             edit->active = true;
-            if(initval && edit->mode == EDITORFOCUSED && !isfocus())
-                edit->init(initval);
             edit->linewrap = length < 0;
             edit->maxx = edit->linewrap ? -1 : length;
             edit->maxy = height <= 0 ? 1 : -1;
@@ -1949,7 +1949,7 @@ namespace UI
     
         void setup(ident *id_, int length, uint *onchange, float scale = 1, const char *keyfilter_ = NULL)
         {
-            if(id && isfocus() && !hasstate(STATE_HOVER)) commit();
+            if(isfocus() && !hasstate(STATE_HOVER)) commit();
             if(changed)
             {
                 if(id == id_) setsval(id, edit->lines[0].text, onchange);
