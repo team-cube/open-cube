@@ -173,6 +173,8 @@ struct editor
         clear(NULL);
     }
 
+    bool empty() { return lines.length() == 1 && lines[0].empty(); }
+
     void clear(const char *init = "")
     {
         cx = cy = 0;
@@ -182,6 +184,17 @@ struct editor
         if(init) lines.add().set(init);
     }
 
+    void init(const char *inittext)
+    {
+        if(strcmp(lines[0].text, inittext)) clear(inittext);
+    }
+
+    void updateheight()
+    {
+        int width;
+        text_bounds(lines[0].text, width, pixelheight, pixelwidth);
+    }
+         
     void setfile(const char *fname)
     {
         DELETEA(filename);
@@ -237,13 +250,14 @@ struct editor
             if(my < 0) my = 0; else if(my >= n) my = n-1;
             len = lines[my].len;
             if(mx > len) mx = len;
+            sx = mx; sy = my;
         }
-        sx = (mx >= 0) ? mx : cx;
-        sy = (mx >= 0) ? my : cy;
+        else { sx = cx; sy = cy; }
         ex = cx;
         ey = cy;
         if(sy > ey) { swap(sy, ey); swap(sx, ex); }
         else if(sy==ey && sx > ex) swap(sx, ex);
+        if(mx >= 0) ex++;
         return (sx != ex) || (sy != ey);
     }
 
@@ -430,6 +444,16 @@ struct editor
         }
     }
 
+    void scrollup()
+    {
+        cy--;
+    }
+
+    void scrolldown()
+    {
+        cy++;
+    }
+
     void key(int code)
     {
         switch(code)
@@ -454,12 +478,6 @@ struct editor
                     y += FONTH;
                     if(y < height) { cx = text_visible(str, x, y, pixelwidth); break; }
                 }
-                cy++;
-                break;
-            case -4:
-                cy--;
-                break;
-            case -5:
                 cy++;
                 break;
             case SDLK_PAGEUP:
@@ -631,6 +649,7 @@ struct editor
                 }
                 gle::end();
                 hudshader->set();
+                gle::colorf(1, 1, 1);
             }
         }
 
@@ -654,6 +673,7 @@ struct editor
                 gle::attribf(x-FONTW/2, y+h+height);
                 gle::end();
                 hudshader->set();
+                gle::colorf(1, 1, 1);
             }
             h+=height;
         }
@@ -662,10 +682,8 @@ struct editor
     }
 };
 
-// a 'stack' where the last is the current focused editor
-static vector <editor*> editors;
-
-static editor *currentfocus() { return editors.length() ? editors.last() : NULL; }
+static vector<editor *> editors;
+static editor *textfocus = NULL;
 
 static void readyeditors()
 {
@@ -677,28 +695,30 @@ static void flusheditors()
     loopvrev(editors) if(!editors[i]->active)
     {
         editor *e = editors.remove(i);
-        DELETEP(e);
+        if(e == textfocus) textfocus = NULL;
+        delete e;
     }
 }
 
 static editor *useeditor(const char *name, int mode, bool focus, const char *initval = NULL)
 {
-    loopv(editors) if(strcmp(editors[i]->name, name) == 0)
+    loopv(editors) if(!strcmp(editors[i]->name, name))
     {
         editor *e = editors[i];
-        if(focus) { editors.add(e); editors.remove(i); } // re-position as last
+        if(focus) textfocus = e;
         e->active = true;
         return e;
     }
+    if(mode < 0) return NULL;
     editor *e = new editor(name, mode, initval);
-    if(focus) editors.add(e); else editors.insert(0, e);
+    editors.add(e);
+    if(focus) textfocus = e;
     return e;
 }
 
 
 #define TEXTCOMMAND(f, s, d, body) ICOMMAND(f, s, d,\
-    editor *top = currentfocus();\
-    if(!top || identflags&IDF_OVERRIDDEN) return;\
+    if(!textfocus || identflags&IDF_OVERRIDDEN) return;\
     body\
 )
 
@@ -714,7 +734,7 @@ ICOMMAND(textlist, "", (), // @DEBUG return list of all the editors
 );
 TEXTCOMMAND(textshow, "", (), // @DEBUG return the start of the buffer
     editline line;
-    line.combinelines(top->lines);
+    line.combinelines(textfocus->lines);
     result(line.text);
     line.clear();
 );
@@ -722,22 +742,22 @@ ICOMMAND(textfocus, "si", (char *name, int *mode), // focus on a (or create a pe
     if(*name) useeditor(name, *mode<=0 ? EDITORFOREVER : *mode, true);
     else if(editors.length() > 0) result(editors.last()->name);
 );
-TEXTCOMMAND(textprev, "", (), editors.insert(0, top); editors.pop();); // return to the previous editor
+TEXTCOMMAND(textprev, "", (), editors.insert(0, textfocus); editors.pop();); // return to the previous editor
 TEXTCOMMAND(textmode, "i", (int *m), // (1= keep while focused, 2= keep while used in gui, 3= keep forever (i.e. until mode changes)) topmost editor, return current setting if no args
-    if(*m) top->mode = *m;
-    else intret(top->mode);
+    if(*m) textfocus->mode = *m;
+    else intret(textfocus->mode);
 );
 TEXTCOMMAND(textsave, "s", (char *file),  // saves the topmost (filename is optional)
-    if(*file) top->setfile(path(file, true));
-    top->save();
+    if(*file) textfocus->setfile(path(file, true));
+    textfocus->save();
 );
-TEXTCOMMAND(textload, "s", (char *file), // loads into the topmost editor, returns filename if no args
+TEXTCOMMAND(textload, "s", (char *file), // loads into the textfocusmost editor, returns filename if no args
     if(*file)
     {
-        top->setfile(path(file, true));
-        top->load();
+        textfocus->setfile(path(file, true));
+        textfocus->load();
     }
-    else if(top->filename) result(top->filename);
+    else if(textfocus->filename) result(textfocus->filename);
 );
 TEXTCOMMAND(textinit, "sss", (char *name, char *file, char *initval), // loads into named editor if no file assigned and editor has been rendered
 {
@@ -752,18 +772,18 @@ TEXTCOMMAND(textinit, "sss", (char *name, char *file, char *initval), // loads i
 
 #define PASTEBUFFER "#pastebuffer"
 
-TEXTCOMMAND(textcopy, "", (), editor *b = useeditor(PASTEBUFFER, EDITORFOREVER, false); top->copyselectionto(b););
-TEXTCOMMAND(textpaste, "", (), editor *b = useeditor(PASTEBUFFER, EDITORFOREVER, false); top->insertallfrom(b););
+TEXTCOMMAND(textcopy, "", (), editor *b = useeditor(PASTEBUFFER, EDITORFOREVER, false); textfocus->copyselectionto(b););
+TEXTCOMMAND(textpaste, "", (), editor *b = useeditor(PASTEBUFFER, EDITORFOREVER, false); textfocus->insertallfrom(b););
 TEXTCOMMAND(textmark, "i", (int *m),  // (1=mark, 2=unmark), return current mark setting if no args
-    if(*m) top->mark(*m==1);
-    else intret(top->region() ? 1 : 2);
+    if(*m) textfocus->mark(*m==1);
+    else intret(textfocus->region() ? 1 : 2);
 );
-TEXTCOMMAND(textselectall, "", (), top->selectall(););
-TEXTCOMMAND(textclear, "", (), top->clear(););
-TEXTCOMMAND(textcurrentline, "",  (), result(top->currentline().text););
+TEXTCOMMAND(textselectall, "", (), textfocus->selectall(););
+TEXTCOMMAND(textclear, "", (), textfocus->clear(););
+TEXTCOMMAND(textcurrentline, "",  (), result(textfocus->currentline().text););
 
 TEXTCOMMAND(textexec, "i", (int *selected), // execute script commands from the buffer (0=all, 1=selected region only)
-    char *script = *selected ? top->selectiontostring() : top->tostring();
+    char *script = *selected ? textfocus->selectiontostring() : textfocus->tostring();
     execute(script);
     delete[] script;
 );

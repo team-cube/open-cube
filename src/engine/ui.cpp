@@ -266,6 +266,15 @@ namespace UI
             return false;
         }
 
+        virtual bool rawkey(int code, bool isdown)
+        {
+            loopchildrenrev(o,
+            {
+                if(o->rawkey(code, isdown)) return true;
+            });
+            return false;
+        }
+
         virtual bool key(int code, bool isdown)
         {
             loopchildrenrev(o,
@@ -1410,7 +1419,7 @@ namespace UI
             if(button && button->haschildstate(STATE_PRESS)) { offsetx = cx - button->x; offsety = cy - button->y; }
             else scrollto(cx, cy);
         }
-
+    
         virtual void arrowscroll(float dir) = 0;
 
         virtual void movebutton(Object *o, float fromx, float fromy, float tox, float toy) = 0;
@@ -1531,7 +1540,7 @@ namespace UI
         const char *gettype() const { return typestr(); }
     };
 
-    static double getval(ident *id, double val = 0)
+    static double getfval(ident *id, double val = 0)
     {
         switch(id->type)
         {
@@ -1543,7 +1552,7 @@ namespace UI
         return val;
     }
 
-    static void setval(ident *id, double val, uint *onchange = NULL)
+    static void setfval(ident *id, double val, uint *onchange = NULL)
     {
         switch(id->type)
         {
@@ -1578,10 +1587,10 @@ namespace UI
             vstep = vstep_ > 0 ? vstep_ : 1;
             if(changed)
             {
-                setval(id, val, onchange);
+                setfval(id, val, onchange);
                 changed = false;
             }
-            else val = getval(id, vmin);
+            else val = getfval(id, vmin);
         }
 
         static const char *typestr() { return "#Slider"; }
@@ -1593,11 +1602,14 @@ namespace UI
             return true;
         }
 
-        void arrowscroll(float dir)
+        void arrowscroll(double dir)
         {
             double newval = clamp(val + dir*vstep, min(vmin, vmax), max(vmin, vmax));
             if(val != newval) changeval(newval);
         }
+
+        void scrollup(float cx, float cy);
+        void scrolldown(float cx, float cy);
 
         virtual void scrollto(float cx, float cy) {}
 
@@ -1616,12 +1628,12 @@ namespace UI
 
     struct SliderArrow : Object
     {
-        float stepdir;
+        double stepdir;
         int laststep, steptime;
 
         SliderArrow() : laststep(0) {}
 
-        void setup(float dir_ = 0, int steptime_ = 0)
+        void setup(double dir_ = 0, int steptime_ = 0)
         {
             Object::setup();
             stepdir = dir_;
@@ -1654,6 +1666,20 @@ namespace UI
         }
     };
 
+    void Slider::scrollup(float cx, float cy)
+    {
+        Object::scrollup(cx, cy);
+        SliderArrow *arrow = (SliderArrow *)findsibling(SliderArrow::typestr());
+        arrowscroll(arrow ? arrow->stepdir : 1);
+    }
+
+    void Slider::scrolldown(float cx, float cy)
+    {
+        Object::scrolldown(cx, cy);
+        SliderArrow *arrow = (SliderArrow *)findsibling(SliderArrow::typestr());
+        arrowscroll(arrow ? -arrow->stepdir : -1);
+    }
+ 
     struct HorizontalSlider : Slider
     {
         static const char *typestr() { return "#HorizontalSlider"; }
@@ -1710,6 +1736,268 @@ namespace UI
         }
     };
 
+    struct TextEditor : Object
+    {
+        static TextEditor *focus;
+
+        float scale, offsetx, offsety;
+        editor *edit;
+        char *keyfilter;
+
+        TextEditor() : edit(NULL), keyfilter(NULL) {}
+
+        void setup(const char *name, int length, int height, float scale_ = 1, const char *initval = NULL, int mode = EDITORUSED, const char *keyfilter_ = NULL)
+        {
+            Object::setup();
+            editor *edit_ = useeditor(name, mode, false, initval);
+            if(edit_ != edit)
+            {
+                if(edit) clearfocus();
+                edit = edit_;
+            }
+            edit->active = true;
+            if(initval && edit->mode == EDITORFOCUSED && !isfocus())
+                edit->init(initval);
+            edit->linewrap = length < 0;
+            edit->maxx = edit->linewrap ? -1 : length;
+            edit->maxy = height <= 0 ? 1 : -1;
+            edit->pixelwidth = abs(length)*FONTH;
+            if(edit->linewrap && edit->maxy == 1) edit->updateheight();
+            else edit->pixelheight = FONTH*max(height, 1);
+            scale = scale_;
+            if(keyfilter_) SETSTR(keyfilter, keyfilter_);
+            else DELETEA(keyfilter);
+        }
+        ~TextEditor()
+        {
+            clearfocus();
+            DELETEA(keyfilter);
+        }
+
+        static void setfocus(TextEditor *e)
+        {
+            if(focus == e) return;
+            focus = e;
+            bool allowtextinput = focus!=NULL && focus->allowtextinput();
+            ::textinput(TI_GUI, allowtextinput);
+            ::keyrepeat(KR_GUI, allowtextinput);
+        }
+        void setfocus() { setfocus(this); }
+        void clearfocus() { if(focus == this) setfocus(NULL); }
+        bool isfocus() const { return focus == this; }
+
+        static const char *typestr() { return "#TextEditor"; }
+        const char *gettype() const { return typestr(); }
+
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+
+        float drawscale() const { return scale / (FONTH * uitextrows); }
+        
+        void draw(float sx, float sy)
+        {
+            float k = drawscale();
+            pushhudmatrix();
+            hudmatrix.translate(sx, sy, 0);
+            hudmatrix.scale(k, k, 1);
+            flushhudmatrix();
+
+            edit->draw(FONTW/2, 0, 0xFFFFFF, isfocus());
+
+            pophudmatrix();
+
+            Object::draw(sx, sy);
+        }
+
+        void layout()
+        {
+            Object::layout();
+
+            float k = drawscale();
+            w = max(w, (edit->pixelwidth + FONTW)*k);
+            h = max(h, edit->pixelheight*k);
+        }
+
+        virtual void resetmark(float cx, float cy)
+        {
+            edit->mark(false);
+            offsetx = cx;
+            offsety = cy;
+        }
+
+        void press(float cx, float cy)
+        {
+            Object::press(cx, cy);
+            setfocus();
+            resetmark(cx, cy);
+        }
+
+        void hold(float cx, float cy)
+        {
+            Object::hold(cx, cy);
+            if(isfocus())
+            {
+                float k = drawscale();
+                bool dragged = max(fabs(cx - offsetx), fabs(cy - offsety)) > (FONTH/8.0f)*k;
+                edit->hit(int(floor(cx/k - FONTW/2)), int(floor(cy/k)), dragged);
+            }
+        }    
+
+        void scrollup(float cx, float cy)
+        {
+            Object::scrollup(cx, cy);
+            edit->scrollup();
+        }
+
+        void scrolldown(float cx, float cy)
+        {
+            Object::scrolldown(cx, cy);
+            edit->scrolldown();
+        }
+
+        virtual void cancel()
+        {
+            clearfocus();
+        }
+
+        virtual void commit()
+        {
+            clearfocus();
+        }
+
+        bool key(int code, bool isdown)
+        {
+            if(Object::key(code, isdown)) return true;
+            if(!isfocus()) return false;
+            switch(code)
+            {
+                case SDLK_ESCAPE:
+                    if(isdown) cancel();
+                    return true;
+                case SDLK_RETURN:
+                case SDLK_TAB:
+                    if(edit->maxy != 1) break;
+                    // fall-through
+                case SDLK_KP_ENTER:
+                    if(isdown) commit();
+                    return true;
+            }
+            if(isdown) edit->key(code);
+            return true;
+        }
+
+        virtual bool allowtextinput() const { return true; }
+
+        bool textinput(const char *str, int len)
+        {
+            if(Object::textinput(str, len)) return true;
+            if(!isfocus() || !allowtextinput()) return false;
+            if(!keyfilter) edit->input(str, len);
+            else while(len > 0)
+            {
+                int accept = min(len, (int)strspn(str, keyfilter));
+                if(accept > 0) edit->input(str, accept);
+                str += accept + 1;
+                len -= accept + 1;
+                if(len <= 0) break;
+                int reject = (int)strcspn(str, keyfilter);   
+                str += reject;
+                str -= reject;
+            }
+            return true;
+        }
+    };
+
+    TextEditor *TextEditor::focus = NULL;
+
+    static const char *getsval(ident *id, const char *val = "")
+    {
+        switch(id->type)
+        {
+            case ID_VAR: val = intstr(*id->storage.i); break;
+            case ID_FVAR: val = floatstr(*id->storage.f); break;
+            case ID_SVAR: val = *id->storage.s; break;
+            case ID_ALIAS: val = id->getstr(); break;
+        }
+        return val;
+    }
+
+    static void setsval(ident *id, const char *val, uint *onchange = NULL)
+    {
+        switch(id->type)
+        {
+            case ID_VAR: setvarchecked(id, parseint(val)); break;
+            case ID_FVAR: setfvarchecked(id, parsefloat(val)); break;
+            case ID_SVAR: setsvarchecked(id, val); break;
+            case ID_ALIAS: alias(id->name, val); break;
+        }
+        if(onchange && (*onchange&CODE_OP_MASK) != CODE_EXIT) execute(onchange);
+    }
+
+    struct Field : TextEditor
+    {
+        ident *id;
+        bool changed;
+
+        Field() : id(NULL), changed(false) {}
+    
+        void setup(ident *id_, int length, uint *onchange, float scale = 1, const char *keyfilter_ = NULL)
+        {
+            if(id && isfocus() && !hasstate(STATE_HOVER)) commit();
+            if(changed)
+            {
+                if(id == id_) setsval(id, edit->lines[0].text, onchange);
+                changed = false;
+            }
+            TextEditor::setup(id_->name, length, 0, scale, id != id_ || !isfocus() ? getsval(id_) : NULL, EDITORFOCUSED, keyfilter_);            
+            id = id_;
+        }
+
+        void commit()
+        {
+            TextEditor::commit();
+            changed = true;
+        }
+
+        void cancel()
+        {
+            TextEditor::cancel();
+            changed = false;
+        }
+    };
+       
+    struct KeyField : Field
+    {
+        void resetmark(float cx, float cy)
+        {
+            edit->clear();
+            Field::resetmark(cx, cy);
+        }
+
+        void insertkey(int code)
+        {
+            const char *keyname = getkeyname(code);
+            if(keyname)
+            {
+                if(!edit->empty()) edit->insert(" ");
+                edit->insert(keyname);
+            }
+        }
+
+        bool rawkey(int code, bool isdown)
+        {
+            if(Object::rawkey(code, isdown)) return true;
+            if(!isfocus() || !isdown) return false;
+            if(code == SDLK_ESCAPE) commit();
+            else insertkey(code);
+            return true;
+        }
+            
+        bool allowtextinput() const { return false; }
+    };
+ 
     struct ModelPreview : Filler
     {
         char *name;
@@ -2058,6 +2346,15 @@ namespace UI
     ICOMMAND(uitext, "sfe", (char *text, float *scale, uint *children),
         BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale), children));
 
+    ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
+        BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+
+    ICOMMAND(uifield, "riefe", (ident *var, int *length, uint *onchange, float *scale, uint *children),
+        BUILD(Field, o, o->setup(var, *length, onchange, *scale <= 0 ? 1 : *scale), children));
+
+    ICOMMAND(uikeyfield, "riefe", (ident *var, int *length, uint *onchange, float *scale, uint *children),
+        BUILD(KeyField, o, o->setup(var, *length, onchange, *scale <= 0 ? 1 : *scale), children));
+
     ICOMMAND(uiimage, "sffe", (char *texname, float *minw, float *minh, uint *children),
         BUILD(Image, o, o->setup(textureload(texname, 3, true, false), *minw, *minh), children));
 
@@ -2130,6 +2427,7 @@ namespace UI
 
     bool keypress(int code, bool isdown)
     {
+        if(world->rawkey(code, isdown)) return true;
         int action = -1, hold = -1;
         switch(code)
         {
@@ -2181,6 +2479,8 @@ namespace UI
 
     void update()
     {
+        readyeditors();
+
         world->hover(cursorx*world->w, cursory*world->h);
         if(world->state&STATE_HOLD) world->hold(cursorx*world->w, cursory*world->h);
         if(world->state&STATE_ALT_HOLD) world->althold(cursorx*world->w, cursory*world->h);
@@ -2188,6 +2488,8 @@ namespace UI
 
         world->build();
         world->layout();
+
+        flusheditors();
     }
 
     void render()
