@@ -386,7 +386,7 @@ void draw_text(const char *str, float left, float top, int r, int g, int b, int 
     #define TEXTCHAR(idx) draw_char(tex, c, left+x, top+y, scale); x += cw;
     #define TEXTWORD TEXTWORDSKELETON
     char colorstack[10];
-    colorstack[0] = 'c'; //indicate user color
+    colorstack[0] = '\0'; //indicate user color
     bvec color(r, g, b);
     if(textbright != 100) color.scale(textbright, 100);
     int colorpos = 0;

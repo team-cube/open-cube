@@ -245,6 +245,22 @@ namespace UI
             adjustchildren();
         }
 
+        void setalign(int xalign, int yalign)
+        {
+            adjust &= ~ALIGN_MASK;
+            adjust |= (clamp(xalign, -1, 1)+2)<<ALIGN_HSHIFT;
+            adjust |= (clamp(yalign, -1, 1)+2)<<ALIGN_VSHIFT;
+        }
+
+        void setclamp(int left, int right, int bottom, int top)
+        {
+            adjust &= ~CLAMP_MASK;
+            if(left) adjust |= CLAMP_LEFT;
+            if(right) adjust |= CLAMP_RIGHT;
+            if(bottom) adjust |= CLAMP_BOTTOM;
+            if(top) adjust |= CLAMP_TOP;
+        }
+
         virtual bool target(float cx, float cy)
         {
             return false;
@@ -812,21 +828,21 @@ namespace UI
         }
     };
 
-    struct Rectangle : Filler
+    struct FillColor : Filler
     {
         enum { SOLID = 0, MODULATE };
 
         int type;
         vec4 color;
 
-        void setup(int type_, float r, float g, float b, float a, float minw_ = 0, float minh_ = 0)
+        void setup(int type_, const vec4 &color_, float minw_ = 0, float minh_ = 0)
         {
             Filler::setup(minw_, minh_);
             type = type_;
-            color = vec4(r, g, b, a);
+            color = color_;
         }
 
-        static const char *typestr() { return "#Rectangle"; }
+        static const char *typestr() { return "#FillColor"; }
         const char *gettype() const { return typestr(); }
 
         bool target(float cx, float cy)
@@ -849,6 +865,80 @@ namespace UI
             gle::colorf(1, 1, 1);
             hudshader->set();
             if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            Object::draw(sx, sy);
+        }
+    };
+
+    struct Gradient : FillColor
+    {
+        enum { VERTICAL, HORIZONTAL };
+
+        int dir;
+        vec4 color2;
+
+        void setup(int type_, int dir_, const vec4 &color_, const vec4 &color2_, float minw_ = 0, float minh_ = 0)
+        {
+            FillColor::setup(type_, color_, minw_, minh_);
+            dir = dir_;
+            color2 = color2_;
+        }
+
+        static const char *typestr() { return "#Gradient"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+            hudnotextureshader->set();
+            gle::defvertex(2);
+            gle::defcolor(4);
+            gle::begin(GL_TRIANGLE_STRIP);
+            gle::attribf(sx+w, sy);   gle::attrib(dir == HORIZONTAL ? color2 : color);
+            gle::attribf(sx,   sy);   gle::attrib(color);
+            gle::attribf(sx+w, sy+h); gle::attrib(color2);
+            gle::attribf(sx,   sy+h); gle::attrib(dir == HORIZONTAL ? color : color2);
+            gle::end();
+            hudshader->set();
+            if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            Object::draw(sx, sy);
+        }
+    };
+
+    struct Outline : Filler
+    {
+        float thick;
+        vec4 color;
+
+        void setup(float thick_, const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        {
+            Filler::setup(minw_, minh_);
+            thick = thick_;
+            color = color_;
+        }
+
+        static const char *typestr() { return "#Outline"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            hudnotextureshader->set();
+            gle::color(color);
+            gle::defvertex(2);
+            gle::begin(GL_QUADS);
+            float tw = min(thick, w/2), th = min(thick, h/2);
+            // top
+            gle::attribf(sx, sy); gle::attribf(sx+w, sy); gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+tw, sy+th);
+            // bottom
+            gle::attribf(sx+tw, sy+h-th); gle::attribf(sx+w-tw, sy+h-th); gle::attribf(sx+w, sy+h); gle::attribf(sx, sy+h);
+            // left
+            gle::attribf(sx, sy); gle::attribf(sx+tw, sy+th); gle::attribf(sx+tw, sy+h-th); gle::attribf(sx, sy+h);
+            // right
+            gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+w, sy); gle::attribf(sx+w, sy+h); gle::attribf(sx+w-tw, sy+h-th);
+            gle::end();
+            gle::colorf(1, 1, 1);
+            hudshader->set();
 
             Object::draw(sx, sy);
         }
@@ -1845,20 +1935,20 @@ namespace UI
 
     ICOMMAND(uialign, "ii", (int *xalign, int *yalign),
     {
-        if(buildparent)
-            buildparent->adjust = (buildparent->adjust & ~ALIGN_MASK) |
-                ((clamp(*xalign, -1, 1)+2)<<ALIGN_HSHIFT) |
-                ((clamp(*yalign, -1, 1)+2)<<ALIGN_VSHIFT);
+        if(buildparent) buildparent->setalign(*xalign, *yalign);
+    });
+    ICOMMANDNS("uialign-", uialign_, "ii", (int *xalign, int *yalign),
+    {
+        if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setalign(*xalign, *yalign);
     });
 
     ICOMMAND(uiclamp, "iiii", (int *left, int *right, int *bottom, int *top),
     {
-        if(buildparent)
-            buildparent->adjust = (buildparent->adjust & ~CLAMP_MASK) |
-                (*left ? CLAMP_LEFT : 0) |
-                (*right ? CLAMP_RIGHT : 0) |
-                (*bottom ? CLAMP_BOTTOM : 0) |
-                (*top ? CLAMP_TOP : 0);
+        if(buildparent) buildparent->setclamp(*left, *right, *bottom, *top);
+    });
+    ICOMMANDNS("uiclamp-", uiclamp_, "iiii", (int *left, int *right, int *bottom, int *top),
+    {
+        if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setclamp(*left, *right, *bottom, *top);
     });
 
     ICOMMAND(uigroup, "e", (uint *children),
@@ -1926,10 +2016,25 @@ namespace UI
         BUILD(SliderButton, o, o->setup(), children));
 
     ICOMMAND(uicolor, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(Rectangle, o, o->setup(Rectangle::SOLID, *r, *g, *b, *a, *minw, *minh), children));
+        BUILD(FillColor, o, o->setup(FillColor::SOLID, vec4(*r, *g, *b, *a), *minw, *minh), children));
 
     ICOMMAND(uimodcolor, "fffffe", (float *r, float *g, float *b, float *minw, float *minh, uint *children),
-        BUILD(Rectangle, o, o->setup(Rectangle::MODULATE, *r, *g, *b, 1, *minw, *minh), children));
+        BUILD(FillColor, o, o->setup(FillColor::MODULATE, vec4(*r, *g, *b, 1), *minw, *minh), children));
+
+    ICOMMAND(uivgradient, "ffffffffffe", (float *r, float *g, float *b, float *a, float *r2, float *g2, float *b2, float *a2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::VERTICAL, vec4(*r, *g, *b, *a), vec4(*r2, *g2, *b2, *a2), *minw, *minh), children));
+
+    ICOMMAND(uimodvgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::VERTICAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
+
+    ICOMMAND(uihgradient, "ffffffffffe", (float *r, float *g, float *b, float *a, float *r2, float *g2, float *b2, float *a2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::HORIZONTAL, vec4(*r, *g, *b, *a), vec4(*r2, *g2, *b2, *a2), *minw, *minh), children));
+
+    ICOMMAND(uimodhgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::HORIZONTAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
+
+    ICOMMAND(uioutline, "ffffffe", (float *thick, float *r, float *g, float *b, float *minw, float *minh, uint *children),
+        BUILD(Outline, o, o->setup(*thick, vec4(*r, *g, *b, 1), *minw, *minh), children));
 
     ICOMMAND(uicolortext, "sffffe", (char *text, float *scale, float *r, float *g, float *b, uint *children),
         BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale, *r, *g, *b), children));
@@ -2084,7 +2189,7 @@ namespace UI
 
         world->draw();
 
-        glEnable(GL_BLEND);
+        glDisable(GL_BLEND);
 
         gle::disable();
     }
