@@ -307,10 +307,14 @@ namespace UI
             draw(x, y);
         }
 
-        void resetstate(bool full = false)
+        void resetstate()
         {
             state = childstate = 0;
-            if(full) loopchildren(o, o->resetstate(true));
+        }
+        void resetchildstate()
+        {
+            resetstate();
+            loopchildren(o, o->resetchildstate());
         }
 
         bool hasstate(int flags) const { return ((state & ~childstate) & flags) != 0; }
@@ -478,7 +482,7 @@ namespace UI
         bool show(Window *w)
         {
             if(children.find(w) >= 0) return false;
-            w->resetstate(true);
+            w->resetchildstate();
             children.add(w);
             w->show();
             return true;
