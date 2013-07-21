@@ -1239,18 +1239,18 @@ namespace UI
     {
         char *str;
         float scale;
-        vec color;
+        vec4 color;
 
         Text() : str(NULL) {}
         ~Text() { delete[] str; }
 
-        void setup(const char *str_, float scale_ = 1, float r = 1, float g = 1, float b = 1)
+        void setup(const char *str_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
         {
             Object::setup();
 
             SETSTR(str, str_);
             scale = scale_;
-            color = vec(r, g, b);
+            color = color_;
         }
 
         static const char *typestr() { return "#Text"; }
@@ -1262,7 +1262,7 @@ namespace UI
         {
             float oldscale = textscale;
             textscale = drawscale();
-            draw_text(str, sx/textscale, sy/textscale, int(color.x*255), int(color.y*255), int(color.z*255));
+            draw_text(str, sx/textscale, sy/textscale, int(color.r*255), int(color.g*255), int(color.b*255), int(color.a*255));
             textscale = oldscale;
 
             Object::draw(sx, sy);
@@ -2334,7 +2334,7 @@ namespace UI
         BUILD(SliderButton, o, o->setup(), children));
 
     ICOMMAND(uicolor, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(FillColor, o, o->setup(FillColor::SOLID, vec4(*r, *g, *b, *a), *minw, *minh), children));
+        BUILD(FillColor, o, o->setup(FillColor::SOLID, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
 
     ICOMMAND(uimodcolor, "fffffe", (float *r, float *g, float *b, float *minw, float *minh, uint *children),
         BUILD(FillColor, o, o->setup(FillColor::MODULATE, vec4(*r, *g, *b, 1), *minw, *minh), children));
@@ -2351,11 +2351,11 @@ namespace UI
     ICOMMAND(uimodhgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
         BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::HORIZONTAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
 
-    ICOMMAND(uioutline, "ffffffe", (float *thick, float *r, float *g, float *b, float *minw, float *minh, uint *children),
-        BUILD(Outline, o, o->setup(*thick, vec4(*r, *g, *b, 1), *minw, *minh), children));
+    ICOMMAND(uioutline, "fffffffe", (float *thick, float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
+        BUILD(Outline, o, o->setup(*thick, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
 
-    ICOMMAND(uicolortext, "sffffe", (char *text, float *scale, float *r, float *g, float *b, uint *children),
-        BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale, *r, *g, *b), children));
+    ICOMMAND(uicolortext, "sfffffe", (char *text, float *scale, float *r, float *g, float *b, float *a, uint *children),
+        BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale, vec4(*r, *g, *b, *a <= 0 ? 1 : *a)), children));
 
     ICOMMAND(uitext, "sfe", (char *text, float *scale, uint *children),
         BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale), children));
