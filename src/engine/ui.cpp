@@ -533,15 +533,19 @@ namespace UI
 
     inline void Object::buildchildren(uint *contents)
     {
-        Object *oldparent = buildparent;
-        int oldchild = buildchild;
-        buildparent = this;
-        buildchild = 0;
-        execute(contents);
-        while(children.length() > buildchild)
-            delete children.pop();
-        buildparent = oldparent;
-        buildchild = oldchild;
+        if((*contents&CODE_OP_MASK) == CODE_EXIT) children.deletecontents();
+        else
+        {
+            Object *oldparent = buildparent;
+            int oldchild = buildchild;
+            buildparent = this;
+            buildchild = 0;
+            execute(contents);
+            while(children.length() > buildchild)
+                delete children.pop();
+            buildparent = oldparent;
+            buildchild = oldchild;
+        }
         resetstate();
     }
 
@@ -1536,7 +1540,7 @@ namespace UI
             case ID_SVAR: setsvarchecked(id, floatstr(val)); break;
             case ID_ALIAS: alias(id->name, floatstr(val)); break;
         }
-        if(onchange) execute(onchange);
+        if(onchange && (*onchange&CODE_OP_MASK) != CODE_EXIT) execute(onchange);
     }
 
     struct Slider : Object
