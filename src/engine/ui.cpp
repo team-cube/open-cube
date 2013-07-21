@@ -2221,34 +2221,35 @@ namespace UI
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
 
+    #define IFSTATEVAL(state,t,f) { if(state) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }
     #define DOSTATE(flags, func) \
         ICOMMANDNS("ui!" #func, uinot##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->hasstate(flags) ? t : f)); \
         ICOMMANDNS("ui" #func, ui##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->haschildstate(flags) ? t : f)); \
         ICOMMANDNS("ui!" #func "?", uinot##func##__, "tt", (tagval *t, tagval *f), \
-            { if(buildparent && buildparent->hasstate(flags)) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }); \
+            IFSTATEVAL(buildparent && buildparent->hasstate(flags), t, f)); \
         ICOMMANDNS("ui" #func "?", ui##func##__, "tt", (tagval *t, tagval *f), \
-            { if(buildparent && buildparent->haschildstate(flags)) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }); \
+            IFSTATEVAL(buildparent && buildparent->haschildstate(flags), t, f)); \
         ICOMMANDNS("ui!" #func "+", uichildnot##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->hasstate(flags) ? t : f)); \
         ICOMMANDNS("ui" #func "+", uichild##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->haschildstate(flags) ? t : f)); \
         ICOMMANDNS("ui!" #func "+?", uichildnot##func##__, "tt", (tagval *t, tagval *f), \
-            { if(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->hasstate(flags)) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }); \
+            IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->hasstate(flags), t, f)); \
         ICOMMANDNS("ui" #func "+?", uichild##func##__, "tt", (tagval *t, tagval *f), \
-            { if(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->haschildstate(flags)) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); });
+            IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->haschildstate(flags), t, f));
     DOSTATES
     #undef DOSTATE
 
     ICOMMANDNS("uifocus", uifocus_, "ee", (uint *t, uint *f), 
         executeret(buildparent && TextEditor::focus == buildparent ? t : f));
     ICOMMANDNS("uifocus?", uifocus__, "tt", (tagval *t, tagval *f), 
-        { if(buildparent && TextEditor::focus == buildparent) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); });
+        IFSTATEVAL(buildparent && TextEditor::focus == buildparent, t, f));
     ICOMMANDNS("uifocus+", uichildfocus_, "ee", (uint *t, uint *f), 
         executeret(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild] ? t : f));
     ICOMMANDNS("uifocus+?", uichildfocus__, "tt", (tagval *t, tagval *f), 
-        { if(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild]) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); });
+        IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild], t, f));
 
     ICOMMAND(uialign, "ii", (int *xalign, int *yalign),
     {
