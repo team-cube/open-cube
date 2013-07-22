@@ -1964,6 +1964,8 @@ COMMAND(getseltex, "");
 ICOMMAND(getreptex, "", (), { if(!noedit()) intret(vslots.inrange(reptex) ? reptex : -1); });
 COMMAND(gettexname, "ii");
 ICOMMAND(texmru, "b", (int *idx), { filltexlist(); intret(texmru.inrange(*idx) ? texmru[*idx] : texmru.length()); });
+ICOMMAND(numvslots, "", (), intret(vslots.length()));
+ICOMMAND(numslots, "", (), intret(slots.length()));
 
 void replacetexcube(cube &c, int oldtex, int newtex)
 {

@@ -2537,7 +2537,7 @@ void gl_drawhud()
         rendertexturepanel(w, h);
     }
 
-    //g3d_limitscale((2*limitgui - conh) / conh);
+    UI::limitscale((2*limitgui - conh) / conh);
 
     pushhudmatrix();
     hudmatrix.scale(conscale, conscale, 1);

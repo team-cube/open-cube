@@ -339,7 +339,7 @@ namespace UI
         {
             switch(state)
             {
-            #define DOSTATE(flags, func) case flags: func(cx, cy); return haschildstate(flags);
+            #define DOSTATE(flags, func) case flags: func##children(cx, cy); return haschildstate(flags);
             DOSTATES
             #undef DOSTATE
             }
@@ -347,15 +347,17 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            virtual void func(float cx, float cy) \
+            virtual void func##children(float cx, float cy) \
             { \
                 loopinchildrenrev(o, cx, cy, \
                 { \
-                    o->func(ox, oy); \
+                    o->func##children(ox, oy); \
                     childstate |= (o->state | o->childstate) & (flags); \
                 }, ); \
                 if(target(cx, cy)) state |= (flags); \
-            }
+                func(cx, cy); \
+            } \
+            virtual void func(float cx, float cy) {}
         DOSTATES
         #undef DOSTATE
 
@@ -462,6 +464,10 @@ namespace UI
 
     struct World : Object
     {
+        float maxscale, px, py, px2, py2;
+
+        World() : maxscale(1), px(0), py(0), px2(0), py2(0) {}
+
         static const char *typestr() { return "#World"; }
         const char *gettype() const { return typestr(); }
         const char *getname() const { return gettype(); }
@@ -480,17 +486,21 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            void func(float cx, float cy) \
+            void func##children(float cx, float cy) \
             { \
+                if(px >= px2 || py >= py2) return; \
+                cx *= px2-px; cx += px - x; \
+                cy *= py2-py; cy += py - y; \
                 loopinchildrenrev(o, cx, cy, \
                 { \
-                    o->func(ox, oy); \
+                    o->func##children(ox, oy); \
                 }, \
                 { \
                     int oflags = (o->state | o->childstate) & (flags); \
                     if(oflags) { childstate |= oflags; break; } \
                 }); \
                 if(target(cx, cy)) state |= (flags); \
+                func(cx, cy); \
             }
         DOSTATES
         #undef DOSTATE
@@ -537,22 +547,43 @@ namespace UI
             }
             return hidden;
         }
+
+        void setup()
+        {
+            Object::setup();
+            px = px2 = py = py2 = 0;
+        }
+
+        void projection()
+        {
+            float scale = max(h/maxscale, 1.0f);
+            px = (x - 0.5f)*scale + 0.5f;
+            px2 = (x + w - 0.5f)*scale + 0.5f;
+            py = (y - 0.5f)*scale + 0.5f;
+            py2 = (y + h - 0.5f)*scale + 0.5f;
+            hudmatrix.ortho(px, px2, py2, py, -1, 1);
+        }
+
+        void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
+        {
+            sx1 = clamp(int(floor((x1-px)/(px2-px)*screenw)), 0, screenw);
+            sy1 = clamp(int(floor(screenh - (y2-py)/(py2-py)*screenh)), 0, screenh);
+            sx2 = clamp(int(ceil((x2-px)/(px2-px)*screenw)), 0, screenw);
+            sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
+        }
     };
 
     World *world = NULL;
 
     void ClipArea::scissor()
     {
-        int sx1 = clamp(int(floor((x1-world->x)/world->w*screenw)), 0, screenw),
-            sy1 = clamp(int(floor((y1-world->y)/world->h*screenh)), 0, screenh),
-            sx2 = clamp(int(ceil((x2-world->x)/world->w*screenw)), 0, screenw),
-            sy2 = clamp(int(ceil((y2-world->y)/world->h*screenh)), 0, screenh);
-        glScissor(sx1, screenh - sy2, sx2-sx1, sy2-sy1);
+        int sx1, sy1, sx2, sy2;
+        world->calcscissor(x1, y1, x2, y2, sx1, sy1, sx2, sy2);
+        glScissor(sx1, sy1, sx2-sx1, sy2-sy1);
     }
 
     void Window::escrelease(float cx, float cy)
     {
-        Object::escrelease(cx, cy);
         world->hide(this);
     }
 
@@ -1388,11 +1419,11 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            void func(float cx, float cy) \
+            void func##children(float cx, float cy) \
             { \
                 cx += offsetx; \
                 cy += offsety; \
-                if(cx < virtw && cy < virth) Clipper::func(cx, cy); \
+                if(cx < virtw && cy < virth) Clipper::func##children(cx, cy); \
             }
         DOSTATES
         #undef DOSTATE
@@ -1419,6 +1450,9 @@ namespace UI
         void addvscroll(float vscroll) { setvscroll(offsety + vscroll); }
         void sethscroll(float hscroll) { offsetx = clamp(hscroll, 0.0f, hlimit()); }
         void setvscroll(float vscroll) { offsety = clamp(vscroll, 0.0f, vlimit()); }
+
+        void scrollup(float cx, float cy);
+        void scrolldown(float cx, float cy);
     };
 
     struct ScrollButton : Object
@@ -1446,14 +1480,12 @@ namespace UI
 
         void hold(float cx, float cy)
         {
-            Object::hold(cx, cy);
             ScrollButton *button = (ScrollButton *)find(ScrollButton::typestr(), false);
             if(button && button->haschildstate(STATE_HOLD)) movebutton(button, offsetx, offsety, cx - button->x, cy - button->y);
         }
 
         void press(float cx, float cy)
         {
-            Object::press(cx, cy);
             ScrollButton *button = (ScrollButton *)find(ScrollButton::typestr(), false);
             if(button && button->haschildstate(STATE_PRESS)) { offsetx = cx - button->x; offsety = cy - button->y; }
             else scrollto(cx, cy);
@@ -1469,9 +1501,25 @@ namespace UI
 
         void arrowscroll(float dir) { addscroll(dir*curtime/1000.0f); }
         void wheelscroll(float step);
+        virtual int wheelscrolldirection() const { return 1; }
+
+        void scrollup(float cx, float cy) { wheelscroll(-wheelscrolldirection()); }
+        void scrolldown(float cx, float cy) { wheelscroll(wheelscrolldirection()); }
 
         virtual void movebutton(Object *o, float fromx, float fromy, float tox, float toy) = 0;
     };
+
+    void Scroller::scrollup(float cx, float cy)
+    {
+        ScrollBar *scrollbar = (ScrollBar *)findsibling(ScrollBar::typestr());
+        if(scrollbar) scrollbar->wheelscroll(-scrollbar->wheelscrolldirection());
+    }
+
+    void Scroller::scrolldown(float cx, float cy)
+    {
+        ScrollBar *scrollbar = (ScrollBar *)findsibling(ScrollBar::typestr());
+        if(scrollbar) scrollbar->wheelscroll(scrollbar->wheelscrolldirection());
+    }
 
     struct ScrollArrow : Object
     {
@@ -1488,19 +1536,18 @@ namespace UI
 
         void hold(float cx, float cy)
         {
-            Object::hold(cx, cy);
             ScrollBar *scrollbar = (ScrollBar *)findsibling(ScrollBar::typestr());
             if(scrollbar) scrollbar->arrowscroll(arrowspeed);
         }
     };
 
+    VARP(uiscrollsteptime, 0, 33, 1000);
+
     void ScrollBar::wheelscroll(float step)
     {
         ScrollArrow *arrow = (ScrollArrow *)findsibling(ScrollArrow::typestr());
-        if(arrow) addscroll(arrow->arrowspeed*step);
+        if(arrow) addscroll(arrow->arrowspeed*step*uiscrollsteptime/1000.0f);
     }
-
-    VARP(uiscrollsteptime, 0, 33, 1000);
 
     struct HorizontalScrollBar : ScrollBar
     {
@@ -1541,18 +1588,6 @@ namespace UI
         void movebutton(Object *o, float fromx, float fromy, float tox, float toy)
         {
             scrollto(o->x + tox - fromx, o->y + toy);
-        }
-
-        void scrollup(float cx, float cy)
-        {
-            Object::scrollup(cx, cy);
-            wheelscroll(-uiscrollsteptime/1000.0f);
-        }
-
-        void scrolldown(float cx, float cy)
-        {
-            Object::scrolldown(cx, cy);
-            wheelscroll(uiscrollsteptime/1000.0f);
         }
     };
 
@@ -1597,17 +1632,7 @@ namespace UI
             scrollto(o->x + tox, o->y + toy - fromy);
         }
 
-        void scrollup(float cx, float cy)
-        {
-            Object::scrollup(cx, cy);
-            wheelscroll(uiscrollsteptime/1000.0f);
-        }
-
-        void scrolldown(float cx, float cy)
-        {
-            Object::scrolldown(cx, cy);
-            wheelscroll(-uiscrollsteptime/1000.0f);
-        }
+        int wheelscrolldirection() const { return -1; }
     };
 
     struct SliderButton : Object
@@ -1685,12 +1710,15 @@ namespace UI
         }
 
         void wheelscroll(float step);
+        virtual int wheelscrolldirection() const { return 1; }
+
+        void scrollup(float cx, float cy) { wheelscroll(-wheelscrolldirection()); }
+        void scrolldown(float cx, float cy) { wheelscroll(wheelscrolldirection()); }
 
         virtual void scrollto(float cx, float cy) {}
 
         void hold(float cx, float cy)
         {
-            Object::hold(cx, cy);
             scrollto(cx, cy);
         }
 
@@ -1721,8 +1749,6 @@ namespace UI
 
         void press(float cx, float cy)
         {
-            Object::press(cx, cy);
-
             laststep = totalmillis + 2*uislidersteptime;
 
             Slider *slider = (Slider *)findsibling(Slider::typestr());
@@ -1731,8 +1757,6 @@ namespace UI
 
         void hold(float cx, float cy)
         {
-            Object::hold(cx, cy);
-
             if(totalmillis < laststep + uislidersteptime)
                 return;
             laststep = totalmillis;
@@ -1775,18 +1799,6 @@ namespace UI
 
             Slider::adjustchildren();
         }
-
-        void scrollup(float cx, float cy)
-        {
-            Object::scrollup(cx, cy);
-            wheelscroll(-1);
-        }
-
-        void scrolldown(float cx, float cy)
-        {
-            Object::scrolldown(cx, cy);
-            wheelscroll(1);
-        }
     };
 
     struct VerticalSlider : Slider
@@ -1816,17 +1828,7 @@ namespace UI
             Slider::adjustchildren();
         }
 
-        void scrollup(float cx, float cy)
-        {
-            Object::scrollup(cx, cy);
-            wheelscroll(1);
-        }
-
-        void scrolldown(float cx, float cy)
-        {
-            Object::scrolldown(cx, cy);
-            wheelscroll(-1);
-        }
+        int wheelscrolldirection() const { return -1; }
     };
 
     struct TextEditor : Object
@@ -1922,14 +1924,12 @@ namespace UI
 
         void press(float cx, float cy)
         {
-            Object::press(cx, cy);
             setfocus();
             resetmark(cx, cy);
         }
 
         void hold(float cx, float cy)
         {
-            Object::hold(cx, cy);
             if(isfocus())
             {
                 float k = drawscale();
@@ -1940,13 +1940,11 @@ namespace UI
 
         void scrollup(float cx, float cy)
         {
-            Object::scrollup(cx, cy);
             edit->scrollup();
         }
 
         void scrolldown(float cx, float cy)
         {
-            Object::scrolldown(cx, cy);
             edit->scrolldown();
         }
 
@@ -2134,13 +2132,11 @@ namespace UI
         void draw(float sx, float sy)
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
-            int sx1 = clamp(int(floor((sx-world->x)/world->w*screenw)), 0, screenw),
-                sy1 = clamp(int(floor(screenh - (sy-world->y)/world->h*screenh)), 0, screenh),
-                sx2 = clamp(int(ceil((sx+w-world->x)/world->w*screenw)), 0, screenw),
-                sy2 = clamp(int(ceil(screenh - (sy+h-world->y)/world->h*screenh)), 0, screenh);
+            int sx1, sy1, sx2, sy2;
+            world->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
             glDisable(GL_BLEND);
             gle::disable();
-            modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, true, clipstack.length() > 0);
+            modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
             model *m = loadmodel(name);
             if(m)
             {
@@ -2185,13 +2181,11 @@ namespace UI
         void draw(float sx, float sy)
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
-            int sx1 = clamp(int(floor((sx-world->x)/world->w*screenw)), 0, screenw),
-                sy1 = clamp(int(floor(screenh - (sy+h-world->y)/world->h*screenh)), 0, screenh),
-                sx2 = clamp(int(ceil((sx+w-world->x)/world->w*screenw)), 0, screenw),
-                sy2 = clamp(int(ceil(screenh - (sy-world->y)/world->h*screenh)), 0, screenh);
+            int sx1, sy1, sx2, sy2;
+            world->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
             glDisable(GL_BLEND);
             gle::disable();
-            modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, true, clipstack.length() > 0);
+            modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
             game::renderplayerpreview(model, team, weapon);
             if(clipstack.length()) clipstack.last().scissor();
             modelpreview::end();
@@ -2336,8 +2330,16 @@ namespace UI
         return window && world->hide(window);
     }
 
+    bool toggleui(const char *name)
+    {
+        if(showui(name)) return true;
+        hideui(name);
+        return false;
+    }
+
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
+    ICOMMAND(toggleui, "s", (char *name), intret(toggleui(name) ? 1 : 0));
 
     #define IFSTATEVAL(state,t,f) { if(state) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }
     #define DOSTATE(flags, func) \
@@ -2551,12 +2553,11 @@ namespace UI
         cursorx = cursory = 0.5f;
     }
 
-    bool movecursor(int &dx, int &dy)
+    bool movecursor(int dx, int dy)
     {
         if(!hascursor()) return false;
-        float scale = 500.0f / uisensitivity;
-        cursorx = clamp(cursorx+dx*(screenh/(screenw*scale)), 0.0f, 1.0f);
-        cursory = clamp(cursory+dy/scale, 0.0f, 1.0f);
+        cursorx = clamp(cursorx + dx*uisensitivity/screenw, 0.0f, 1.0f);
+        cursory = clamp(cursory + dy*uisensitivity/screenh, 0.0f, 1.0f);
         return true;
     }
 
@@ -2576,7 +2577,7 @@ namespace UI
         {
             if(isdown)
             {
-                if(world->setstate(action, cursorx*world->w, cursory*world->h))
+                if(world->setstate(action, cursorx, cursory))
                 {
                     if(hold >= 0) world->state |= hold;
                     return true;
@@ -2585,7 +2586,7 @@ namespace UI
             else if(hold < 0) return true;
             else if(world->state&hold)
             {
-                world->setstate(action, cursorx*world->w, cursory*world->h);
+                world->setstate(action, cursorx, cursory);
                 world->state &= ~hold;
                 return true;
             }
@@ -2597,6 +2598,11 @@ namespace UI
     bool textinput(const char *str, int len)
     {
         return world->textinput(str, len);
+    }
+
+    void limitscale(float scale)
+    {
+        world->maxscale = scale;
     }
 
     void setup()
@@ -2616,25 +2622,26 @@ namespace UI
     {
         readyeditors();
 
-        world->hover(cursorx*world->w, cursory*world->h);
-        if(world->state&STATE_HOLD) world->hold(cursorx*world->w, cursory*world->h);
-        if(world->state&STATE_ALT_HOLD) world->althold(cursorx*world->w, cursory*world->h);
-        if(world->state&STATE_ESC_HOLD) world->eschold(cursorx*world->w, cursory*world->h);
+        world->setstate(STATE_HOVER, cursorx, cursory);
+        if(world->state&STATE_HOLD) world->setstate(STATE_HOLD, cursorx, cursory);
+        if(world->state&STATE_ALT_HOLD) world->setstate(STATE_ALT_HOLD, cursorx, cursory);
+        if(world->state&STATE_ESC_HOLD) world->setstate(STATE_ESC_HOLD, cursorx, cursory);
 
         world->build();
-        world->layout();
 
         flusheditors();
     }
 
     void render()
     {
+        world->layout();
+
         if(world->children.empty()) return;
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        hudmatrix.ortho(world->x, world->x + world->w, world->y + world->h, world->y, -1, 1);
+        world->projection();
         resethudmatrix();
         hudshader->set();
 
