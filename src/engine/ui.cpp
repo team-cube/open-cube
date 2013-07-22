@@ -1541,7 +1541,7 @@ namespace UI
         }
     };
 
-    VARP(uiscrollsteptime, 0, 33, 1000);
+    VARP(uiscrollsteptime, 0, 50, 1000);
 
     void ScrollBar::wheelscroll(float step)
     {
