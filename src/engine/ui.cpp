@@ -30,10 +30,10 @@ namespace UI
         gle::defvertex(2);
         gle::deftexcoord0();
         gle::begin(GL_TRIANGLE_STRIP);
-        gle::attribf(x+w, y);   gle::attrib(tc[0]);
-        gle::attribf(x,   y);   gle::attrib(tc[1]);
-        gle::attribf(x+w, y+h); gle::attrib(tc[3]);
-        gle::attribf(x,   y+h); gle::attrib(tc[2]);
+        gle::attribf(x+w, y);   gle::attrib(tc[1]);
+        gle::attribf(x,   y);   gle::attrib(tc[0]);
+        gle::attribf(x+w, y+h); gle::attrib(tc[2]);
+        gle::attribf(x,   y+h); gle::attrib(tc[3]);
         gle::end();
     }
 
