@@ -427,7 +427,7 @@ namespace UI
 
         void hide()
         {
-            if(onshow) execute(onshow);
+            if(onhide) execute(onhide);
         }
 
         void show()
