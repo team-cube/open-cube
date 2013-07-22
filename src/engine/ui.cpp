@@ -2027,6 +2027,11 @@ namespace UI
         static const char *typestr() { return "#ModelPreview"; }
         const char *gettype() const { return typestr(); }
 
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+
         void draw(float sx, float sy)
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
@@ -2073,6 +2078,11 @@ namespace UI
         static const char *typestr() { return "#PlayerPreview"; }
         const char *gettype() const { return typestr(); }
 
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+
         void draw(float sx, float sy)
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
@@ -2110,6 +2120,11 @@ namespace UI
 
         static const char *typestr() { return "#SlotViewer"; }
         const char *gettype() const { return typestr(); }
+
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
 
         void previewslot(Slot &slot, VSlot &vslot, float x, float y)
         {
