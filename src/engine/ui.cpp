@@ -123,7 +123,8 @@ namespace UI
         STATE_ESC_HOLD    = 1<<8,
         STATE_ESC_RELEASE = 1<<9,
         STATE_SCROLL_UP   = 1<<10,
-        STATE_SCROLL_DOWN = 1<<11
+        STATE_SCROLL_DOWN = 1<<11,
+        STATE_HIDDEN      = 1<<12
     };
 
     struct Object
@@ -432,7 +433,24 @@ namespace UI
 
         void show()
         {
+            state |= STATE_HIDDEN;
             if(onshow) execute(onshow);
+        }
+
+        void layout()
+        {
+            if(!(state&STATE_HIDDEN)) Object::layout();
+            else w = h = 0;
+        }
+
+        void draw(float sx, float sy)
+        {
+            if(!(state&STATE_HIDDEN)) Object::draw(sx, sy);
+        }
+
+        void adjustchildren()
+        {
+            if(!(state&STATE_HIDDEN)) Object::adjustchildren();
         }
 
         void escrelease(float cx, float cy);
@@ -488,15 +506,36 @@ namespace UI
             return true;
         }
 
+        void hide(Window *w, int index)
+        {
+            children.remove(index);
+            childstate = 0;
+            loopchildren(o, childstate |= o->state | o->childstate);
+            w->hide();
+        }
+
         bool hide(Window *w)
         {
             int index = children.find(w);
             if(index < 0) return false;
-            children.remove(index);
-            childstate = 0;
-            loopchildren(w, childstate |= w->state | w->childstate);
-            w->hide();
+            hide(w, index);
             return true;
+        }
+
+        int hideall()
+        {
+            int hidden = 0;
+            loopvrev(children)
+            {
+                Object *o = children[i];
+                if(o->gettype() == Window::typestr())
+                {
+                    Window *w = (Window *)o;
+                    hide(w, i);
+                    hidden++;
+                }
+            }
+            return hidden;
         }
     };
 
@@ -573,7 +612,13 @@ namespace UI
     {
         reset();
         setup();
-        loopchildren(o, o->build());
+        loopv(children)
+        {
+            Object *o = children[i];
+            o->build();
+            if(!children.inrange(i)) break;
+            if(children[i] != o) i--;
+        }
     }
 
     #define BUILD(type, o, setup, contents) do { \
@@ -1413,8 +1458,17 @@ namespace UI
             if(button && button->haschildstate(STATE_PRESS)) { offsetx = cx - button->x; offsety = cy - button->y; }
             else scrollto(cx, cy);
         }
-    
-        virtual void arrowscroll(float dir) = 0;
+
+        virtual void addscroll(Scroller *scroller, float dir) = 0;
+
+        void addscroll(float dir)
+        {
+            Scroller *scroller = (Scroller *)findsibling(Scroller::typestr());
+            if(scroller) addscroll(scroller, dir);
+        }
+
+        void arrowscroll(float dir) { addscroll(dir*curtime/1000.0f); }
+        void wheelscroll(float step);
 
         virtual void movebutton(Object *o, float fromx, float fromy, float tox, float toy) = 0;
     };
@@ -1440,16 +1494,22 @@ namespace UI
         }
     };
 
+    void ScrollBar::wheelscroll(float step)
+    {
+        ScrollArrow *arrow = (ScrollArrow *)findsibling(ScrollArrow::typestr());
+        if(arrow) addscroll(arrow->arrowspeed*step);
+    }
+
+    VARP(uiscrollsteptime, 0, 33, 1000);
+
     struct HorizontalScrollBar : ScrollBar
     {
         static const char *typestr() { return "#HorizontalScrollBar"; }
         const char *gettype() const { return typestr(); }
 
-        void arrowscroll(float dir)
+        void addscroll(Scroller *scroller, float dir)
         {
-            Scroller *scroller = (Scroller *)findsibling(Scroller::typestr());
-            if(!scroller) return;
-            scroller->addhscroll(dir*curtime/1000.0f);
+            scroller->addhscroll(dir);
         }
 
         void scrollto(float cx, float cy)
@@ -1482,6 +1542,18 @@ namespace UI
         {
             scrollto(o->x + tox - fromx, o->y + toy);
         }
+
+        void scrollup(float cx, float cy)
+        {
+            Object::scrollup(cx, cy);
+            wheelscroll(-uiscrollsteptime/1000.0f);
+        }
+
+        void scrolldown(float cx, float cy)
+        {
+            Object::scrolldown(cx, cy);
+            wheelscroll(uiscrollsteptime/1000.0f);
+        }
     };
 
     struct VerticalScrollBar : ScrollBar
@@ -1489,11 +1561,9 @@ namespace UI
         static const char *typestr() { return "#VerticalScrollBar"; }
         const char *gettype() const { return typestr(); }
 
-        void arrowscroll(float dir)
+        void addscroll(Scroller *scroller, float dir)
         {
-            Scroller *scroller = (Scroller *)findsibling(Scroller::typestr());
-            if(!scroller) return;
-            scroller->addvscroll(dir*curtime/1000.0f);
+            scroller->addvscroll(dir);
         }
 
         void scrollto(float cx, float cy)
@@ -1525,6 +1595,18 @@ namespace UI
         void movebutton(Object *o, float fromx, float fromy, float tox, float toy)
         {
             scrollto(o->x + tox, o->y + toy - fromy);
+        }
+
+        void scrollup(float cx, float cy)
+        {
+            Object::scrollup(cx, cy);
+            wheelscroll(uiscrollsteptime/1000.0f);
+        }
+
+        void scrolldown(float cx, float cy)
+        {
+            Object::scrolldown(cx, cy);
+            wheelscroll(-uiscrollsteptime/1000.0f);
         }
     };
 
@@ -1602,8 +1684,7 @@ namespace UI
             if(val != newval) changeval(newval);
         }
 
-        void scrollup(float cx, float cy);
-        void scrolldown(float cx, float cy);
+        void wheelscroll(float step);
 
         virtual void scrollto(float cx, float cy) {}
 
@@ -1620,18 +1701,19 @@ namespace UI
         }
     };
 
+    VARP(uislidersteptime, 0, 50, 1000);
+
     struct SliderArrow : Object
     {
         double stepdir;
-        int laststep, steptime;
+        int laststep;
 
         SliderArrow() : laststep(0) {}
 
-        void setup(double dir_ = 0, int steptime_ = 0)
+        void setup(double dir_ = 0)
         {
             Object::setup();
             stepdir = dir_;
-            steptime = steptime_;
         }
 
         static const char *typestr() { return "#SliderArrow"; }
@@ -1641,7 +1723,7 @@ namespace UI
         {
             Object::press(cx, cy);
 
-            laststep = totalmillis + 2*steptime;
+            laststep = totalmillis + 2*uislidersteptime;
 
             Slider *slider = (Slider *)findsibling(Slider::typestr());
             if(slider) slider->arrowscroll(stepdir);
@@ -1651,7 +1733,7 @@ namespace UI
         {
             Object::hold(cx, cy);
 
-            if(totalmillis < laststep + steptime)
+            if(totalmillis < laststep + uislidersteptime)
                 return;
             laststep = totalmillis;
 
@@ -1660,20 +1742,13 @@ namespace UI
         }
     };
 
-    void Slider::scrollup(float cx, float cy)
+    void Slider::wheelscroll(float step)
     {
-        Object::scrollup(cx, cy);
         SliderArrow *arrow = (SliderArrow *)findsibling(SliderArrow::typestr());
-        arrowscroll(arrow ? arrow->stepdir : 1);
+        if(arrow) step *= arrow->stepdir;
+        arrowscroll(step);
     }
 
-    void Slider::scrolldown(float cx, float cy)
-    {
-        Object::scrolldown(cx, cy);
-        SliderArrow *arrow = (SliderArrow *)findsibling(SliderArrow::typestr());
-        arrowscroll(arrow ? -arrow->stepdir : -1);
-    }
- 
     struct HorizontalSlider : Slider
     {
         static const char *typestr() { return "#HorizontalSlider"; }
@@ -1699,6 +1774,18 @@ namespace UI
             button->adjust &= ~ALIGN_HMASK;
 
             Slider::adjustchildren();
+        }
+
+        void scrollup(float cx, float cy)
+        {
+            Object::scrollup(cx, cy);
+            wheelscroll(-1);
+        }
+
+        void scrolldown(float cx, float cy)
+        {
+            Object::scrolldown(cx, cy);
+            wheelscroll(1);
         }
     };
 
@@ -1728,6 +1815,18 @@ namespace UI
 
             Slider::adjustchildren();
         }
+
+        void scrollup(float cx, float cy)
+        {
+            Object::scrollup(cx, cy);
+            wheelscroll(1);
+        }
+
+        void scrolldown(float cx, float cy)
+        {
+            Object::scrolldown(cx, cy);
+            wheelscroll(-1);
+        }
     };
 
     struct TextEditor : Object
@@ -1749,7 +1848,7 @@ namespace UI
                 if(edit) clearfocus();
                 edit = edit_;
             }
-            else if(isfocus() && !hasstate(STATE_HOVER)) commit(); 
+            else if(isfocus() && !hasstate(STATE_HOVER)) commit();
             if(initval && edit->mode == EDITORFOCUSED && !isfocus()) edit->init(initval);
             edit->active = true;
             edit->linewrap = length < 0;
@@ -1789,7 +1888,7 @@ namespace UI
         }
 
         float drawscale() const { return scale / (FONTH * uitextrows); }
-        
+
         void draw(float sx, float sy)
         {
             float k = drawscale();
@@ -1837,7 +1936,7 @@ namespace UI
                 bool dragged = max(fabs(cx - offsetx), fabs(cy - offsety)) > (FONTH/8.0f)*k;
                 edit->hit(int(floor(cx/k - FONTW/2)), int(floor(cy/k)), dragged);
             }
-        }    
+        }
 
         void scrollup(float cx, float cy)
         {
@@ -1896,7 +1995,7 @@ namespace UI
                 str += accept + 1;
                 len -= accept + 1;
                 if(len <= 0) break;
-                int reject = (int)strcspn(str, keyfilter);   
+                int reject = (int)strcspn(str, keyfilter);
                 str += reject;
                 str -= reject;
             }
@@ -1936,7 +2035,7 @@ namespace UI
         bool changed;
 
         Field() : id(NULL), changed(false) {}
-    
+
         void setup(ident *id_, int length, uint *onchange, float scale = 1, const char *keyfilter_ = NULL)
         {
             if(isfocus() && !hasstate(STATE_HOVER)) commit();
@@ -1945,7 +2044,7 @@ namespace UI
                 if(id == id_) setsval(id, edit->lines[0].text, onchange);
                 changed = false;
             }
-            TextEditor::setup(id_->name, length, 0, scale, id != id_ || !isfocus() ? getsval(id_) : NULL, EDITORFOCUSED, keyfilter_);            
+            TextEditor::setup(id_->name, length, 0, scale, id != id_ || !isfocus() ? getsval(id_) : NULL, EDITORFOCUSED, keyfilter_);
             id = id_;
         }
 
@@ -1961,7 +2060,7 @@ namespace UI
             changed = false;
         }
     };
-       
+
     struct KeyField : Field
     {
         void resetmark(float cx, float cy)
@@ -1988,10 +2087,10 @@ namespace UI
             else insertkey(code);
             return true;
         }
-            
+
         bool allowtextinput() const { return false; }
     };
- 
+
     struct ModelPreview : Filler
     {
         char *name;
@@ -2216,7 +2315,7 @@ namespace UI
             Object::draw(sx, sy);
         }
     };
-        
+
     ICOMMAND(newui, "ssss", (char *name, char *contents, char *onshow, char *onhide),
     {
         Window *window = windows.find(name, NULL);
@@ -2232,6 +2331,7 @@ namespace UI
 
     bool hideui(const char *name)
     {
+        if(!name) return world->hideall() > 0;
         Window *window = windows.find(name, NULL);
         return window && world->hide(window);
     }
@@ -2260,13 +2360,13 @@ namespace UI
     DOSTATES
     #undef DOSTATE
 
-    ICOMMANDNS("uifocus", uifocus_, "ee", (uint *t, uint *f), 
+    ICOMMANDNS("uifocus", uifocus_, "ee", (uint *t, uint *f),
         executeret(buildparent && TextEditor::focus == buildparent ? t : f));
-    ICOMMANDNS("uifocus?", uifocus__, "tt", (tagval *t, tagval *f), 
+    ICOMMANDNS("uifocus?", uifocus__, "tt", (tagval *t, tagval *f),
         IFSTATEVAL(buildparent && TextEditor::focus == buildparent, t, f));
-    ICOMMANDNS("uifocus+", uinextfocus_, "ee", (uint *t, uint *f), 
+    ICOMMANDNS("uifocus+", uinextfocus_, "ee", (uint *t, uint *f),
         executeret(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild] ? t : f));
-    ICOMMANDNS("uifocus+?", uinextfocus__, "tt", (tagval *t, tagval *f), 
+    ICOMMANDNS("uifocus+?", uinextfocus__, "tt", (tagval *t, tagval *f),
         IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild], t, f));
 
     ICOMMAND(uialign, "ii", (int *xalign, int *yalign),
@@ -2345,8 +2445,8 @@ namespace UI
     ICOMMAND(uivslider, "rfffee", (ident *var, float *vmin, float *vmax, float *vstep, uint *onchange, uint *children),
         BUILD(VerticalSlider, o, o->setup(var, *vmin, *vmax, *vstep, onchange), children));
 
-    ICOMMAND(uisliderarrow, "fie", (float *dir, int *time, uint *children),
-        BUILD(SliderArrow, o, o->setup(*dir, *time), children));
+    ICOMMAND(uisliderarrow, "fe", (float *dir, uint *children),
+        BUILD(SliderArrow, o, o->setup(*dir), children));
 
     ICOMMAND(uisliderbutton, "e", (uint *children),
         BUILD(SliderButton, o, o->setup(), children));

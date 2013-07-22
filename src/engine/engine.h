@@ -604,11 +604,6 @@ enum { TI_CONSOLE = 1<<0, TI_GUI = 1<<1 };
 
 extern void textinput(bool on, int mask = ~0);
 
-// menu
-extern void menuprocess();
-extern void addchange(const char *desc, int type);
-extern void clearchanges(int type);
-
 // physics
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
@@ -688,11 +683,18 @@ namespace UI
     void update();
     void render();
     void cleanup();
+
+    bool showui(const char *name);
+    bool hideui(const char *name);
 }
 
 // menus
+
 extern int mainmenu;
 
+extern void addchange(const char *desc, int type);
+extern void clearchanges(int type);
+extern void menuprocess();
 extern void clearmainmenu();
 
 // sound

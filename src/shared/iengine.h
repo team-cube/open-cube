@@ -182,12 +182,6 @@ extern void closelogfile();
 extern void logoutfv(const char *fmt, va_list args);
 extern void logoutf(const char *fmt, ...) PRINTFARGS(1, 2);
 
-// menus
-extern vec menuinfrontofplayer();
-extern void newgui(char *name, char *contents, char *header = NULL, char *init = NULL);
-extern void showgui(const char *name);
-extern int cleargui(int n = 0);
-
 // octa
 extern int lookupmaterial(const vec &o);
 

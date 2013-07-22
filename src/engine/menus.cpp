@@ -19,20 +19,23 @@ VARP(applydialog, 0, 1, 1);
 void addchange(const char *desc, int type)
 {
     if(!applydialog) return;
+    loopv(needsapply) if(!strcmp(needsapply[i].desc, desc)) return;
     needsapply.add(change(type, desc));
+    UI::showui("changes");
 }
 
 void clearchanges(int type)
 {
     loopvrev(needsapply)
     {
-        change &c = needsapply[i];    
+        change &c = needsapply[i];
         if(c.type&type)
         {
             c.type &= ~type;
             if(!c.type) needsapply.remove(i);
         }
     }
+    if(needsapply.empty()) UI::hideui("changes");
 }
 
 void applychanges()
@@ -43,10 +46,13 @@ void applychanges()
     else if(changetypes&CHANGE_SHADERS) execident("resetshaders");
     if(changetypes&CHANGE_SOUND) execident("resetsound");
 }
+
 COMMAND(applychanges, "");
+ICOMMAND(pendingchanges, "b", (int *idx), { if(needsapply.inrange(*idx)) result(needsapply[*idx].desc); else if(*idx < 0) intret(needsapply.length()); });
 
 void menuprocess()
 {
+    if(mainmenu && !isconnected(true) && !UI::hascursor()) UI::showui("main");
 }
 
 VAR(mainmenu, 1, 1, 0);
@@ -56,6 +62,7 @@ void clearmainmenu()
     if(mainmenu && isconnected())
     {
         mainmenu = 0;
+        UI::hideui(NULL);
     }
 }
 

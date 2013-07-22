@@ -194,7 +194,7 @@ struct editor
         int width;
         text_bounds(lines[0].text, width, pixelheight, pixelwidth);
     }
-         
+
     void setfile(const char *fname)
     {
         DELETEA(filename);

@@ -413,7 +413,7 @@ void draw_text(const char *str, float left, float top, int r, int g, int b, int 
         xtraverts += gle::end();
     }
     gle::disable();
-    if(oldshader == hudshader->detailshader) 
+    if(oldshader == hudshader->detailshader)
     {
         oldshader->bindprograms();
         gle::colorf(1, 1, 1);

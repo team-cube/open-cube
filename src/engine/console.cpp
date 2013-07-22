@@ -151,7 +151,7 @@ void consolebox(float x1, float y1, float x2, float y2)
         float vy = 0, vy2 = 0, ty = 0, ty2 = 0;
         switch(i)
         {
-            case 0: vy = y1;         vy2 = y1+yborder; ty = 0;         ty2 = tborder; break; 
+            case 0: vy = y1;         vy2 = y1+yborder; ty = 0;         ty2 = tborder; break;
             case 1: vy = y1+yborder; vy2 = y2-yborder; ty = tborder;   ty2 = 1-tborder; break;
             case 2: vy = y2-yborder; vy2 = y2;         ty = 1-tborder; ty2 = 1; break;
         }
