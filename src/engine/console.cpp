@@ -138,6 +138,42 @@ float drawconlines(int conskip, int confade, float conwidth, float conheight, fl
     return y+conoff;
 }
 
+void consolebox(float x1, float y1, float x2, float y2)
+{
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    settexture("media/interface/consolebox.png", 3);
+    gle::colorf(1, 1, 1);
+    gle::defvertex(2);
+    gle::deftexcoord0();
+    float tborder = 8/256.0f, xborder = FONTH/6.0f, yborder = FONTH/6.0f;
+    loopi(3)
+    {
+        float vy = 0, vy2 = 0, ty = 0, ty2 = 0;
+        switch(i)
+        {
+            case 0: vy = y1;         vy2 = y1+yborder; ty = 0;         ty2 = tborder; break; 
+            case 1: vy = y1+yborder; vy2 = y2-yborder; ty = tborder;   ty2 = 1-tborder; break;
+            case 2: vy = y2-yborder; vy2 = y2;         ty = 1-tborder; ty2 = 1; break;
+        }
+        loopj(3)
+        {
+            float vx = 0, vx2 = 0, tx = 0, tx2 = 0;
+            switch(j)
+            {
+                case 0: vx = x1;         vx2 = x1+xborder; tx = 0;         tx2 = tborder; break;
+                case 1: vx = x1+xborder; vx2 = x2-xborder; tx = tborder;   tx2 = 1-tborder; break;
+                case 2: vx = x2-xborder; vx2 = x2;         tx = 1-tborder; tx2 = 1; break;
+            }
+            gle::begin(GL_TRIANGLE_STRIP);
+            gle::attribf(vx,  vy);  gle::attribf(tx,  ty);
+            gle::attribf(vx2, vy);  gle::attribf(tx2, ty);
+            gle::attribf(vx,  vy2); gle::attribf(tx,  ty2);
+            gle::attribf(vx2, vy2); gle::attribf(tx2, ty2);
+            gle::end();
+        }
+    }
+}
+
 float renderconsole(float w, float h, float abovehud)                   // render buffer taking into account time & scrolling
 {
     float conpad = fullconsole ? 0 : FONTH/4,
@@ -145,10 +181,7 @@ float renderconsole(float w, float h, float abovehud)                   // rende
           conheight = min(fullconsole ? ((h*fullconsize/100)/FONTH)*FONTH : FONTH*consize, h - 2*(conpad + conoff)),
           conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
 
-#if 0
-    extern void consolebox(float x1, float y1, float x2, float y2);
     if(fullconsole) consolebox(conpad, conpad, conwidth+conpad+2*conoff, conheight+conpad+2*conoff);
-#endif
 
     float y = drawconlines(conskip, fullconsole ? 0 : confade, conwidth, conheight, conpad+conoff, fullconsole ? fullconfilter : confilter);
     if(!fullconsole && (miniconsize && miniconwidth))
