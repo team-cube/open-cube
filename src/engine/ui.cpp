@@ -2121,9 +2121,8 @@ namespace UI
         static const char *typestr() { return "#SlotViewer"; }
         const char *gettype() const { return typestr(); }
 
-        void previewslot(VSlot &vslot, float x, float y)
+        void previewslot(Slot &slot, VSlot &vslot, float x, float y)
         {
-            Slot &slot = *vslot.slot;
             if(slot.sts.empty()) return;
             VSlot *layer = NULL, *decal = NULL;
             Texture *t = NULL, *glowtex = NULL, *layertex = NULL, *decaltex = NULL;
@@ -2194,11 +2193,25 @@ namespace UI
 
         void draw(float sx, float sy)
         {
-            previewslot(lookupvslot(index, false), sx, sy);
+            Slot &slot = lookupslot(index, false);
+            previewslot(slot, *slot.variants, sx, sy);
             Object::draw(sx, sy);
         }
     };
 
+    struct VSlotViewer : SlotViewer
+    {
+        static const char *typestr() { return "#VSlotViewer"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            VSlot &vslot = lookupvslot(index, false);
+            previewslot(*vslot.slot, vslot, sx, sy);
+            Object::draw(sx, sy);
+        }
+    };
+        
     ICOMMAND(newui, "ssss", (char *name, char *contents, char *onshow, char *onhide),
     {
         Window *window = windows.find(name, NULL);
@@ -2407,6 +2420,9 @@ namespace UI
 
     ICOMMAND(uislotview, "iffe", (int *index, float *minw, float *minh, uint *children),
         BUILD(SlotViewer, o, o->setup(*index, *minw, *minh), children));
+
+    ICOMMAND(uivslotview, "iffe", (int *index, float *minw, float *minh, uint *children),
+        BUILD(VSlotViewer, o, o->setup(*index, *minw, *minh), children));
 
     FVAR(uisensitivity, 1e-3f, 1, 1e3f);
 
