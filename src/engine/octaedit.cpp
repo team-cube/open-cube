@@ -1949,7 +1949,7 @@ void getseltex()
 
 void gettexname(int *tex, int *subslot)
 {
-    if(noedit(true) || *tex<0) return;
+    if(*tex<0) return;
     VSlot &vslot = lookupvslot(*tex, false);
     Slot &slot = *vslot.slot;
     if(!slot.sts.inrange(*subslot)) return;
