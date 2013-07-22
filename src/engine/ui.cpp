@@ -1342,22 +1342,12 @@ namespace UI
             offsety = min(offsety, vlimit());
         }
 
-        bool target(float cx, float cy)
-        {
-            if(cx + offsetx >= virtw || cy + offsety >= virth) return false;
-            return Object::target(cx + offsetx, cy + offsety);
-        }
-
         #define DOSTATE(flags, func) \
             void func(float cx, float cy) \
             { \
-                if(cx + offsetx >= virtw || cy + offsety >= virth) return; \
-                loopinchildrenrev(o, cx + offsetx, cy + offsety, \
-                { \
-                    o->func(ox, oy); \
-                    childstate |= (o->state | o->childstate) & (flags); \
-                }, ); \
-                if(target(cx, cy)) state |= (flags); \
+                cx += offsetx; \
+                cy += offsety; \
+                if(cx < virtw && cy < virth) Clipper::func(cx, cy); \
             }
         DOSTATES
         #undef DOSTATE
@@ -2244,13 +2234,13 @@ namespace UI
             IFSTATEVAL(buildparent && buildparent->hasstate(flags), t, f)); \
         ICOMMANDNS("ui" #func "?", ui##func##__, "tt", (tagval *t, tagval *f), \
             IFSTATEVAL(buildparent && buildparent->haschildstate(flags), t, f)); \
-        ICOMMANDNS("ui!" #func "+", uichildnot##func##_, "ee", (uint *t, uint *f), \
+        ICOMMANDNS("ui!" #func "+", uinextnot##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->hasstate(flags) ? t : f)); \
-        ICOMMANDNS("ui" #func "+", uichild##func##_, "ee", (uint *t, uint *f), \
+        ICOMMANDNS("ui" #func "+", uinext##func##_, "ee", (uint *t, uint *f), \
             executeret(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->haschildstate(flags) ? t : f)); \
-        ICOMMANDNS("ui!" #func "+?", uichildnot##func##__, "tt", (tagval *t, tagval *f), \
+        ICOMMANDNS("ui!" #func "+?", uinextnot##func##__, "tt", (tagval *t, tagval *f), \
             IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->hasstate(flags), t, f)); \
-        ICOMMANDNS("ui" #func "+?", uichild##func##__, "tt", (tagval *t, tagval *f), \
+        ICOMMANDNS("ui" #func "+?", uinext##func##__, "tt", (tagval *t, tagval *f), \
             IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && buildparent->children[buildchild]->haschildstate(flags), t, f));
     DOSTATES
     #undef DOSTATE
@@ -2259,9 +2249,9 @@ namespace UI
         executeret(buildparent && TextEditor::focus == buildparent ? t : f));
     ICOMMANDNS("uifocus?", uifocus__, "tt", (tagval *t, tagval *f), 
         IFSTATEVAL(buildparent && TextEditor::focus == buildparent, t, f));
-    ICOMMANDNS("uifocus+", uichildfocus_, "ee", (uint *t, uint *f), 
+    ICOMMANDNS("uifocus+", uinextfocus_, "ee", (uint *t, uint *f), 
         executeret(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild] ? t : f));
-    ICOMMANDNS("uifocus+?", uichildfocus__, "tt", (tagval *t, tagval *f), 
+    ICOMMANDNS("uifocus+?", uinextfocus__, "tt", (tagval *t, tagval *f), 
         IFSTATEVAL(buildparent && buildparent->children.inrange(buildchild) && TextEditor::focus == buildparent->children[buildchild], t, f));
 
     ICOMMAND(uialign, "ii", (int *xalign, int *yalign),
