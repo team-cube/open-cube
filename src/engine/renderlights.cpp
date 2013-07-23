@@ -3789,9 +3789,8 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
 {
     GLERROR;
 
-    GLuint outfbo = w > vieww || h > viewh ? scalefbo[0] : 0;
-    glBindFramebuffer_(GL_FRAMEBUFFER, outfbo);
-    glViewport(outfbo ? 0 : x, outfbo ? 0 : y, vieww, viewh);
+    glBindFramebuffer_(GL_FRAMEBUFFER, 0);
+    glViewport(x, y, w, h);
 
     if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mscolortex);
     else glBindTexture(GL_TEXTURE_RECTANGLE, gcolortex);
@@ -3814,16 +3813,6 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
     GLOBALPARAMF(sunlightcolor, 0.6f*lightscale, 0.6f*lightscale, 0.6f*lightscale);
 
     SETSHADER(modelpreview);
-
-    if(outfbo)
-    {
-        screenquad(vieww, viewh);
-
-        glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-        glViewport(x, y, w, h);
-        glBindTexture(GL_TEXTURE_RECTANGLE, scaletex[0]);
-        SETSHADER(scalelinear);
-    }
 
     if(!background)
     {
