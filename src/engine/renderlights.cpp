@@ -2574,7 +2574,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                         if((tilemask && !(tilemask[y]&(1<<k))) ||
                            skips[k] != i ||
                            striptile.length() < i+n ||
-                           memcmp(&tile[i], &striptile[i], n*sizeof(int)) ||
+                           (n > 0 && memcmp(&tile[i], &striptile[i], n*sizeof(int))) ||
                            n < min(min(lighttilebatch, lighttilestripthreshold), striptile.length()-i))
                             break;
                         skips[k] = max(i+n, 1);
