@@ -273,6 +273,12 @@ namespace game
     }
     ICOMMAND(getclientname, "i", (int *cn), result(getclientname(*cn)));
 
+    ICOMMAND(getclientcolorname, "i", (int *cn),
+    {
+        fpsent *d = getclient(*cn);
+        if(d) result(colorname(d));
+    });
+
     int getclientteam(int cn)
     {
         fpsent *d = getclient(cn);
@@ -296,6 +302,18 @@ namespace game
     }
     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
 
+    ICOMMAND(getclientfrags, "i", (int *cn), 
+    {
+        fpsent *d = getclient(*cn);
+        if(d) intret(d->frags);
+    });
+
+    ICOMMAND(getclientflags, "i", (int *cn),
+    {
+        fpsent *d = getclient(*cn);
+        if(d) intret(d->flags);
+    });
+
     bool ismaster(int cn)
     {
         fpsent *d = getclient(cn);
@@ -318,7 +336,7 @@ namespace game
     ICOMMAND(isadmin, "i", (int *cn), intret(isadmin(*cn) ? 1 : 0));
 
     ICOMMAND(getmastermode, "", (), intret(mastermode));
-    ICOMMAND(mastermodename, "i", (int *mm), result(server::mastermodename(*mm, "")));
+    ICOMMAND(getmastermodename, "i", (int *mm), result(server::mastermodename(*mm, "")));
 
     bool isspectator(int cn)
     {
@@ -326,6 +344,18 @@ namespace game
         return d && d->state==CS_SPECTATOR;
     }
     ICOMMAND(isspectator, "i", (int *cn), intret(isspectator(*cn) ? 1 : 0));
+
+    ICOMMAND(islagged, "i", (int *cn),
+    {
+        fpsent *d = getclient(*cn);
+        if(d) intret(d->state==CS_LAGGED ? 1 : 0);
+    });
+
+    ICOMMAND(isdead, "i", (int *cn),
+    {
+        fpsent *d = getclient(*cn);
+        if(d) intret(d->state==CS_DEAD ? 1 : 0);
+    });
 
     bool isai(int cn, int type)
     {
@@ -530,12 +560,14 @@ namespace game
     }
     ICOMMAND(mode, "i", (int *val), setmode(*val));
     ICOMMAND(getmode, "", (), intret(gamemode));
+    ICOMMAND(getmodename, "i", (int *mode), result(server::modename(*mode, "")));
     ICOMMAND(timeremaining, "i", (int *formatted),
     {
         int val = max(maplimit - lastmillis, 0)/1000;
         if(*formatted) result(tempformatstring("%d:%02d", val/60, val%60));
         else intret(val);
     });
+    ICOMMAND(intermission, "", (), intret(intermission ? 1 : 0));
 
     ICOMMANDS("m_ctf", "i", (int *mode), { int gamemode = *mode; intret(m_ctf); });
     ICOMMANDS("m_teammode", "i", (int *mode), { int gamemode = *mode; intret(m_teammode); });
@@ -724,6 +756,7 @@ namespace game
         else if(*numargs < 0) intret(gamespeed);
         else printvar(id, gamespeed);
     });
+    ICOMMAND(prettygamespeed, "i", (), result(tempformatstring("%d.%02dx", gamespeed/100, gamespeed%100)));
 
     int scaletime(int t) { return t*gamespeed; }
 

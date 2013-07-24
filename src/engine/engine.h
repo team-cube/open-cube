@@ -684,9 +684,6 @@ namespace UI
     void update();
     void render();
     void cleanup();
-
-    bool showui(const char *name);
-    bool hideui(const char *name);
 }
 
 // menus

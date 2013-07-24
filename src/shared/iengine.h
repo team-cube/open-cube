@@ -159,6 +159,13 @@ extern void printfvar(ident *id, float f);
 extern void printsvar(ident *id, const char *s);
 extern int clampvar(ident *id, int i, int minval, int maxval);
 extern float clampfvar(ident *id, float f, float minval, float maxval);
+extern void loopiter(ident *id, identstack &stack, tagval &v);
+extern void loopend(ident *id, identstack &stack);
+
+#define loopstart(id, stack) if((id)->type != ID_ALIAS) return; identstack stack;
+static inline void loopiter(ident *id, identstack &stack, int i) { tagval v; v.setint(i); loopiter(id, stack, v); }
+static inline void loopiter(ident *id, identstack &stack, float f) { tagval v; v.setfloat(f); loopiter(id, stack, v); }
+static inline void loopiter(ident *id, identstack &stack, const char *s) { tagval v; v.setstr(newstring(s)); loopiter(id, stack, v); }
 
 // console
 
@@ -396,6 +403,16 @@ extern void preloadmodel(const char *name);
 extern void flushpreloadedmodels(bool msg = true);
 extern bool matchanim(const char *name, const char *pattern);
 
+// UI
+
+namespace UI
+{
+    bool showui(const char *name);
+    bool hideui(const char *name);
+    bool toggleui(const char *name);
+    void holdui(const char *name, bool on);
+}
+
 // ragdoll
 
 extern void moveragdoll(dynent *d);
@@ -475,4 +492,5 @@ extern void freepubkey(void *pubkey);
 extern void *genchallenge(void *pubkey, const void *seed, int seedlen, vector<char> &challengestr);
 extern void freechallenge(void *answer);
 extern bool checkchallenge(const char *answerstr, void *correct);
+
 

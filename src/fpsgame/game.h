@@ -616,6 +616,7 @@ namespace game
     extern void getbestteams(vector<int> &best);
     extern void clearteaminfo();
     extern void setteaminfo(int team, int frags);
+    extern void removegroupedplayer(fpsent *d);
 
     // render
     struct playermodelinfo

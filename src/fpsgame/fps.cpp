@@ -478,6 +478,7 @@ namespace game
         removetrackedparticles(d);
         removetrackeddynlights(d);
         if(cmode) cmode->removeplayer(d);
+        removegroupedplayer(d);
         players.removeobj(d);
         DELETEP(clients[cn]);
         cleardynentcache();
@@ -848,27 +849,6 @@ namespace game
         return crosshair;
     }
 
-#if 0
-    bool serverinfostartcolumn(g3d_gui *g, int i)
-    {
-        static const char * const names[] = { "ping ", "players ", "mode ", "map ", "time ", "master ", "host ", "port ", "description " };
-        static const float struts[] =       { 7,       7,          12.5f,   14,      7,      8,         14,      7,       24.5f };
-        if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
-        g->pushlist();
-        g->text(names[i], 0xFFFF80, !i ? " " : NULL);
-        if(struts[i]) g->strut(struts[i]);
-        g->mergehits(true);
-        return true;
-    }
-
-    void serverinfoendcolumn(g3d_gui *g, int i)
-    {
-        g->mergehits(false);
-        g->column(i);
-        g->poplist();
-    }
-#endif
-
     const char *mastermodecolor(int n, const char *unknown)
     {
         return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodecolors)/sizeof(mastermodecolors[0])) ? mastermodecolors[n-MM_START] : unknown;
@@ -911,99 +891,6 @@ namespace game
             int mm = si->attr.inrange(2) ? si->attr[2] : MM_INVALID;
             result(si->maxplayers > 0 && si->numplayers >= si->maxplayers ? "serverfull" : mastermodeicon(mm, "serverunk"));
         }));
-
-#if 0
-    bool serverinfoentry(g3d_gui *g, int i, const char *name, int port, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
-    {
-        if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
-        {
-            switch(i)
-            {
-                case 0:
-                    if(g->button(" ", 0xFFFFDD, "serverunk")&G3D_UP) return true;
-                    break;
-
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                    if(g->button(" ", 0xFFFFDD)&G3D_UP) return true;
-                    break;
-
-                case 6:
-                    if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
-                    break;
-
-                case 7:
-                    if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
-                    break;
-
-                case 8:
-                    if(ping < 0)
-                    {
-                        if(g->button(sdesc, 0xFFFFDD)&G3D_UP) return true;
-                    }
-                    else if(g->buttonf("[%s protocol] ", 0xFFFFDD, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
-                    break;
-            }
-            return false;
-        }
-
-        switch(i)
-        {
-            case 0:
-            {
-                const char *icon = attr.inrange(3) && np >= attr[3] ? "serverfull" : (attr.inrange(4) ? mastermodeicon(attr[4], "serverunk") : "serverunk");
-                if(g->buttonf("%d ", 0xFFFFDD, icon, ping)&G3D_UP) return true;
-                break;
-            }
-
-            case 1:
-                if(attr.length()>=4)
-                {
-                    if(g->buttonf(np >= attr[3] ? "\f3%d/%d " : "%d/%d ", 0xFFFFDD, NULL, np, attr[3])&G3D_UP) return true;
-                }
-                else if(g->buttonf("%d ", 0xFFFFDD, NULL, np)&G3D_UP) return true;
-                break;
-
-            case 2:
-                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
-                break;
-
-            case 3:
-                if(g->buttonf("%.25s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
-                break;
-
-            case 4:
-                if(attr.length()>=3 && attr[2] > 0)
-                {
-                    int secs = clamp(attr[2], 0, 59*60+59),
-                        mins = secs/60;
-                    secs %= 60;
-                    if(g->buttonf("%d:%02d ", 0xFFFFDD, NULL, mins, secs)&G3D_UP) return true;
-                }
-                else if(g->buttonf(" ", 0xFFFFDD)&G3D_UP) return true;
-                break;
-            case 5:
-                if(g->buttonf("%s%s ", 0xFFFFDD, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
-                break;
-
-            case 6:
-                if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
-                break;
-
-            case 7:
-                if(g->buttonf("%d ", 0xFFFFDD, NULL, port)&G3D_UP) return true;
-                break;
-
-            case 8:
-                if(g->buttonf("%.25s", 0xFFFFDD, NULL, sdesc)&G3D_UP) return true;
-                break;
-        }
-        return false;
-    }
-#endif
 
     // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.
     void writegamedata(vector<char> &extras) {}

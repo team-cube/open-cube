@@ -408,12 +408,14 @@ namespace UI
     {
         char *name;
         uint *contents, *onshow, *onhide;
+        bool allowinput;
 
-        Window(const char *name, const char *contents, const char *onshow, const char *onhide) :
+        Window(const char *name, const char *contents, const char *onshow, const char *onhide, bool allowinput = true) :
             name(newstring(name)),
             contents(compilecode(contents)),
             onshow(onshow && onshow[0] ? compilecode(onshow) : NULL),
-            onhide(onhide && onhide[0] ? compilecode(onhide) : NULL)
+            onhide(onhide && onhide[0] ? compilecode(onhide) : NULL),
+            allowinput(allowinput)
         {
         }
         ~Window()
@@ -456,6 +458,14 @@ namespace UI
         {
             if(!(state&STATE_HIDDEN)) Object::adjustchildren();
         }
+
+        #define DOSTATE(flags, func) \
+            void func##children(float cx, float cy) \
+            { \
+                if(allowinput) Object::func##children(cx, cy); \
+            }
+        DOSTATES
+        #undef DOSTATE
 
         void escrelease(float cx, float cy);
     };
@@ -537,16 +547,12 @@ namespace UI
         int hideall()
         {
             int hidden = 0;
-            loopvrev(children)
+            loopchildrenrev(o,
             {
-                Object *o = children[i];
-                if(o->istype<Window>())
-                {
-                    Window *w = (Window *)o;
-                    hide(w, i);
-                    hidden++;
-                }
-            }
+                Window *w = (Window *)o;
+                hide(w, i);
+                hidden++;
+            });
             return hidden;
         }
 
@@ -558,7 +564,9 @@ namespace UI
 
         void projection()
         {
-            float scale = max(h/maxscale, 1.0f);
+            float maxy = 0;
+            loopchildren(o, maxy = max(maxy, o->y + o->h));
+            float scale = max(maxy/(h*maxscale), 1.0f);
             px = (x - 0.5f)*scale + 0.5f;
             px2 = (x + w - 0.5f)*scale + 0.5f;
             py = (y - 0.5f)*scale + 0.5f;
@@ -573,6 +581,8 @@ namespace UI
             sx2 = clamp(int(ceil((x2-px)/(px2-px)*screenw)), 0, screenw);
             sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
         }
+
+        bool allowinput() const { loopchildren(o, { Window *w = (Window *)o; if(w->allowinput) return true; }); return false; }
     };
 
     World *world = NULL;
@@ -914,6 +924,7 @@ namespace UI
         {
             widths.setsize(0);
 
+            w = h = 0;
             loopchildren(o,
             {
                 o->layout();
@@ -924,17 +935,17 @@ namespace UI
                     Object *c = o->children[j];
                     if(c->w > widths[j]) widths[j] = c->w;
                 }
+                w = max(w, o->w);
             });
             float rw = 0;
-            w = h = 0;
             loopv(widths) rw += widths[i];
             rw += space*max(widths.length() - 1, 0);
+            w = max(w, rw);
             loopchildren(o,
             {
                 o->x = 0;
                 o->y = h;
                 o->w = max(o->w, rw);
-                w = max(w, o->w);
                 float offset = 0;
                 int cols = o->childcolumns();
                 loopj(cols)
@@ -963,8 +974,10 @@ namespace UI
             float offsety = 0;
             loopchildren(o,
             {
+                o->x = 0;
                 o->y = offsety;
-                o->adjustlayout(0, o->y, o->w, o->h);
+                o->w = w;
+                o->adjustlayout(0, o->y, w, o->h);
                 float offsetx = 0;
                 int cols = o->childcolumns();
                 loopj(cols)
@@ -1072,14 +1085,29 @@ namespace UI
         }
     };
 
+    struct Color
+    {
+        uchar r, g, b, a;
+        
+        Color() {}
+        Color(uint c) : r((c>>16)&0xFF), g((c>>8)&0xFF), b(c&0xFF), a(c>>24 ? c>>24 : 0xFF) {}
+        Color(uint c, uchar a) : r((c>>16)&0xFF), g((c>>8)&0xFF), b(c&0xFF), a(a) {}
+        Color(uchar r, uchar g, uchar b, uchar a = 255) : r(r), g(g), b(b), a(a) {}
+ 
+        void init() { gle::colorub(r, g, b, a); }
+        void attrib() { gle::attribub(r, g, b, a); }
+        
+        static void def() { gle::defcolor(4, GL_UNSIGNED_BYTE); }
+    };
+
     struct FillColor : Filler
     {
         enum { SOLID = 0, MODULATE };
 
         int type;
-        vec4 color;
+        Color color;
 
-        void setup(int type_, const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        void setup(int type_, const Color &color_, float minw_ = 0, float minh_ = 0)
         {
             Filler::setup(minw_, minh_);
             type = type_;
@@ -1098,7 +1126,7 @@ namespace UI
         {
             if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
             hudnotextureshader->set();
-            gle::color(color);
+            color.init();
             gle::defvertex(2);
             gle::begin(GL_TRIANGLE_STRIP);
             gle::attribf(sx+w, sy);
@@ -1119,9 +1147,9 @@ namespace UI
         enum { VERTICAL, HORIZONTAL };
 
         int dir;
-        vec4 color2;
+        Color color2;
 
-        void setup(int type_, int dir_, const vec4 &color_, const vec4 &color2_, float minw_ = 0, float minh_ = 0)
+        void setup(int type_, int dir_, const Color &color_, const Color &color2_, float minw_ = 0, float minh_ = 0)
         {
             FillColor::setup(type_, color_, minw_, minh_);
             dir = dir_;
@@ -1136,12 +1164,12 @@ namespace UI
             if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
             hudnotextureshader->set();
             gle::defvertex(2);
-            gle::defcolor(4);
+            Color::def();
             gle::begin(GL_TRIANGLE_STRIP);
-            gle::attribf(sx+w, sy);   gle::attrib(dir == HORIZONTAL ? color2 : color);
-            gle::attribf(sx,   sy);   gle::attrib(color);
-            gle::attribf(sx+w, sy+h); gle::attrib(color2);
-            gle::attribf(sx,   sy+h); gle::attrib(dir == HORIZONTAL ? color : color2);
+            gle::attribf(sx+w, sy);   (dir == HORIZONTAL ? color2 : color).attrib();
+            gle::attribf(sx,   sy);   color.attrib();
+            gle::attribf(sx+w, sy+h); color2.attrib();
+            gle::attribf(sx,   sy+h); (dir == HORIZONTAL ? color : color2).attrib();
             gle::end();
             hudshader->set();
             if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1152,9 +1180,9 @@ namespace UI
 
     struct Line : Filler
     {
-        vec4 color;
+        Color color;
 
-        void setup(const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        void setup(const Color &color_, float minw_ = 0, float minh_ = 0)
         {
             Filler::setup(minw_, minh_);
             color = color_;
@@ -1166,7 +1194,7 @@ namespace UI
         void draw(float sx, float sy)
         {
             hudnotextureshader->set();
-            gle::color(color);
+            color.init();
             gle::defvertex(2);
             gle::begin(GL_LINES);
             gle::attribf(sx,   sy);
@@ -1181,9 +1209,9 @@ namespace UI
 
     struct Outline : Filler
     {
-        vec4 color;
+        Color color;
 
-        void setup(const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        void setup(const Color &color_, float minw_ = 0, float minh_ = 0)
         {
             Filler::setup(minw_, minh_);
             color = color_;
@@ -1195,7 +1223,7 @@ namespace UI
         void draw(float sx, float sy)
         {
             hudnotextureshader->set();
-            gle::color(color);
+            color.init();
             gle::defvertex(2);
             gle::begin(GL_LINE_LOOP);
             gle::attribf(sx,   sy);
@@ -1475,9 +1503,9 @@ namespace UI
     struct Text : Object
     {
         float scale;
-        vec4 color;
+        Color color;
 
-        void setup(float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        void setup(float scale_ = 1, const Color &color_ = Color(255, 255, 255))
         {
             Object::setup();
 
@@ -1496,7 +1524,7 @@ namespace UI
         {
             float oldscale = textscale;
             textscale = drawscale();
-            draw_text(getstr(), sx/textscale, sy/textscale, int(color.r*255), int(color.g*255), int(color.b*255), int(color.a*255));
+            draw_text(getstr(), sx/textscale, sy/textscale, color.r, color.g, color.b, color.a);
             textscale = oldscale;
 
             Object::draw(sx, sy);
@@ -1520,7 +1548,7 @@ namespace UI
         TextString() : str(NULL) {}
         ~TextString() { delete[] str; }
 
-        void setup(const char *str_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        void setup(const char *str_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
         {
             Text::setup(scale_, color_);
 
@@ -1540,7 +1568,7 @@ namespace UI
 
         TextInt() : val(0) { str[0] = '0'; str[1] = '\0'; }
 
-        void setup(int val_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        void setup(int val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
         {
             Text::setup(scale_, color_);
 
@@ -1560,7 +1588,7 @@ namespace UI
 
         TextFloat() { memset(&val, -1, sizeof(val)); str[0] = '\0'; }
 
-        void setup(float val_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        void setup(float val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
         {
             Text::setup(scale_, color_);
 
@@ -2528,11 +2556,11 @@ namespace UI
         }
     };
 
-    ICOMMAND(newui, "ssss", (char *name, char *contents, char *onshow, char *onhide),
+    ICOMMAND(newui, "ssssb", (char *name, char *contents, char *onshow, char *onhide, int *allowinput),
     {
         Window *window = windows.find(name, NULL);
         if(window) { world->hide(window); windows.remove(name); delete window; }
-        windows[name] = new Window(name, contents, onshow, onhide);
+        windows[name] = new Window(name, contents, onshow, onhide, *allowinput!=0);
     });
 
     bool showui(const char *name)
@@ -2555,9 +2583,16 @@ namespace UI
         return false;
     }
 
+    void holdui(const char *name, bool on)
+    {
+        if(on) showui(name);
+        else hideui(name);
+    }
+
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
     ICOMMAND(toggleui, "s", (char *name), intret(toggleui(name) ? 1 : 0));
+    ICOMMAND(holdui, "sD", (char *name, int *down), holdui(name, *down!=0));
 
     #define IFSTATEVAL(state,t,f) { if(state) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }
     #define DOSTATE(flags, func) \
@@ -2597,6 +2632,10 @@ namespace UI
     {
         if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setalign(*xalign, *yalign);
     });
+    ICOMMANDNS("uialign*", uialign__, "ii", (int *xalign, int *yalign),
+    {
+        if(buildparent) loopi(buildchild) buildparent->children[i]->setalign(*xalign, *yalign);
+    });
 
     ICOMMAND(uiclamp, "iiii", (int *left, int *right, int *bottom, int *top),
     {
@@ -2605,6 +2644,10 @@ namespace UI
     ICOMMANDNS("uiclamp-", uiclamp_, "iiii", (int *left, int *right, int *bottom, int *top),
     {
         if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setclamp(*left, *right, *bottom, *top);
+    });
+    ICOMMANDNS("uiclamp*", uiclamp__, "iiii", (int *left, int *right, int *bottom, int *top),
+    {
+        if(buildparent) loopi(buildchild) buildparent->children[i]->setclamp(*left, *right, *bottom, *top);
     });
 
     ICOMMAND(uigroup, "e", (uint *children),
@@ -2678,31 +2721,31 @@ namespace UI
     ICOMMAND(uisliderbutton, "e", (uint *children),
         BUILD(SliderButton, o, o->setup(), children));
 
-    ICOMMAND(uicolor, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(FillColor, o, o->setup(FillColor::SOLID, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
+    ICOMMAND(uicolor, "iffe", (int *c, float *minw, float *minh, uint *children),
+        BUILD(FillColor, o, o->setup(FillColor::SOLID, Color(*c), *minw, *minh), children));
 
-    ICOMMAND(uimodcolor, "fffffe", (float *r, float *g, float *b, float *minw, float *minh, uint *children),
-        BUILD(FillColor, o, o->setup(FillColor::MODULATE, vec4(*r, *g, *b, 1), *minw, *minh), children));
+    ICOMMAND(uimodcolor, "iffe", (int *c, float *minw, float *minh, uint *children),
+        BUILD(FillColor, o, o->setup(FillColor::MODULATE, Color(*c), *minw, *minh), children));
 
-    ICOMMAND(uivgradient, "ffffffffffe", (float *r, float *g, float *b, float *a, float *r2, float *g2, float *b2, float *a2, float *minw, float *minh, uint *children),
-        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::VERTICAL, vec4(*r, *g, *b, *a), vec4(*r2, *g2, *b2, *a2), *minw, *minh), children));
+    ICOMMAND(uivgradient, "iiffe", (int *c, int *c2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::VERTICAL, Color(*c), Color(*c2), *minw, *minh), children));
 
-    ICOMMAND(uimodvgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
-        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::VERTICAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
+    ICOMMAND(uimodvgradient, "iiffe", (int *c, int *c2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::VERTICAL, Color(*c), Color(*c2), *minw, *minh), children));
 
-    ICOMMAND(uihgradient, "ffffffffffe", (float *r, float *g, float *b, float *a, float *r2, float *g2, float *b2, float *a2, float *minw, float *minh, uint *children),
-        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::HORIZONTAL, vec4(*r, *g, *b, *a), vec4(*r2, *g2, *b2, *a2), *minw, *minh), children));
+    ICOMMAND(uihgradient, "iiffe", (int *c, int *c2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::SOLID, Gradient::HORIZONTAL, Color(*c), Color(*c2), *minw, *minh), children));
 
-    ICOMMAND(uimodhgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
-        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::HORIZONTAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
+    ICOMMAND(uimodhgradient, "iiffe", (int *c, int *c2, float *minw, float *minh, uint *children),
+        BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::HORIZONTAL, Color(*c), Color(*c2), *minw, *minh), children));
 
-    ICOMMAND(uioutline, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(Outline, o, o->setup(vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
+    ICOMMAND(uioutline, "iffe", (int *c, float *minw, float *minh, uint *children),
+        BUILD(Outline, o, o->setup(Color(*c), *minw, *minh), children));
 
-    ICOMMAND(uiline, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(Line, o, o->setup(vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
+    ICOMMAND(uiline, "iffe", (int *c, float *minw, float *minh, uint *children),
+        BUILD(Line, o, o->setup(Color(*c), *minw, *minh), children));
 
-    static inline void buildtext(tagval &t, float scale, const vec4 &color, uint *children)
+    static inline void buildtext(tagval &t, float scale, const Color &color, uint *children)
     {
         if(scale <= 0) scale = 1;
         switch(t.type)
@@ -2728,11 +2771,11 @@ namespace UI
         }
     }
 
-    ICOMMAND(uicolortext, "tfffffe", (tagval *text, float *scale, float *r, float *g, float *b, float *a, uint *children),
-        buildtext(*text, *scale, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), children));
+    ICOMMAND(uicolortext, "tfie", (tagval *text, float *scale, int *c, uint *children),
+        buildtext(*text, *scale, Color(*c), children));
 
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale, vec4(1, 1, 1, 1), children));
+        buildtext(*text, *scale, Color(255, 255, 255), children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
@@ -2789,7 +2832,7 @@ namespace UI
 
     bool hascursor()
     {
-        return world->children.length() > 0;
+        return world->allowinput();
     }
 
     void getcursorpos(float &x, float &y)
