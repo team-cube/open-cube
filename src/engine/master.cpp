@@ -725,7 +725,7 @@ int main(int argc, char **argv)
     {
         if(reloadcfg)
         {
-            conoutf("reloading master.cfg");
+            conoutf("reloading %s", cfgname);
             execfile(cfgname);
             bangameservers();
             banclients();
