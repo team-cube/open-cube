@@ -144,7 +144,7 @@ namespace game
             string hostname;
             if(enet_address_get_host_ip(address, hostname, sizeof(hostname)) >= 0)
             {
-                if(servinfo[0]) g.titlef("%.25s", 0xFFFF80, NULL, servinfo);
+                if(servdesc[0]) g.titlef("%.25s", 0xFFFF80, NULL, servdesc);
                 else g.titlef("%s:%d", 0xFFFF80, NULL, hostname, address->port);
             }
         }

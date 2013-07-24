@@ -109,7 +109,7 @@ namespace server
     extern bool sendpackets(bool force = false);
     extern void serverinforeply(ucharbuf &req, ucharbuf &p);
     extern void serverupdate();
-    extern bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np);
+    extern int protocolversion();
     extern int laninfoport();
     extern int serverport();
     extern const char *defaultmaster();

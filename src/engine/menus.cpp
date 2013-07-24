@@ -2,6 +2,7 @@
 
 void notifywelcome()
 {
+    UI::hideui("servers");
 }
 
 struct change

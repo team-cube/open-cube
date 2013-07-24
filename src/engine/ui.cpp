@@ -400,6 +400,8 @@ namespace UI
         void buildchildren(uint *contents);
 
         virtual void build() {}
+
+        virtual int childcolumns() const { return children.length(); }
     };
 
     struct Window : Object
@@ -538,7 +540,7 @@ namespace UI
             loopvrev(children)
             {
                 Object *o = children[i];
-                if(o->gettype() == Window::typestr())
+                if(o->istype<Window>())
                 {
                     Window *w = (Window *)o;
                     hide(w, i);
@@ -742,13 +744,13 @@ namespace UI
         }
     };
 
-    struct Table : Object
+    struct Grid : Object
     {
         int columns;
         float space;
         vector<float> widths, heights;
 
-        static const char *typestr() { return "#Table"; }
+        static const char *typestr() { return "#Grid"; }
         const char *gettype() const { return typestr(); }
 
         void setup(int columns_, float space_ = 0)
@@ -824,6 +826,155 @@ namespace UI
                     offsety += heights[row] + rspace;
                     row++;
                 }
+            });
+        }
+    };
+
+    struct TableHeader : Object
+    {
+        int columns;
+
+        TableHeader() : columns(0) {}
+
+        static const char *typestr() { return "#TableHeader"; }
+        const char *gettype() const { return typestr(); }
+
+        int childcolumns() const { return columns; }
+
+        void buildchildren(uint *columndata, uint *contents)
+        {
+            Object *oldparent = buildparent;
+            int oldchild = buildchild;
+            buildparent = this;
+            buildchild = 0;
+            execute(columndata);
+            if(columns != buildchild) while(children.length() > buildchild) delete children.pop();
+            columns = buildchild;
+            if((*contents&CODE_OP_MASK) != CODE_EXIT) execute(contents);
+            while(children.length() > buildchild) delete children.pop();
+            buildparent = oldparent;
+            buildchild = oldchild;
+            resetstate();
+        }
+
+        void adjustchildren()
+        {
+            for(int i = columns; i < children.length(); i++) children[i]->adjustlayout(0, 0, w, h);
+        }
+
+        void draw(float sx, float sy)
+        {
+            for(int i = columns; i < children.length(); i++)
+            {
+                Object *o = children[i];
+                if(!isfullyclipped(sx + o->x, sy + o->y, o->w, o->h))
+                    o->draw(sx + o->x, sy + o->y);
+            }
+            loopi(columns)
+            {
+                Object *o = children[i];
+                if(!isfullyclipped(sx + o->x, sy + o->y, o->w, o->h))
+                    o->draw(sx + o->x, sy + o->y);
+            }
+        }
+    };
+
+    struct TableRow : TableHeader
+    {
+        static const char *typestr() { return "#TableRow"; }
+        const char *gettype() const { return typestr(); }
+
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+    };
+
+    #define BUILDCOLUMNS(type, o, setup, columndata, contents) do { \
+        type *o = buildparent->buildtype<type>(); \
+        setup; \
+        o->buildchildren(columndata, contents); \
+    } while(0)
+
+    struct Table : Object
+    {
+        float space;
+        vector<float> widths;
+
+        static const char *typestr() { return "#Table"; }
+        const char *gettype() const { return typestr(); }
+
+        void setup(float space_ = 0)
+        {
+            Object::setup();
+            space = space_;
+        }
+
+        void layout()
+        {
+            widths.setsize(0);
+
+            loopchildren(o,
+            {
+                o->layout();
+                int cols = o->childcolumns();
+                while(widths.length() <= cols) widths.add(0);
+                loopj(cols)
+                {
+                    Object *c = o->children[j];
+                    if(c->w > widths[j]) widths[j] = c->w;
+                }
+            });
+            float rw = 0;
+            w = h = 0;
+            loopv(widths) rw += widths[i];
+            rw += space*max(widths.length() - 1, 0);
+            loopchildren(o,
+            {
+                o->x = 0;
+                o->y = h;
+                o->w = max(o->w, rw);
+                w = max(w, o->w);
+                float offset = 0;
+                int cols = o->childcolumns();
+                loopj(cols)
+                {
+                    Object *c = o->children[j];
+                    c->x = offset;
+                    c->adjustlayout(c->x, c->y, widths[j], o->h);
+                    offset += widths[j];
+                }
+                h += o->h;
+            });
+
+            h += space*max(children.length() - 1, 0);
+        }
+
+        void adjustchildren()
+        {
+            if(children.empty()) return;
+
+            float cspace = w, rspace = h;
+            loopv(widths) cspace -= widths[i];
+            loopchildren(o, rspace -= o->h);
+            cspace /= max(widths.length() - 1, 1);
+            rspace /= max(children.length() - 1, 1);
+
+            float offsety = 0;
+            loopchildren(o,
+            {
+                o->y = offsety;
+                o->adjustlayout(0, o->y, o->w, o->h);
+                float offsetx = 0;
+                int cols = o->childcolumns();
+                loopj(cols)
+                {
+                    Object *c = o->children[j];
+                    c->x = offsetx;
+                    c->adjustlayout(c->x, c->y, widths[j], o->h);
+                    offsetx += widths[j] + cspace;
+                }
+                offsety += o->h + rspace;
             });
         }
     };
@@ -999,15 +1150,42 @@ namespace UI
         }
     };
 
-    struct Outline : Filler
+    struct Line : Filler
     {
-        float thick;
         vec4 color;
 
-        void setup(float thick_, const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        void setup(const vec4 &color_, float minw_ = 0, float minh_ = 0)
         {
             Filler::setup(minw_, minh_);
-            thick = thick_;
+            color = color_;
+        }
+
+        static const char *typestr() { return "#Line"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            hudnotextureshader->set();
+            gle::color(color);
+            gle::defvertex(2);
+            gle::begin(GL_LINES);
+            gle::attribf(sx,   sy);
+            gle::attribf(sx+w, sy+h);
+            gle::end();
+            gle::colorf(1, 1, 1);
+            hudshader->set();
+
+            Object::draw(sx, sy);
+        }
+    };
+
+    struct Outline : Filler
+    {
+        vec4 color;
+
+        void setup(const vec4 &color_, float minw_ = 0, float minh_ = 0)
+        {
+            Filler::setup(minw_, minh_);
             color = color_;
         }
 
@@ -1019,29 +1197,12 @@ namespace UI
             hudnotextureshader->set();
             gle::color(color);
             gle::defvertex(2);
-            if(thick <= 0)
-            {
-                gle::begin(GL_LINE_LOOP);
-                gle::attribf(sx,   sy);
-                gle::attribf(sx+w, sy);
-                gle::attribf(sx+w, sy+h);
-                gle::attribf(sx,   sy+h);
-                gle::end();
-            }
-            else
-            {
-                gle::begin(GL_QUADS);
-                float tw = min(thick, w/2), th = min(thick, h/2);
-                // top
-                gle::attribf(sx, sy); gle::attribf(sx+w, sy); gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+tw, sy+th);
-                // bottom
-                gle::attribf(sx+tw, sy+h-th); gle::attribf(sx+w-tw, sy+h-th); gle::attribf(sx+w, sy+h); gle::attribf(sx, sy+h);
-                // left
-                gle::attribf(sx, sy); gle::attribf(sx+tw, sy+th); gle::attribf(sx+tw, sy+h-th); gle::attribf(sx, sy+h);
-                // right
-                gle::attribf(sx+w-tw, sy+th); gle::attribf(sx+w, sy); gle::attribf(sx+w, sy+h); gle::attribf(sx+w-tw, sy+h-th);
-                gle::end();
-            }
+            gle::begin(GL_LINE_LOOP);
+            gle::attribf(sx,   sy);
+            gle::attribf(sx+w, sy);
+            gle::attribf(sx+w, sy+h);
+            gle::attribf(sx,   sy+h);
+            gle::end();
             gle::colorf(1, 1, 1);
             hudshader->set();
 
@@ -1313,18 +1474,13 @@ namespace UI
 
     struct Text : Object
     {
-        char *str;
         float scale;
         vec4 color;
 
-        Text() : str(NULL) {}
-        ~Text() { delete[] str; }
-
-        void setup(const char *str_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        void setup(float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
         {
             Object::setup();
 
-            SETSTR(str, str_);
             scale = scale_;
             color = color_;
         }
@@ -1334,11 +1490,13 @@ namespace UI
 
         float drawscale() const { return scale / (FONTH * uitextrows); }
 
+        virtual const char *getstr() const { return ""; }
+
         void draw(float sx, float sy)
         {
             float oldscale = textscale;
             textscale = drawscale();
-            draw_text(str, sx/textscale, sy/textscale, int(color.r*255), int(color.g*255), int(color.b*255), int(color.a*255));
+            draw_text(getstr(), sx/textscale, sy/textscale, int(color.r*255), int(color.g*255), int(color.b*255), int(color.a*255));
             textscale = oldscale;
 
             Object::draw(sx, sy);
@@ -1349,10 +1507,70 @@ namespace UI
             Object::layout();
 
             float k = drawscale(), tw, th;
-            text_boundsf(str, tw, th);
+            text_boundsf(getstr(), tw, th);
             w = max(w, tw*k);
             h = max(h, th*k);
         }
+    };
+
+    struct TextString : Text
+    {
+        char *str;
+
+        TextString() : str(NULL) {}
+        ~TextString() { delete[] str; }
+
+        void setup(const char *str_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        {
+            Text::setup(scale_, color_);
+
+            SETSTR(str, str_);
+        }
+
+        static const char *typestr() { return "#TextString"; }
+        const char *gettype() const { return typestr(); }
+
+        const char *getstr() const { return str; }
+    };
+
+    struct TextInt : Text
+    {
+        int val;
+        char str[20];
+
+        TextInt() : val(0) { str[0] = '0'; str[1] = '\0'; }
+
+        void setup(int val_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        {
+            Text::setup(scale_, color_);
+
+            if(val != val_) { val = val_; intformat(str, val, sizeof(str)); }
+        }
+
+        static const char *typestr() { return "#TextInt"; }
+        const char *gettype() const { return typestr(); }
+
+        const char *getstr() const { return str; }
+    };
+
+    struct TextFloat : Text
+    {
+        float val;
+        char str[20];
+
+        TextFloat() { memset(&val, -1, sizeof(val)); str[0] = '\0'; }
+
+        void setup(float val_, float scale_ = 1, const vec4 &color_ = vec4(1, 1, 1, 1))
+        {
+            Text::setup(scale_, color_);
+
+            if(val != val_) { val = val_; intformat(str, val, sizeof(str)); }
+        }
+
+        static const char *typestr() { return "#TextFloat"; }
+        const char *gettype() const { return typestr(); }
+
+        const char *getstr() const { return str; }
     };
 
     struct Clipper : Object
@@ -2411,8 +2629,15 @@ namespace UI
         BUILD(HorizontalList, o, o->setup(*space), children);
     });
 
-    ICOMMAND(uitable, "ife", (int *columns, float *space, uint *children),
-        BUILD(Table, o, o->setup(*columns, *space), children));
+    ICOMMAND(uigrid, "ife", (int *columns, float *space, uint *children),
+        BUILD(Grid, o, o->setup(*columns, *space), children));
+
+    ICOMMAND(uitableheader, "ee", (uint *columndata, uint *children),
+        BUILDCOLUMNS(TableHeader, o, o->setup(), columndata, children));
+    ICOMMAND(uitablerow, "ee", (uint *columndata, uint *children),
+        BUILDCOLUMNS(TableRow, o, o->setup(), columndata, children));
+    ICOMMAND(uitable, "fe", (float *space, uint *children),
+        BUILD(Table, o, o->setup(*space), children));
 
     ICOMMAND(uispace, "ffe", (float *spacew, float *spaceh, uint *children),
         BUILD(Spacer, o, o->setup(*spacew, *spaceh), children));
@@ -2471,14 +2696,43 @@ namespace UI
     ICOMMAND(uimodhgradient, "ffffffffe", (float *r, float *g, float *b, float *r2, float *g2, float *b2, float *minw, float *minh, uint *children),
         BUILD(Gradient, o, o->setup(Gradient::MODULATE, Gradient::HORIZONTAL, vec4(*r, *g, *b, 1), vec4(*r2, *g2, *b2, 1), *minw, *minh), children));
 
-    ICOMMAND(uioutline, "fffffffe", (float *thick, float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
-        BUILD(Outline, o, o->setup(*thick, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
+    ICOMMAND(uioutline, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
+        BUILD(Outline, o, o->setup(vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
 
-    ICOMMAND(uicolortext, "sfffffe", (char *text, float *scale, float *r, float *g, float *b, float *a, uint *children),
-        BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale, vec4(*r, *g, *b, *a <= 0 ? 1 : *a)), children));
+    ICOMMAND(uiline, "ffffffe", (float *r, float *g, float *b, float *a, float *minw, float *minh, uint *children),
+        BUILD(Line, o, o->setup(vec4(*r, *g, *b, *a <= 0 ? 1 : *a), *minw, *minh), children));
 
-    ICOMMAND(uitext, "sfe", (char *text, float *scale, uint *children),
-        BUILD(Text, o, o->setup(text, *scale <= 0 ? 1 : *scale), children));
+    static inline void buildtext(tagval &t, float scale, const vec4 &color, uint *children)
+    {
+        if(scale <= 0) scale = 1;
+        switch(t.type)
+        {
+            case VAL_INT:
+                BUILD(TextInt, o, o->setup(t.i, scale, color), children);
+                break;
+            case VAL_FLOAT:
+                BUILD(TextFloat, o, o->setup(t.f, scale, color), children);
+                break;
+            case VAL_CSTR:
+            case VAL_MACRO:
+            case VAL_STR:
+                if(t.s[0])
+                {
+                    BUILD(TextString, o, o->setup(t.s, scale, color), children);
+                    break;
+                }
+                // fall-through
+            default:
+                BUILD(Object, o, o->setup(), children);
+                break;
+        }
+    }
+
+    ICOMMAND(uicolortext, "tfffffe", (tagval *text, float *scale, float *r, float *g, float *b, float *a, uint *children),
+        buildtext(*text, *scale, vec4(*r, *g, *b, *a <= 0 ? 1 : *a), children));
+
+    ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
+        buildtext(*text, *scale, vec4(1, 1, 1, 1), children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));

@@ -429,6 +429,32 @@ extern bool requestmaster(const char *req);
 extern bool requestmasterf(const char *fmt, ...) PRINTFARGS(1, 2);
 extern bool isdedicatedserver();
 
+// serverbrowser
+
+struct servinfo
+{
+    string name, map, desc;
+    int protocol, numplayers, maxplayers, ping;
+    vector<int> attr;
+
+    servinfo() : protocol(INT_MIN), numplayers(0), maxplayers(0)
+    {
+        name[0] = map[0] = desc[0] = '\0';
+    }
+};
+
+extern servinfo *getservinfo(int i);
+
+#define GETSERVINFO(idx, si, body) do { \
+    servinfo *si = getservinfo(idx); \
+    if(si) \
+    { \
+        body; \
+    } \
+} while(0)
+#define GETSERVINFOATTR(idx, aidx, aval, body) \
+    GETSERVINFO(idx, si, { if(si->attr.inrange(aidx)) { int aval = si->attr[aidx]; body; } })
+
 // client
 extern void sendclientpacket(ENetPacket *packet, int chan);
 extern void flushclient();

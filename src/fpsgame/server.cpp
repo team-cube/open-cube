@@ -1466,7 +1466,7 @@ namespace server
                 if(msg < 0) val = uchar(-msg);
                 else msgmask[msg] = val;
             }
-            va_end(msgs); 
+            va_end(msgs);
         }
 
         uchar operator[](int msg) const { return msg >= 0 && msg < NUMMSG ? msgmask[msg] : 0; }
@@ -2756,7 +2756,7 @@ namespace server
                     getstring(desc, p, sizeof(desc));
                     uint id = (uint)getint(p);
                     getstring(ans, p, sizeof(ans));
-                    if(!answerchallenge(ci, id, ans, desc)) 
+                    if(!answerchallenge(ci, id, ans, desc))
                     {
                         disconnect_client(sender, ci->connectauth);
                         return;
@@ -3502,12 +3502,12 @@ namespace server
             return;
         }
 
+        putint(p, PROTOCOL_VERSION);
         putint(p, numclients(-1, false, true));
-        putint(p, gamepaused || gamespeed != 100 ? 7 : 5);                   // number of attrs following
-        putint(p, PROTOCOL_VERSION);    // generic attributes, passed back below
+        putint(p, maxclients);
+        putint(p, gamepaused || gamespeed != 100 ? 5 : 3); // number of attrs following
         putint(p, gamemode);
         putint(p, m_timed ? max((gamelimit - gamemillis)/1000, 0) : 0);
-        putint(p, maxclients);
         putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
         if(gamepaused || gamespeed != 100)
         {
@@ -3519,10 +3519,7 @@ namespace server
         sendserverinforeply(p);
     }
 
-    bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np)
-    {
-        return attr.length() && attr[0]==PROTOCOL_VERSION;
-    }
+    int protocolversion() { return PROTOCOL_VERSION; }
 
     #include "aiman.h"
 }
