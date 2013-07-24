@@ -329,7 +329,7 @@ struct serverinfo : servinfo
     {
         if(address.host == ENET_HOST_ANY) return "[unknown host]";
         if(ping == WAITING) return "[waiting for response]";
-        if(protocol > currentprotocol) return "[older protocol]";
+        if(protocol < currentprotocol) return "[older protocol]";
         if(protocol > currentprotocol) return "[newer protocol]";
         return NULL;
     }
