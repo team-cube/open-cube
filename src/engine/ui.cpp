@@ -456,10 +456,10 @@ namespace UI
     
     static Window *window = NULL;
 
-    static float maxscale = 1;
-
     struct Window : Object
     {
+        static float maxscale;
+
         char *name;
         uint *contents, *onshow, *onhide;
         bool allowinput;
@@ -588,9 +588,11 @@ namespace UI
         }
     };
 
+    float Window::maxscale = 1;
+
     static inline bool htcmp(const char *key, const Window *w) { return !strcmp(key, w->name); }
 
-    hashset<Window *> windows;
+    static hashset<Window *> windows;
 
     void ClipArea::scissor()
     {
@@ -2942,7 +2944,7 @@ namespace UI
 
     void limitscale(float scale)
     {
-        maxscale = scale;
+        Window::maxscale = scale;
     }
 
     void setup()
