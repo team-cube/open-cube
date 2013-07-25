@@ -172,7 +172,6 @@ namespace game
         const ENetAddress *address = connectedpeer();
         if(address && player1->clientnum >= 0)
         {
-            extern string servdesc;
             if(servdesc[0]) result(servdesc);
             else
             {

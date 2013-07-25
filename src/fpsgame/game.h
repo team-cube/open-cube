@@ -569,6 +569,7 @@ namespace game
 
     // client
     extern bool connected, remote, demoplayback;
+    extern string servdesc;
 
     extern int parseplayer(const char *arg);
     extern void ignore(int cn);
