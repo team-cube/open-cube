@@ -127,6 +127,17 @@ namespace UI
         STATE_HIDDEN      = 1<<12
     };
 
+    struct Object;
+
+    static Object *buildparent = NULL;
+    static int buildchild = -1;
+
+    #define BUILD(type, o, setup, contents) do { \
+        type *o = buildparent->buildtype<type>(); \
+        setup; \
+        o->buildchildren(contents); \
+    } while(0)
+
     struct Object
     {
         Object *parent;
@@ -396,26 +407,71 @@ namespace UI
             return NULL;
         }
 
-        template<class T> T *buildtype();
-        void buildchildren(uint *contents);
+        template<class T> T *buildtype()
+        {
+            T *t;
+            if(children.inrange(buildchild))
+            {
+                Object *o = children[buildchild];
+                if(o->istype<T>()) t = (T *)o;
+                else
+                {
+                    delete o;
+                    t = new T;
+                    children[buildchild] = t;
+                }
+            }
+            else
+            {
+                t = new T;
+                children.add(t);
+            }
+            t->reset(this);
+            buildchild++;
+            return t;
+        }
 
-        virtual void build() {}
+        void buildchildren(uint *contents)
+        {
+            if((*contents&CODE_OP_MASK) == CODE_EXIT) children.deletecontents();
+            else
+            {
+                Object *oldparent = buildparent;
+                int oldchild = buildchild;
+                buildparent = this;
+                buildchild = 0;
+                execute(contents);
+                while(children.length() > buildchild)
+                    delete children.pop();
+                buildparent = oldparent;
+                buildchild = oldchild;
+            }
+            resetstate();
+        }
 
         virtual int childcolumns() const { return children.length(); }
     };
+
+    struct Window;
+    
+    static Window *window = NULL;
+
+    static float maxscale = 1;
 
     struct Window : Object
     {
         char *name;
         uint *contents, *onshow, *onhide;
         bool allowinput;
+        float px, py, px2, py2;
 
         Window(const char *name, const char *contents, const char *onshow, const char *onhide, bool allowinput = true) :
             name(newstring(name)),
             contents(compilecode(contents)),
             onshow(onshow && onshow[0] ? compilecode(onshow) : NULL),
             onhide(onhide && onhide[0] ? compilecode(onhide) : NULL),
-            allowinput(allowinput)
+            allowinput(allowinput),
+            px(0), py(0), px2(0), py2(0)
         {
         }
         ~Window()
@@ -443,43 +499,108 @@ namespace UI
             if(onshow) execute(onshow);
         }
 
-        void layout()
+        void setup()
         {
-            if(!(state&STATE_HIDDEN)) Object::layout();
-            else w = h = 0;
+            Object::setup();
+            px = py = px2 = py2 = 0;
         }
 
-        void draw(float sx, float sy)
+        void layout()
         {
-            if(!(state&STATE_HIDDEN)) Object::draw(sx, sy);
+            if(state&STATE_HIDDEN) { w = h = 0; return; } 
+            window = this;
+            Object::layout();
+            window = NULL;
+        }
+
+        void draw()
+        {
+            if(state&STATE_HIDDEN) return; 
+            window = this;
+
+            projection();
+            resethudmatrix();
+            hudshader->set();
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            gle::colorf(1, 1, 1);
+
+            Object::draw(x, y);
+
+            glDisable(GL_BLEND);
+
+            window = NULL;
         }
 
         void adjustchildren()
         {
-            if(!(state&STATE_HIDDEN)) Object::adjustchildren();
+            if(state&STATE_HIDDEN) return;
+            window = this;
+            Object::adjustchildren();
+            window = NULL;
         }
 
+        void adjustlayout()
+        {
+            float aspect = float(screenw)/screenh,
+                  sh = max(max(h, w/aspect), 1.0f),
+                  sw = aspect*sh,
+                  sx = 0.5f*(1 - sw),
+                  sy = 0.5f*(1 - sh);
+            Object::adjustlayout(sx, sy, sw, sh);
+        }    
+            
         #define DOSTATE(flags, func) \
             void func##children(float cx, float cy) \
             { \
-                if(allowinput) Object::func##children(cx, cy); \
+                if(!allowinput || px >= px2 || py >= py2) return; \
+                cx *= px2-px; cx += px - x; \
+                cy *= py2-py; cy += py - y; \
+                Object::func##children(cx, cy); \
             }
         DOSTATES
         #undef DOSTATE
 
         void escrelease(float cx, float cy);
+
+        void projection()
+        {
+            float aspect = float(screenw)/screenh,
+                  sh = max(max(h, w/aspect), 1.0f),
+                  sw = aspect*sh,
+                  sx = 0.5f*(1 - sw),
+                  sy = 0.5f*(1 - sh),
+                  scale = max((y + h)/(sh*maxscale), 1.0f);
+            px = (sx - 0.5f)*scale + 0.5f;
+            px2 = (sx + sw - 0.5f)*scale + 0.5f;
+            py = (sy - 0.5f)*scale + 0.5f;
+            py2 = (sy + sh - 0.5f)*scale + 0.5f;
+            hudmatrix.ortho(px, px2, py2, py, -1, 1);
+        }
+
+        void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
+        {
+            sx1 = clamp(int(floor((x1-px)/(px2-px)*screenw)), 0, screenw);
+            sy1 = clamp(int(floor(screenh - (y2-py)/(py2-py)*screenh)), 0, screenh);
+            sx2 = clamp(int(ceil((x2-px)/(px2-px)*screenw)), 0, screenw);
+            sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
+        }
     };
 
     static inline bool htcmp(const char *key, const Window *w) { return !strcmp(key, w->name); }
 
     hashset<Window *> windows;
 
+    void ClipArea::scissor()
+    {
+        int sx1, sy1, sx2, sy2;
+        window->calcscissor(x1, y1, x2, y2, sx1, sy1, sx2, sy2);
+        glScissor(sx1, sy1, sx2-sx1, sy2-sy1);
+    }
+
     struct World : Object
     {
-        float maxscale, px, py, px2, py2;
-
-        World() : maxscale(1), px(0), py(0), px2(0), py2(0) {}
-
         static const char *typestr() { return "#World"; }
         const char *gettype() const { return typestr(); }
         const char *getname() const { return gettype(); }
@@ -500,40 +621,35 @@ namespace UI
             } \
         } while(0)
 
-        void layout()
+        void adjustchildren()
         {
-            Object::layout();
-
-            float aspect = float(screenw)/screenh;
-            h = max(max(h, w/aspect), 1.0f);
-            w = aspect*h;
-            x = 0.5f*(1 - w);
-            y = 0.5f*(1 - h);
-
-            adjustchildren();
+            loopwindows(w, w->adjustlayout());
         }
 
         #define DOSTATE(flags, func) \
             void func##children(float cx, float cy) \
             { \
-                if(px >= px2 || py >= py2) return; \
-                cx *= px2-px; cx += px - x; \
-                cy *= py2-py; cy += py - y; \
-                loopinchildrenrev(o, cx, cy, \
+                loopwindowsrev(w, \
                 { \
-                    o->func##children(ox, oy); \
-                }, \
-                { \
-                    int oflags = (o->state | o->childstate) & (flags); \
-                    if(oflags) { childstate |= oflags; break; } \
+                    w->func##children(cx, cy); \
+                    int wflags = (w->state | w->childstate) & (flags); \
+                    if(wflags) { childstate |= wflags; break; } \
                 }); \
-                if(target(cx, cy)) state |= (flags); \
-                func(cx, cy); \
             }
         DOSTATES
         #undef DOSTATE
 
-        void build();
+        void build()
+        {
+            reset();
+            setup();
+            loopwindows(w,
+            {
+                w->build();
+                if(!children.inrange(i)) break;
+                if(children[i] != w) i--;
+            });
+        }
 
         bool show(Window *w)
         {
@@ -571,92 +687,23 @@ namespace UI
             return hidden;
         }
 
-        void setup()
-        {
-            Object::setup();
-            px = px2 = py = py2 = 0;
-        }
-
-        void projection()
-        {
-            float maxy = 0;
-            loopchildren(o, maxy = max(maxy, o->y + o->h));
-            float scale = max(maxy/(h*maxscale), 1.0f);
-            px = (x - 0.5f)*scale + 0.5f;
-            px2 = (x + w - 0.5f)*scale + 0.5f;
-            py = (y - 0.5f)*scale + 0.5f;
-            py2 = (y + h - 0.5f)*scale + 0.5f;
-            hudmatrix.ortho(px, px2, py2, py, -1, 1);
-        }
-
-        void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
-        {
-            sx1 = clamp(int(floor((x1-px)/(px2-px)*screenw)), 0, screenw);
-            sy1 = clamp(int(floor(screenh - (y2-py)/(py2-py)*screenh)), 0, screenh);
-            sx2 = clamp(int(ceil((x2-px)/(px2-px)*screenw)), 0, screenw);
-            sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
-        }
-
         bool allowinput() const { loopwindows(w, { if(w->allowinput) return true; }); return false; }
+
+        void draw()
+        {
+            if(children.empty()) return;
+
+            loopwindows(w, w->draw());
+
+            gle::disable();
+        }
     };
 
-    World *world = NULL;
-
-    void ClipArea::scissor()
-    {
-        int sx1, sy1, sx2, sy2;
-        world->calcscissor(x1, y1, x2, y2, sx1, sy1, sx2, sy2);
-        glScissor(sx1, sy1, sx2-sx1, sy2-sy1);
-    }
+    static World *world = NULL;
 
     void Window::escrelease(float cx, float cy)
     {
         world->hide(this);
-    }
-
-    Object *buildparent = NULL;
-    int buildchild = -1;
-
-    template<class T> inline T *Object::buildtype()
-    {
-        T *t;
-        if(children.inrange(buildchild))
-        {
-            Object *o = children[buildchild];
-            if(o->istype<T>()) t = (T *)o;
-            else
-            {
-                delete o;
-                t = new T;
-                children[buildchild] = t;
-            }
-        }
-        else
-        {
-            t = new T;
-            children.add(t);
-        }
-        t->reset(this);
-        buildchild++;
-        return t;
-    }
-
-    inline void Object::buildchildren(uint *contents)
-    {
-        if((*contents&CODE_OP_MASK) == CODE_EXIT) children.deletecontents();
-        else
-        {
-            Object *oldparent = buildparent;
-            int oldchild = buildchild;
-            buildparent = this;
-            buildchild = 0;
-            execute(contents);
-            while(children.length() > buildchild)
-                delete children.pop();
-            buildparent = oldparent;
-            buildchild = oldchild;
-        }
-        resetstate();
     }
 
     void Window::build()
@@ -665,25 +712,6 @@ namespace UI
         setup();
         buildchildren(contents);
     }
-
-    void World::build()
-    {
-        reset();
-        setup();
-        loopv(children)
-        {
-            Object *o = children[i];
-            o->build();
-            if(!children.inrange(i)) break;
-            if(children[i] != o) i--;
-        }
-    }
-
-    #define BUILD(type, o, setup, contents) do { \
-        type *o = buildparent->buildtype<type>(); \
-        setup; \
-        o->buildchildren(contents); \
-    } while(0)
 
     struct HorizontalList : Object
     {
@@ -2394,7 +2422,7 @@ namespace UI
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
-            world->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
@@ -2443,7 +2471,7 @@ namespace UI
         {
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
-            world->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
@@ -2914,7 +2942,7 @@ namespace UI
 
     void limitscale(float scale)
     {
-        world->maxscale = scale;
+        maxscale = scale;
     }
 
     void setup()
@@ -2947,23 +2975,8 @@ namespace UI
     void render()
     {
         world->layout();
-
-        if(world->children.empty()) return;
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        world->projection();
-        resethudmatrix();
-        hudshader->set();
-
-        gle::colorf(1, 1, 1);
-
+        world->adjustchildren();
         world->draw();
-
-        glDisable(GL_BLEND);
-
-        gle::disable();
     }
 }
 
