@@ -163,6 +163,9 @@ namespace game
     ICOMMAND(scoreboardshowclientnum, "", (), intret(showclientnum || player1->privilege>=PRIV_MASTER ? 1 : 0));
     ICOMMAND(scoreboardmultiplayer, "", (), intret(multiplayer(false) || demoplayback ? 1 : 0));
 
+    ICOMMAND(scoreboardhighlight, "i", (int *cn), 
+        intret(*cn == player1->clientnum && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? 0x808080 : 0));
+
     ICOMMAND(scoreboardservinfo, "", (),
     {
         if(!showservinfo) return;
