@@ -484,6 +484,22 @@ namespace UI
         const char *gettype() const { return typestr(); }
         const char *getname() const { return gettype(); }
 
+        #define loopwindows(o, body) do { \
+            loopv(children) \
+            { \
+                Window *o = (Window *)children[i]; \
+                body; \
+            } \
+        } while(0)
+
+        #define loopwindowsrev(o, body) do { \
+            loopvrev(children) \
+            { \
+                Window *o = (Window *)children[i]; \
+                body; \
+            } \
+        } while(0)
+
         void layout()
         {
             Object::layout();
@@ -547,9 +563,8 @@ namespace UI
         int hideall()
         {
             int hidden = 0;
-            loopchildrenrev(o,
+            loopwindowsrev(w,
             {
-                Window *w = (Window *)o;
                 hide(w, i);
                 hidden++;
             });
@@ -582,7 +597,7 @@ namespace UI
             sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
         }
 
-        bool allowinput() const { loopchildren(o, { Window *w = (Window *)o; if(w->allowinput) return true; }); return false; }
+        bool allowinput() const { loopwindows(w, { if(w->allowinput) return true; }); return false; }
     };
 
     World *world = NULL;
