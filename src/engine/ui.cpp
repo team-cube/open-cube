@@ -2817,13 +2817,13 @@ namespace UI
         }
     }
 
-    ICOMMAND(uicolortext, "tfie", (tagval *text, float *scale, int *c, uint *children),
+    ICOMMAND(uicolortext, "tife", (tagval *text, int *c, float *scale, uint *children),
         buildtext(*text, *scale, Color(*c), -1, children));
 
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
         buildtext(*text, *scale, Color(255, 255, 255), -1, children));
 
-    ICOMMAND(uiwrapcolortext, "tffie", (tagval *text, float *wrap, float *scale, int *c, uint *children),
+    ICOMMAND(uiwrapcolortext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
         buildtext(*text, *scale, Color(*c), *wrap, children));
 
     ICOMMAND(uiwraptext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
