@@ -689,7 +689,7 @@ namespace UI
             return hidden;
         }
 
-        bool allowinput() const { loopwindows(w, { if(w->allowinput) return true; }); return false; }
+        bool allowinput() const { loopwindows(w, { if(w->allowinput && !(w->state&STATE_HIDDEN)) return true; }); return false; }
 
         void draw()
         {
