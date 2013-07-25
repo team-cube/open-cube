@@ -302,7 +302,7 @@ namespace game
     }
     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
 
-    ICOMMAND(getclientfrags, "i", (int *cn), 
+    ICOMMAND(getclientfrags, "i", (int *cn),
     {
         fpsent *d = getclient(*cn);
         if(d) intret(d->frags);

@@ -118,7 +118,7 @@ namespace game
         vector<fpsent *> &p = *team < 0 ? spectators : teamplayers[*team];
         loopv(p)
         {
-            loopiter(id, stack, p[i]->clientnum); 
+            loopiter(id, stack, p[i]->clientnum);
             execute(body);
         }
         loopend(id, stack);
@@ -142,7 +142,7 @@ namespace game
     ICOMMAND(scoreboardpj, "i", (int *cn),
     {
         fpsent *d = getclient(*cn);
-        if(d && d != player1) 
+        if(d && d != player1)
         {
             if(d->state==CS_LAGGED) result("LAG");
             else intret(d->plag);
@@ -163,7 +163,7 @@ namespace game
     ICOMMAND(scoreboardshowclientnum, "", (), intret(showclientnum || player1->privilege>=PRIV_MASTER ? 1 : 0));
     ICOMMAND(scoreboardmultiplayer, "", (), intret(multiplayer(false) || demoplayback ? 1 : 0));
 
-    ICOMMAND(scoreboardhighlight, "i", (int *cn), 
+    ICOMMAND(scoreboardhighlight, "i", (int *cn),
         intret(*cn == player1->clientnum && highlightscore && (multiplayer(false) || demoplayback || players.length() > 1) ? 0x808080 : 0));
 
     ICOMMAND(scoreboardservinfo, "", (),
@@ -208,7 +208,7 @@ namespace game
 
     ICOMMAND(getteamscore, "i", (int *team),
     {
-        if(m_teammode && validteam(*team)) 
+        if(m_teammode && validteam(*team))
         {
             if(cmode && cmode->hidefrags()) intret(cmode->getteamscore(*team));
             else intret(teaminfos[*team-1].frags);

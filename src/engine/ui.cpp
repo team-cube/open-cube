@@ -453,7 +453,7 @@ namespace UI
     };
 
     struct Window;
-    
+
     static Window *window = NULL;
 
     struct Window : Object
@@ -507,7 +507,7 @@ namespace UI
 
         void layout()
         {
-            if(state&STATE_HIDDEN) { w = h = 0; return; } 
+            if(state&STATE_HIDDEN) { w = h = 0; return; }
             window = this;
             Object::layout();
             window = NULL;
@@ -515,7 +515,7 @@ namespace UI
 
         void draw()
         {
-            if(state&STATE_HIDDEN) return; 
+            if(state&STATE_HIDDEN) return;
             window = this;
 
             projection();
@@ -549,8 +549,8 @@ namespace UI
                   sx = 0.5f*(1 - sw),
                   sy = 0.5f*(1 - sh);
             Object::adjustlayout(sx, sy, sw, sh);
-        }    
-            
+        }
+
         #define DOSTATE(flags, func) \
             void func##children(float cx, float cy) \
             { \
@@ -1133,15 +1133,15 @@ namespace UI
     struct Color
     {
         uchar r, g, b, a;
-        
+
         Color() {}
         Color(uint c) : r((c>>16)&0xFF), g((c>>8)&0xFF), b(c&0xFF), a(c>>24 ? c>>24 : 0xFF) {}
         Color(uint c, uchar a) : r((c>>16)&0xFF), g((c>>8)&0xFF), b(c&0xFF), a(a) {}
         Color(uchar r, uchar g, uchar b, uchar a = 255) : r(r), g(g), b(b), a(a) {}
- 
+
         void init() { gle::colorub(r, g, b, a); }
         void attrib() { gle::attribub(r, g, b, a); }
-        
+
         static void def() { gle::defcolor(4, GL_UNSIGNED_BYTE); }
     };
 
@@ -1547,15 +1547,16 @@ namespace UI
 
     struct Text : Object
     {
-        float scale;
+        float scale, wrap;
         Color color;
 
-        void setup(float scale_ = 1, const Color &color_ = Color(255, 255, 255))
+        void setup(float scale_ = 1, const Color &color_ = Color(255, 255, 255), float wrap_ = -1)
         {
             Object::setup();
 
             scale = scale_;
             color = color_;
+            wrap = wrap_;
         }
 
         static const char *typestr() { return "#Text"; }
@@ -1569,7 +1570,7 @@ namespace UI
         {
             float oldscale = textscale;
             textscale = drawscale();
-            draw_text(getstr(), sx/textscale, sy/textscale, color.r, color.g, color.b, color.a);
+            draw_text(getstr(), sx/textscale, sy/textscale, color.r, color.g, color.b, color.a, -1, wrap >= 0 ? int(wrap/textscale) : -1);
             textscale = oldscale;
 
             Object::draw(sx, sy);
@@ -1580,7 +1581,7 @@ namespace UI
             Object::layout();
 
             float k = drawscale(), tw, th;
-            text_boundsf(getstr(), tw, th);
+            text_boundsf(getstr(), tw, th, wrap >= 0 ? int(wrap/k) : -1);
             w = max(w, tw*k);
             h = max(h, th*k);
         }
@@ -1593,9 +1594,9 @@ namespace UI
         TextString() : str(NULL) {}
         ~TextString() { delete[] str; }
 
-        void setup(const char *str_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
+        void setup(const char *str_, float scale_ = 1, const Color &color_ = Color(255, 255, 255), float wrap_ = -1)
         {
-            Text::setup(scale_, color_);
+            Text::setup(scale_, color_, wrap_);
 
             SETSTR(str, str_);
         }
@@ -1613,9 +1614,9 @@ namespace UI
 
         TextInt() : val(0) { str[0] = '0'; str[1] = '\0'; }
 
-        void setup(int val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
+        void setup(int val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255), float wrap_ = -1)
         {
-            Text::setup(scale_, color_);
+            Text::setup(scale_, color_, wrap_);
 
             if(val != val_) { val = val_; intformat(str, val, sizeof(str)); }
         }
@@ -1633,9 +1634,9 @@ namespace UI
 
         TextFloat() { memset(&val, -1, sizeof(val)); str[0] = '\0'; }
 
-        void setup(float val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255))
+        void setup(float val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255), float wrap_ = -1)
         {
-            Text::setup(scale_, color_);
+            Text::setup(scale_, color_, wrap_);
 
             if(val != val_) { val = val_; intformat(str, val, sizeof(str)); }
         }
@@ -2790,23 +2791,23 @@ namespace UI
     ICOMMAND(uiline, "iffe", (int *c, float *minw, float *minh, uint *children),
         BUILD(Line, o, o->setup(Color(*c), *minw, *minh), children));
 
-    static inline void buildtext(tagval &t, float scale, const Color &color, uint *children)
+    static inline void buildtext(tagval &t, float scale, const Color &color, float wrap, uint *children)
     {
         if(scale <= 0) scale = 1;
         switch(t.type)
         {
             case VAL_INT:
-                BUILD(TextInt, o, o->setup(t.i, scale, color), children);
+                BUILD(TextInt, o, o->setup(t.i, scale, color, wrap), children);
                 break;
             case VAL_FLOAT:
-                BUILD(TextFloat, o, o->setup(t.f, scale, color), children);
+                BUILD(TextFloat, o, o->setup(t.f, scale, color, wrap), children);
                 break;
             case VAL_CSTR:
             case VAL_MACRO:
             case VAL_STR:
                 if(t.s[0])
                 {
-                    BUILD(TextString, o, o->setup(t.s, scale, color), children);
+                    BUILD(TextString, o, o->setup(t.s, scale, color, wrap), children);
                     break;
                 }
                 // fall-through
@@ -2817,10 +2818,16 @@ namespace UI
     }
 
     ICOMMAND(uicolortext, "tfie", (tagval *text, float *scale, int *c, uint *children),
-        buildtext(*text, *scale, Color(*c), children));
+        buildtext(*text, *scale, Color(*c), -1, children));
 
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale, Color(255, 255, 255), children));
+        buildtext(*text, *scale, Color(255, 255, 255), -1, children));
+
+    ICOMMAND(uiwrapcolortext, "tffie", (tagval *text, float *wrap, float *scale, int *c, uint *children),
+        buildtext(*text, *scale, Color(*c), *wrap, children));
+
+    ICOMMAND(uiwraptext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
+        buildtext(*text, *scale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
