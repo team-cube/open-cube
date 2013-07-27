@@ -12,6 +12,7 @@ int identflags = 0;
 enum
 {
     MAXARGS = 25,
+    MAXRESULTS = 7,
     MAXCOMARGS = 12
 };
 
@@ -989,7 +990,7 @@ static inline void compileblock(vector<uint> &code)
     code.add(CODE_EMPTY);
 }
 
-static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0');
+static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0', int prevargs = MAXRESULTS);
 
 static inline const char *compileblock(vector<uint> &code, const char *p, int rettype = RET_NULL, int brak = '\0')
 {
@@ -1101,7 +1102,7 @@ static inline void compileval(vector<uint> &code, int wordtype, const stringslic
 }
 
 static stringslice unusedword(NULL, 0);
-static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int numargs = 1, stringslice &word = unusedword);
+static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int numargs = MAXRESULTS, stringslice &word = unusedword);
 
 static void compilelookup(vector<uint> &code, const char *&p, int ltype)
 {
@@ -1193,12 +1194,15 @@ static void compilelookup(vector<uint> &code, const char *&p, int ltype)
 #ifndef STANDALONE
                         case 'D': comtype = CODE_COMD; numargs++; break;
 #endif
-                        case 'C': comtype = CODE_COMC; numargs = 1; goto endfmt;
-                        case 'V': comtype = CODE_COMV; numargs = 2; goto endfmt;
+                        case 'C': comtype = CODE_COMC; goto compilecomv;
+                        case 'V': comtype = CODE_COMV; goto compilecomv;
                         case '1': case '2': case '3': case '4': break;
                     }
-                endfmt:
                     code.add(comtype|retcodeany(ltype)|(id->index<<8));
+                    code.add(CODE_EXIT|retcodeany(ltype));
+                    goto done;
+                compilecomv:
+                    code.add(comtype|retcodeany(ltype)|(numargs<<8)|(id->index<<13));
                     code.add(CODE_EXIT|retcodeany(ltype));
                     goto done;
                 }
@@ -1349,7 +1353,7 @@ static void compileblockmain(vector<uint> &code, const char *&p, int wordtype, i
                 int level = p - (esc - 1);
                 if(brak > level) continue;
                 else if(brak < level) debugcodeline(line, "too many @s");
-                if(!concs && numargs) code.add(CODE_ENTER);
+                if(!concs && numargs >= MAXRESULTS) code.add(CODE_ENTER);
                 if(concs + 2 > MAXARGS)
                 {
                     code.add(CODE_CONCW|RET_STR|(concs<<8));
@@ -1390,7 +1394,7 @@ done:
     }
     if(concs)
     {
-        if(numargs)
+        if(numargs >= MAXRESULTS)
         {
             code.add(CODE_CONCM|retcodeany(wordtype)|(concs<<8));
             code.add(CODE_EXIT|retcodeany(wordtype));
@@ -1469,7 +1473,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int num
         case '$': compilelookup(code, p, wordtype); return true;
         case '(':
             p++;
-            if(numargs) 
+            if(numargs >= MAXRESULTS) 
             {
                 code.add(CODE_ENTER);
                 compilestatements(code, p, VAL_ANY, ')');
@@ -1478,7 +1482,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int num
             else
             {
                 int start = code.length();
-                compilestatements(code, p, VAL_ANY, ')');
+                compilestatements(code, p, VAL_ANY, ')', numargs);
                 if(code.length() > start) code.add(CODE_RESULT_ARG|retcodeany(wordtype));
                 else compileval(code, wordtype);
             }
@@ -1534,7 +1538,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int num
     }
 }
 
-static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak)
+static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak, int prevargs)
 {
     const char *line = p;
     stringslice idname;
@@ -1543,7 +1547,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
     {
         skipcomments(p);
         idname.str = NULL;
-        bool more = compilearg(code, p, VAL_WORD, 0, idname);
+        bool more = compilearg(code, p, VAL_WORD, prevargs, idname);
         if(!more) goto endstatement;
         skipcomments(p);
         if(p[0] == '=') switch(p[1])
@@ -1557,7 +1561,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     ident *id = newident(idname, IDF_UNKNOWN);
                     if(id && id->type == ID_ALIAS)
                     {
-                        if(!(more = compilearg(code, p, VAL_ANY, 0))) compilestr(code);
+                        if(!(more = compilearg(code, p, VAL_ANY, prevargs))) compilestr(code);
                         code.add((id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8));
                         goto endstatement;
                     }
@@ -1572,7 +1576,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
         {
         noid:
             while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numargs++;
-            code.add(CODE_CALLU);
+            code.add(CODE_CALLU|(numargs<<8));
         }
         else
         {
@@ -1589,8 +1593,8 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
             else switch(id->type)
             {
                 case ID_ALIAS:
-                    while(numargs < MAXARGS && (more = compilearg(code, p, VAL_ANY, numargs))) numargs++;
-                    code.add(CODE_CALL|(id->index<<8));
+                    while(numargs < MAXARGS && (more = compilearg(code, p, VAL_ANY, prevargs+numargs))) numargs++;
+                    code.add((id->index < MAXARGS ? CODE_CALLARG : CODE_CALL)|(numargs<<8)|(id->index<<13));
                     break;
                 case ID_COMMAND:
                 {
@@ -1600,7 +1604,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     {
                     case 'S':
                     case 's':
-                        if(more) more = compilearg(code, p, *fmt == 's' ? VAL_CSTR : VAL_STR, numargs);
+                        if(more) more = compilearg(code, p, *fmt == 's' ? VAL_CSTR : VAL_STR, prevargs+numargs);
                         if(!more)
                         {
                             if(rep) break;
@@ -1609,55 +1613,57 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                         }
                         else if(!fmt[1])
                         {
-                            int numconc = 0;
+                            int numconc = 1;
                             while(numargs + numconc < MAXARGS && (more = compilearg(code, p, VAL_CSTR))) numconc++;
-                            if(numconc > 0) code.add(CODE_CONC|RET_STR|((numconc+1)<<8));
+                            if(numconc > 1) code.add(CODE_CONC|RET_STR|(numconc<<8));
                         }
                         numargs++;
                         break;
-                    case 'i': if(more) more = compilearg(code, p, VAL_INT, numargs); if(!more) { if(rep) break; compileint(code); fakeargs++; } numargs++; break;
-                    case 'b': if(more) more = compilearg(code, p, VAL_INT, numargs); if(!more) { if(rep) break; compileint(code, INT_MIN); fakeargs++; } numargs++; break;
-                    case 'f': if(more) more = compilearg(code, p, VAL_FLOAT, numargs); if(!more) { if(rep) break; compilefloat(code); fakeargs++; } numargs++; break;
-                    case 'F': if(more) more = compilearg(code, p, VAL_FLOAT, numargs); if(!more) { if(rep) break; code.add(CODE_DUP|RET_FLOAT); fakeargs++; } numargs++; break;
+                    case 'i': if(more) more = compilearg(code, p, VAL_INT, prevargs+numargs); if(!more) { if(rep) break; compileint(code); fakeargs++; } numargs++; break;
+                    case 'b': if(more) more = compilearg(code, p, VAL_INT, prevargs+numargs); if(!more) { if(rep) break; compileint(code, INT_MIN); fakeargs++; } numargs++; break;
+                    case 'f': if(more) more = compilearg(code, p, VAL_FLOAT, prevargs+numargs); if(!more) { if(rep) break; compilefloat(code); fakeargs++; } numargs++; break;
+                    case 'F': if(more) more = compilearg(code, p, VAL_FLOAT, prevargs+numargs); if(!more) { if(rep) break; code.add(CODE_DUP|RET_FLOAT); fakeargs++; } numargs++; break;
                     case 'T':
-                    case 't': if(more) more = compilearg(code, p, *fmt == 't' ? VAL_CANY : VAL_ANY, numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
-                    case 'E': if(more) more = compilearg(code, p, VAL_COND, numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
-                    case 'e': if(more) more = compilearg(code, p, VAL_CODE, numargs); if(!more) { if(rep) break; compileblock(code); fakeargs++; } numargs++; break;
-                    case 'r': if(more) more = compilearg(code, p, VAL_IDENT, numargs); if(!more) { if(rep) break; compileident(code); fakeargs++; } numargs++; break;
+                    case 't': if(more) more = compilearg(code, p, *fmt == 't' ? VAL_CANY : VAL_ANY, prevargs+numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
+                    case 'E': if(more) more = compilearg(code, p, VAL_COND, prevargs+numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
+                    case 'e': if(more) more = compilearg(code, p, VAL_CODE, prevargs+numargs); if(!more) { if(rep) break; compileblock(code); fakeargs++; } numargs++; break;
+                    case 'r': if(more) more = compilearg(code, p, VAL_IDENT, prevargs+numargs); if(!more) { if(rep) break; compileident(code); fakeargs++; } numargs++; break;
                     case '$': compileident(code, id); numargs++; break;
                     case 'N': compileint(code, numargs-fakeargs); numargs++; break;
 #ifndef STANDALONE
                     case 'D': comtype = CODE_COMD; numargs++; break;
 #endif
-                    case 'C': comtype = CODE_COMC; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, numargs))) numargs++; numargs = 1; goto endfmt;
-                    case 'V': comtype = CODE_COMV; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, numargs))) numargs++; numargs = 2; goto endfmt;
+                    case 'C': comtype = CODE_COMC; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, prevargs+numargs))) numargs++; goto compilecomv;
+                    case 'V': comtype = CODE_COMV; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, prevargs+numargs))) numargs++; goto compilecomv;
                     case '1': case '2': case '3': case '4': if(more) { fmt -= *fmt-'0'+1; rep = true; } break;
                     }
-                endfmt:
                     code.add(comtype|retcodeany(rettype)|(id->index<<8));
+                    break;
+                compilecomv:
+                    code.add(comtype|retcodeany(rettype)|(numargs<<8)|(id->index<<13));
                     break;
                 }
                 case ID_LOCAL:
-                    if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_IDENT, numargs))) numargs++;
+                    if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_IDENT, prevargs+numargs))) numargs++;
                     if(more) while((more = compilearg(code, p, VAL_POP)));
-                    code.add(CODE_LOCAL);
+                    code.add(CODE_LOCAL|(numargs<<8));
                     break;
                 case ID_DO:
-                    if(more) more = compilearg(code, p, VAL_CODE, 0);
+                    if(more) more = compilearg(code, p, VAL_CODE, prevargs);
                     code.add((more ? CODE_DO : CODE_NULL) | retcodeany(rettype));
                     break;
                 case ID_IF:
-                    if(more) more = compilearg(code, p, VAL_CANY, 0);
+                    if(more) more = compilearg(code, p, VAL_CANY, prevargs);
                     if(!more) code.add(CODE_NULL | retcodeany(rettype));
                     else
                     {
                         int start1 = code.length();
-                        more = compilearg(code, p, VAL_CODE);
+                        more = compilearg(code, p, VAL_CODE, prevargs+1);
                         if(!more) { code.add(CODE_POP); code.add(CODE_NULL | retcodeany(rettype)); }
                         else
                         {
                             int start2 = code.length();
-                            more = compilearg(code, p, VAL_CODE);
+                            more = compilearg(code, p, VAL_CODE, prevargs+2);
                             uint inst1 = code[start1], op1 = inst1&CODE_OP_MASK;
                             if(!more)
                             {
@@ -1701,16 +1707,16 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     }
                     break;
                 case ID_RESULT:
-                    if(more) more = compilearg(code, p, VAL_ANY, 0);
+                    if(more) more = compilearg(code, p, VAL_ANY, prevargs);
                     code.add((more ? CODE_RESULT : CODE_NULL) | retcodeany(rettype));
                     break;
                 case ID_NOT:
-                    if(more) more = compilearg(code, p, VAL_CANY, 0);
+                    if(more) more = compilearg(code, p, VAL_CANY, prevargs);
                     code.add((more ? CODE_NOT : CODE_TRUE) | retcodeany(rettype));
                     break;
                 case ID_AND:
                 case ID_OR:
-                    if(more) more = compilearg(code, p, VAL_COND, 0);
+                    if(more) more = compilearg(code, p, VAL_COND, prevargs);
                     if(!more) { code.add((id->type == ID_AND ? CODE_TRUE : CODE_FALSE) | retcodeany(rettype)); }
                     else
                     {
@@ -1718,13 +1724,13 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                         int start = code.length(), end = start;
                         while(numargs < MAXARGS)
                         {
-                            more = compilearg(code, p, VAL_COND);
+                            more = compilearg(code, p, VAL_COND, prevargs+numargs);
                             if(!more) break;
                             numargs++;
                             if((code[end]&0xFF) != CODE_BLOCK) break;
                             end = code.length();
                         }
-                        if(more) code.add(CODE_COMV|retcodeany(rettype)|(id->index<<8));
+                        if(more) code.add(CODE_COMV|retcodeany(rettype)|(numargs<<8)|(id->index<<13));
                         else
                         {
                             uint op = id->type == ID_AND ? CODE_JUMP_RESULT_FALSE : CODE_JUMP_RESULT_TRUE;
@@ -1742,22 +1748,22 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     }
                     break;
                 case ID_VAR:
-                    if(!(more = compilearg(code, p, VAL_INT, 0))) code.add(CODE_PRINT|(id->index<<8));
-                    else if(!(id->flags&IDF_HEX) || !(more = compilearg(code, p, VAL_INT))) code.add(CODE_IVAR1|(id->index<<8));
-                    else if(!(more = compilearg(code, p, VAL_INT))) code.add(CODE_IVAR2|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_INT, prevargs))) code.add(CODE_PRINT|(id->index<<8));
+                    else if(!(id->flags&IDF_HEX) || !(more = compilearg(code, p, VAL_INT, prevargs+1))) code.add(CODE_IVAR1|(id->index<<8));
+                    else if(!(more = compilearg(code, p, VAL_INT, prevargs+2))) code.add(CODE_IVAR2|(id->index<<8));
                     else code.add(CODE_IVAR3|(id->index<<8));
                     break;
                 case ID_FVAR:
-                    if(!(more = compilearg(code, p, VAL_FLOAT, 0))) code.add(CODE_PRINT|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_FLOAT, prevargs))) code.add(CODE_PRINT|(id->index<<8));
                     else code.add(CODE_FVAR1|(id->index<<8));
                     break;
                 case ID_SVAR:
-                    if(!(more = compilearg(code, p, VAL_CSTR, 0))) code.add(CODE_PRINT|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_CSTR, prevargs))) code.add(CODE_PRINT|(id->index<<8));
                     else
                     {
-                        int numconc = 0;
-                        while(numconc+1 < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numconc++;
-                        if(numconc > 0) code.add(CODE_CONC|RET_STR|((numconc+1)<<8));
+                        do ++numargs;
+                        while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, prevargs+numargs)));
+                        if(numargs > 1) code.add(CODE_CONC|RET_STR|(numargs<<8));
                         code.add(CODE_SVAR1|(id->index<<8));
                     }
                     break;
@@ -2037,7 +2043,9 @@ static inline void callcommand(ident *id, tagval *args, int numargs, bool lookup
         case 'V': i = max(i+1, numargs); ((comfunv)id->fun)(args, i); goto cleanup;
         case '1': case '2': case '3': case '4': if(i+1 < numargs) { fmt -= *fmt-'0'+1; rep = true; } break;
     }
-    #define ARG(n) (id->argmask&(1<<n) ? (void *)args[n].s : (void *)&args[n].i)
+    ++i;
+    #define OFFSETARG(n) n
+    #define ARG(n) (id->argmask&(1<<(n)) ? (void *)args[OFFSETARG(n)].s : (void *)&args[OFFSETARG(n)].i)
     #define CALLCOM(n) \
         switch(n) \
         { \
@@ -2055,8 +2063,8 @@ static inline void callcommand(ident *id, tagval *args, int numargs, bool lookup
             case 11: ((comfun11)id->fun)(ARG(0), ARG(1), ARG(2), ARG(3), ARG(4), ARG(5), ARG(6), ARG(7), ARG(8), ARG(9), ARG(10)); break; \
             case 12: ((comfun12)id->fun)(ARG(0), ARG(1), ARG(2), ARG(3), ARG(4), ARG(5), ARG(6), ARG(7), ARG(8), ARG(9), ARG(10), ARG(11)); break; \
         }
-    ++i;
     CALLCOM(i)
+    #undef OFFSETARG
 cleanup:
     loopk(i) freearg(args[k]);
     for(; i < numargs; i++) freearg(args[i]);
@@ -2074,9 +2082,8 @@ static const uint *runcode(const uint *code, tagval &result)
         return skipcode(code, result);
     }
     ++rundepth;
-    ident *id = NULL;
     int numargs = 0;
-    tagval args[MAXARGS+1], *prevret = commandret;
+    tagval args[MAXARGS+MAXRESULTS], *prevret = commandret;
     commandret = &result;
     for(;;)
     {
@@ -2089,7 +2096,6 @@ static const uint *runcode(const uint *code, tagval &result)
                 case op: \
                     freearg(result); \
                     val; \
-                    freeargs(args, numargs, 0); \
                     continue;
 
             RETOP(CODE_NULL|RET_NULL, result.setnull())
@@ -2107,10 +2113,13 @@ static const uint *runcode(const uint *code, tagval &result)
             RETOP(CODE_TRUE|RET_INT, result.setint(1))
             RETOP(CODE_TRUE|RET_FLOAT, result.setfloat(1.0f))
 
-            RETOP(CODE_NOT|RET_STR, result.setstr(newstring(getbool(args[0]) ? "0" : "1")))
+            #define RETPOP(op, val) \
+                RETOP(op, { --numargs; val; freearg(args[numargs]); })
+                    
+            RETPOP(CODE_NOT|RET_STR, result.setstr(newstring(getbool(args[numargs]) ? "0" : "1")))
             case CODE_NOT|RET_NULL:
-            RETOP(CODE_NOT|RET_INT, result.setint(getbool(args[0]) ? 0 : 1))
-            RETOP(CODE_NOT|RET_FLOAT, result.setfloat(getbool(args[0]) ? 0.0f : 1.0f))
+            RETPOP(CODE_NOT|RET_INT, result.setint(getbool(args[numargs]) ? 0 : 1))
+            RETPOP(CODE_NOT|RET_FLOAT, result.setfloat(getbool(args[numargs]) ? 0.0f : 1.0f))
 
             case CODE_POP:
                 freearg(args[--numargs]);
@@ -2121,7 +2130,6 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_ENTER_RESULT:
                 freearg(result);
                 code = runcode(code, result);
-                freeargs(args, numargs, 0);
                 continue;
             case CODE_EXIT|RET_STR: case CODE_EXIT|RET_INT: case CODE_EXIT|RET_FLOAT:
                 forcearg(result, op&CODE_RET_MASK);
@@ -2141,24 +2149,21 @@ static const uint *runcode(const uint *code, tagval &result)
 
             case CODE_LOCAL:
             {
-                identstack locals[MAXARGS];
                 freearg(result);
-                loopi(numargs) pushalias(*args[i].id, locals[i]);
+                int numlocals = op>>8, offset = numargs-numlocals;
+                identstack locals[MAXARGS];
+                loopi(numlocals) pushalias(*args[offset+i].id, locals[i]);
                 code = runcode(code, result);
-                loopi(numargs) popalias(*args[i].id);
+                for(int i = offset; i < numargs; i++) popalias(*args[i].id);
                 goto exit;
-            }
-
-            #define FORCERESULT { \
-                freeargs(args, numargs, 0); \
-                forcearg(result, op&CODE_RET_MASK); \
-                continue; \
             }
 
             case CODE_DO|RET_NULL: case CODE_DO|RET_STR: case CODE_DO|RET_INT: case CODE_DO|RET_FLOAT:
                 freearg(result);
-                runcode(args[0].code, result);
-                FORCERESULT;
+                runcode(args[--numargs].code, result);
+                freearg(args[numargs]);
+                forcearg(result, op&CODE_RET_MASK);
+                continue;
 
             case CODE_JUMP:
             {
@@ -2169,35 +2174,35 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_JUMP_TRUE:
             {
                 uint len = op>>8;
-                if(getbool(args[0])) code += len;
-                freeargs(args, numargs, 0);
+                if(getbool(args[--numargs])) code += len;
+                freearg(args[numargs]);
                 continue;
             }
             case CODE_JUMP_FALSE:
             {
                 uint len = op>>8;
-                if(!getbool(args[0])) code += len;
-                freeargs(args, numargs, 0);
+                if(!getbool(args[--numargs])) code += len;
+                freearg(args[numargs]);
                 continue;
             }
             case CODE_JUMP_RESULT_TRUE:
             {
                 uint len = op>>8;
                 freearg(result);
-                if(args[0].type == VAL_CODE) runcode(args[0].code, result);
-                else { result = args[0]; args[0].type = VAL_NULL; }
+                --numargs;
+                if(args[numargs].type == VAL_CODE) { runcode(args[numargs].code, result); freearg(args[numargs]); }
+                else result = args[numargs];
                 if(getbool(result)) code += len;
-                freeargs(args, numargs, 0);
                 continue;
             }
             case CODE_JUMP_RESULT_FALSE:
             {
                 uint len = op>>8;
                 freearg(result);
-                if(args[0].type == VAL_CODE) runcode(args[0].code, result);
-                else { result = args[0]; args[0].type = VAL_NULL; }
+                --numargs;
+                if(args[numargs].type == VAL_CODE) { runcode(args[numargs].code, result); freearg(args[numargs]); }
+                else result = args[numargs];
                 if(!getbool(result)) code += len;
-                freeargs(args, numargs, 0);
                 continue;
             }
 
@@ -2238,13 +2243,14 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_FORCE|RET_INT: forceint(args[numargs-1]); continue;
             case CODE_FORCE|RET_FLOAT: forcefloat(args[numargs-1]); continue;
 
-            case CODE_RESULT|RET_NULL: case CODE_RESULT|RET_STR: case CODE_RESULT|RET_INT: case CODE_RESULT|RET_FLOAT:
-            litval:
+            case CODE_RESULT|RET_NULL:
                 freearg(result);
-                result = args[0];
+                result = args[--numargs];
+                continue;
+            case CODE_RESULT|RET_STR: case CODE_RESULT|RET_INT: case CODE_RESULT|RET_FLOAT:
+                freearg(result);
+                result = args[--numargs];
                 forcearg(result, op&CODE_RET_MASK);
-                args[0].type = VAL_NULL;
-                freeargs(args, numargs, 0);
                 continue;
 
             case CODE_EMPTY|RET_NULL: args[numargs++].setcode(emptyblock[VAL_NULL]+1); break;
@@ -2326,7 +2332,7 @@ static const uint *runcode(const uint *code, tagval &result)
                 #define LOOKUPU(aval, sval, ival, fval, nval) { \
                     tagval &arg = args[numargs-1]; \
                     if(arg.type != VAL_STR && arg.type != VAL_MACRO && arg.type != VAL_CSTR) continue; \
-                    id = idents.access(arg.s); \
+                    ident *id = idents.access(arg.s); \
                     if(id) switch(id->type) \
                     { \
                         case ID_ALIAS: \
@@ -2363,7 +2369,7 @@ static const uint *runcode(const uint *code, tagval &result)
                         arg.setstr(newstring("")));
             case CODE_LOOKUP|RET_STR:
                 #define LOOKUP(aval) { \
-                    id = identmap[op>>8]; \
+                    ident *id = identmap[op>>8]; \
                     if(id->flags&IDF_UNKNOWN) debugcode("unknown alias lookup: %s", id->name); \
                     aval; \
                     continue; \
@@ -2371,7 +2377,7 @@ static const uint *runcode(const uint *code, tagval &result)
                 LOOKUP(args[numargs++].setstr(newstring(id->getstr())));
             case CODE_LOOKUPARG|RET_STR:
                 #define LOOKUPARG(aval, nval) { \
-                    id = identmap[op>>8]; \
+                    ident *id = identmap[op>>8]; \
                     if(!(aliasstack->usedargs&(1<<id->index))) { nval; continue; } \
                     aval; \
                     continue; \
@@ -2433,49 +2439,69 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_SVAR|RET_INT: args[numargs++].setint(parseint(*identmap[op>>8]->storage.s)); continue;
             case CODE_SVAR|RET_FLOAT: args[numargs++].setfloat(parsefloat(*identmap[op>>8]->storage.s)); continue;
             case CODE_SVARM: args[numargs++].setcstr(*identmap[op>>8]->storage.s); continue;
-            case CODE_SVAR1: setsvarchecked(identmap[op>>8], args[0].s); freeargs(args, numargs, 0); continue;
+            case CODE_SVAR1: setsvarchecked(identmap[op>>8], args[--numargs].s); freearg(args[numargs]); continue;
 
             case CODE_IVAR|RET_INT: case CODE_IVAR|RET_NULL: args[numargs++].setint(*identmap[op>>8]->storage.i); continue;
             case CODE_IVAR|RET_STR: args[numargs++].setstr(newstring(intstr(*identmap[op>>8]->storage.i))); continue;
             case CODE_IVAR|RET_FLOAT: args[numargs++].setfloat(float(*identmap[op>>8]->storage.i)); continue;
-            case CODE_IVAR1: setvarchecked(identmap[op>>8], args[0].i); numargs = 0; continue;
-            case CODE_IVAR2: setvarchecked(identmap[op>>8], (args[0].i<<16)|(args[1].i<<8)); numargs = 0; continue;
-            case CODE_IVAR3: setvarchecked(identmap[op>>8], (args[0].i<<16)|(args[1].i<<8)|args[2].i); numargs = 0; continue;
+            case CODE_IVAR1: setvarchecked(identmap[op>>8], args[--numargs].i); continue;
+            case CODE_IVAR2: setvarchecked(identmap[op>>8], (args[--numargs].i<<16)|(args[1].i<<8)); continue;
+            case CODE_IVAR3: setvarchecked(identmap[op>>8], (args[--numargs].i<<16)|(args[1].i<<8)|args[2].i); continue;
 
             case CODE_FVAR|RET_FLOAT: case CODE_FVAR|RET_NULL: args[numargs++].setfloat(*identmap[op>>8]->storage.f); continue;
             case CODE_FVAR|RET_STR: args[numargs++].setstr(newstring(floatstr(*identmap[op>>8]->storage.f))); continue;
             case CODE_FVAR|RET_INT: args[numargs++].setint(int(*identmap[op>>8]->storage.f)); continue;
-            case CODE_FVAR1: setfvarchecked(identmap[op>>8], args[0].f); numargs = 0; continue;
+            case CODE_FVAR1: setfvarchecked(identmap[op>>8], args[--numargs].f); continue;
 
+            #define OFFSETARG(n) offset+n
             case CODE_COM|RET_NULL: case CODE_COM|RET_STR: case CODE_COM|RET_FLOAT: case CODE_COM|RET_INT:
-                id = identmap[op>>8];
-#ifndef STANDALONE
-            callcom:
-#endif
+            {
+                ident *id = identmap[op>>8];
+                int offset = numargs-id->numargs;
                 forcenull(result);
-                CALLCOM(numargs)
-                FORCERESULT;
+                CALLCOM(id->numargs)
+                forcearg(result, op&CODE_RET_MASK);
+                freeargs(args, numargs, offset);
+                continue;
+            }
 #ifndef STANDALONE
             case CODE_COMD|RET_NULL: case CODE_COMD|RET_STR: case CODE_COMD|RET_FLOAT: case CODE_COMD|RET_INT:
-                id = identmap[op>>8];
-                addreleaseaction(id, args, numargs);
-                numargs++;
-                goto callcom;
+            {
+                ident *id = identmap[op>>8];
+                addreleaseaction(id, args, numargs++);
+                int offset = numargs-id->numargs;
+                CALLCOM(id->numargs)
+                forcearg(result, op&CODE_RET_MASK);
+                freeargs(args, numargs, offset);
+                continue;
+            }
 #endif
+            #undef OFFSETARG
+
             case CODE_COMV|RET_NULL: case CODE_COMV|RET_STR: case CODE_COMV|RET_FLOAT: case CODE_COMV|RET_INT:
-                id = identmap[op>>8];
+            {
+                ident *id = identmap[op>>13];
+                int callargs = (op>>8)&0x1F, offset = numargs-callargs;
                 forcenull(result);
-                ((comfunv)id->fun)(args, numargs);
-                FORCERESULT;
+                ((comfunv)id->fun)(&args[offset], callargs);
+                forcearg(result, op&CODE_RET_MASK);
+                freeargs(args, numargs, offset);
+                continue;
+            }
             case CODE_COMC|RET_NULL: case CODE_COMC|RET_STR: case CODE_COMC|RET_FLOAT: case CODE_COMC|RET_INT:
-                id = identmap[op>>8];
+            {
+                ident *id = identmap[op>>13];
+                int callargs = (op>>8)&0x1F, offset = numargs-callargs;
                 forcenull(result);
                 {
                     vector<char> buf;
                     buf.reserve(MAXSTRLEN);
-                    ((comfun1)id->fun)(conc(buf, args, numargs, true));
+                    ((comfun1)id->fun)(conc(buf, &args[offset], callargs, true));
                 }
-                FORCERESULT;
+                forcearg(result, op&CODE_RET_MASK);
+                freeargs(args, numargs, offset);
+                continue;
+            }
 
             case CODE_CONC|RET_NULL: case CODE_CONC|RET_STR: case CODE_CONC|RET_FLOAT: case CODE_CONC|RET_INT:
             case CODE_CONCW|RET_NULL: case CODE_CONCW|RET_STR: case CODE_CONCW|RET_FLOAT: case CODE_CONCW|RET_INT:
@@ -2483,8 +2509,9 @@ static const uint *runcode(const uint *code, tagval &result)
                 int numconc = op>>8;
                 char *s = conc(&args[numargs-numconc], numconc, (op&CODE_OP_MASK)==CODE_CONC);
                 freeargs(args, numargs, numargs-numconc);
-                args[numargs++].setstr(s);
-                forcearg(args[numargs-1], op&CODE_RET_MASK);
+                args[numargs].setstr(s);
+                forcearg(args[numargs], op&CODE_RET_MASK);
+                numargs++;
                 continue;
             }
 
@@ -2500,28 +2527,33 @@ static const uint *runcode(const uint *code, tagval &result)
 
             case CODE_ALIAS:
                 setalias(*identmap[op>>8], args[--numargs]);
-                freeargs(args, numargs, 0);
                 continue;
             case CODE_ALIASARG:
                 setarg(*identmap[op>>8], args[--numargs]);
-                freeargs(args, numargs, 0);
                 continue;
             case CODE_ALIASU:
-                forcestr(args[0]);
-                setalias(args[0].s, args[--numargs]);
-                freeargs(args, numargs, 0);
+                numargs -= 2;
+                setalias(args[numargs].getstr(), args[numargs+1]);
+                freearg(args[numargs]);
                 continue;
 
+            #define SKIPARGS(offset) offset
             case CODE_CALL|RET_NULL: case CODE_CALL|RET_STR: case CODE_CALL|RET_FLOAT: case CODE_CALL|RET_INT:
-                #define CALLALIAS(offset, op) { \
+            {
+                #define FORCERESULT { \
+                    freeargs(args, numargs, SKIPARGS(offset)); \
+                    forcearg(result, op&CODE_RET_MASK); \
+                    continue; \
+                }
+                #define CALLALIAS { \
                     identstack argstack[MAXARGS]; \
-                    for(int i = 0; i < numargs-offset; i++) \
-                        pusharg(*identmap[i], args[i+offset], argstack[i]); \
-                    int oldargs = _numargs, newargs = numargs-offset; \
-                    _numargs = newargs; \
+                    for(int i = 0; i < callargs; i++) \
+                        pusharg(*identmap[i], args[offset + i], argstack[i]); \
+                    int oldargs = _numargs; \
+                    _numargs = callargs; \
                     int oldflags = identflags; \
                     identflags |= id->flags&IDF_OVERRIDDEN; \
-                    identlink aliaslink = { id, aliasstack, (1<<newargs)-1, argstack }; \
+                    identlink aliaslink = { id, aliasstack, (1<<callargs)-1, argstack }; \
                     aliasstack = &aliaslink; \
                     if(!id->code) id->code = compilecode(id->getstr()); \
                     uint *code = id->code; \
@@ -2531,38 +2563,56 @@ static const uint *runcode(const uint *code, tagval &result)
                     if(int(code[0]) < 0x100) delete[] code; \
                     aliasstack = aliaslink.next; \
                     identflags = oldflags; \
-                    for(int i = 0; i < newargs; i++) \
+                    for(int i = 0; i < callargs; i++) \
                         poparg(*identmap[i]); \
-                    for(int argmask = aliaslink.usedargs&(~0<<newargs), i = newargs; argmask; i++) \
+                    for(int argmask = aliaslink.usedargs&(~0<<callargs), i = callargs; argmask; i++) \
                         if(argmask&(1<<i)) { poparg(*identmap[i]); argmask &= ~(1<<i); } \
                     forcearg(result, op&CODE_RET_MASK); \
                     _numargs = oldargs; \
-                    numargs = 0; \
+                    numargs = SKIPARGS(offset); \
                 }
                 forcenull(result);
-                id = identmap[op>>8];
+                ident *id = identmap[op>>13];
+                int callargs = (op>>8)&0x1F, offset = numargs-callargs;
                 if(id->flags&IDF_UNKNOWN)
                 {
                     debugcode("unknown command: %s", id->name);
                     FORCERESULT;
                 }
-                CALLALIAS(0, op);
+                CALLALIAS;
                 continue;
+            }
             case CODE_CALLARG|RET_NULL: case CODE_CALLARG|RET_STR: case CODE_CALLARG|RET_FLOAT: case CODE_CALLARG|RET_INT:
+            {
                 forcenull(result);
-                id = identmap[op>>8];
+                ident *id = identmap[op>>13];
+                int callargs = (op>>8)&0x1F, offset = numargs-callargs;
                 if(!(aliasstack->usedargs&(1<<id->index))) FORCERESULT;
-                CALLALIAS(0, op);
+                CALLALIAS;
                 continue;
+            }
+            #undef SKIPARGS
 
+            #define SKIPARGS(offset) offset-1
             case CODE_CALLU|RET_NULL: case CODE_CALLU|RET_STR: case CODE_CALLU|RET_FLOAT: case CODE_CALLU|RET_INT:
-                if(args[0].type != VAL_STR && args[0].type != VAL_MACRO && args[0].type != VAL_CSTR) goto litval;
-                id = idents.access(args[0].s);
+            {
+                int callargs = op>>8, offset = numargs-callargs; 
+                tagval &idarg = args[offset-1];
+                if(idarg.type != VAL_STR && idarg.type != VAL_MACRO && idarg.type != VAL_CSTR)
+                {
+                litval:
+                    freearg(result);
+                    result = idarg;
+                    forcearg(result, op&CODE_RET_MASK);
+                    while(--numargs >= offset) freearg(args[numargs]);
+                    continue;
+                }
+                ident *id = idents.access(idarg.s);
                 if(!id)
                 {
                 noid:
-                    if(checknumber(args[0].s)) goto litval;
-                    debugcode("unknown command: %s", args[0].s);
+                    if(checknumber(idarg.s)) goto litval;
+                    debugcode("unknown command: %s", idarg.s);
                     forcenull(result);
                     FORCERESULT;
                 }
@@ -2573,36 +2623,38 @@ static const uint *runcode(const uint *code, tagval &result)
                         if(!id->fun) FORCERESULT;
                         // fall-through
                     case ID_COMMAND:
-                        freearg(args[0]);
-                        callcommand(id, args+1, numargs-1);
+                        freearg(idarg);
+                        callcommand(id, &args[offset], callargs);
                         forcearg(result, op&CODE_RET_MASK);
-                        numargs = 0;
+                        numargs = offset - 1;
                         continue;
                     case ID_LOCAL:
                     {
                         identstack locals[MAXARGS];
-                        freearg(args[0]);
-                        loopj(numargs-1) pushalias(*forceident(args[j+1]), locals[j]);
+                        freearg(idarg);
+                        loopj(callargs) pushalias(*forceident(args[offset+j]), locals[j]);
                         code = runcode(code, result);
-                        loopj(numargs-1) popalias(*args[j+1].id);
+                        loopj(callargs) popalias(*args[offset+j].id);
                         goto exit;
                     }
                     case ID_VAR:
-                        if(numargs <= 1) printvar(id); else setvarchecked(id, &args[1], numargs-1);
+                        if(callargs <= 1) printvar(id); else setvarchecked(id, &args[offset], callargs);
                         FORCERESULT;
                     case ID_FVAR:
-                        if(numargs <= 1) printvar(id); else setfvarchecked(id, forcefloat(args[1]));
+                        if(callargs <= 1) printvar(id); else setfvarchecked(id, forcefloat(args[offset]));
                         FORCERESULT;
                     case ID_SVAR:
-                        if(numargs <= 1) printvar(id); else setsvarchecked(id, forcestr(args[1]));
+                        if(callargs <= 1) printvar(id); else setsvarchecked(id, forcestr(args[offset]));
                         FORCERESULT;
                     case ID_ALIAS:
                         if(id->index < MAXARGS && !(aliasstack->usedargs&(1<<id->index))) FORCERESULT;
                         if(id->valtype==VAL_NULL) goto noid;
-                        freearg(args[0]);
-                        CALLALIAS(1, op);
+                        freearg(idarg);
+                        CALLALIAS;
                         continue;
                 }
+            }
+            #undef SKIPARGS
         }
     }
 exit:
@@ -2659,7 +2711,15 @@ void executeret(ident *id, tagval *args, int numargs, tagval &result)
         case ID_ALIAS:
             if(id->index < MAXARGS && !(aliasstack->usedargs&(1<<id->index))) break;
             if(id->valtype==VAL_NULL) break;
-            CALLALIAS(0, RET_NULL);
+            #define callargs numargs
+            #define offset 0
+            #define op RET_NULL
+            #define SKIPARGS(offset) offset
+            CALLALIAS;
+            #undef callargs
+            #undef offset
+            #undef op
+            #undef SKIPARGS
             break;
     }
     freeargs(args, numargs, 0);
