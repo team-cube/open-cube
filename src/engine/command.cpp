@@ -1686,10 +1686,14 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     if(more) more = compilearg(code, p, VAL_ANY);
                     code.add((more ? CODE_RESULT : CODE_NULL) | retcodeany(rettype));
                     break;
+                case ID_NOT:
+                    if(more) more = compilearg(code, p, VAL_CANY);
+                    code.add((more ? CODE_NOT : CODE_TRUE) | retcodeany(rettype));
+                    break;
                 case ID_AND:
                 case ID_OR:
                     if(more) more = compilearg(code, p, VAL_COND);
-                    if(!more) { compileint(code, id->type == ID_AND ? 1 : 0); code.add(CODE_RESULT | retcodeany(rettype)); }
+                    if(!more) { code.add((id->type == ID_AND ? CODE_TRUE : CODE_FALSE) | retcodeany(rettype)); }
                     else
                     {
                         numargs++;
@@ -2063,25 +2067,32 @@ static const uint *runcode(const uint *code, tagval &result)
         {
             case CODE_START: case CODE_OFFSET: continue;
 
-            case CODE_NULL|RET_NULL:
-                forcenull(result);
-                freeargs(args, numargs, 0);
-                continue;
-            case CODE_NULL|RET_STR:
-                freearg(result);
-                freeargs(args, numargs, 0);
-                result.setstr(newstring(""));
-                continue;
-            case CODE_NULL|RET_INT:
-                freearg(result);
-                freeargs(args, numargs, 0);
-                result.setint(0);
-                continue;
-            case CODE_NULL|RET_FLOAT:
-                freearg(result);
-                freeargs(args, numargs, 0);
-                result.setfloat(0.0f);
-                continue;
+            #define RETOP(op, val) \
+                case op: \
+                    freearg(result); \
+                    val; \
+                    freeargs(args, numargs, 0); \
+                    continue;
+
+            RETOP(CODE_NULL|RET_NULL, result.setnull())
+            RETOP(CODE_NULL|RET_STR, result.setstr(newstring("")))
+            RETOP(CODE_NULL|RET_INT, result.setint(0))
+            RETOP(CODE_NULL|RET_FLOAT, result.setfloat(0.0f))
+
+            RETOP(CODE_FALSE|RET_STR, result.setstr(newstring("0")))
+            case CODE_FALSE|RET_NULL:
+            RETOP(CODE_FALSE|RET_INT, result.setint(0))
+            RETOP(CODE_FALSE|RET_FLOAT, result.setfloat(0.0f))
+
+            RETOP(CODE_TRUE|RET_STR, result.setstr(newstring("1")))
+            case CODE_TRUE|RET_NULL:
+            RETOP(CODE_TRUE|RET_INT, result.setint(1))
+            RETOP(CODE_TRUE|RET_FLOAT, result.setfloat(1.0f))
+
+            RETOP(CODE_NOT|RET_STR, result.setstr(newstring(getbool(args[0]) ? "0" : "1")))
+            case CODE_NOT|RET_NULL:
+            RETOP(CODE_NOT|RET_INT, result.setint(getbool(args[0]) ? 0 : 1))
+            RETOP(CODE_NOT|RET_FLOAT, result.setfloat(getbool(args[0]) ? 0.0f : 1.0f))
 
             case CODE_POP:
                 freearg(args[--numargs]);
@@ -2111,10 +2122,16 @@ static const uint *runcode(const uint *code, tagval &result)
                 goto exit;
             }
 
+            #define FORCERESULT { \
+                freeargs(args, numargs, 0); \
+                forcearg(result, op&CODE_RET_MASK); \
+                continue; \
+            }
+
             case CODE_DO|RET_NULL: case CODE_DO|RET_STR: case CODE_DO|RET_INT: case CODE_DO|RET_FLOAT:
                 freearg(result);
                 runcode(args[0].code, result);
-                goto forceresult;
+                FORCERESULT;
 
             case CODE_JUMP:
             {
@@ -2410,10 +2427,7 @@ static const uint *runcode(const uint *code, tagval &result)
 #endif
                 forcenull(result);
                 CALLCOM(numargs)
-            forceresult:
-                freeargs(args, numargs, 0);
-                forcearg(result, op&CODE_RET_MASK);
-                continue;
+                FORCERESULT;
 #ifndef STANDALONE
             case CODE_COMD|RET_NULL: case CODE_COMD|RET_STR: case CODE_COMD|RET_FLOAT: case CODE_COMD|RET_INT:
                 id = identmap[op>>8];
@@ -2425,7 +2439,7 @@ static const uint *runcode(const uint *code, tagval &result)
                 id = identmap[op>>8];
                 forcenull(result);
                 ((comfunv)id->fun)(args, numargs);
-                goto forceresult;
+                FORCERESULT;
             case CODE_COMC|RET_NULL: case CODE_COMC|RET_STR: case CODE_COMC|RET_FLOAT: case CODE_COMC|RET_INT:
                 id = identmap[op>>8];
                 forcenull(result);
@@ -2434,7 +2448,7 @@ static const uint *runcode(const uint *code, tagval &result)
                     buf.reserve(MAXSTRLEN);
                     ((comfun1)id->fun)(conc(buf, args, numargs, true));
                 }
-                goto forceresult;
+                FORCERESULT;
 
             case CODE_CONC|RET_NULL: case CODE_CONC|RET_STR: case CODE_CONC|RET_FLOAT: case CODE_CONC|RET_INT:
             case CODE_CONCW|RET_NULL: case CODE_CONCW|RET_STR: case CODE_CONCW|RET_FLOAT: case CODE_CONCW|RET_INT:
@@ -2503,14 +2517,14 @@ static const uint *runcode(const uint *code, tagval &result)
                 if(id->flags&IDF_UNKNOWN)
                 {
                     debugcode("unknown command: %s", id->name);
-                    goto forceresult;
+                    FORCERESULT;
                 }
                 CALLALIAS(0, op);
                 continue;
             case CODE_CALLARG|RET_NULL: case CODE_CALLARG|RET_STR: case CODE_CALLARG|RET_FLOAT: case CODE_CALLARG|RET_INT:
                 forcenull(result);
                 id = identmap[op>>8];
-                if(!(aliasstack->usedargs&(1<<id->index))) goto forceresult;
+                if(!(aliasstack->usedargs&(1<<id->index))) FORCERESULT;
                 CALLALIAS(0, op);
                 continue;
 
@@ -2523,13 +2537,13 @@ static const uint *runcode(const uint *code, tagval &result)
                     if(checknumber(args[0].s)) goto litval;
                     debugcode("unknown command: %s", args[0].s);
                     forcenull(result);
-                    goto forceresult;
+                    FORCERESULT;
                 }
                 forcenull(result);
                 switch(id->type)
                 {
                     default:
-                        if(!id->fun) goto forceresult;
+                        if(!id->fun) FORCERESULT;
                         // fall-through
                     case ID_COMMAND:
                         freearg(args[0]);
@@ -2548,15 +2562,15 @@ static const uint *runcode(const uint *code, tagval &result)
                     }
                     case ID_VAR:
                         if(numargs <= 1) printvar(id); else setvarchecked(id, &args[1], numargs-1);
-                        goto forceresult;
+                        FORCERESULT;
                     case ID_FVAR:
                         if(numargs <= 1) printvar(id); else setfvarchecked(id, forcefloat(args[1]));
-                        goto forceresult;
+                        FORCERESULT;
                     case ID_SVAR:
                         if(numargs <= 1) printvar(id); else setsvarchecked(id, forcestr(args[1]));
-                        goto forceresult;
+                        FORCERESULT;
                     case ID_ALIAS:
-                        if(id->index < MAXARGS && !(aliasstack->usedargs&(1<<id->index))) goto forceresult;
+                        if(id->index < MAXARGS && !(aliasstack->usedargs&(1<<id->index))) FORCERESULT;
                         if(id->valtype==VAL_NULL) goto noid;
                         freearg(args[0]);
                         CALLALIAS(1, op);
@@ -3442,7 +3456,7 @@ ICOMMAND(>f, "ff", (float *a, float *b), intret((int)(*a > *b)));
 ICOMMAND(<=f, "ff", (float *a, float *b), intret((int)(*a <= *b)));
 ICOMMAND(>=f, "ff", (float *a, float *b), intret((int)(*a >= *b)));
 ICOMMAND(^, "ii", (int *a, int *b), intret(*a ^ *b));
-ICOMMAND(!, "t", (tagval *a), intret(!getbool(*a)));
+ICOMMANDK(!, ID_NOT, "t", (tagval *a), intret(getbool(*a) ? 0 : 1));
 ICOMMAND(&, "ii", (int *a, int *b), intret(*a & *b));
 ICOMMAND(|, "ii", (int *a, int *b), intret(*a | *b));
 ICOMMAND(~, "i", (int *a), intret(~*a));
