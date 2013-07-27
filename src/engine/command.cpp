@@ -2445,8 +2445,8 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_IVAR|RET_STR: args[numargs++].setstr(newstring(intstr(*identmap[op>>8]->storage.i))); continue;
             case CODE_IVAR|RET_FLOAT: args[numargs++].setfloat(float(*identmap[op>>8]->storage.i)); continue;
             case CODE_IVAR1: setvarchecked(identmap[op>>8], args[--numargs].i); continue;
-            case CODE_IVAR2: setvarchecked(identmap[op>>8], (args[--numargs].i<<16)|(args[1].i<<8)); continue;
-            case CODE_IVAR3: setvarchecked(identmap[op>>8], (args[--numargs].i<<16)|(args[1].i<<8)|args[2].i); continue;
+            case CODE_IVAR2: numargs -= 2; setvarchecked(identmap[op>>8], (args[numargs].i<<16)|(args[numargs+1].i<<8)); continue;
+            case CODE_IVAR3: numargs -= 3; setvarchecked(identmap[op>>8], (args[numargs].i<<16)|(args[numargs+1].i<<8)|args[numargs+2].i); continue;
 
             case CODE_FVAR|RET_FLOAT: case CODE_FVAR|RET_NULL: args[numargs++].setfloat(*identmap[op>>8]->storage.f); continue;
             case CODE_FVAR|RET_STR: args[numargs++].setstr(newstring(floatstr(*identmap[op>>8]->storage.f))); continue;
