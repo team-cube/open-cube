@@ -1101,7 +1101,7 @@ static inline void compileval(vector<uint> &code, int wordtype, const stringslic
 }
 
 static stringslice unusedword(NULL, 0);
-static bool compilearg(vector<uint> &code, const char *&p, int wordtype, stringslice &word = unusedword);
+static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int numargs = 1, stringslice &word = unusedword);
 
 static void compilelookup(vector<uint> &code, const char *&p, int ltype)
 {
@@ -1319,7 +1319,7 @@ static bool compileblocksub(vector<uint> &code, const char *&p)
     return true;
 }
 
-static void compileblockmain(vector<uint> &code, const char *&p, int wordtype)
+static void compileblockmain(vector<uint> &code, const char *&p, int wordtype, int numargs)
 {
     const char *line = p, *start = p;
     int concs = 0;
@@ -1349,7 +1349,7 @@ static void compileblockmain(vector<uint> &code, const char *&p, int wordtype)
                 int level = p - (esc - 1);
                 if(brak > level) continue;
                 else if(brak < level) debugcodeline(line, "too many @s");
-                if(!concs) code.add(CODE_ENTER);
+                if(!concs && numargs) code.add(CODE_ENTER);
                 if(concs + 2 > MAXARGS)
                 {
                     code.add(CODE_CONCW|RET_STR|(concs<<8));
@@ -1390,8 +1390,12 @@ done:
     }
     if(concs)
     {
-        code.add(CODE_CONCM|(wordtype < VAL_ANY ? wordtype<<CODE_RET : RET_STR)|(concs<<8));
-        code.add(CODE_EXIT|(wordtype < VAL_ANY ? wordtype<<CODE_RET : RET_STR));
+        if(numargs)
+        {
+            code.add(CODE_CONCM|retcodeany(wordtype)|(concs<<8));
+            code.add(CODE_EXIT|retcodeany(wordtype));
+        }
+        else code.add(CODE_CONCW|retcodeany(wordtype)|(concs<<8));
     }
     switch(wordtype)
     {
@@ -1415,7 +1419,7 @@ done:
     }
 }
 
-static bool compilearg(vector<uint> &code, const char *&p, int wordtype, stringslice &word)
+static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int numargs, stringslice &word)
 {
     skipcomments(p);
     switch(*p)
@@ -1465,9 +1469,18 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, strings
         case '$': compilelookup(code, p, wordtype); return true;
         case '(':
             p++;
-            code.add(CODE_ENTER);
-            compilestatements(code, p, VAL_ANY, ')');
-            code.add(CODE_EXIT|retcodeany(wordtype));
+            if(numargs) 
+            {
+                code.add(CODE_ENTER);
+                compilestatements(code, p, VAL_ANY, ')');
+                code.add(CODE_EXIT|retcodeany(wordtype));
+            }
+            else
+            {
+                int start = code.length();
+                compilestatements(code, p, VAL_ANY, ')');
+                code.add((code.length() > start ? CODE_RESULT_ARG : CODE_NULL)|retcodeany(wordtype));
+            }
             switch(wordtype)
             {
                 case VAL_POP: code.add(CODE_POP); break;
@@ -1478,7 +1491,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, strings
             return true;
         case '[':
             p++;
-            compileblockmain(code, p, wordtype);
+            compileblockmain(code, p, wordtype, numargs);
             return true;
         default:
             switch(wordtype)
@@ -1524,13 +1537,12 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
 {
     const char *line = p;
     stringslice idname;
-    ident *id;
     int numargs;
     for(;;)
     {
         skipcomments(p);
         idname.str = NULL;
-        bool more = compilearg(code, p, VAL_WORD, idname);
+        bool more = compilearg(code, p, VAL_WORD, 0, idname);
         if(!more) goto endstatement;
         skipcomments(p);
         if(p[0] == '=') switch(p[1])
@@ -1541,12 +1553,17 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                 p++;
                 if(idname.str)
                 {
-                    id = newident(idname, IDF_UNKNOWN);
-                    if(!id || id->type != ID_ALIAS) { compilestr(code, idname, true); id = NULL; }
+                    ident *id = newident(idname, IDF_UNKNOWN);
+                    if(id && id->type == ID_ALIAS)
+                    {
+                        if(!(more = compilearg(code, p, VAL_ANY, 0))) compilestr(code);
+                        code.add((id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8));
+                        goto endstatement;
+                    }
+                    compilestr(code, idname, true);
                 }
-                else id = NULL;
                 if(!(more = compilearg(code, p, VAL_ANY))) compilestr(code);
-                code.add(id ? (id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8) : CODE_ALIASU);
+                code.add(CODE_ALIASU);
                 goto endstatement;
         }
         numargs = 0;
@@ -1558,7 +1575,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
         }
         else
         {
-            id = idents.access(idname);
+            ident *id = idents.access(idname);
             if(!id)
             {
                 if(!checknumber(idname)) { compilestr(code, idname, true); goto noid; }
@@ -1571,7 +1588,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
             else switch(id->type)
             {
                 case ID_ALIAS:
-                    while(numargs < MAXARGS && (more = compilearg(code, p, VAL_ANY))) numargs++;
+                    while(numargs < MAXARGS && (more = compilearg(code, p, VAL_ANY, numargs))) numargs++;
                     code.add(CODE_CALL|(id->index<<8));
                     break;
                 case ID_COMMAND:
@@ -1582,7 +1599,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     {
                     case 'S':
                     case 's':
-                        if(more) more = compilearg(code, p, *fmt == 's' ? VAL_CSTR : VAL_STR);
+                        if(more) more = compilearg(code, p, *fmt == 's' ? VAL_CSTR : VAL_STR, numargs);
                         if(!more)
                         {
                             if(rep) break;
@@ -1597,22 +1614,22 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                         }
                         numargs++;
                         break;
-                    case 'i': if(more) more = compilearg(code, p, VAL_INT); if(!more) { if(rep) break; compileint(code); fakeargs++; } numargs++; break;
-                    case 'b': if(more) more = compilearg(code, p, VAL_INT); if(!more) { if(rep) break; compileint(code, INT_MIN); fakeargs++; } numargs++; break;
-                    case 'f': if(more) more = compilearg(code, p, VAL_FLOAT); if(!more) { if(rep) break; compilefloat(code); fakeargs++; } numargs++; break;
-                    case 'F': if(more) more = compilearg(code, p, VAL_FLOAT); if(!more) { if(rep) break; code.add(CODE_DUP|RET_FLOAT); fakeargs++; } numargs++; break;
+                    case 'i': if(more) more = compilearg(code, p, VAL_INT, numargs); if(!more) { if(rep) break; compileint(code); fakeargs++; } numargs++; break;
+                    case 'b': if(more) more = compilearg(code, p, VAL_INT, numargs); if(!more) { if(rep) break; compileint(code, INT_MIN); fakeargs++; } numargs++; break;
+                    case 'f': if(more) more = compilearg(code, p, VAL_FLOAT, numargs); if(!more) { if(rep) break; compilefloat(code); fakeargs++; } numargs++; break;
+                    case 'F': if(more) more = compilearg(code, p, VAL_FLOAT, numargs); if(!more) { if(rep) break; code.add(CODE_DUP|RET_FLOAT); fakeargs++; } numargs++; break;
                     case 'T':
-                    case 't': if(more) more = compilearg(code, p, *fmt == 't' ? VAL_CANY : VAL_ANY); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
-                    case 'E': if(more) more = compilearg(code, p, VAL_COND); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
-                    case 'e': if(more) more = compilearg(code, p, VAL_CODE); if(!more) { if(rep) break; compileblock(code); fakeargs++; } numargs++; break;
-                    case 'r': if(more) more = compilearg(code, p, VAL_IDENT); if(!more) { if(rep) break; compileident(code); fakeargs++; } numargs++; break;
+                    case 't': if(more) more = compilearg(code, p, *fmt == 't' ? VAL_CANY : VAL_ANY, numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
+                    case 'E': if(more) more = compilearg(code, p, VAL_COND, numargs); if(!more) { if(rep) break; compilenull(code); fakeargs++; } numargs++; break;
+                    case 'e': if(more) more = compilearg(code, p, VAL_CODE, numargs); if(!more) { if(rep) break; compileblock(code); fakeargs++; } numargs++; break;
+                    case 'r': if(more) more = compilearg(code, p, VAL_IDENT, numargs); if(!more) { if(rep) break; compileident(code); fakeargs++; } numargs++; break;
                     case '$': compileident(code, id); numargs++; break;
                     case 'N': compileint(code, numargs-fakeargs); numargs++; break;
 #ifndef STANDALONE
                     case 'D': comtype = CODE_COMD; numargs++; break;
 #endif
-                    case 'C': comtype = CODE_COMC; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numargs++; numargs = 1; goto endfmt;
-                    case 'V': comtype = CODE_COMV; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numargs++; numargs = 2; goto endfmt;
+                    case 'C': comtype = CODE_COMC; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, numargs))) numargs++; numargs = 1; goto endfmt;
+                    case 'V': comtype = CODE_COMV; if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, numargs))) numargs++; numargs = 2; goto endfmt;
                     case '1': case '2': case '3': case '4': if(more) { fmt -= *fmt-'0'+1; rep = true; } break;
                     }
                 endfmt:
@@ -1620,16 +1637,16 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     break;
                 }
                 case ID_LOCAL:
-                    if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_IDENT))) numargs++;
+                    if(more) while(numargs < MAXARGS && (more = compilearg(code, p, VAL_IDENT, numargs))) numargs++;
                     if(more) while((more = compilearg(code, p, VAL_POP)));
                     code.add(CODE_LOCAL);
                     break;
                 case ID_DO:
-                    if(more) more = compilearg(code, p, VAL_CODE);
+                    if(more) more = compilearg(code, p, VAL_CODE, 0);
                     code.add((more ? CODE_DO : CODE_NULL) | retcodeany(rettype));
                     break;
                 case ID_IF:
-                    if(more) more = compilearg(code, p, VAL_CANY);
+                    if(more) more = compilearg(code, p, VAL_CANY, 0);
                     if(!more) code.add(CODE_NULL | retcodeany(rettype));
                     else
                     {
@@ -1683,16 +1700,16 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     }
                     break;
                 case ID_RESULT:
-                    if(more) more = compilearg(code, p, VAL_ANY);
+                    if(more) more = compilearg(code, p, VAL_ANY, 0);
                     code.add((more ? CODE_RESULT : CODE_NULL) | retcodeany(rettype));
                     break;
                 case ID_NOT:
-                    if(more) more = compilearg(code, p, VAL_CANY);
+                    if(more) more = compilearg(code, p, VAL_CANY, 0);
                     code.add((more ? CODE_NOT : CODE_TRUE) | retcodeany(rettype));
                     break;
                 case ID_AND:
                 case ID_OR:
-                    if(more) more = compilearg(code, p, VAL_COND);
+                    if(more) more = compilearg(code, p, VAL_COND, 0);
                     if(!more) { code.add((id->type == ID_AND ? CODE_TRUE : CODE_FALSE) | retcodeany(rettype)); }
                     else
                     {
@@ -1724,17 +1741,17 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                     }
                     break;
                 case ID_VAR:
-                    if(!(more = compilearg(code, p, VAL_INT))) code.add(CODE_PRINT|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_INT, 0))) code.add(CODE_PRINT|(id->index<<8));
                     else if(!(id->flags&IDF_HEX) || !(more = compilearg(code, p, VAL_INT))) code.add(CODE_IVAR1|(id->index<<8));
                     else if(!(more = compilearg(code, p, VAL_INT))) code.add(CODE_IVAR2|(id->index<<8));
                     else code.add(CODE_IVAR3|(id->index<<8));
                     break;
                 case ID_FVAR:
-                    if(!(more = compilearg(code, p, VAL_FLOAT))) code.add(CODE_PRINT|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_FLOAT, 0))) code.add(CODE_PRINT|(id->index<<8));
                     else code.add(CODE_FVAR1|(id->index<<8));
                     break;
                 case ID_SVAR:
-                    if(!(more = compilearg(code, p, VAL_CSTR))) code.add(CODE_PRINT|(id->index<<8));
+                    if(!(more = compilearg(code, p, VAL_CSTR, 0))) code.add(CODE_PRINT|(id->index<<8));
                     else
                     {
                         int numconc = 0;
@@ -2105,9 +2122,18 @@ static const uint *runcode(const uint *code, tagval &result)
                 code = runcode(code, result);
                 freeargs(args, numargs, 0);
                 continue;
-            case CODE_EXIT|RET_NULL: case CODE_EXIT|RET_STR: case CODE_EXIT|RET_INT: case CODE_EXIT|RET_FLOAT:
+            case CODE_EXIT|RET_STR: case CODE_EXIT|RET_INT: case CODE_EXIT|RET_FLOAT:
                 forcearg(result, op&CODE_RET_MASK);
+                // fall-through
+            case CODE_EXIT|RET_NULL:
                 goto exit;
+            case CODE_RESULT_ARG|RET_STR: case CODE_RESULT_ARG|RET_INT: case CODE_RESULT_ARG|RET_FLOAT:
+                forcearg(result, op&CODE_RET_MASK);
+                // fall-through
+            case CODE_RESULT_ARG|RET_NULL:
+                args[numargs++] = result;
+                result.setnull();
+                continue;
             case CODE_PRINT:
                 printvar(identmap[op>>8]);
                 continue;
