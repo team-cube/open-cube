@@ -1479,7 +1479,8 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int num
             {
                 int start = code.length();
                 compilestatements(code, p, VAL_ANY, ')');
-                code.add((code.length() > start ? CODE_RESULT_ARG : CODE_NULL)|retcodeany(wordtype));
+                if(code.length() > start) code.add(CODE_RESULT_ARG|retcodeany(wordtype));
+                else compileval(code, wordtype);
             }
             switch(wordtype)
             {
