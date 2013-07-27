@@ -27,66 +27,121 @@ MAP Complex ARENA
 Editing Menus
    Use F# keys for various menus
    Remove "Editing" from main menu?
-      F1  Create entity menu
-             ...
-             "use F3 for mapmodels"
+   Show highlighted commands in all menus to help wean users away from menus and towards using console
+      F1  "Create/Modify Entity"
+             Create if no entities are selected
+                *Entdrop Settings
+                -mapmodel (goto F3 menu)
+                -light (submenu)
+                -spotlight (submenu)
+                -playerstart
+                -playerstart team red
+                -playerstart team blue
+                -envmap 
+                -particles (submenu)
+                -sound (submenu, shows list of sounds from map.cfg/mapsound)
+                -ammo rifle?
+                -ammo rocket?
+                -armor?     (an armor or shield pickup that gives 1 more hit (2 hits to be killed))
+                -teleport (submenu, show list of #s (for port or dest) used in map)
+                -teledest (submenu, show list of #s (for port or dest) used in map)
+                -jumppad (submenu)
+                -flag team red
+                -flag team blue
+             Edit if entity is selected
+             Edit if entities are selected
+                show warning that more than 1 entity is selected
+                   show attribute value if attribute values are equal
+                   show "multiple values" if attribute values are not equal 
+                      still allow editing?
+                      relative/absolute setting?
+                disable editing if entities of different types are selected?
+             
 
-      F2  Texture menu
+      F2  "Texture List"
              2 tabs
                 tab with only textures listed in texturereset
                 tab with only textures used in map, including vslot textures
 
-      F3  Mapmodel menu
+      F3  "Add Mapmodel"
              ...
 
-      F4  Entity modify menu
-             used for editing entity attributes
-             will be relative to selected entity
+      F4  "Material"
+             ...
 
-      F5  Savemap (menu)
+      F5  "Savemap"
              saves map if named
                 if it's a new unsaved/unnamed map
                    show savemap dialog asking for name
                       after saved, autosave to new name without reloading the map
 
-      F6  Loadmap menu
+      F6  "Loadmap"
              2 tabs
                 tab with offical maps
                 tab with custom maps
 
-      F7  Environment/Lighting Menu
+      F7  "Environment Settings"
              Skybox
                 checkbox to autoload predefined sun/skylight setting with skybox
                 yawsky  (works with sunlightyaw?)
                 skyboxoverbright
-                skybox stuff on own tab
-             Sunlight settings
-             Skylight settings
-             Ambient
-             AO settings
-             GI settings
+                skyboxcolor
+                spinsky
+             Lighting
+                Sunlight settings
+                Skylight settings
+                Ambient
+                AO settings
+                GI settings
+             Fog
+                ...
+             Fogdome
+                ...
+             Water
+                watercolor
+             Cloudbox
+                ...
+             Cloudlayer
+                ...
 
-      F8  ...
+      F8  "World Geometry Primitives"
+             Preset
+                4x4x4 Curve
+                4x8x4 Arc
+                8x8x4 Cylinder
+                8x8x8 Cylinder 90 degree turn
+                8x8x8 Sphere
+             Custom
+                ...
 
-      F9  Basic/Miscellaneous Editing Menu?
-             ...
+      F9  "Miscellaneous Editing"
+             Miscellaneous
+                newmap
+                mapenlarge
+                maptitle
+                calclight
+                undo size
+                ...
 
-      F10 (currently /kill command, use for something else?)
+      F10 "Default Editbind Quick Reference"
+             A list of all the default editing keybinds
+                Visual, with pic of keyboard?
+                   hover over keys to show what they do?
 
-      F11 Show Console
+      F11 "Show Console"
 
-      F12 Screenshot
+      F12 "Screenshot"
 
 
 
 ***************************************************************
-HUD Guns
+HUD Gun Models
    Rifle
       ...
    Rocket
       ...
    Knife/Blade?
-      for left-hand melee attack (or just use gunbutt animation)
+      for left-hand melee attack (or use gunbutt animation)
 
 
 ***************************************************************
