@@ -1104,17 +1104,17 @@ static inline void compileval(vector<uint> &code, int wordtype, const stringslic
 static stringslice unusedword(NULL, 0);
 static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int numargs = MAXRESULTS, stringslice &word = unusedword);
 
-static void compilelookup(vector<uint> &code, const char *&p, int ltype)
+static void compilelookup(vector<uint> &code, const char *&p, int ltype, int numargs = MAXRESULTS)
 {
     stringslice lookup;
     switch(*++p)
     {
         case '(':
         case '[':
-            if(!compilearg(code, p, VAL_CSTR)) goto invalid;
+            if(!compilearg(code, p, VAL_CSTR, numargs)) goto invalid;
             break;
         case '$':
-            compilelookup(code, p, VAL_CSTR);
+            compilelookup(code, p, VAL_CSTR, numargs);
             break;
         case '\"':
             cutstring(p, lookup);
@@ -1283,16 +1283,16 @@ done:
     return true;
 }
 
-static bool compileblocksub(vector<uint> &code, const char *&p)
+static bool compileblocksub(vector<uint> &code, const char *&p, int numargs)
 {
     stringslice lookup;
     switch(*p)
     {
         case '(':
-            if(!compilearg(code, p, VAL_CANY)) return false;
+            if(!compilearg(code, p, VAL_CANY, numargs)) return false;
             break;
         case '[':
-            if(!compilearg(code, p, VAL_CSTR)) return false;
+            if(!compilearg(code, p, VAL_CSTR, numargs)) return false;
             code.add(CODE_LOOKUPMU);
             break;
         case '\"':
@@ -1360,9 +1360,9 @@ static void compileblockmain(vector<uint> &code, const char *&p, int wordtype, i
                     concs = 1;
                 }
                 if(compileblockstr(code, start, esc-1, true)) concs++;
-                if(compileblocksub(code, p)) concs++;
-                if(!concs) code.pop();
-                else start = p;
+                if(compileblocksub(code, p, numargs + concs)) concs++;
+                if(concs) start = p;
+                else if(numargs >= MAXRESULTS) code.pop();
                 break;
             }
         }
@@ -1470,7 +1470,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int num
                 }
             }
             return true;
-        case '$': compilelookup(code, p, wordtype); return true;
+        case '$': compilelookup(code, p, wordtype, numargs); return true;
         case '(':
             p++;
             if(numargs >= MAXRESULTS) 
@@ -1575,7 +1575,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
         if(!idname.str)
         {
         noid:
-            while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY))) numargs++;
+            while(numargs < MAXARGS && (more = compilearg(code, p, VAL_CANY, prevargs+numargs))) numargs++;
             code.add(CODE_CALLU|(numargs<<8));
         }
         else
@@ -1614,7 +1614,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                         else if(!fmt[1])
                         {
                             int numconc = 1;
-                            while(numargs + numconc < MAXARGS && (more = compilearg(code, p, VAL_CSTR))) numconc++;
+                            while(numargs + numconc < MAXARGS && (more = compilearg(code, p, VAL_CSTR, prevargs+numargs+numconc))) numconc++;
                             if(numconc > 1) code.add(CODE_CONC|RET_STR|(numconc<<8));
                         }
                         numargs++;
