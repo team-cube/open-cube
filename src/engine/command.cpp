@@ -990,7 +990,7 @@ static inline void compileblock(vector<uint> &code)
     code.add(CODE_EMPTY);
 }
 
-static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0', int prevargs = MAXRESULTS);
+static void compilestatements(vector<uint> &code, const char *&p, int rettype, int brak = '\0', int prevargs = 0);
 
 static inline const char *compileblock(vector<uint> &code, const char *p, int rettype = RET_NULL, int brak = '\0')
 {
