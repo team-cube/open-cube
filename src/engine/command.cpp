@@ -2468,8 +2468,8 @@ static const uint *runcode(const uint *code, tagval &result)
             case CODE_COMD|RET_NULL: case CODE_COMD|RET_STR: case CODE_COMD|RET_FLOAT: case CODE_COMD|RET_INT:
             {
                 ident *id = identmap[op>>8];
-                addreleaseaction(id, args, numargs++);
-                int offset = numargs-id->numargs;
+                int offset = numargs-(id->numargs-1);
+                addreleaseaction(id, &args[offset], id->numargs-1);
                 CALLCOM(id->numargs)
                 forcearg(result, op&CODE_RET_MASK);
                 freeargs(args, numargs, offset);
