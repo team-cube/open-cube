@@ -605,7 +605,6 @@ namespace UI
     {
         static const char *typestr() { return "#World"; }
         const char *gettype() const { return typestr(); }
-        const char *getname() const { return gettype(); }
 
         #define loopwindows(o, body) do { \
             loopv(children) \
