@@ -467,6 +467,7 @@ namespace game
                 {
                     vec pos(v);
                     pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
+                    particle_splash(PART_FIREBALL3, 1, 1, pos, 0xFFFFFF, 4.8f, 150, 20);
                     regular_particle_splash(PART_SMOKE, 2, 300, pos, 0x404040, 2.4f, 50, -20);
                 }
             }
@@ -747,6 +748,7 @@ namespace game
 
     void renderprojectiles()
     {
+#if 0
         float yaw, pitch;
         loopv(projs)
         {
@@ -762,6 +764,7 @@ namespace game
             v.add(pos);
             rendermodel("projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, v, yaw, pitch, 0, MDL_CULL_VFC|MDL_CULL_OCCLUDED);
         }
+#endif
     }
 
     void removeweapons(fpsent *d)
