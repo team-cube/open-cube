@@ -247,7 +247,11 @@ namespace game
             int team = m_teammode && validteam(d->team) ? d->team : 0;
             renderplayer(d, getplayermodelinfo(d), team, fade);
         }
-        if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead)) renderplayer(player1, getplayermodelinfo(player1), player1->team, 1);
+        if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead)) 
+        {
+            int team = m_teammode && validteam(player1->team) ? player1->team : 0;
+            renderplayer(player1, getplayermodelinfo(player1), team, 1);
+        }
         entities::renderentities();
         renderbouncers();
         renderprojectiles();
