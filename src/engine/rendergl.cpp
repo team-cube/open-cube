@@ -2326,7 +2326,7 @@ ICOMMAND(getcrosshair, "i", (int *i),
     if(*i >= 0 && *i < MAXCROSSHAIRS)
     {
         name = crosshairs[*i] ? crosshairs[*i]->name : game::defaultcrosshair(*i);
-        if(!name) name = "media/interface/crosshair/default_normal.png";
+        if(!name) name = "media/interface/crosshair/default.png";
     }
     result(name);
 });
