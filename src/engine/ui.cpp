@@ -2843,21 +2843,36 @@ namespace UI
     ICOMMAND(uistretchedimage, "sffe", (char *texname, float *minw, float *minh, uint *children),
         BUILD(StretchedImage, o, o->setup(textureload(texname, 3, true, false), *minw, *minh), children));
 
-    ICOMMAND(uicroppedimage, "sffsssse", (char *texname, float *minw, float *minh, char *cropx, char *cropy, char *cropw, char *croph, uint *children),
+    static inline float parsepixeloffset(const tagval *t, int size)
+    {
+        switch(t->type)
+        {
+            case VAL_INT: return t->i;
+            case VAL_FLOAT: return t->f;
+            case VAL_NULL: return 0;
+            default:
+            {
+                const char *s = t->getstr();
+                char *end;
+                float val = strtod(s, &end);
+                return *end == 'p' ? val/size : val;
+            }
+        }
+    }
+            
+    ICOMMAND(uicroppedimage, "sfftttte", (char *texname, float *minw, float *minh, tagval *cropx, tagval *cropy, tagval *cropw, tagval *croph, uint *children),
         BUILD(CroppedImage, o, {
             Texture *tex = textureload(texname, 3, true, false);
             o->setup(tex, *minw, *minh,
-                strchr(cropx, 'p') ? atof(cropx) / tex->xs : atof(cropx),
-                strchr(cropy, 'p') ? atof(cropy) / tex->ys : atof(cropy),
-                strchr(cropw, 'p') ? atof(cropw) / tex->xs : atof(cropw),
-                strchr(croph, 'p') ? atof(croph) / tex->ys : atof(croph));
+                parsepixeloffset(cropx, tex->xs), parsepixeloffset(cropy, tex->ys),
+                parsepixeloffset(cropw, tex->xs), parsepixeloffset(croph, tex->ys));
         }, children));
 
-    ICOMMAND(uiborderedimage, "ssfe", (char *texname, char *texborder, float *screenborder, uint *children),
+    ICOMMAND(uiborderedimage, "stfe", (char *texname, tagval *texborder, float *screenborder, uint *children),
         BUILD(BorderedImage, o, {
             Texture *tex = textureload(texname, 3, true, false);
             o->setup(tex,
-                strchr(texborder, 'p') ? atof(texborder) / tex->xs : atof(texborder),
+                parsepixeloffset(texborder, tex->xs),
                 *screenborder);
         }, children));
 
