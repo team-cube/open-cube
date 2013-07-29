@@ -198,7 +198,7 @@ COMMAND(cancelsel, "");
 COMMAND(reorient, "");
 COMMAND(selextend, "");
 
-ICOMMAND(selmoved, "", (), { if(noedit(true)) return; intret(sel.o != savedsel.o ? 1 : 0); }); 
+ICOMMAND(selmoved, "", (), { if(noedit(true)) return; intret(sel.o != savedsel.o ? 1 : 0); });
 ICOMMAND(selsave, "", (), { if(noedit(true)) return; savedsel = sel; });
 ICOMMAND(selrestore, "", (), { if(noedit(true)) return; sel = savedsel; });
 ICOMMAND(selswap, "", (), { if(noedit(true)) return; swap(sel, savedsel); });

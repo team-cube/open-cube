@@ -842,7 +842,7 @@ namespace UI
 
             int column = 0, row = 0;
             float offsetx = 0, offsety = 0,
-                  cspace = (w - subw) / max(widths.length() - 1, 1), 
+                  cspace = (w - subw) / max(widths.length() - 1, 1),
                   rspace = (h - subh) / max(heights.length() - 1, 1);
             loopchildren(o,
             {
@@ -2816,7 +2816,7 @@ namespace UI
             }
         }
     }
-            
+
     ICOMMAND(uicroppedimage, "sfftttte", (char *texname, float *minw, float *minh, tagval *cropx, tagval *cropy, tagval *cropw, tagval *croph, uint *children),
         BUILD(CroppedImage, o, {
             Texture *tex = textureload(texname, 3, true, false);

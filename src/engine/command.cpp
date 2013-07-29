@@ -1473,7 +1473,7 @@ static bool compilearg(vector<uint> &code, const char *&p, int wordtype, int pre
         case '$': compilelookup(code, p, wordtype, prevargs); return true;
         case '(':
             p++;
-            if(prevargs >= MAXRESULTS) 
+            if(prevargs >= MAXRESULTS)
             {
                 code.add(CODE_ENTER);
                 compilestatements(code, p, wordtype > VAL_ANY ? VAL_CANY : VAL_ANY, ')');
@@ -1740,7 +1740,7 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                             if((code[end]&~CODE_RET_MASK) != (CODE_BLOCK|(uint(code.length()-(end+1))<<8))) break;
                             end = code.length();
                         }
-                        if(more) 
+                        if(more)
                         {
                             while(numargs < MAXARGS && (more = compilearg(code, p, VAL_COND, prevargs+numargs))) numargs++;
                             code.add(CODE_COMV|retcodeany(rettype)|(numargs<<8)|(id->index<<13));
@@ -2129,7 +2129,7 @@ static const uint *runcode(const uint *code, tagval &result)
 
             #define RETPOP(op, val) \
                 RETOP(op, { --numargs; val; freearg(args[numargs]); })
-                    
+
             RETPOP(CODE_NOT|RET_STR, result.setstr(newstring(getbool(args[numargs]) ? "0" : "1")))
             case CODE_NOT|RET_NULL:
             RETPOP(CODE_NOT|RET_INT, result.setint(getbool(args[numargs]) ? 0 : 1))
@@ -2610,7 +2610,7 @@ static const uint *runcode(const uint *code, tagval &result)
             #define SKIPARGS(offset) offset-1
             case CODE_CALLU|RET_NULL: case CODE_CALLU|RET_STR: case CODE_CALLU|RET_FLOAT: case CODE_CALLU|RET_INT:
             {
-                int callargs = op>>8, offset = numargs-callargs; 
+                int callargs = op>>8, offset = numargs-callargs;
                 tagval &idarg = args[offset-1];
                 if(idarg.type != VAL_STR && idarg.type != VAL_MACRO && idarg.type != VAL_CSTR)
                 {

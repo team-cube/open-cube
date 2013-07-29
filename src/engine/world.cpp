@@ -744,11 +744,11 @@ ICOMMAND(entadd, "", (),
 {
     if(enthover >= 0 && !noentedit())
     {
-        if(entgroup.find(enthover) < 0) entadd(enthover); 
+        if(entgroup.find(enthover) < 0) entadd(enthover);
         if(entmoving > 1) entmoving = 1;
     }
 });
- 
+
 ICOMMAND(enttoggle, "", (),
 {
     if(enthover < 0 || noentedit() || !enttoggle(enthover)) { entmoving = 0; intret(0); }
@@ -767,7 +767,7 @@ ICOMMAND(entmoving, "b", (int *n),
         }
     }
     intret(entmoving);
-});  
+});
 
 void entpush(int *dir)
 {
