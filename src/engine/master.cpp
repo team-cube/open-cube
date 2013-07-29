@@ -436,7 +436,7 @@ void checkgameservers()
             }
             else
             {
-                static const uchar ping[] = { 1 };
+                static const uchar ping[] = { 0xFF, 0xFF, 1 };
                 buf.data = (void *)ping;
                 buf.dataLength = sizeof(ping);
                 s.numpings++;
