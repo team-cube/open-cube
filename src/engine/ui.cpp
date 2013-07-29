@@ -716,7 +716,7 @@ namespace UI
 
     struct HorizontalList : Object
     {
-        float space;
+        float space, subw;
 
         static const char *typestr() { return "#HorizontalList"; }
         const char *gettype() const { return typestr(); }
@@ -729,31 +729,23 @@ namespace UI
 
         void layout()
         {
-            w = h = 0;
+            subw = h = 0;
             loopchildren(o,
             {
-                o->x = w;
+                o->x = subw;
                 o->y = 0;
                 o->layout();
-                w += o->w;
+                subw += o->w;
                 h = max(h, o->y + o->h);
             });
-            w += space*max(children.length() - 1, 0);
+            w = subw + space*max(children.length() - 1, 0);
         }
 
         void adjustchildren()
         {
             if(children.empty()) return;
 
-            float cspace = space;
-            if(adjust&(CLAMP_LEFT|CLAMP_RIGHT))
-            {
-                cspace = w;
-                loopchildren(o, cspace -= o->w);
-                cspace /= max(children.length() - 1, 1);
-            }
-
-            float offset = 0;
+            float offset = 0, cspace = (w - subw) / max(children.length() - 1, 1);
             loopchildren(o,
             {
                 o->x = offset;
@@ -765,7 +757,7 @@ namespace UI
 
     struct VerticalList : Object
     {
-        float space;
+        float space, subh;
 
         static const char *typestr() { return "#VerticalList"; }
         const char *gettype() const { return typestr(); }
@@ -778,31 +770,23 @@ namespace UI
 
         void layout()
         {
-            w = h = 0;
+            w = subh = 0;
             loopchildren(o,
             {
                 o->x = 0;
-                o->y = h;
+                o->y = subh;
                 o->layout();
-                h += o->h;
+                subh += o->h;
                 w = max(w, o->x + o->w);
             });
-            h += space*max(children.length() - 1, 0);
+            h = subh + space*max(children.length() - 1, 0);
         }
 
         void adjustchildren()
         {
             if(children.empty()) return;
 
-            float rspace = space;
-            if(adjust&(CLAMP_BOTTOM|CLAMP_TOP))
-            {
-                rspace = h;
-                loopchildren(o, rspace -= o->h);
-                rspace /= max(children.length() - 1, 1);
-            }
-
-            float offset = 0;
+            float offset = 0, rspace = (h - subh) / max(children.length() - 1, 1);
             loopchildren(o,
             {
                 o->y = offset;
@@ -815,7 +799,7 @@ namespace UI
     struct Grid : Object
     {
         int columns;
-        float space;
+        float space, subw, subh;
         vector<float> widths, heights;
 
         static const char *typestr() { return "#Grid"; }
@@ -845,34 +829,21 @@ namespace UI
                 if(!column) row++;
             });
 
-            w = space*max(widths.length() - 1, 0);
-            h = space*max(heights.length() - 1, 0);
-            loopv(widths) w += widths[i];
-            loopv(heights) h += heights[i];
+            subw = subh = 0;
+            loopv(widths) subw += widths[i];
+            loopv(heights) subh += heights[i];
+            w = subw + space*max(widths.length() - 1, 0);
+            h = subh + space*max(heights.length() - 1, 0);
         }
 
         void adjustchildren()
         {
             if(children.empty()) return;
 
-            float cspace = space;
-            if(adjust&(CLAMP_LEFT|CLAMP_RIGHT))
-            { 
-                cspace = w;
-                loopv(widths) cspace -= widths[i];
-                cspace /= max(widths.length() - 1, 1);
-            }
-            
-            float rspace = space;
-            if(adjust&(CLAMP_BOTTOM|CLAMP_TOP))
-            {
-                rspace = h;
-                loopv(heights) rspace -= heights[i];
-                rspace /= max(heights.length() - 1, 1);
-            }
-
             int column = 0, row = 0;
-            float offsetx = 0, offsety = 0;
+            float offsetx = 0, offsety = 0,
+                  cspace = (w - subw) / max(widths.length() - 1, 1), 
+                  rspace = (h - subh) / max(heights.length() - 1, 1);
             loopchildren(o,
             {
                 o->x = offsetx;
@@ -958,7 +929,7 @@ namespace UI
 
     struct Table : Object
     {
-        float space;
+        float space, subw, subh;
         vector<float> widths;
 
         static const char *typestr() { return "#Table"; }
@@ -974,7 +945,7 @@ namespace UI
         {
             widths.setsize(0);
 
-            w = h = 0;
+            w = subh = 0;
             loopchildren(o,
             {
                 o->layout();
@@ -986,42 +957,22 @@ namespace UI
                     if(c->w > widths[j]) widths[j] = c->w;
                 }
                 w = max(w, o->w);
-            });
-            float rw = 0;
-            loopv(widths) rw += widths[i];
-            rw += space*max(widths.length() - 1, 0);
-            w = max(w, rw);
-            loopchildren(o,
-            {
-                o->x = 0;
-                o->y = h;
-                o->w = max(o->w, rw);
-                float offset = 0;
-                int cols = o->childcolumns();
-                loopj(cols)
-                {
-                    Object *c = o->children[j];
-                    c->x = offset;
-                    c->adjustlayout(c->x, c->y, widths[j], o->h);
-                    offset += widths[j];
-                }
-                h += o->h;
+                subh += o->h;
             });
 
-            h += space*max(children.length() - 1, 0);
+            subw = 0;
+            loopv(widths) subw += widths[i];
+            w = max(w, subw + space*max(widths.length() - 1, 0));
+            h = subh + space*max(children.length() - 1, 0);
         }
 
         void adjustchildren()
         {
             if(children.empty()) return;
 
-            float cspace = w, rspace = h;
-            loopv(widths) cspace -= widths[i];
-            loopchildren(o, rspace -= o->h);
-            cspace /= max(widths.length() - 1, 1);
-            rspace /= max(children.length() - 1, 1);
-
-            float offsety = 0;
+            float offsety = 0,
+                  cspace = (w - subw) / max(widths.length() - 1, 1),
+                  rspace = (h - subh) / max(children.length() - 1, 1);
             loopchildren(o,
             {
                 o->x = 0;
