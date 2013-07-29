@@ -2308,7 +2308,7 @@ void loadcrosshair(const char *name, int i)
     if(crosshairs[i] == notexture)
     {
         name = game::defaultcrosshair(i);
-        if(!name) name = "media/interface/crosshair/default_normal.png";
+        if(!name) name = "media/interface/crosshair/default.png";
         crosshairs[i] = textureload(name, 3, true);
     }
 }
