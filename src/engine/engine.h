@@ -111,11 +111,6 @@ static inline bool pvsoccluded(const ivec &bborigin, int size)
     return pvsoccluded(bborigin, ivec(bborigin).add(size));
 }
 
-static inline bool pvsoccludedsphere(const vec &center, float radius)
-{
-    return pvsoccluded(vec(center).sub(radius), vec(center).add(radius+1));
-}
-
 // rendergl
 extern bool hasVAO, hasTR, hasTSW, hasFBO, hasAFBO, hasDS, hasTF, hasCBF, hasS3TC, hasFXT1, hasLATC, hasRGTC, hasAF, hasFBB, hasFBMS, hasTMS, hasMSS, hasFBMSBS, hasNVFBMSC, hasNVTMS, hasUBO, hasMBR, hasDB, hasTG, hasT4, hasTQ, hasPF, hasTRG, hasDBT, hasDC, hasDBGO, hasGPU4, hasGPU5, hasEAL;
 extern int glversion, glslversion;
