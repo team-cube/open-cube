@@ -248,10 +248,10 @@ namespace UI
 
             if(adjust&CLAMP_MASK)
             {
-                if(adjust&CLAMP_LEFT)   x = px;
-                if(adjust&CLAMP_RIGHT)  w = px + pw - x;
-                if(adjust&CLAMP_BOTTOM) y = py;
-                if(adjust&CLAMP_TOP)    h = py + ph - y;
+                if(adjust&CLAMP_LEFT)   { w += x - px; x = px; }
+                if(adjust&CLAMP_RIGHT)    w = px + pw - x;
+                if(adjust&CLAMP_BOTTOM) { h += y - py; y = py; }
+                if(adjust&CLAMP_TOP)      h = py + ph - y;
             }
 
             adjustchildren();
@@ -745,9 +745,13 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float cspace = w;
-            loopchildren(o, cspace -= o->w);
-            cspace /= max(children.length() - 1, 1);
+            float cspace = space;
+            if(adjust&(CLAMP_LEFT|CLAMP_RIGHT))
+            {
+                cspace = w;
+                loopchildren(o, cspace -= o->w);
+                cspace /= max(children.length() - 1, 1);
+            }
 
             float offset = 0;
             loopchildren(o,
@@ -790,9 +794,13 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float rspace = h;
-            loopchildren(o, rspace -= o->h);
-            rspace /= max(children.length() - 1, 1);
+            float rspace = space;
+            if(adjust&(CLAMP_BOTTOM|CLAMP_TOP))
+            {
+                rspace = h;
+                loopchildren(o, rspace -= o->h);
+                rspace /= max(children.length() - 1, 1);
+            }
 
             float offset = 0;
             loopchildren(o,
@@ -829,50 +837,42 @@ namespace UI
             loopchildren(o,
             {
                 o->layout();
-                if(!widths.inrange(column)) widths.add(o->w);
+                if(column >= widths.length()) widths.add(o->w);
                 else if(o->w > widths[column]) widths[column] = o->w;
-                if(!heights.inrange(row)) heights.add(o->h);
+                if(row >= heights.length()) heights.add(o->h);
                 else if(o->h > heights[row]) heights[row] = o->h;
                 column = (column + 1) % columns;
                 if(!column) row++;
             });
-            w = h = 0;
-            column = row = 0;
-            float offset = 0;
-            loopchildren(o,
-            {
-                o->x = offset;
-                o->y = h;
-                o->adjustlayout(o->x, o->y, widths[column], heights[row]);
-                offset += widths[column];
-                w = max(w, offset);
-                column = (column + 1) % columns;
-                if(!column)
-                {
-                    offset = 0;
-                    h += heights[row];
-                    row++;
-                }
-            });
-            if(column) h += heights[row];
 
-            w += space*max(widths.length() - 1, 0);
-            h += space*max(heights.length() - 1, 0);
+            w = space*max(widths.length() - 1, 0);
+            h = space*max(heights.length() - 1, 0);
+            loopv(widths) w += widths[i];
+            loopv(heights) h += heights[i];
         }
 
         void adjustchildren()
         {
             if(children.empty()) return;
 
-            float cspace = w, rspace = h;
-            loopv(widths) cspace -= widths[i];
-            loopv(heights) rspace -= heights[i];
-            cspace /= max(widths.length() - 1, 1);
-            rspace /= max(heights.length() - 1, 1);
+            float cspace = space;
+            if(adjust&(CLAMP_LEFT|CLAMP_RIGHT))
+            { 
+                cspace = w;
+                loopv(widths) cspace -= widths[i];
+                cspace /= max(widths.length() - 1, 1);
+            }
+            
+            float rspace = space;
+            if(adjust&(CLAMP_BOTTOM|CLAMP_TOP))
+            {
+                rspace = h;
+                loopv(heights) rspace -= heights[i];
+                rspace /= max(heights.length() - 1, 1);
+            }
 
             int column = 0, row = 0;
             float offsetx = 0, offsety = 0;
-
             loopchildren(o,
             {
                 o->x = offsetx;
