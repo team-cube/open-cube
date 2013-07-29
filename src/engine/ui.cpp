@@ -745,13 +745,16 @@ namespace UI
         {
             if(children.empty()) return;
 
+            float cspace = w;
+            loopchildren(o, cspace -= o->w);
+            cspace /= max(children.length() - 1, 1);
+
             float offset = 0;
             loopchildren(o,
             {
                 o->x = offset;
-                offset += o->w;
-                o->adjustlayout(o->x, 0, offset - o->x, h);
-                offset += space;
+                offset += o->w + cspace;
+                o->adjustlayout(o->x, 0, o->w, h);
             });
         }
     };
@@ -787,13 +790,16 @@ namespace UI
         {
             if(children.empty()) return;
 
+            float rspace = h;
+            loopchildren(o, rspace -= o->h);
+            rspace /= max(children.length() - 1, 1);
+
             float offset = 0;
             loopchildren(o,
             {
                 o->y = offset;
-                offset += o->h;
-                o->adjustlayout(0, o->y, w, offset - o->y);
-                offset += space;
+                offset += o->h + rspace;
+                o->adjustlayout(0, o->y, w, o->h);
             });
         }
     };
