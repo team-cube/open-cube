@@ -1524,12 +1524,12 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            Object::draw(sx, sy);
+
             float oldscale = textscale;
             textscale = drawscale();
             draw_text(getstr(), sx/textscale, sy/textscale, color.r, color.g, color.b, color.a, -1, wrap >= 0 ? int(wrap/textscale) : -1);
             textscale = oldscale;
-
-            Object::draw(sx, sy);
         }
 
         void layout()
@@ -2379,6 +2379,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            Object::draw(sx, sy);
+
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
             window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
@@ -2401,8 +2403,6 @@ namespace UI
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
             if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
-
-            Object::draw(sx, sy);
         }
     };
 
@@ -2428,6 +2428,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            Object::draw(sx, sy);
+
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
             window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
@@ -2441,8 +2443,6 @@ namespace UI
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
             if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
-
-            Object::draw(sx, sy);
         }
     };
 
