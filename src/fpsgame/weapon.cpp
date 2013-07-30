@@ -146,7 +146,6 @@ namespace game
         bouncer() : bounces(0), roll(0), variant(0)
         {
             type = ENT_BOUNCE;
-            collidetype = COLLIDE_AABB;
         }
     };
 

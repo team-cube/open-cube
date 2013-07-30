@@ -1102,12 +1102,7 @@ void setbbfrommodel(dynent *d, const char *mdl)
     if(!m) return;
     vec center, radius;
     m->collisionbox(center, radius);
-    if(!m->ellipsecollide)
-    {
-        d->collidetype = COLLIDE_OBB;
-        //d->collidetype = COLLIDE_AABB;
-        //rotatebb(center, radius, int(d->yaw), int(d->pitch));
-    }
+    if(!m->ellipsecollide) d->collidetype = COLLIDE_OBB;
     d->xradius   = radius.x + fabs(center.x);
     d->yradius   = radius.y + fabs(center.y);
     d->radius    = d->collidetype==COLLIDE_OBB ? sqrtf(d->xradius*d->xradius + d->yradius*d->yradius) : max(d->xradius, d->yradius);
