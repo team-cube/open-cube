@@ -618,6 +618,18 @@ struct matrix3x3
         c = vec(axis.x*axis.z*(1-ck)-axis.y*sk, axis.y*axis.z*(1-ck)+axis.x*sk, axis.z*axis.z*(1-ck)+ck);
     }
 
+    void setyaw(float ck, float sk)
+    {
+        a = vec(ck, -sk, 0);
+        b = vec(sk, ck, 0);
+        c = vec(0, 0, 1);
+    }
+
+    void setyaw(float angle)
+    {
+        setyaw(cosf(angle), sinf(angle));
+    }
+
     bool calcangleaxis(float &angle, vec &axis, float threshold = 1e-9f)
     {
         angle = acosf(clamp(0.5f*(a.x + b.y + c.z - 1), -1.0f, 1.0f));

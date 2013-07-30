@@ -57,7 +57,10 @@ namespace mpr
     {
         matrix3x3 orient;
 
-        EntOBB(physent *ent) : Ent(ent), orient(ent->yaw*RAD, vec(0, 0, 1)) {}
+        EntOBB(physent *ent) : Ent(ent)
+        {
+            orient.setyaw(ent->yaw*RAD);
+        }
 
         vec contactface(const vec &wn, const vec &wdir) const
         {

@@ -633,6 +633,17 @@ extern int batcheddynamicmodels();
 extern int batcheddynamicmodelbounds(int mask, vec &bbmin, vec &bbmax);
 extern void cleanupmodels();
 
+static inline model *loadmapmodel(int n)
+{
+    extern vector<mapmodelinfo> mapmodels;
+    if(mapmodels.inrange(n))
+    {
+        model *m = mapmodels[n].m;
+        return m ? m : loadmodel(NULL, n);
+    }
+    return NULL;
+}
+
 // renderparticles
 extern void initparticles();
 extern void clearparticles();
