@@ -2120,8 +2120,8 @@ namespace UI
             if(focus == e) return;
             focus = e;
             bool allowtextinput = focus!=NULL && focus->allowtextinput();
-            ::textinput(TI_GUI, allowtextinput);
-            ::keyrepeat(KR_GUI, allowtextinput);
+            ::textinput(allowtextinput, TI_GUI);
+            ::keyrepeat(allowtextinput, KR_GUI);
         }
         void setfocus() { setfocus(this); }
         void clearfocus() { if(focus == this) setfocus(NULL); }
