@@ -47,7 +47,7 @@ namespace mpr
     struct Ent
     {
         physent *ent;
-    
+
         Ent(physent *ent) : ent(ent) {}
 
         vec center() const { return vec(ent->o.x, ent->o.y, ent->o.z + (ent->aboveeye - ent->eyeheight)/2); }
@@ -82,12 +82,12 @@ namespace mpr
         {
             return vec(ln.x > 0 ? ent->xradius : -ent->xradius,
                        ln.y > 0 ? ent->yradius : -ent->yradius,
-                       ln.z > 0 ? ent->aboveeye : -ent->eyeheight); 
+                       ln.z > 0 ? ent->aboveeye : -ent->eyeheight);
         }
 
-        vec supportpoint(const vec &n) const 
-        { 
-            return orient.transposedtransform(localsupportpoint(orient.transform(n))).add(ent->o); 
+        vec supportpoint(const vec &n) const
+        {
+            return orient.transposedtransform(localsupportpoint(orient.transform(n))).add(ent->o);
         }
 
         float supportcoordneg(float a, float b, float c) const
@@ -118,7 +118,7 @@ namespace mpr
         float bottom() const { return ent->o.z - ent->eyeheight; }
         float top() const { return ent->o.z + ent->aboveeye; }
     };
- 
+
     struct EntCylinder : EntFuzzy
     {
         EntCylinder(physent *ent) : EntFuzzy(ent) {}

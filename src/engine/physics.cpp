@@ -483,8 +483,7 @@ bool ellipsecollide(physent *d, const vec &dir, const vec &o, const vec &center,
     {
         if(dist > (d->o.z < yo.z ? below : above) && (dir.iszero() || x*dir.x + y*dir.y > 0))
         {
-            wall = vec(-x, -y, 0);
-            if(!wall.iszero()) wall.normalize();
+            wall = vec(-x, -y, 0).rescale(1);
             return true;
         }
         if(d->o.z < yo.z)
@@ -694,7 +693,7 @@ static bool fuzzycollidebox(physent *d, const vec &dir, float cutoff, const vec 
             if(d->type==ENT_PLAYER &&
                 dist < (dir.z*w.z < 0 ?
                     d->zmargin-(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) :
-                    ((dir.x*w.x < 0 || dir.y*w.y < 0) ? -d->radius : 0)))
+                    (dir.x*w.x < 0 || dir.y*w.y < 0 ? -d->radius : 0)))
                 continue;
         }
         wall = w;
@@ -752,7 +751,7 @@ static bool fuzzycollideellipse(physent *d, const vec &dir, float cutoff, const 
             if(d->type==ENT_PLAYER &&
                 dist < (dir.z*w.z < 0 ?
                     d->zmargin-(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) :
-                    ((dir.x*w.x < 0 || dir.y*w.y < 0) ? -d->radius : 0)))
+                    (dir.x*w.x < 0 || dir.y*w.y < 0 ? -d->radius : 0)))
                 continue;
         }
         wall = w;
@@ -765,6 +764,8 @@ static bool fuzzycollideellipse(physent *d, const vec &dir, float cutoff, const 
     return true;
 }
 
+VAR(testtricol, 0, 0, 2);
+
 bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // collide with a mapmodel
 {
     const vector<extentity *> &ents = entities::getents();
@@ -773,13 +774,13 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
         extentity &e = *ents[oc.mapmodels[i]];
         if(e.flags&EF_NOCOLLIDE) continue;
         model *m = loadmapmodel(e.attr1);
-        if(!m || !m->collide) continue; 
+        if(!m || !m->collide) continue;
         int yaw = e.attr2, pitch = e.attr3, roll = e.attr4;
-        if(m->collide == COLLIDE_TRI)
+        if(m->collide == COLLIDE_TRI || testtricol)
         {
             float scale = e.attr5 > 0 ? e.attr5/100.0f : 1;
             if(!m->bih && !m->setBIH()) continue;
-            switch(d->collidetype)
+            switch(testtricol ? testtricol : d->collidetype)
             {
                 case COLLIDE_ELLIPSE:
                     if(m->bih->ellipsecollide(d, dir, cutoff, e.o, yaw, pitch, roll, scale)) return true;
@@ -832,7 +833,7 @@ static bool fuzzycollidesolid(physent *d, const vec &dir, float cutoff, const cu
     int crad = size/2;
     if(fabs(d->o.x - co.x - crad) > d->radius + crad || fabs(d->o.y - co.y - crad) > d->radius + crad ||
        d->o.z + d->aboveeye < co.z || d->o.z - d->eyeheight > co.z + size)
-        return true;
+        return false;
 
     wall = vec(0, 0, 0);
     float bestdist = -1e10f;
@@ -860,7 +861,7 @@ static bool fuzzycollidesolid(physent *d, const vec &dir, float cutoff, const cu
     if(wall.iszero())
     {
         inside = false;
-        return true;
+        return false;
     }
     return true;
 }
@@ -928,7 +929,7 @@ static bool fuzzycollideplanes(physent *d, const vec &dir, float cutoff, const c
             if(d->type==ENT_PLAYER &&
                 dist < (dir.z*w.z < 0 ?
                     d->zmargin-(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) :
-                    ((dir.x*w.x < 0 || dir.y*w.y < 0) ? -d->radius : 0)))
+                    (dir.x*w.x < 0 || dir.y*w.y < 0 ? -d->radius : 0)))
                 continue;
         }
         if(clampcollide(p, entvol, w, pw)) continue;
@@ -1012,7 +1013,7 @@ static bool cubecollideplanes(physent *d, const vec &dir, float cutoff, const cu
             if(d->type==ENT_PLAYER &&
                 dist < (dir.z*w.z < 0 ?
                     d->zmargin-(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) :
-                    ((dir.x*w.x < 0 || dir.y*w.y < 0) ? -d->radius : 0)))
+                    (dir.x*w.x < 0 || dir.y*w.y < 0 ? -d->radius : 0)))
                 continue;
         }
         if(clampcollide(p, entvol, w, pw)) continue;

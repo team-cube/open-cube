@@ -298,39 +298,84 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     return false;
 }
 
-static inline vec closestpointtri(const vec &p, const vec &a, const vec &ab, const vec &ac)
+static inline float segmentdistance(const vec &p1, const vec &q1, const vec &p2, const vec &d2)
 {
-    vec ap = vec(p).sub(a);
-    float d1 = ab.dot(ap), d2 = ac.dot(ap);
-    if(d1 <= 0 && d2 <= 0) return ap;
+    vec d1 = vec(q1).sub(p1), r = vec(p1).sub(p2);
+    float a = d1.squaredlen(), e = d2.squaredlen(), f = d2.dot(r), s, t;
+    if(a <= 1e-4f)
+    {
+        if(e <= 1e-4f) return r.squaredlen();
+        s = 0;
+        t = clamp(f / e, 0.0f, 1.0f);
+    }
+    else
+    {
+        float c = d1.dot(r);
+        if(e <= 1e-4f)
+        {
+            t = 0;
+            s = clamp(-c / a, 0.0f, 1.0f);
+        }
+        else
+        {
+            float b = d1.dot(d2), denom = a*e - b*b;
+            s = denom ? clamp((b*f - c*e) / denom, 0.0f, 1.0f) : 0.0f;
+            t = b*s + f;
+            if(t < 0)
+            {
+                t = 0;
+                s = clamp(-c / a, 0.0f, 1.0f);
+            }
+            else if(t > e)
+            {
+                t = 1;
+                s = clamp((b - c) / a, 0.0f, 1.0f);
+            }
+            else t /= e;
+        }
+    }
+    vec c1 = vec(d1).mul(s).add(p1),
+        c2 = vec(d2).mul(t).add(p2);
+    return vec(c1).sub(c2).squaredlen();
+}
 
-    vec bp = vec(ap).sub(ab);
-    float d3 = ab.dot(bp), d4 = ac.dot(bp);
-    if(d3 >= 0 && d4 <= d3) return bp;
-
-    float vc = d1*d4 - d3*d2;
-    if(vc <= 0 && d1 >= 0 && d3 <= 0)
-        return bp.sub(vec(ab).mul(d1 / (d1 - d3)));
-
-    vec cp = vec(ap).sub(ac);
-    float d5 = ab.dot(cp), d6 = ac.dot(cp);
-    if(d6 >= 0 && d5 <= d6) return cp;
-
-    float vb = d5*d2 - d1*d6;
-    if(vb <= 0 && d2 >= 0 && d6 <= 0)
-        return ap.sub(vec(ac).mul(d2 / (d2 - d6)));
-
-    float va = d3*d6 - d5*d4;
-    if(va <= 0 && d4 >= d3 && d5 >= d6)
-        return bp.sub(vec(ac).sub(ab).mul((d4 - d3) / ((d4 - d3) + (d5 - d6))));
-
-    float denom = 1 / (va + vb + vc);
-    return ap.sub(vec(ab).mul(vb*denom).add(vec(ac).mul(vc*denom)));
+static inline float trisegmentdistance(const vec &n, const vec &a, const vec &ab, const vec &ac, const vec &p, const vec &q)
+{
+    vec pq = vec(q).sub(p), b = vec(ab).add(a), c = vec(ac).add(a),
+        pa = vec(a).sub(p), pb = vec(b).sub(p), pc = vec(c).sub(p),
+        qa = vec(a).sub(q), qb = vec(b).sub(q), qc = vec(c).sub(q);
+    float dist;
+    if(pq.scalartriple(pa, pb) > 0) // P outside AB
+    {
+        dist = segmentdistance(a, b, p, pq);
+        if(pq.scalartriple(qb, qa) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside AB
+        else if(pq.scalartriple(qc, qb) > 0) dist = min(dist, segmentdistance(b, c, p, pq)); // Q outside BC
+        else if(pq.scalartriple(qa, qc) > 0) dist = min(dist, segmentdistance(c, a, p, pq)); // Q outside CA
+    }
+    else if(pq.scalartriple(pb, pc) > 0) // P outside BC
+    {
+        dist = segmentdistance(b, c, p, pq);
+        if(pq.scalartriple(qc, qb) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside BC
+        else if(pq.scalartriple(qa, qc) > 0) dist = min(dist, segmentdistance(c, a, p, pq)); // Q outside CA
+        else if(pq.scalartriple(qb, qa) > 0) dist = min(dist, segmentdistance(a, b, p, pq)); // Q outside AB
+    }
+    else if(pq.scalartriple(pc, pa) > 0) // P outside CA
+    {
+        dist = segmentdistance(c, a, p, pq);
+        if(pq.scalartriple(qa, qc) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside CA
+        else if(pq.scalartriple(qb, qa) > 0) dist = min(dist, segmentdistance(a, b, p, pq)); // Q outside AB
+        else if(pq.scalartriple(qc, qb) > 0) dist = min(dist, segmentdistance(b, c, p, pq)); // Q outside BC
+    }
+    else if(pq.scalartriple(qb, qa) > 0) dist = min(segmentdistance(a, b, p, pq), n.dot(pa)); // Q outside AB
+    else if(pq.scalartriple(qc, qb) > 0) dist = min(segmentdistance(b, c, p, pq), n.dot(pa)); // Q outside BC
+    else if(pq.scalartriple(qa, qc) > 0) dist = min(segmentdistance(c, a, p, pq), n.dot(pa)); // Q outside CA
+    else dist = min(fabs(n.dot(pa)), fabs(n.dot(qa)))/n.squaredlen(); // both P and Q inside
+    return dist;
 }
 
 static inline bool triboxoverlap(const vec &radius, const vec &a, const vec &ab, const vec &ac)
 {
-    vec b = vec(ab).add(a), c = vec(ac).add(a), 
+    vec b = vec(ab).add(a), c = vec(ac).add(a),
         bc = vec(ac).sub(ab);
 
     #define TESTAXIS(v0, v1, v2, e, s, t) { \
@@ -340,7 +385,7 @@ static inline bool triboxoverlap(const vec &radius, const vec &a, const vec &ab,
         if(p < q) { if(q < -r || p > r) return false; } \
         else if(p < -r || q > r) return false; \
     }
- 
+
     TESTAXIS(a, b, c, ab, z, y);
     TESTAXIS(a, b, c, ab, x, z);
     TESTAXIS(a, b, c, ab, y, x);
@@ -351,7 +396,7 @@ static inline bool triboxoverlap(const vec &radius, const vec &a, const vec &ab,
 
     TESTAXIS(a, c, b, ac, y, z);
     TESTAXIS(a, c, b, ac, z, x);
-    TESTAXIS(a, c, b, ac, x, y); 
+    TESTAXIS(a, c, b, ac, x, y);
 
     #define TESTFACE(w) { \
         if(a.w < b.w) \
@@ -376,40 +421,35 @@ extern bool inside;
 template<>
 inline void BIH::tricollide<COLLIDE_ELLIPSE>(const tri &t, physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const matrix3x3 &orient, float &dist, const vec &bo, const vec &br)
 {
-    vec a = orient.transform(t.a), b = orient.transform(t.b), c = orient.transform(t.c),
-        p = closestpointtri(center, a, b, c).mul(radius);
+    vec n = vec().cross(t.b, t.c), zr = vec(orient.c).mul(radius.z - radius.x);
+    if(trisegmentdistance(n, t.a, t.b, t.c, vec(center).sub(zr), vec(center).add(zr)) > radius.x*radius.x) return;
 
-    float pdist = p.squaredlen(), rdist = vec(p).mul(radius).squaredlen();
-    if(pdist*pdist > rdist) return;
-
-    pdist = sqrt(pdist) - sqrt(rdist/pdist);
+    float nmag = 1/n.magnitude(),
+          pdist = (n.dot(vec(center).sub(t.a)) - fabs(n.dot(zr))) * nmag;
     if(pdist <= dist) return;
 
     inside = true;
 
-    vec n = vec().cross(b.mul(radius), c.mul(radius));
-    float nmag = n.magnitude();
+    n = orient.transform(n).mul(nmag);
 
     if(!dir.iszero())
     {
-        if(n.dot(dir) >= -cutoff*nmag) return;
+        if(n.dot(dir) >= -cutoff) return;
         if(d->type==ENT_PLAYER &&
             pdist < (dir.z*n.z < 0 ?
                2*radius.z*(d->zmargin/(d->aboveeye+d->eyeheight)-(dir.z < 0 ? 1/3.0f : 1/4.0f)) :
-               ((dir.x*n.x < 0 || dir.y*n.y < 0) ? -radius.x : 0)))
+               (dir.x*n.x < 0 || dir.y*n.y < 0 ? -radius.x : 0)))
             return;
     }
 
     dist = pdist;
-    wall = n.mul(1/nmag);
+    wall = n;
 }
 
 template<>
 inline void BIH::tricollide<COLLIDE_OBB>(const tri &t, physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const matrix3x4 &orient, float &dist, const vec &bo, const vec &br)
 {
-    vec a = orient.transform(t.a),
-        b = orient.transformnormal(t.b),
-        c = orient.transformnormal(t.c);
+    vec a = orient.transform(t.a), b = orient.transformnormal(t.b), c = orient.transformnormal(t.c);
     if(!triboxoverlap(radius, a, b, c)) return;
 
     vec n;
@@ -420,9 +460,10 @@ inline void BIH::tricollide<COLLIDE_OBB>(const tri &t, physent *d, const vec &di
     float nmag = 1/n.magnitude();
     pdist = (pdist - r)*nmag;
     if(pdist <= dist) return;
-    n.mul(nmag);
 
     inside = true;
+
+    n.mul(nmag);
 
     if(!dir.iszero())
     {
@@ -430,7 +471,7 @@ inline void BIH::tricollide<COLLIDE_OBB>(const tri &t, physent *d, const vec &di
         if(d->type==ENT_PLAYER &&
             pdist < (dir.z*n.z < 0 ?
                2*radius.z*(d->zmargin/(d->aboveeye+d->eyeheight)-(dir.z < 0 ? 1/3.0f : 1/4.0f)) :
-               ((dir.x*n.x < 0 || dir.y*n.y < 0) ? -radius.x : 0)))
+               (dir.x*n.x < 0 || dir.y*n.y < 0 ? -max(radius.x, radius.y) : 0)))
             return;
     }
 
@@ -447,7 +488,7 @@ inline void BIH::collide(physent *d, const vec &dir, float cutoff, const vec &ce
     for(;;)
     {
         int axis = curnode->axis();
-        int nearidx = 0, faridx = nearidx^1;
+        const int nearidx = 0, faridx = nearidx^1;
         float nearsplit = bmin[axis] - curnode->split[nearidx],
               farsplit = curnode->split[faridx] - bmax[axis];
 
@@ -525,14 +566,9 @@ bool BIH::ellipsecollide(physent *d, const vec &dir, float cutoff, const vec &o,
        bo.x - br.x > bbmax.x || bo.y - br.y > bbmax.y || bo.z - br.z > bbmax.z)
         return false;
 
-    vec invradius(1/radius.x, 1/radius.y, 1/radius.z);
-    orient.a.mul(invradius.x);
-    orient.b.mul(invradius.y);
-    orient.c.mul(invradius.z);
-   
     wall = vec(0, 0, 0);
     float dist = -1e10f;
-    collide<COLLIDE_ELLIPSE>(d, vec(dir).rescale(1), cutoff, vec(center).mul(invradius), radius, orient, dist, &nodes[0], bo, br);
+    collide<COLLIDE_ELLIPSE>(d, dir, cutoff, bo, radius, orient, dist, &nodes[0], bo, br);
     return dist > -1e9f;
 }
 
