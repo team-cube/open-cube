@@ -340,6 +340,10 @@ extern void clearmapcrc();
 extern bool loadents(const char *fname, vector<entity> &ents, uint *crc = NULL);
 
 // physics
+extern vec collidewall;
+extern bool collideinside;
+extern physent *collideplayer;
+
 extern void moveplayer(physent *pl, int moveres, bool local);
 extern bool moveplayer(physent *pl, int moveres, bool local, int curtime);
 extern void crouchplayer(physent *pl, int moveres, bool local);
