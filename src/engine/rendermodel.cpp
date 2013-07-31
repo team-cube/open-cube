@@ -230,7 +230,7 @@ COMMAND(mdlextendbb, "fff");
 void mdlname()
 {
     checkmdl;
-    result(loadingmodel->name());
+    result(loadingmodel->name);
 }
 
 COMMAND(mdlname, "");
@@ -345,12 +345,13 @@ ICOMMAND(nummapmodels, "", (), { intret(mapmodels.length()); });
 
 // model registry
 
-hashtable<const char *, model *> mdllookup;
+hashnameset<model *> models;
 vector<const char *> preloadmodels;
+hashset<char *> failedmodels;
 
 void preloadmodel(const char *name)
 {
-    if(!name || !name[0] || mdllookup.access(name)) return;
+    if(!name || !name[0] || models.access(name)) return;
     preloadmodels.add(newstring(name));
 }
 
@@ -407,12 +408,12 @@ model *loadmodel(const char *name, int i, bool msg)
         if(mmi.m) return mmi.m;
         name = mmi.name;
     }
-    model **mm = mdllookup.access(name);
+    model **mm = models.access(name);
     model *m;
     if(mm) m = *mm;
     else
     {
-        if(!name[0] || loadingmodel) return NULL;
+        if(!name[0] || loadingmodel || failedmodels.find(name, NULL)) return NULL;
         if(msg)
         {
             defformatstring(filename, "media/model/%s", name);
@@ -427,29 +428,33 @@ model *loadmodel(const char *name, int i, bool msg)
             DELETEP(m);
         }
         loadingmodel = NULL;
-        if(!m) return NULL;
-        mdllookup.access(m->name(), m);
+        if(!m) 
+        {
+            failedmodels.add(newstring(name));
+            return NULL;
+        }
+        models.access(m->name, m);
     }
     if(mapmodels.inrange(i) && !mapmodels[i].m) mapmodels[i].m = m;
     return m;
 }
 
-void clear_mdls()
+void clear_models()
 {
-    enumerate(mdllookup, model *, m, delete m);
+    enumerate(models, model *, m, delete m);
 }
 
 void cleanupmodels()
 {
-    enumerate(mdllookup, model *, m, m->cleanup());
+    enumerate(models, model *, m, m->cleanup());
 }
 
 void clearmodel(char *name)
 {
-    model **m = mdllookup.access(name);
+    model **m = models.access(name);
     if(!m) { conoutf("model %s is not loaded", name); return; }
     loopv(mapmodels) if(mapmodels[i].m==*m) mapmodels[i].m = NULL;
-    mdllookup.remove(name);
+    models.remove(name);
     (*m)->cleanup();
     delete *m;
     conoutf("cleared model %s", name);
@@ -966,7 +971,6 @@ hasboundbox:
     if(a) for(int i = 0; a[i].tag; i++)
     {
         if(a[i].name) a[i].m = loadmodel(a[i].name);
-        //if(a[i].m && a[i].m->type()!=m->type()) a[i].m = NULL;
     }
 
     if(flags&MDL_CULL_QUERY)

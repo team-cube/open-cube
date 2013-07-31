@@ -526,7 +526,7 @@ extern void abortconnect();
 extern void clientkeepalive();
 
 // command
-extern hashset<ident> idents;
+extern hashnameset<ident> idents;
 extern int identflags;
 
 extern void clearoverrides();

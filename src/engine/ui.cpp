@@ -590,9 +590,7 @@ namespace UI
 
     float Window::maxscale = 1;
 
-    static inline bool htcmp(const char *key, const Window *w) { return !strcmp(key, w->name); }
-
-    static hashset<Window *> windows;
+    static hashnameset<Window *> windows;
 
     void ClipArea::scissor()
     {
