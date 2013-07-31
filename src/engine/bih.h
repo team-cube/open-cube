@@ -45,7 +45,7 @@ struct BIH
     template<int C, class M>
     void collide(physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const M &orient, float &dist, BIHNode *curnode, const vec &bo, const vec &br);
     template<int C, class M>
-    static void tricollide(const tri &t, physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const M &orient, float &dist, const vec &bo, const vec &br);
+    void tricollide(const tri &t, physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const M &orient, float &dist, const vec &bo, const vec &br);
 
     void preload();
 };
