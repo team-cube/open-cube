@@ -1,6 +1,6 @@
 #include "engine.h"
 
-bool BIH::triintersect(const tri &t, const vec &o, const vec &ray, float maxdist, float &dist, int mode, const tri *noclip)
+bool BIH::triintersect(const tri &t, const vec &o, const vec &ray, float maxdist, float &dist, int mode)
 {
     vec p;
     p.cross(ray, t.c);
@@ -55,12 +55,12 @@ inline bool BIH::traverse(const vec &o, const vec &ray, const vec &invray, float
                     tmin = max(tmin, farsplit);
                     continue;
                 }
-                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode, noclip)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
         }
         else if(curnode->isleaf(nearidx))
         {
-            if(triintersect(tris[curnode->childindex(nearidx)], o, ray, maxdist, dist, mode, noclip)) return true;
+            if(triintersect(tris[curnode->childindex(nearidx)], o, ray, maxdist, dist, mode)) return true;
             if(farsplit < tmax)
             {
                 if(!curnode->isleaf(faridx))
@@ -69,7 +69,7 @@ inline bool BIH::traverse(const vec &o, const vec &ray, const vec &invray, float
                     tmin = max(tmin, farsplit);
                     continue;
                 }
-                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode, noclip)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
         }
         else
@@ -93,7 +93,7 @@ inline bool BIH::traverse(const vec &o, const vec &ray, const vec &invray, float
                         continue;
                     }
                 }
-                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode, noclip)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
             curnode = &nodes[curnode->childindex(nearidx)];
             tmax = min(tmax, nearsplit);
@@ -421,6 +421,8 @@ extern bool inside;
 template<>
 inline void BIH::tricollide<COLLIDE_ELLIPSE>(const tri &t, physent *d, const vec &dir, float cutoff, const vec &center, const vec &radius, const matrix3x3 &orient, float &dist, const vec &bo, const vec &br)
 {
+    if(&t >= noclip) return;
+
     vec n = vec().cross(t.b, t.c), zr = vec(orient.c).mul(radius.z - radius.x);
     if(trisegmentdistance(n, t.a, t.b, t.c, vec(center).sub(zr), vec(center).add(zr)) > radius.x*radius.x) return;
 

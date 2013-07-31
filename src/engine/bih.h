@@ -37,7 +37,7 @@ struct BIH
 
     bool traverse(const vec &o, const vec &ray, float maxdist, float &dist, int mode);
     bool traverse(const vec &o, const vec &ray, const vec &invray, float maxdist, float &dist, int mode, BIHNode *curnode, float tmin, float tmax);
-    static bool triintersect(const tri &t, const vec &o, const vec &ray, float maxdist, float &dist, int mode, const tri *noclip);
+    bool triintersect(const tri &t, const vec &o, const vec &ray, float maxdist, float &dist, int mode, const tri *noclip);
 
     bool boxcollide(physent *d, const vec &dir, float cutoff, const vec &o, int yaw, int pitch, int roll, float scale = 1);
     bool ellipsecollide(physent *d, const vec &dir, float cutoff, const vec &o, int yaw, int pitch, int roll, float scale = 1);
