@@ -1,7 +1,5 @@
 #include "engine.h"
 
-VAR(foo, 0, 1, 1);
-
 struct decalvert
 {
     vec pos;
@@ -194,7 +192,7 @@ struct decalrenderer
         }
         decals = new decalinfo[tris];
         maxdecals = tris;
-        loopi(NUMDB) verts[i].init(i ? (1 || hasDB2 ? tris/2 : 0) : tris);
+        loopi(NUMDB) verts[i].init(i ? (hasDB2 ? tris/2 : 0) : tris);
     }
 
     void preload()
@@ -527,7 +525,7 @@ struct decalrenderer
         }
         else return;
 
-        decalbuffer &buf = verts[(mat || cu.material&MAT_ALPHA) && hasDB2 && foo ? DB_TRANSPARENT : DB_OPAQUE];
+        decalbuffer &buf = verts[(mat || cu.material&MAT_ALPHA) && hasDB2 ? DB_TRANSPARENT : DB_OPAQUE];
         loopl(numplanes)
         {
             const vec &n = planes[l];
