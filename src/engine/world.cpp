@@ -32,7 +32,7 @@ bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
             return false;
         case ET_MAPMODEL:
         {
-            model *m = loadmodel(NULL, e.attr1);
+            model *m = loadmapmodel(e.attr1);
             if(m)
             {
                 vec center, radius;
@@ -74,7 +74,7 @@ void modifyoctaentity(int flags, int id, extentity &e, cube *c, const ivec &cor,
             switch(e.type)
             {
                 case ET_MAPMODEL:
-                    if(loadmodel(NULL, e.attr1))
+                    if(loadmapmodel(e.attr1))
                     {
                         if(va)
                         {
@@ -99,7 +99,7 @@ void modifyoctaentity(int flags, int id, extentity &e, cube *c, const ivec &cor,
             switch(e.type)
             {
                 case ET_MAPMODEL:
-                    if(loadmodel(NULL, e.attr1))
+                    if(loadmapmodel(e.attr1))
                     {
                         oe.mapmodels.removeobj(id);
                         if(va)
@@ -477,7 +477,7 @@ void entselectionbox(const entity &e, vec &eo, vec &es)
         eo.y += e.o.y;
         eo.z = e.o.z - entselradius + es.z;
     }
-    else if(e.type == ET_MAPMODEL && (m = loadmodel(NULL, e.attr1)))
+    else if(e.type == ET_MAPMODEL && (m = loadmapmodel(e.attr1)))
     {
         mmcollisionbox(e, m, eo, es);
         es.max(entselradius);
@@ -833,7 +833,7 @@ bool dropentity(entity &e, int drop = -1)
     if(drop<0) drop = entdrop;
     if(e.type == ET_MAPMODEL)
     {
-        model *m = loadmodel(NULL, e.attr1);
+        model *m = loadmapmodel(e.attr1);
         if(m)
         {
             vec center;
