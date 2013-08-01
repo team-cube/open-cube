@@ -212,7 +212,7 @@ COMMAND(mdlalphashadow, "i");
 void mdlbb(float *rad, float *h, float *eyeheight)
 {
     checkmdl;
-    loadingmodel->collideradius = *rad;
+    loadingmodel->collidexyradius = *rad;
     loadingmodel->collideheight = *h;
     loadingmodel->eyeheight = *eyeheight;
 }

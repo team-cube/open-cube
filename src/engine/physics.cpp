@@ -776,10 +776,15 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
         if(e.flags&EF_NOCOLLIDE) continue;
         model *m = loadmapmodel(e.attr1);
         if(!m || !m->collide) continue;
+
+        vec center, radius;
+        float rejectradius = m->collisionbox(center, radius), scale = e.attr5 > 0 ? e.attr5/100.0f : 1;
+        center.mul(scale);
+        if(d->o.reject(vec(e.o).add(center), d->radius + rejectradius*scale)) continue;
+
         int yaw = e.attr2, pitch = e.attr3, roll = e.attr4;
         if(m->collide == COLLIDE_TRI || testtricol)
         {
-            float scale = e.attr5 > 0 ? e.attr5/100.0f : 1;
             if(!m->bih && !m->setBIH()) continue;
             switch(testtricol ? testtricol : d->collidetype)
             {
@@ -794,9 +799,7 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
         }
         else
         {
-            vec center, radius;
-            m->collisionbox(center, radius);
-            if(e.attr5 > 0) { float scale = e.attr5/100.f; center.mul(scale); radius.mul(scale); }
+            radius.mul(scale);
             switch(d->collidetype)
             {
                 case COLLIDE_ELLIPSE:

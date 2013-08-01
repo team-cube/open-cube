@@ -7,7 +7,7 @@ VARNR(mapscale, worldscale, 1, 0, 0);
 VARNR(mapsize, worldsize, 1, 0, 0);
 SVARR(maptitle, "Untitled Map by Unknown");
 
-VAR(octaentsize, 0, 128, 1024);
+VAR(octaentsize, 0, 64, 1024);
 VAR(entselradius, 0, 2, 10);
 
 static inline void mmboundbox(const entity &e, model *m, vec &center, vec &radius)
@@ -163,7 +163,7 @@ static bool modifyoctaent(int flags, int id, extentity &e)
     }
     else
     {
-        int leafsize = octaentsize, limit = max(r.x, max(r.y, r.z));
+        int leafsize = octaentsize, limit = max(r.x - o.x, max(r.y - o.y, r.z - o.z));
         while(leafsize < limit) leafsize *= 2;
         int diff = ~(leafsize-1) & ((o.x^r.x)|(o.y^r.y)|(o.z^r.z));
         if(diff && (limit > octaentsize/2 || diff < leafsize*2)) leafsize *= 2;
