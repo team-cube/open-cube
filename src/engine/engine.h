@@ -654,9 +654,11 @@ extern void renderparticles();
 extern bool printparticles(extentity &e, char *buf, int len);
 
 // decal
+enum { DB_OPAQUE = 0, DB_TRANSPARENT, NUMDB };
+
 extern void initdecals();
 extern void cleardecals();
-extern void renderdecals();
+extern void renderdecals(int db = DB_OPAQUE);
 
 // rendersky
 extern int skytexture, skyshadow, explicitsky;
