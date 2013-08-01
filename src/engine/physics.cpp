@@ -101,15 +101,18 @@ bool pointincube(const clipplanes &p, const vec &v)
 
 vec hitsurface;
 
-static inline bool raycubeintersect(const clipplanes &p, const cube &c, const vec &v, const vec &ray, const vec &invray, float &dist)
+static inline bool raycubeintersect(const clipplanes &p, const cube &c, const vec &v, const vec &ray, const vec &invray, float maxdist, float &dist)
 {
     int entry = -1, bbentry = -1;
     INTERSECTPLANES(entry = i, return false);
     INTERSECTBOX(bbentry = i, return false);
     if(exitdist < 0) return false;
     dist = max(enterdist+0.1f, 0.0f);
-    if(bbentry>=0) { hitsurface = vec(0, 0, 0); hitsurface[bbentry] = ray[bbentry]>0 ? -1 : 1; }
-    else hitsurface = p.p[entry];
+    if(dist < maxdist)
+    {
+        if(bbentry>=0) { hitsurface = vec(0, 0, 0); hitsurface[bbentry] = ray[bbentry]>0 ? -1 : 1; }
+        else hitsurface = p.p[entry];
+    }
     return true;
 }
 
@@ -289,10 +292,23 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
             ((mode&RAY_EDITMAT) && c.material != MAT_AIR) ||
             (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
             isentirelysolid(c) ||
-            dent < dist))
+            dent < dist) &&
+            (!(mode&RAY_CLIPMAT) || (c.material&MATF_CLIP)!=MAT_NOCLIP))
         {
-            if(closest >= 0) { hitsurface = vec(0, 0, 0); hitsurface[closest] = ray[closest]>0 ? -1 : 1; }
-            return min(dent, dist);
+            if(dist < dent)
+            {
+                if(closest < 0)
+                {
+                    float dx = ((x&(~0<<lshift))+(invray.x>0 ? 0 : 1<<lshift)-v.x)*invray.x,
+                          dy = ((y&(~0<<lshift))+(invray.y>0 ? 0 : 1<<lshift)-v.y)*invray.y,
+                          dz = ((z&(~0<<lshift))+(invray.z>0 ? 0 : 1<<lshift)-v.z)*invray.z;
+                    closest = dx > dy ? (dx > dz ? 0 : 2) : (dy > dz ? 1 : 2);
+                }
+                hitsurface = vec(0, 0, 0);
+                hitsurface[closest] = ray[closest]>0 ? -1 : 1;
+                return dist;
+            }
+            return dent;
         }
 
         ivec lo(x&(~0<<lshift), y&(~0<<lshift), z&(~0<<lshift));
@@ -301,7 +317,7 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
         {
             const clipplanes &p = getclipplanes(c, lo, lsize, false, 1);
             float f = 0;
-            if(raycubeintersect(p, c, v, ray, invray, f) && (dist+f>0 || !(mode&RAY_SKIPFIRST)))
+            if(raycubeintersect(p, c, v, ray, invray, dent-dist, f) && (dist+f>0 || !(mode&RAY_SKIPFIRST)) && (!(mode&RAY_CLIPMAT) || (c.material&MATF_CLIP)!=MAT_NOCLIP))
                 return min(dent, dist+f);
         }
 

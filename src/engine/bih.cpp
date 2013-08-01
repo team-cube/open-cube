@@ -1,5 +1,7 @@
 #include "engine.h"
 
+extern vec hitsurface;
+
 bool BIH::triintersect(const tri &t, const vec &o, const vec &ray, float maxdist, float &dist, int mode)
 {
     vec p;
@@ -22,6 +24,11 @@ bool BIH::triintersect(const tri &t, const vec &o, const vec &ray, float maxdist
         int si = clamp(int(t.tex->xs * (t.tc[0] + u*(t.tc[2] - t.tc[0]) + v*(t.tc[4] - t.tc[0]))), 0, t.tex->xs-1),
             ti = clamp(int(t.tex->ys * (t.tc[1] + u*(t.tc[3] - t.tc[1]) + v*(t.tc[5] - t.tc[1]))), 0, t.tex->ys-1);
         if(!(t.tex->alphamask[ti*((t.tex->xs+7)/8) + si/8] & (1<<(si%8)))) return false;
+    }
+    if(!(mode&RAY_SHADOW))
+    {
+        hitsurface.cross(t.b, t.c).normalize();
+        if(hitsurface.dot(ray) > 0) hitsurface.neg();
     }
     dist = f;
     return true;
@@ -293,6 +300,12 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     if(m->bih->traverse(mo, mray, maxdist ? maxdist : 1e16f, dist, mode))
     {
         if(scale > 0) dist *= scale/100.0f;
+        if(!(mode&RAY_SHADOW))
+        {
+            if(roll != 0) hitsurface.rotate_around_y(sincosmod360(-roll));
+            if(pitch != 0) hitsurface.rotate_around_x(sincosmod360(pitch));
+            if(yaw != 0) hitsurface.rotate_around_z(sincosmod360(yaw));
+        }
         return true;
     }
     return false;
