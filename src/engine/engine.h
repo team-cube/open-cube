@@ -611,13 +611,14 @@ extern void resetmap();
 extern void startmap(const char *name);
 
 // rendermodel
-struct mapmodelinfo { string name; model *m; };
+struct mapmodelinfo { string name; model *m, *collide; };
+
+extern vector<mapmodelinfo> mapmodels;
 
 extern float transmdlsx1, transmdlsy1, transmdlsx2, transmdlsy2;
 extern uint transmdltiles[LIGHTTILE_MAXH];
 
 extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks);
-extern mapmodelinfo *getmminfo(int i);
 extern void resetmodelbatches();
 extern void startmodelquery(occludequery *query);
 extern void endmodelquery();
@@ -635,7 +636,6 @@ extern void cleanupmodels();
 
 static inline model *loadmapmodel(int n)
 {
-    extern vector<mapmodelinfo> mapmodels;
     if(mapmodels.inrange(n))
     {
         model *m = mapmodels[n].m;
@@ -643,6 +643,8 @@ static inline model *loadmapmodel(int n)
     }
     return NULL;
 }
+
+static inline mapmodelinfo *getmminfo(int n) { return mapmodels.inrange(n) ? &mapmodels[n] : NULL; }
 
 // renderparticles
 extern void initparticles();

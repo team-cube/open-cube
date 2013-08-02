@@ -66,13 +66,17 @@ void mdlellipsecollide(int *collide)
 
 COMMAND(mdlellipsecollide, "i");
 
-void mdltricollide(int *collide)
+void mdltricollide(char *collide)
 {
     checkmdl;
-    loadingmodel->collide = *collide!=0 ? COLLIDE_TRI : COLLIDE_NONE;
+    DELETEA(loadingmodel->collidemodel);
+    char *end = NULL;
+    int val = strtol(collide, &end, 0);
+    if(*end) { val = 1; loadingmodel->collidemodel = newstring(collide); } 
+    loadingmodel->collide = val ? COLLIDE_TRI : COLLIDE_NONE;
 }
 
-COMMAND(mdltricollide, "i");
+COMMAND(mdltricollide, "s");
 
 void mdlspec(float *percent)
 {
@@ -321,12 +325,12 @@ vector<mapmodelinfo> mapmodels;
 static const char * const mmprefix = "mapmodel/";
 static const int mmprefixlen = strlen(mmprefix);
 
-void mmodel(char *name)
+void mapmodel(char *name)
 {
     mapmodelinfo &mmi = mapmodels.add();
     if(name[0]) formatstring(mmi.name, "%s%s", mmprefix, name);
     else mmi.name[0] = '\0';
-    mmi.m = NULL;
+    mmi.m = mmi.collide = NULL;
 }
 
 void mapmodelreset(int *n)
@@ -335,10 +339,10 @@ void mapmodelreset(int *n)
     mapmodels.shrink(clamp(*n, 0, mapmodels.length()));
 }
 
-mapmodelinfo *getmminfo(int i) { return mapmodels.inrange(i) ? &mapmodels[i] : NULL; }
 const char *mapmodelname(int i) { return mapmodels.inrange(i) ? mapmodels[i].name : NULL; }
 
-COMMAND(mmodel, "s");
+ICOMMAND(mmodel, "s", (char *name), mapmodel(name));
+COMMAND(mapmodel, "s");
 COMMAND(mapmodelreset, "i");
 ICOMMAND(mapmodelname, "ii", (int *index, int *prefix), { if(mapmodels.inrange(*index)) result(mapmodels[*index].name[0] ? mapmodels[*index].name + (*prefix ? 0 : mmprefixlen) : ""); });
 ICOMMAND(nummapmodels, "", (), { intret(mapmodels.length()); });
@@ -351,7 +355,7 @@ hashset<char *> failedmodels;
 
 void preloadmodel(const char *name)
 {
-    if(!name || !name[0] || models.access(name)) return;
+    if(!name || !name[0] || models.access(name) || preloadmodels.htfind(name) >= 0) return;
     preloadmodels.add(newstring(name));
 }
 
@@ -375,27 +379,40 @@ void flushpreloadedmodels(bool msg)
 void preloadusedmapmodels(bool msg, bool bih)
 {
     vector<extentity *> &ents = entities::getents();
-    vector<int> mapmodels;
+    vector<int> used;
     loopv(ents)
     {
         extentity &e = *ents[i];
-        if(e.type==ET_MAPMODEL && e.attr1 >= 0 && mapmodels.find(e.attr1) < 0) mapmodels.add(e.attr1);
+        if(e.type==ET_MAPMODEL && e.attr1 >= 0 && used.find(e.attr1) < 0) used.add(e.attr1);
     }
 
-    loopv(mapmodels)
+    vector<const char *> col;
+    loopv(used)
     {
-        loadprogress = float(i+1)/mapmodels.length();
-        int mmindex = mapmodels[i];
-        mapmodelinfo *mmi = getmminfo(mmindex);
-        if(!mmi) { if(msg) conoutf(CON_WARN, "could not find map model: %d", mmindex); }
-        else if(mmi->name[0] && !loadmodel(NULL, mmindex, msg)) { if(msg) conoutf(CON_WARN, "could not load model: %s", mmi->name); }
-        else if(mmi->m)
+        loadprogress = float(i+1)/used.length();
+        int mmindex = used[i];
+        if(!mapmodels.inrange(mmindex)) { if(msg) conoutf(CON_WARN, "could not find map model: %d", mmindex); continue; }
+        mapmodelinfo &mmi = mapmodels[mmindex];
+        if(!mmi.name[0]) continue;
+        model *m = loadmodel(NULL, mmindex, msg);
+        if(!m) { if(msg) conoutf(CON_WARN, "could not load map model: %s", mmi.name); }
+        else
         {
-            if(bih) mmi->m->preloadBIH();
-            mmi->m->preloadmeshes();
-            mmi->m->preloadshaders();
+            if(bih) m->preloadBIH();
+            m->preloadmeshes();
+            m->preloadshaders();
+            if(m->collidemodel && col.htfind(mmi.m->collidemodel) < 0) col.add(mmi.m->collidemodel);
         }
     }
+
+    loopv(col)
+    {
+        loadprogress = float(i+1)/col.length();
+        model *m = loadmodel(col[i], -1, msg);
+        if(!m) { if(msg) conoutf(CON_WARN, "could not load collide model: %s", col[i]); }
+        else if(!m->bih) m->setBIH();
+    }
+
     loadprogress = 0;
 }
 
@@ -451,12 +468,17 @@ void cleanupmodels()
 
 void clearmodel(char *name)
 {
-    model **m = models.access(name);
+    model *m = models.find(name, NULL);
     if(!m) { conoutf("model %s is not loaded", name); return; }
-    loopv(mapmodels) if(mapmodels[i].m==*m) mapmodels[i].m = NULL;
+    loopv(mapmodels)
+    {
+        mapmodelinfo &mmi = mapmodels[i];
+        if(mmi.m == m) mmi.m = NULL;
+        if(mmi.collide == m) mmi.collide = NULL;
+    } 
     models.remove(name);
-    (*m)->cleanup();
-    delete *m;
+    m->cleanup();
+    delete m;
     conoutf("cleared model %s", name);
 }
 

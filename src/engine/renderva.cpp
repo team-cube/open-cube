@@ -2122,9 +2122,8 @@ static void genshadowmeshmapmodels(shadowmesh &m, int sides, shadowdrawinfo draw
         if(!(e.flags&EF_RENDER)) continue;
         e.flags &= ~EF_RENDER;
 
-        mapmodelinfo *mmi = getmminfo(e.attr1);
-        if(!mmi) continue;
-        model *mm = mmi->m ? mmi->m : loadmodel(mmi->name);
+        
+        model *mm = loadmapmodel(e.attr1);
         if(!mm || !mm->shadow || mm->animated() || (mm->alphashadow && mm->alphatested())) continue;
 
         matrix3x4 orient;
