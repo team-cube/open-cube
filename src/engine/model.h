@@ -47,7 +47,7 @@ struct model
 
     void boundbox(vec &center, vec &radius)
     {
-        if(bbradius.x < 0) 
+        if(bbradius.x < 0)
         {
             calcbb(bbcenter, bbradius);
             bbradius.add(bbextend);

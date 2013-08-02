@@ -791,7 +791,7 @@ bool mmcollide(physent *d, const vec &dir, float cutoff, octaentities &oc) // co
             if(!m) m = mmi.m;
             mmi.collide = m;
         }
-        int mcol = mmi.m->collide; 
+        int mcol = mmi.m->collide;
         if(!mcol) continue;
 
         vec center, radius;

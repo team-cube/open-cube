@@ -634,7 +634,7 @@ typedef void (APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, G
 extern PFNGLGETSTRINGIPROC glGetStringi_;
 extern PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_;
 
-// GL_EXT_draw_buffers2 
+// GL_EXT_draw_buffers2
 extern PFNGLCOLORMASKIPROC glColorMaski_;
 extern PFNGLENABLEIPROC glEnablei_;
 extern PFNGLDISABLEIPROC glDisablei_;

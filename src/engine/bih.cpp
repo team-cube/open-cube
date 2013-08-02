@@ -361,23 +361,23 @@ static inline float trisegmentdistance(const vec &n, const vec &a, const vec &ab
     if(pq.scalartriple(pa, pb) > 0) // P outside AB
     {
         dist = segmentdistance(a, b, p, pq);
-        if(pq.scalartriple(qb, qa) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside AB
-        else if(pq.scalartriple(qc, qb) > 0) dist = min(dist, segmentdistance(b, c, p, pq)); // Q outside BC
+        if(pq.scalartriple(qc, qb) > 0) dist = min(dist, segmentdistance(b, c, p, pq)); // Q outside BC
         else if(pq.scalartriple(qa, qc) > 0) dist = min(dist, segmentdistance(c, a, p, pq)); // Q outside CA
+        else if(pq.scalartriple(qb, qa) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside AB
     }
     else if(pq.scalartriple(pb, pc) > 0) // P outside BC
     {
         dist = segmentdistance(b, c, p, pq);
-        if(pq.scalartriple(qc, qb) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside BC
-        else if(pq.scalartriple(qa, qc) > 0) dist = min(dist, segmentdistance(c, a, p, pq)); // Q outside CA
+        if(pq.scalartriple(qa, qc) > 0) dist = min(dist, segmentdistance(c, a, p, pq)); // Q outside CA
         else if(pq.scalartriple(qb, qa) > 0) dist = min(dist, segmentdistance(a, b, p, pq)); // Q outside AB
+        else if(pq.scalartriple(qc, qb) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside BC
     }
     else if(pq.scalartriple(pc, pa) > 0) // P outside CA
     {
         dist = segmentdistance(c, a, p, pq);
-        if(pq.scalartriple(qa, qc) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside CA
-        else if(pq.scalartriple(qb, qa) > 0) dist = min(dist, segmentdistance(a, b, p, pq)); // Q outside AB
+        if(pq.scalartriple(qb, qa) > 0) dist = min(dist, segmentdistance(a, b, p, pq)); // Q outside AB
         else if(pq.scalartriple(qc, qb) > 0) dist = min(dist, segmentdistance(b, c, p, pq)); // Q outside BC
+        else if(pq.scalartriple(qa, qc) <= 0) dist = min(dist, (float)fabs(n.dot(qa))/n.squaredlen()); // Q inside CA
     }
     else if(pq.scalartriple(qb, qa) > 0) dist = min(segmentdistance(a, b, p, pq), n.dot(pa)); // Q outside AB
     else if(pq.scalartriple(qc, qb) > 0) dist = min(segmentdistance(b, c, p, pq), n.dot(pa)); // Q outside BC

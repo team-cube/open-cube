@@ -177,7 +177,7 @@ struct decalrenderer
           decalu(0), decalv(0)
     {
     }
-    
+
     ~decalrenderer()
     {
         DELETEA(decals);
@@ -249,10 +249,10 @@ struct decalrenderer
         decalinfo *d = &decals[startdecal],
                   *end = &decals[enddecal < startdecal ? maxdecals : enddecal],
                   *cleared[NUMDB] = { NULL };
-        for(; d < end && d->millis <= threshold; d++) 
+        for(; d < end && d->millis <= threshold; d++)
             cleared[d->owner] = d;
         if(d >= end && enddecal < startdecal)
-            for(d = decals, end = &decals[enddecal]; d < end && d->millis <= threshold; d++) 
+            for(d = decals, end = &decals[enddecal]; d < end && d->millis <= threshold; d++)
                 cleared[d->owner] = d;
         startdecal = d - decals;
         if(startdecal == enddecal) loopi(NUMDB) verts[i].clear();

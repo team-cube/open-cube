@@ -2122,7 +2122,7 @@ static void genshadowmeshmapmodels(shadowmesh &m, int sides, shadowdrawinfo draw
         if(!(e.flags&EF_RENDER)) continue;
         e.flags &= ~EF_RENDER;
 
-        
+
         model *mm = loadmapmodel(e.attr1);
         if(!mm || !mm->shadow || mm->animated() || (mm->alphashadow && mm->alphatested())) continue;
 

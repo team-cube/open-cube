@@ -1252,7 +1252,7 @@ struct animmodel : model
 
     vector<part *> parts;
 
-    animmodel(const char *name) : model(name) 
+    animmodel(const char *name) : model(name)
     {
     }
 

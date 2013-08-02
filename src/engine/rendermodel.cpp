@@ -72,7 +72,7 @@ void mdltricollide(char *collide)
     DELETEA(loadingmodel->collidemodel);
     char *end = NULL;
     int val = strtol(collide, &end, 0);
-    if(*end) { val = 1; loadingmodel->collidemodel = newstring(collide); } 
+    if(*end) { val = 1; loadingmodel->collidemodel = newstring(collide); }
     loadingmodel->collide = val ? COLLIDE_TRI : COLLIDE_NONE;
 }
 
@@ -401,7 +401,7 @@ void preloadusedmapmodels(bool msg, bool bih)
             if(bih) m->preloadBIH();
             m->preloadmeshes();
             m->preloadshaders();
-            if(m->collidemodel && col.htfind(mmi.m->collidemodel) < 0) col.add(mmi.m->collidemodel);
+            if(m->collidemodel && col.htfind(m->collidemodel) < 0) col.add(m->collidemodel);
         }
     }
 
@@ -445,7 +445,7 @@ model *loadmodel(const char *name, int i, bool msg)
             DELETEP(m);
         }
         loadingmodel = NULL;
-        if(!m) 
+        if(!m)
         {
             failedmodels.add(newstring(name));
             return NULL;
@@ -475,7 +475,7 @@ void clearmodel(char *name)
         mapmodelinfo &mmi = mapmodels[i];
         if(mmi.m == m) mmi.m = NULL;
         if(mmi.collide == m) mmi.collide = NULL;
-    } 
+    }
     models.remove(name);
     m->cleanup();
     delete m;
