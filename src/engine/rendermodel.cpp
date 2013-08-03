@@ -399,6 +399,7 @@ void preloadusedmapmodels(bool msg, bool bih)
         else
         {
             if(bih) m->preloadBIH();
+            else if(m->collide == COLLIDE_TRI && !m->collidemodel && m->bih) m->setBIH();
             m->preloadmeshes();
             m->preloadshaders();
             if(m->collidemodel && col.htfind(m->collidemodel) < 0) col.add(m->collidemodel);

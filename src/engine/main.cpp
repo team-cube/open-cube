@@ -1200,7 +1200,9 @@ int main(int argc, char **argv)
         menuprocess();
         tryedit();
 
+        int gstart = SDL_GetTicks();
         if(lastmillis) game::updateworld();
+        //printf("world time: %f\n", (SDL_GetTicks() - gstart)/1000.0f);
 
         checksleep(lastmillis);
 

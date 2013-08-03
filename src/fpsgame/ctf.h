@@ -214,7 +214,7 @@ struct ctfclientmode : clientmode
             flag &f = flags[i];
             ivec o(vec(ci->state.o).mul(DMF));
             sendf(-1, 1, "ri7", N_DROPFLAG, ci->clientnum, i, ++f.version, o.x, o.y, o.z);
-            dropflag(i, o.tovec().div(DMF), lastmillis, dropper ? dropper->clientnum : ci->clientnum, dropper && dropper!=ci);
+            dropflag(i, vec(o).div(DMF), lastmillis, dropper ? dropper->clientnum : ci->clientnum, dropper && dropper!=ci);
         }
     }
 
