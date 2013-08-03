@@ -488,8 +488,8 @@ inline void BIH::tricollide<COLLIDE_ELLIPSE>(const mesh &m, const tri &t, physen
         zdir = vec(orient.c).mul(m.invscale*m.invscale*(radius.z - radius.x));
     if(trisegmentdistance(a, b, c, vec(center).sub(zdir), vec(center).add(zdir)) > m.invscale*m.invscale*radius.x*radius.x) return;
 
-    float pdist = (t.normal.dot(vec(center).sub(a)) - fabs(t.normal.dot(zdir)))*m.scale;
-    if(pdist <= dist) return;
+    float pdist = (t.normal.dot(vec(center).sub(a)) - fabs(t.normal.dot(zdir)))*m.scale - radius.x;
+    if(pdist > 0 || pdist <= dist) return;
 
     collideinside = true;
 
