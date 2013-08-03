@@ -396,7 +396,7 @@ static inline float trisegmentdistance(const vec &a, const vec &b, const vec &c,
     if(ap.dot(nab) < 0) // P outside AB
     {
         dist = segmentdistance(ab, pq, ap);
-        if(bq.dot(nab) < 0) dist = min(dist, segmentdistance(bc, pq, bp)); // Q outside BC
+        if(bq.dot(nbc) < 0) dist = min(dist, segmentdistance(bc, pq, bp)); // Q outside BC
         else if(aq.dot(nca) < 0) dist = min(dist, segmentdistance(pq, ca, cp)); // Q outside CA
         else if(aq.dot(nab) >= 0) dist = min(dist, dq*dq/n.squaredlen()); // Q inside AB
         else return dist;
@@ -497,7 +497,7 @@ inline void BIH::tricollide<COLLIDE_ELLIPSE>(const mesh &m, const tri &t, physen
 
     if(!dir.iszero())
     {
-        if(n.dot(dir) >= -cutoff) return;
+        if(n.dot(dir) >= -cutoff*dir.magnitude()) return;
         if(d->type==ENT_PLAYER &&
             pdist < (dir.z*n.z < 0 ?
                2*radius.z*(d->zmargin/(d->aboveeye+d->eyeheight)-(dir.z < 0 ? 1/3.0f : 1/4.0f)) :
@@ -531,7 +531,7 @@ inline void BIH::tricollide<COLLIDE_OBB>(const mesh &m, const tri &t, physent *d
 
     if(!dir.iszero())
     {
-        if(n.dot(dir) >= -cutoff) return;
+        if(n.dot(dir) >= -cutoff*dir.magnitude()) return;
         if(d->type==ENT_PLAYER &&
             pdist < (dir.z*n.z < 0 ?
                2*radius.z*(d->zmargin/(d->aboveeye+d->eyeheight)-(dir.z < 0 ? 1/3.0f : 1/4.0f)) :
@@ -671,7 +671,7 @@ bool BIH::boxcollide(physent *d, const vec &dir, float cutoff, const vec &o, int
 
     matrix3x3 drot;
     drot.setyaw(d->yaw*RAD);
-    vec ddir = drot.transform(dir).rescale(1);
+    vec ddir = drot.transform(dir);
 
     matrix3x4 dorient;
     dorient.mul(drot, drot.transform(center).neg(), orient);
