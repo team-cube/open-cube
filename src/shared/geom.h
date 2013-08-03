@@ -635,6 +635,13 @@ struct matrix3x3
         c.mul(1/c.magnitude());
     }
 
+    void scale(float k)
+    {
+        a.mul(k);
+        b.mul(k);
+        c.mul(k);
+    }
+
     void rotate(float angle, const vec &axis)
     {
         rotate(cosf(angle), sinf(angle), axis);

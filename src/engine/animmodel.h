@@ -1486,6 +1486,12 @@ struct animmodel : model
         center.add(radius);
     }
 
+    void calctransform(matrix3x4 &m)
+    {
+        initmatrix(m);
+        m.scale(scale);
+    }
+
     static bool enabletc, enablecullface, enablenormals, enabletangents, enablebones, enabledepthoffset;
     static float sizescale, transparent;
     static GLuint lastvbuf, lasttcbuf, lastnbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
