@@ -586,10 +586,11 @@ namespace UI
         #define DOSTATE(flags, func) \
             void func##children(float cx, float cy, int mask, bool inside, int setflags) \
             { \
-                if(!allowinput || px >= px2 || py >= py2) return; \
+                if(!allowinput || state&STATE_HIDDEN || px >= px2 || py >= py2) return; \
                 cx *= px2-px; cx += px - x; \
                 cy *= py2-py; cy += py - y; \
-                Object::func##children(cx, cy, mask, inside, setflags); \
+                if(!inside || (cx >= 0 && cy >= 0 && cx < w && cy < h)) \
+                    Object::func##children(cx, cy, mask, inside, setflags); \
             }
         DOSTATES
         #undef DOSTATE
@@ -2942,16 +2943,18 @@ namespace UI
                 if(hold) world->clearstate(hold);
                 if(world->setstate(action, cursorx, cursory, 0, true, action|hold)) return true;
             }
-            else if(!hold) return true;
-            else if(world->setstate(action, cursorx, cursory, hold, true, action))
+            else if(hold)
             {
+                if(world->setstate(action, cursorx, cursory, hold, true, action))
+                {
+                    world->clearstate(hold);
+                    return true;
+                }
                 world->clearstate(hold);
-                return true;
             }
-            else world->clearstate(hold);
-            return false;
+            return world->allowinput();
         }
-        return world->key(code, isdown);
+        return world->key(code, isdown) || world->allowinput();
     }
 
     bool textinput(const char *str, int len)
