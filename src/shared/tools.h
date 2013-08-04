@@ -771,7 +771,7 @@ template <class T> struct vector
         for(int i = 1; i < ulen; i++) if(htcmp(buf[i-1], buf[i])) \
         { \
             int n = i; \
-            while(++i < ulen) if(!htcmp(buf[i-1], buf[i])) { overwrite; n++; } \
+            while(++i < ulen) if(!htcmp(buf[n-1], buf[i])) { overwrite; n++; } \
             cleanup; \
             break; \
         }
