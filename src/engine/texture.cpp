@@ -3112,7 +3112,7 @@ void screenshot(char *filename)
             concatstring(buf, ssinfo);
         }
 
-        for(char *s = buf; *s; s++) if(iscubespace(*s)) *s = '-';
+        for(char *s = buf; *s; s++) if(iscubespace(*s) || *s == '/' || *s == '\\') *s = '-';
     }
     if(format < 0)
     {
