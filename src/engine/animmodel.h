@@ -4,6 +4,11 @@ VARP(glowmodels, 0, 1, 1);
 VARP(bumpmodels, 0, 1, 1);
 VARP(fullbrightmodels, 0, 0, 200);
 VAR(testtags, 0, 0, 1);
+VARF(dbgcollidemesh, 0, 0, 1,
+{
+    extern void cleanupmodels();
+    cleanupmodels();
+});
 
 struct animmodel : model
 {
@@ -412,7 +417,7 @@ struct animmodel : model
             loopv(meshes) \
             { \
                 type &name = *(type *)meshes[i]; \
-                if(name.canrender) { body; } \
+                if(name.canrender || dbgcollidemesh) { body; } \
             } \
         } while(0)
 
