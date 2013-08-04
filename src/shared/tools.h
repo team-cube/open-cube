@@ -329,8 +329,15 @@ struct packetbuf : ucharbuf
 template<class T>
 static inline float heapscore(const T &n) { return n; }
 
-template<class T>
-static inline bool compareless(const T &x, const T &y) { return x < y; }
+template<class T> struct sortless { static inline bool compare(const T &x, const T &y) { return x < y; } };
+template<> struct sortless<char *> { static inline bool compare(char *x, char *y) { return strcmp(x, y) < 0; } };
+template<> struct sortless<const char *> { static inline bool compare(const char *x, const char *y) { return strcmp(x, y) < 0; } };
+template<class T> static inline bool compareless(const T &x, const T &y) { return sortless<T>::compare(x, y); }
+
+template<class T> struct sortnameless { static inline bool compare(const T &x, const T &y) { return compareless(x.name, y.name); } };
+template<class T> struct sortnameless<T *> { static inline bool compare(T *x, T *y) { return compareless(x->name, y->name); } };
+template<class T> struct sortnameless<const T *> { static inline bool compare(const T *x, const T *y) { return compareless(x->name, y->name); } };
+template<class T> static inline bool comparenameless(const T &x, const T &y) { return sortnameless<T>::compare(x, y); }
 
 template<class T, class F>
 static inline void insertionsort(T *start, T *end, F fun)
@@ -359,7 +366,7 @@ static inline void insertionsort(T *buf, int n, F fun)
 template<class T>
 static inline void insertionsort(T *buf, int n)
 {
-    insertionsort(buf, buf+n, compareless<T>);
+    insertionsort(buf, buf+n, sortless<T>::compare);
 }
 
 template<class T, class F>
@@ -413,7 +420,7 @@ static inline void quicksort(T *buf, int n, F fun)
 template<class T>
 static inline void quicksort(T *buf, int n)
 {
-    quicksort(buf, buf+n, compareless<T>);
+    quicksort(buf, buf+n, sortless<T>::compare);
 }
 
 template<class T> struct isclass
@@ -567,8 +574,8 @@ template <class T> struct vector
     void shrink(int i) { ASSERT(i<=ulen); if(isclass<T>::no) ulen = i; else while(ulen>i) drop(); }
     void setsize(int i) { ASSERT(i<=ulen); ulen = i; }
 
-    void deletecontents() { while(!empty()) delete   pop(); }
-    void deletearrays() { while(!empty()) delete[] pop(); }
+    void deletecontents(int n = 0) { while(ulen > n) delete pop(); }
+    void deletearrays(int n = 0) { while(ulen > n) delete[] pop(); }
 
     T *getbuf() { return buf; }
     const T *getbuf() const { return buf; }
@@ -580,7 +587,8 @@ template <class T> struct vector
         quicksort(&buf[i], n < 0 ? ulen-i : n, fun);
     }
 
-    void sort() { sort(compareless<T>); }
+    void sort() { sort(sortless<T>::compare); }
+    void sortname() { sort(sortnameless<T>::compare); }
 
     void growbuf(int sz)
     {
@@ -754,6 +762,28 @@ template <class T> struct vector
         loopi(ulen) if(htcmp(key, buf[i])) return i;
         return -1;
     }
+
+    #define UNIQUE(overwrite, cleanup) \
+        for(int i = 1; i < ulen; i++) if(htcmp(buf[i-1], buf[i])) \
+        { \
+            int n = i; \
+            while(++i < ulen) if(!htcmp(buf[i-1], buf[i])) { overwrite; buf[n++] = buf[i]; } \
+            cleanup; \
+            break; \
+        }
+    void unique() // contents must be initially sorted
+    {
+        UNIQUE( , setsize(n)); 
+    }
+    void uniquedeletecontents()
+    {
+        UNIQUE(delete buf[n], deletecontents(n));
+    }
+    void uniquedeletearrays()
+    {
+        UNIQUE(delete[] buf[n], deletearrays(n));
+    }
+    #undef UNIQUE
 };
 
 template<class H, class E, class K, class T> struct hashbase
