@@ -2954,7 +2954,7 @@ namespace UI
             }
             return world->allowinput();
         }
-        return world->key(code, isdown) || world->allowinput();
+        return world->key(code, isdown);
     }
 
     bool textinput(const char *str, int len)
