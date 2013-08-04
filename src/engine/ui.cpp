@@ -2981,7 +2981,7 @@ namespace UI
     {
         readyeditors();
 
-        if(!(world->childstate&STATE_HOLD_MASK)) world->setstate(STATE_HOVER, cursorx, cursory);
+        world->setstate(STATE_HOVER, cursorx, cursory, world->childstate&STATE_HOLD_MASK);
         if(world->childstate&STATE_HOLD) world->setstate(STATE_HOLD, cursorx, cursory, STATE_HOLD, false);
         if(world->childstate&STATE_ALT_HOLD) world->setstate(STATE_ALT_HOLD, cursorx, cursory, STATE_ALT_HOLD, false);
         if(world->childstate&STATE_ESC_HOLD) world->setstate(STATE_ESC_HOLD, cursorx, cursory, STATE_ESC_HOLD, false);
