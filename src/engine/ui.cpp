@@ -1270,9 +1270,12 @@ namespace UI
 
         void draw(float sx, float sy)
         {
-            glBindTexture(GL_TEXTURE_2D, tex->id);
+            if(tex != notexture)
+            {
+                glBindTexture(GL_TEXTURE_2D, tex->id);
 
-            quad(sx, sy, w, h);
+                quad(sx, sy, w, h);
+            }
 
             Object::draw(sx, sy);
         }
@@ -1301,6 +1304,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            if(tex == notexture) { Object::draw(sx, sy); return; }
+
             glBindTexture(GL_TEXTURE_2D, tex->id);
 
             quad(sx, sy, w, h, cropx, cropy, cropw, croph);
@@ -1316,7 +1321,7 @@ namespace UI
 
         bool target(float cx, float cy)
         {
-            if(!(tex->type&Texture::ALPHA)) return false;
+            if(!(tex->type&Texture::ALPHA)) return true;
 
             float mx, my;
             if(w <= minw) mx = cx/w;
@@ -1333,6 +1338,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            if(tex == notexture) { Object::draw(sx, sy); return; }
+
             glBindTexture(GL_TEXTURE_2D, tex->id);
 
             gle::defvertex(2);
@@ -1391,7 +1398,7 @@ namespace UI
 
         bool target(float cx, float cy)
         {
-            if(!(tex->type&Texture::ALPHA)) return false;
+            if(!(tex->type&Texture::ALPHA)) return true;
 
             float mx, my;
             if(cx < screenborder) mx = cx/screenborder*texborder;
@@ -1406,6 +1413,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            if(tex == notexture) { Object::draw(sx, sy); return; }
+
             glBindTexture(GL_TEXTURE_2D, tex->id);
 
             gle::defvertex(2);
@@ -1460,13 +1469,15 @@ namespace UI
 
         bool target(float cx, float cy)
         {
-            if(!(tex->type&Texture::ALPHA)) return false;
+            if(!(tex->type&Texture::ALPHA)) return true;
 
             return checkalphamask(tex, fmod(cx/tilew, 1), fmod(cy/tileh, 1));
         }
 
         void draw(float sx, float sy)
         {
+            if(tex == notexture) { Object::draw(sx, sy); return; }
+
             glBindTexture(GL_TEXTURE_2D, tex->id);
 
             if(tex->clamp)
