@@ -777,7 +777,7 @@ template <class T> struct vector
         }
     void unique() // contents must be initially sorted
     {
-        UNIQUE( , setsize(n)); 
+        UNIQUE( , setsize(n));
     }
     void uniquedeletecontents()
     {

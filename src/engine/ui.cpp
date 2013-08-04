@@ -124,7 +124,9 @@ namespace UI
         STATE_ESC_RELEASE = 1<<9,
         STATE_SCROLL_UP   = 1<<10,
         STATE_SCROLL_DOWN = 1<<11,
-        STATE_HIDDEN      = 1<<12
+        STATE_HIDDEN      = 1<<12,
+
+        STATE_HOLD_MASK = STATE_HOLD | STATE_ALT_HOLD | STATE_ESC_HOLD
     };
 
     struct Object;
@@ -321,7 +323,8 @@ namespace UI
 
         void resetstate()
         {
-            state = childstate = 0;
+            state &= STATE_HOLD_MASK;
+            childstate &= STATE_HOLD_MASK;
         }
         void resetchildstate()
         {
@@ -346,26 +349,54 @@ namespace UI
             DOSTATE(STATE_SCROLL_UP, scrollup) \
             DOSTATE(STATE_SCROLL_DOWN, scrolldown)
 
-        bool setstate(int state, float cx, float cy)
+        bool setstate(int state, float cx, float cy, int mask = 0, bool inside = true, int setflags = 0)
         {
             switch(state)
             {
-            #define DOSTATE(flags, func) case flags: func##children(cx, cy); return haschildstate(flags);
+            #define DOSTATE(flags, func) case flags: func##children(cx, cy, mask, inside, setflags | flags); return haschildstate(flags);
             DOSTATES
             #undef DOSTATE
             }
             return false;
         }
 
-        #define DOSTATE(flags, func) \
-            virtual void func##children(float cx, float cy) \
+        void clearstate(int flags)
+        {
+            state &= ~flags;
+            if(childstate & flags)
+            {
+                loopchildren(o, { if((o->state | o->childstate) & flags) o->clearstate(flags); });
+                childstate &= ~flags;
+            }
+        }
+
+        #define propagatestate(o, cx, cy, mask, inside, body) \
+            loopchildrenrev(o, \
             { \
-                loopinchildrenrev(o, cx, cy, \
+                if(((o->state | o->childstate) & mask) != mask) continue; \
+                float o##x = cx - o->x; \
+                float o##y = cy - o->y; \
+                if(!inside) \
                 { \
-                    o->func##children(ox, oy); \
-                    childstate |= (o->state | o->childstate) & (flags); \
-                }, ); \
-                if(target(cx, cy)) state |= (flags); \
+                    o##x = clamp(o##x, 0.0f, o->w); \
+                    o##y = clamp(o##y, 0.0f, o->h); \
+                    body; \
+                } \
+                else if(o##x >= 0 && o##x < o->w && o##y >= 0 && o##y < o->h) \
+                { \
+                    body; \
+                } \
+            })
+
+        #define DOSTATE(flags, func) \
+            virtual void func##children(float cx, float cy, int mask, bool inside, int setflags) \
+            { \
+                propagatestate(o, cx, cy, mask, inside, \
+                { \
+                    o->func##children(ox, oy, mask, inside, setflags); \
+                    childstate |= (o->state | o->childstate) & (setflags); \
+                }); \
+                if(target(cx, cy)) state |= (setflags); \
                 func(cx, cy); \
             } \
             virtual void func(float cx, float cy) {}
@@ -496,6 +527,7 @@ namespace UI
         void show()
         {
             state |= STATE_HIDDEN;
+            clearstate(STATE_HOLD_MASK);
             if(onshow) execute(onshow);
         }
 
@@ -552,12 +584,12 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            void func##children(float cx, float cy) \
+            void func##children(float cx, float cy, int mask, bool inside, int setflags) \
             { \
                 if(!allowinput || px >= px2 || py >= py2) return; \
                 cx *= px2-px; cx += px - x; \
                 cy *= py2-py; cy += py - y; \
-                Object::func##children(cx, cy); \
+                Object::func##children(cx, cy, mask, inside, setflags); \
             }
         DOSTATES
         #undef DOSTATE
@@ -626,12 +658,13 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            void func##children(float cx, float cy) \
+            void func##children(float cx, float cy, int mask, bool inside, int setflags) \
             { \
                 loopwindowsrev(w, \
                 { \
-                    w->func##children(cx, cy); \
-                    int wflags = (w->state | w->childstate) & (flags); \
+                    if(((w->state | w->childstate) & mask) != mask) continue; \
+                    w->func##children(cx, cy, mask, inside, setflags); \
+                    int wflags = (w->state | w->childstate) & (setflags); \
                     if(wflags) { childstate |= wflags; break; } \
                 }); \
             }
@@ -1676,11 +1709,11 @@ namespace UI
         }
 
         #define DOSTATE(flags, func) \
-            void func##children(float cx, float cy) \
+            void func##children(float cx, float cy, int mask, bool inside, int setflags) \
             { \
                 cx += offsetx; \
                 cy += offsety; \
-                if(cx < virtw && cy < virth) Clipper::func##children(cx, cy); \
+                if(cx < virtw && cy < virth) Clipper::func##children(cx, cy, mask, inside, setflags); \
             }
         DOSTATES
         #undef DOSTATE
@@ -2893,7 +2926,7 @@ namespace UI
     bool keypress(int code, bool isdown)
     {
         if(world->rawkey(code, isdown)) return true;
-        int action = -1, hold = -1;
+        int action = 0, hold = 0;
         switch(code)
         {
         case -1: action = isdown ? STATE_PRESS : STATE_RELEASE; hold = STATE_HOLD; break;
@@ -2902,23 +2935,20 @@ namespace UI
         case -4: action = STATE_SCROLL_UP; break;
         case -5: action = STATE_SCROLL_DOWN; break;
         }
-        if(action >= 0)
+        if(action)
         {
             if(isdown)
             {
-                if(world->setstate(action, cursorx, cursory))
-                {
-                    if(hold >= 0) world->state |= hold;
-                    return true;
-                }
+                if(hold) world->clearstate(hold);
+                if(world->setstate(action, cursorx, cursory, 0, true, action|hold)) return true;
             }
-            else if(hold < 0) return true;
-            else if(world->state&hold)
+            else if(!hold) return true;
+            else if(world->setstate(action, cursorx, cursory, hold, true, action))
             {
-                world->setstate(action, cursorx, cursory);
-                world->state &= ~hold;
+                world->clearstate(hold);
                 return true;
             }
+            else world->clearstate(hold);
             return false;
         }
         return world->key(code, isdown);
@@ -2951,10 +2981,10 @@ namespace UI
     {
         readyeditors();
 
-        world->setstate(STATE_HOVER, cursorx, cursory);
-        if(world->state&STATE_HOLD) world->setstate(STATE_HOLD, cursorx, cursory);
-        if(world->state&STATE_ALT_HOLD) world->setstate(STATE_ALT_HOLD, cursorx, cursory);
-        if(world->state&STATE_ESC_HOLD) world->setstate(STATE_ESC_HOLD, cursorx, cursory);
+        if(!(world->childstate&STATE_HOLD_MASK)) world->setstate(STATE_HOVER, cursorx, cursory);
+        if(world->childstate&STATE_HOLD) world->setstate(STATE_HOLD, cursorx, cursory, STATE_HOLD, false);
+        if(world->childstate&STATE_ALT_HOLD) world->setstate(STATE_ALT_HOLD, cursorx, cursory, STATE_ALT_HOLD, false);
+        if(world->childstate&STATE_ESC_HOLD) world->setstate(STATE_ESC_HOLD, cursorx, cursory, STATE_ESC_HOLD, false);
 
         world->build();
 
