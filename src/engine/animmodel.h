@@ -1698,7 +1698,7 @@ template<class MDL, class MESH> struct modelcommands
         loopmeshes(meshname, m, m.noclip = *noclip!=0);
     }
 
-    static void settricollidemesh(char *meshname)
+    static void settricollide(char *meshname)
     {
         bool init = true;
         loopmeshes("*", m, { if(!m.cancollide) init = false; });
@@ -1738,7 +1738,7 @@ template<class MDL, class MESH> struct modelcommands
             modelcommand(setshader, "shader", "ss");
             modelcommand(setscroll, "scroll", "sff");
             modelcommand(setnoclip, "noclip", "si");
-            modelcommand(settricollidemesh, "tricollidemesh", "s"); 
+            modelcommand(settricollide, "tricollide", "s"); 
         }
         if(MDL::multiparted()) modelcommand(setlink, "link", "iisfff");
     }
