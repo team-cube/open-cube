@@ -68,7 +68,7 @@ extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, 
 extern int texalign(const void *data, int w, int bpp);
 extern bool floatformat(GLenum format);
 extern void cleanuptexture(Texture *t);
-extern void loadalphamask(Texture *t);
+extern uchar *loadalphamask(Texture *t);
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true, bool transient = false);
 extern void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapside &side);
 extern void loadshaders();

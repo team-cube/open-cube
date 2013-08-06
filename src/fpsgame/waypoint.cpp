@@ -39,20 +39,20 @@ namespace ai
         NUMWPCACHES
     };
 
-    struct wpcachenode
-    {
-        float split[2];
-        uint child[2];
-
-        int axis() const { return child[0]>>30; }
-        int childindex(int which) const { return child[which]&0x3FFFFFFF; }
-        bool isleaf(int which) const { return (child[1]&(1<<(30+which)))!=0; }
-    };
-
     struct wpcache
     {
-        vector<wpcachenode> nodes;
-        int firstwp, lastwp, maxdepth;
+        struct node
+        {
+            float split[2];
+            uint child[2];
+
+            int axis() const { return child[0]>>30; }
+            int childindex(int which) const { return child[which]&0x3FFFFFFF; }
+            bool isleaf(int which) const { return (child[1]&(1<<(30+which)))!=0; }
+        };
+
+        vector<node> nodes;
+        int firstwp, lastwp;
         vec bbmin, bbmax;
 
         wpcache() { clear(); }
@@ -61,12 +61,11 @@ namespace ai
         {
             nodes.setsize(0);
             firstwp = lastwp = -1;
-            maxdepth = -1;
             bbmin = vec(1e16f, 1e16f, 1e16f);
             bbmax = vec(-1e16f, -1e16f, -1e16f);
         }
 
-        void build(int first = -1, int last = -1)
+        void build(int first = 0, int last = -1)
         {
             if(last < 0) last = waypoints.length();
             vector<int> indices;
@@ -83,7 +82,7 @@ namespace ai
             build(indices.getbuf(), indices.length(), bbmin, bbmax);
         }
 
-        void build(int *indices, int numindices, const vec &vmin, const vec &vmax, int depth = 1)
+        void build(int *indices, int numindices, const vec &vmin, const vec &vmax)
         {
             int axis = 2;
             loopk(2) if(vmax[k] - vmin[k] > vmax[axis] - vmin[axis]) axis = k;
@@ -138,26 +137,24 @@ namespace ai
                 }
             }
 
-            int node = nodes.length();
-            nodes.add();
-            nodes[node].split[0] = splitleft;
-            nodes[node].split[1] = splitright;
+            int offset = nodes.length();
+            node &curnode = nodes.add();
+            curnode.split[0] = splitleft;
+            curnode.split[1] = splitright;
 
-            if(left<=1) nodes[node].child[0] = (axis<<30) | (left>0 ? indices[0] : 0x3FFFFFFF);
+            if(left<=1) curnode.child[0] = (axis<<30) | (left>0 ? indices[0] : 0x3FFFFFFF);
             else
             {
-                nodes[node].child[0] = (axis<<30) | (nodes.length()-node);
-                if(left) build(indices, left, leftmin, leftmax, depth+1);
+                curnode.child[0] = (axis<<30) | (nodes.length()-offset);
+                if(left) build(indices, left, leftmin, leftmax);
             }
 
-            if(numindices-right<=1) nodes[node].child[1] = (1<<31) | (left<=1 ? 1<<30 : 0) | (numindices-right>0 ? indices[right] : 0x3FFFFFFF);
+            if(numindices-right<=1) curnode.child[1] = (1<<31) | (left<=1 ? 1<<30 : 0) | (numindices-right>0 ? indices[right] : 0x3FFFFFFF);
             else
             {
-                nodes[node].child[1] = (left<=1 ? 1<<30 : 0) | (nodes.length()-node);
-                if(numindices-right) build(&indices[right], numindices-right, rightmin, rightmax, depth+1);
+                curnode.child[1] = (left<=1 ? 1<<30 : 0) | (nodes.length()-offset);
+                if(numindices-right) build(&indices[right], numindices-right, rightmin, rightmax);
             }
-
-            maxdepth = max(maxdepth, depth);
         }
     } wpcaches[NUMWPCACHES];
 
@@ -185,8 +182,8 @@ namespace ai
 
     void buildwpcache()
     {
-        loopi(NUMWPCACHES) if(wpcaches[i].maxdepth < 0)
-            wpcaches[i].build(i > 0 ? wpcaches[i-1].lastwp+1 : 1, i+1 >= NUMWPCACHES || wpcaches[i+1].maxdepth < 0 ? -1 : wpcaches[i+1].firstwp);
+        loopi(NUMWPCACHES) if(wpcaches[i].firstwp < 0)
+            wpcaches[i].build(i > 0 ? wpcaches[i-1].lastwp+1 : 1, i+1 >= NUMWPCACHES || wpcaches[i+1].firstwp < 0 ? -1 : wpcaches[i+1].firstwp);
         clearedwpcaches = 0;
         lastwpcache = waypoints.length();
 
@@ -196,11 +193,11 @@ namespace ai
 
     struct wpcachestack
     {
-        wpcachenode *node;
+        wpcache::node *node;
         float tmin, tmax;
     };
 
-    vector<wpcachenode *> wpcachestack;
+    vector<wpcache::node *> wpcachestack;
 
     int closestwaypoint(const vec &pos, float mindist, bool links, fpsent *d)
     {
@@ -217,7 +214,7 @@ namespace ai
             } \
         } while(0)
         int closest = -1;
-        wpcachenode *curnode;
+        wpcache::node *curnode;
         loop(which, NUMWPCACHES) for(curnode = &wpcaches[which].nodes[0], wpcachestack.setsize(0);;)
         {
             int axis = curnode->axis();
@@ -268,7 +265,7 @@ namespace ai
             float dist = w.o.squaredist(pos); \
             if(dist > mindist2 && dist < maxdist2) results.add(n); \
         } while(0)
-        wpcachenode *curnode;
+        wpcache::node *curnode;
         loop(which, NUMWPCACHES) for(curnode = &wpcaches[which].nodes[0], wpcachestack.setsize(0);;)
         {
             int axis = curnode->axis();
@@ -317,7 +314,7 @@ namespace ai
             const waypoint &w = ai::waypoints[n]; \
             if(w.o.squaredist(pos) < limit2) add(owner, above, n); \
         } while(0)
-        wpcachenode *curnode;
+        wpcache::node *curnode;
         loop(which, NUMWPCACHES) for(curnode = &wpcaches[which].nodes[0], wpcachestack.setsize(0);;)
         {
             int axis = curnode->axis();

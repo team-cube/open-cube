@@ -14,7 +14,7 @@ bool BIH::triintersect(const mesh &m, int tidx, const vec &mo, const vec &mray, 
     float f = r.dot(n)*m.scale;
     if(f < 0 || f > maxdist*adet || !adet) return false;
     float invdet = 1/adet;
-    if(m.flags&MESH_ALPHA && (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY && (m.tex->alphamask || (loadalphamask(m.tex), m.tex->alphamask)))
+    if(m.flags&MESH_ALPHA && (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY && (m.tex->alphamask || loadalphamask(m.tex)))
     {
         vec2 at = m.gettc(t.vert[0]), bt = m.gettc(t.vert[1]).sub(at).mul(v*invdet), ct = m.gettc(t.vert[2]).sub(at).mul(w*invdet);
         at.add(bt).add(ct);
@@ -145,8 +145,8 @@ void BIH::build(mesh &m, ushort *indices, int numindices, const ivec &vmin, cons
     int left, right;
     loopk(3)
     {
-        leftmin = rightmin = vec(INT_MAX, INT_MAX, INT_MAX);
-        leftmax = rightmax = vec(INT_MIN, INT_MIN, INT_MIN);
+        leftmin = rightmin = ivec(INT_MAX, INT_MAX, INT_MAX);
+        leftmax = rightmax = ivec(INT_MIN, INT_MIN, INT_MIN);
         int split = (vmax[axis] + vmin[axis])/2;
         for(left = 0, right = numindices, splitleft = SHRT_MIN, splitright = SHRT_MAX; left < right;)
         {
@@ -176,8 +176,8 @@ void BIH::build(mesh &m, ushort *indices, int numindices, const ivec &vmin, cons
 
     if(!left || right==numindices)
     {
-        leftmin = rightmin = vec(INT_MAX, INT_MAX, INT_MAX);
-        leftmax = rightmax = vec(INT_MIN, INT_MIN, INT_MIN);
+        leftmin = rightmin = ivec(INT_MAX, INT_MAX, INT_MAX);
+        leftmax = rightmax = ivec(INT_MIN, INT_MIN, INT_MIN);
         left = right = numindices/2;
         splitleft = SHRT_MIN;
         splitright = SHRT_MAX;
