@@ -106,6 +106,7 @@ const struct material
     {"noclip", MAT_NOCLIP},
     {"gameclip", MAT_GAMECLIP},
     {"death", MAT_DEATH},
+    {"nogi", MAT_NOGI},
     {"alpha", MAT_ALPHA}
 };
 
@@ -126,7 +127,7 @@ const char *findmaterialname(int mat)
 
 const char *getmaterialdesc(int mat, const char *prefix)
 {
-    static const ushort matmasks[] = { MATF_VOLUME|MATF_INDEX, MATF_CLIP, MAT_DEATH, MAT_ALPHA };
+    static const ushort matmasks[] = { MATF_VOLUME|MATF_INDEX, MATF_CLIP, MAT_DEATH, MAT_NOGI, MAT_ALPHA };
     static string desc;
     desc[0] = '\0';
     loopi(sizeof(matmasks)/sizeof(matmasks[0])) if(mat&matmasks[i])
@@ -172,7 +173,7 @@ void genmatsurfs(const cube &c, int cx, int cy, int cz, int size, vector<materia
 {
     loopi(6)
     {
-        static const ushort matmasks[] = { MATF_VOLUME|MATF_INDEX, MATF_CLIP, MAT_DEATH, MAT_ALPHA };
+        static const ushort matmasks[] = { MATF_VOLUME|MATF_INDEX, MATF_CLIP, MAT_DEATH, MAT_NOGI, MAT_ALPHA };
         loopj(sizeof(matmasks)/sizeof(matmasks[0]))
         {
             ushort matmask = matmasks[j];
@@ -493,6 +494,7 @@ void rendermatgrid()
                 case MAT_LAVA:     color = bvec(85, 40,  0); break; // orange
                 case MAT_GAMECLIP: color = bvec(85, 85,  0); break; // yellow
                 case MAT_DEATH:    color = bvec(40, 40, 40); break; // black
+                case MAT_NOGI:     color = bvec(40, 30,  0); break; // brown
                 case MAT_ALPHA:    color = bvec(85,  0, 85); break; // pink
                 default: continue;
             }
@@ -799,6 +801,7 @@ void rendereditmaterials()
                 case MAT_LAVA:     color = bvec(  0, 128, 255); break; // orange
                 case MAT_GAMECLIP: color = bvec(  0,   0, 255); break; // yellow
                 case MAT_DEATH:    color = bvec(192, 192, 192); break; // black
+                case MAT_NOGI:     color = bvec(128, 160, 255); break; // brown
                 case MAT_ALPHA:    color = bvec(  0, 255,   0); break; // pink
                 default: continue;
             }
