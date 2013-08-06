@@ -1133,12 +1133,6 @@ struct ivec
 
     ivec() {}
     ivec(const vec &v) : x(int(v.x)), y(int(v.y)), z(int(v.z)) {}
-    explicit ivec(int i)
-    {
-        x = ((i&1)>>0);
-        y = ((i&2)>>1);
-        z = ((i&4)>>2);
-    }
     ivec(int a, int b, int c) : x(a), y(b), z(c) {}
     ivec(int d, int row, int col, int depth)
     {
@@ -1146,12 +1140,7 @@ struct ivec
         v[C[d]] = col;
         v[D[d]] = depth;
     }
-    ivec(int i, int cx, int cy, int cz, int size)
-    {
-        x = cx+((i&1)>>0)*size;
-        y = cy+((i&2)>>1)*size;
-        z = cz+((i&4)>>2)*size;
-    }
+    ivec(int i, const ivec &co, int size) : x(co.x+((i&1)>>0)*size), y(co.y+((i&2)>>1)*size), z(co.z +((i&4)>>2)*size) {}
     explicit ivec(const ivec4 &v);
     explicit ivec(const ivec2 &v, int z = 0);
     explicit ivec(const usvec &v);

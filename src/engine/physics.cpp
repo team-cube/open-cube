@@ -17,7 +17,7 @@ static inline clipplanes &getclipplanes(const cube &c, const ivec &o, int size, 
     {
         p.owner = &c;
         p.version = clipcacheversion+offset;
-        genclipplanes(c, o.x, o.y, o.z, size, p, collide);
+        genclipplanes(c, o, size, p, collide);
     }
     return p;
 }
@@ -1069,7 +1069,7 @@ static inline bool octacollide(physent *d, const vec &dir, float cutoff, const i
     loopoctabox(cor, size, bo, bs)
     {
         if(c[i].ext && c[i].ext->ents) if(mmcollide(d, dir, cutoff, *c[i].ext->ents)) return true;
-        ivec o(i, cor.x, cor.y, cor.z, size);
+        ivec o(i, cor, size);
         if(c[i].children)
         {
             if(octacollide(d, dir, cutoff, bo, bs, c[i].children, o, size>>1)) return true;
