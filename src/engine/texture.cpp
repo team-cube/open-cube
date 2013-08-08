@@ -3080,12 +3080,12 @@ SVARP(screenshotdir, "screenshot");
 void screenshot(char *filename)
 {
     static string buf;
-    int format = -1;
+    int format = -1, dirlen = 0;
     copystring(buf, screenshotdir);
     if(screenshotdir[0])
     {
-        int len = strlen(buf);
-        if(buf[len] != '/' && buf[len] != '\\' && len+1 < (int)sizeof(buf)) { buf[len] = '/'; buf[len+1] = '\0'; }
+        dirlen = strlen(buf);
+        if(buf[dirlen] != '/' && buf[dirlen] != '\\' && dirlen+1 < (int)sizeof(buf)) { buf[dirlen++] = '/'; buf[dirlen] = '\0'; }
         const char *dir = findfile(buf, "w");
         if(!fileexists(dir, "w")) createdir(dir);
     }
@@ -3114,7 +3114,7 @@ void screenshot(char *filename)
             concatstring(buf, ssinfo);
         }
 
-        for(char *s = buf; *s; s++) if(iscubespace(*s) || *s == '/' || *s == '\\') *s = '-';
+        for(char *s = &buf[dirlen]; *s; s++) if(iscubespace(*s) || *s == '/' || *s == '\\') *s = '-';
     }
     if(format < 0)
     {
