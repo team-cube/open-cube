@@ -1,9 +1,8 @@
 Nieb's Personal Todo (Procrastination) List
    In order of Priority
-***************************************************************
+===============================================================
 MAP Complex ARENA
    MapModels
-      office chair
       copy paper box
       wall clock
       copy machine
@@ -12,8 +11,6 @@ MAP Complex ARENA
       garbage bin
       garbage can
       wall pictures
-         MC Escher? (are his works in public domain?)
-         clever quote?
       projector
       projector screen
       server rack
@@ -23,7 +20,7 @@ MAP Complex ARENA
 
 
 
-***************************************************************
+===============================================================
 Editing Menus
    Use F# keys for various menus
    Remove "Editing" from main menu?
@@ -134,7 +131,7 @@ Editing Menus
 
 
 
-***************************************************************
+===============================================================
 HUD Gun Models
    Rifle
       ...
@@ -144,19 +141,19 @@ HUD Gun Models
       for left-hand melee attack (or use gunbutt animation)
 
 
-***************************************************************
+===============================================================
 MAP Flagstone CTF
    Wild-West / Old Mine Theme
    New/Reworked layout
       accommodate new player movement speed
 
 
-***************************************************************
+===============================================================
 Player Model
    Anims?
 
 
-***************************************************************
+===============================================================
 MAP Shipwreck CTF
    Tropical Island / PirateShip Theme
    New layout
@@ -164,10 +161,12 @@ MAP Shipwreck CTF
       better balanced gameplay
 
 
-***************************************************************
+===============================================================
 MAP Turbine ARENA
    Desert Theme
-***************************************************************
+
+===============================================================
 MAP Ot ARENA
    Theme?
-***************************************************************
+
+===============================================================
