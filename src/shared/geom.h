@@ -196,6 +196,18 @@ struct vec
         t.project(*this).project(s);
     }
 
+    template<class T>
+    bool insidebb(const T &bbmin, const T &bbmax) const
+    {
+        return x >= bbmin.x && x <= bbmax.x && y >= bbmin.y && y <= bbmax.y && z >= bbmin.z && z <= bbmax.z;
+    }
+
+    template<class T, class U>
+    bool insidebb(const T &o, U size) const
+    {
+        return x >= o.x && x <= o.x + size && y >= o.y && y <= o.y + size && z >= o.z && z <= o.z + size;
+    }
+
     template<class T> float dist_to_bb(const T &min, const T &max) const
     {
         float sqrdist = 0;
