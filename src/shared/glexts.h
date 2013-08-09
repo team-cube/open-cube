@@ -609,6 +609,10 @@ typedef void (APIENTRYP PFNGLUNIFORMBLOCKBINDINGPROC) (GLuint program, GLuint un
 #define GL_R11F_G11F_B10F                 0x8C3A
 #define GL_COMPRESSED_RED                 0x8225
 #define GL_COMPRESSED_RG                  0x8226
+#define GL_QUERY_WAIT                     0x8E13
+#define GL_QUERY_NO_WAIT                  0x8E14
+#define GL_QUERY_BY_REGION_WAIT           0x8E15
+#define GL_QUERY_BY_REGION_NO_WAIT        0x8E16
 typedef void (APIENTRYP PFNGLBINDBUFFERRANGEPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void (APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
 typedef void (APIENTRYP PFNGLBINDFRAGDATALOCATIONPROC) (GLuint program, GLuint color, const GLchar *name);
@@ -617,6 +621,8 @@ typedef const GLubyte * (APIENTRYP PFNGLGETSTRINGIPROC) (GLenum name, GLuint ind
 typedef void (APIENTRYP PFNGLCOLORMASKIPROC) (GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 typedef void (APIENTRYP PFNGLENABLEIPROC) (GLenum target, GLuint index);
 typedef void (APIENTRYP PFNGLDISABLEIPROC) (GLenum target, GLuint index);
+typedef void (APIENTRYP PFNGLBEGINCONDITIONALRENDERNVPROC) (GLuint id, GLenum mode);
+typedef void (APIENTRYP PFNGLENDCONDITIONALRENDERNVPROC) (void);
 #elif GL_GLEXT_VERSION < 43
 typedef void (APIENTRYP PFNGLBINDBUFFERRANGEPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void (APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
@@ -629,6 +635,10 @@ extern PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_;
 extern PFNGLCOLORMASKIPROC glColorMaski_;
 extern PFNGLENABLEIPROC glEnablei_;
 extern PFNGLDISABLEIPROC glDisablei_;
+
+// GL_NV_conditional_render
+extern PFNGLBEGINCONDITIONALRENDERPROC glBeginConditionalRender_;
+extern PFNGLENDCONDITIONALRENDERPROC glEndConditionalRender_;
 
 #ifndef GL_VERSION_3_1
 #define GL_VERSION_3_1 1
@@ -672,6 +682,10 @@ extern PFNGLISVERTEXARRAYPROC      glIsVertexArray_;
 #define GL_TEXTURE_SWIZZLE_B              0x8E44
 #define GL_TEXTURE_SWIZZLE_A              0x8E45
 #define GL_TEXTURE_SWIZZLE_RGBA           0x8E46
+#endif
+
+#ifndef GL_ARB_occlusion_query2
+#define GL_ANY_SAMPLES_PASSED             0x8C2F
 #endif
 
 #ifndef GL_VERSION_4_0

@@ -2,7 +2,7 @@
 
 #include "engine.h"
 
-bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasDBT = false, hasDC = false, hasDBGO = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false;
+bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasDBT = false, hasDC = false, hasDBGO = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
 bool mesa = false, intel = false, ati = false, nvidia = false;
 
 int hasstencil = 0;
@@ -187,6 +187,10 @@ PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_ = NULL;
 PFNGLCOLORMASKIPROC glColorMaski_ = NULL;
 PFNGLENABLEIPROC    glEnablei_    = NULL;
 PFNGLDISABLEIPROC   glDisablei_   = NULL;
+
+// GL_NV_conditional_render
+PFNGLBEGINCONDITIONALRENDERPROC glBeginConditionalRender_ = NULL;
+PFNGLENDCONDITIONALRENDERPROC   glEndConditionalRender_   = NULL;
 
 // GL_ARB_uniform_buffer_object
 PFNGLGETUNIFORMINDICESPROC       glGetUniformIndices_       = NULL;
@@ -518,9 +522,13 @@ void gl_checkextensions()
         hasCBF = true;
 
         glColorMaski_ = (PFNGLCOLORMASKIPROC)getprocaddress("glColorMaski");
-        glEnablei_ =    (PFNGLENABLEIPROC)getprocaddress("glEnablei");
-        glDisablei_ =   (PFNGLENABLEIPROC)getprocaddress("glDisablei");
+        glEnablei_ =    (PFNGLENABLEIPROC)   getprocaddress("glEnablei");
+        glDisablei_ =   (PFNGLENABLEIPROC)   getprocaddress("glDisablei");
         hasDB2 = true;
+
+        glBeginConditionalRender_ = (PFNGLBEGINCONDITIONALRENDERPROC)getprocaddress("glBeginConditionalRender");
+        glEndConditionalRender_ =   (PFNGLENDCONDITIONALRENDERPROC)  getprocaddress("glEndConditionalRender");
+        hasCR = true;
     }
     else
     {
@@ -559,10 +567,17 @@ void gl_checkextensions()
         if(hasext("GL_EXT_draw_buffers2"))
         {
             glColorMaski_ = (PFNGLCOLORMASKIPROC)getprocaddress("glColorMaskIndexedEXT");
-            glEnablei_ =    (PFNGLENABLEIPROC)getprocaddress("glEnableIndexedEXT");
-            glDisablei_ =   (PFNGLENABLEIPROC)getprocaddress("glDisableIndexedEXT");
+            glEnablei_ =    (PFNGLENABLEIPROC)   getprocaddress("glEnableIndexedEXT");
+            glDisablei_ =   (PFNGLENABLEIPROC)   getprocaddress("glDisableIndexedEXT");
             hasDB2 = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_draw_buffers2 extension.");
+        }
+        if(hasext("GL_NV_conditional_render"))
+        {
+            glBeginConditionalRender_ = (PFNGLBEGINCONDITIONALRENDERPROC)getprocaddress("glBeginConditionalRenderNV");
+            glEndConditionalRender_ =   (PFNGLENDCONDITIONALRENDERPROC)  getprocaddress("glEndConditionalRenderNV");
+            hasCR = true;
+            if(dbgexts) conoutf(CON_INIT, "Using GL_NV_conditional_render extension.");
         }
     }
 
@@ -759,7 +774,7 @@ void gl_checkextensions()
 
     if(glversion >= 330)
     {
-        hasTSW = hasEAL = true;
+        hasTSW = hasEAL = hasOQ2 = true;
     }
     else
     {
@@ -772,6 +787,11 @@ void gl_checkextensions()
         {
             hasEAL = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_explicit_attrib_location extension.");
+        }
+        if(hasext("GL_ARB_occlusion_query2"))
+        {
+            hasOQ2 = true;
+            if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_occlusion_query2 extension.");
         }
     }
 
