@@ -8,7 +8,6 @@ MAP Complex ARENA
       copy machine
       desk
       fire extinguisher
-      garbage bin
       garbage can
       wall pictures
       projector
