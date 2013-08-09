@@ -423,6 +423,8 @@ void doscale()
 
 VARFP(glineardepth, 0, 0, 3, initwarning("g-buffer setup", INIT_LOAD, CHANGE_SHADERS));
 VAR(gdepthformat, 1, 0, 0);
+VARF(gstencil, 0, 0, 1, cleanupgbuffer());
+VARF(gdepthstencil, 0, 2, 2, cleanupgbuffer());
 VAR(ghasstencil, 1, 0, 0);
 VARFP(msaa, 0, 0, 16, initwarning("MSAA setup", INIT_LOAD, CHANGE_SHADERS));
 VARFP(csaa, 0, 0, 16, initwarning("MSAA setup", INIT_LOAD, CHANGE_SHADERS));
@@ -470,8 +472,6 @@ void initgbuffer()
         else msaamincolorsamples = msaasamples;
     }
 
-    ghasstencil = 0;
-
     int lineardepth = glineardepth;
     if(msaasamples)
     {
@@ -481,9 +481,7 @@ void initgbuffer()
             else if(!lineardepth) lineardepth = 1;
         }
         else if(msaalineardepth >= 0) lineardepth = msaalineardepth;
-        ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && lineardepth)) && hasDS ? 2 : (msaastencil ? 1 : 0);
     }
-    else ghasstencil = (gdepthstencil > 1 || (gdepthstencil && lineardepth)) && hasDS ? 2 : (gstencil ? 1 : 0);
 
     if(lineardepth > 1 && (!hasAFBO || !hasTF || !hasTRG)) gdepthformat = 1;
     else gdepthformat = lineardepth;
@@ -567,6 +565,7 @@ void setupmsbuffer(int w, int h)
 
     maskgbuffer("cngd");
 
+    ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && glineardepth)) && hasDS ? 2 : (msaastencil ? 1 : 0);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
     GLenum fixed = hasMSS && multisampledaa() ? GL_TRUE : GL_FALSE;
@@ -713,6 +712,7 @@ void setupgbuffer()
     gh = sh;
 
     hdrformat = gethdrformat(hdr ? hdrprec : 0);
+    ghasstencil = (gdepthstencil > 1 || (gdepthstencil && glineardepth)) && hasDS ? 2 : (gstencil ? 1 : 0);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
     if(msaasamples) setupmsbuffer(gw, gh);
@@ -833,8 +833,6 @@ void resolvemsaacolor(int w = vieww, int h = viewh)
     endtimer(resolvetimer);
 }
 
-VARF(gstencil, 0, 0, 1, cleanupgbuffer());
-VARF(gdepthstencil, 0, 2, 2, cleanupgbuffer());
 FVAR(bloomthreshold, 1e-3f, 0.8f, 1e3f);
 FVARP(bloomscale, 0, 1.0f, 1e3f);
 VARP(bloomblur, 0, 7, 7);
