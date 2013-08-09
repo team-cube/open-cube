@@ -532,9 +532,7 @@ void setupscreen()
         winw = desktopw;
         winh = desktoph;
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-#ifdef WIN32
         initwindowpos = true;
-#endif
     }
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
