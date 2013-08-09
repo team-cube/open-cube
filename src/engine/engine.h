@@ -410,10 +410,8 @@ extern void resetqueries();
 extern int getnumqueries();
 extern void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o);
 
-extern int foo;
-
-#define startquery(query) do { glBeginQuery_(foo ? GL_ANY_SAMPLES_PASSED :GL_SAMPLES_PASSED, ((occludequery *)(query))->id); } while(0)
-#define endquery(query) do { glEndQuery_(foo ? GL_ANY_SAMPLES_PASSED : GL_SAMPLES_PASSED); } while(0)
+#define startquery(query) do { glBeginQuery_(GL_SAMPLES_PASSED, ((occludequery *)(query))->id); } while(0)
+#define endquery(query) do { glEndQuery_(GL_SAMPLES_PASSED); } while(0)
 
 struct shadowmesh;
 extern void clearshadowmeshes();
