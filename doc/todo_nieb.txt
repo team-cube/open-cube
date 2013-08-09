@@ -18,12 +18,17 @@ MAP Complex ARENA
       conference table?
 
 
-
 ===============================================================
-Editing Menus
-   Use F# keys for various menus
-   Remove "Editing" from main menu?
-   Show highlighted commands in all menus to help wean users away from menus and towards using console
+UI Stuff
+
+   EditHUD rework...
+
+   Tinker with stdui, develop theme & functionality...
+
+   Main menus...
+
+   F# Edit Menus
+      *Show highlighted commands in all menus to help wean users away from menus and towards using console
       F1  "Create/Modify Entity"
              Create if no entities are selected
                 *Entdrop Settings
@@ -55,9 +60,9 @@ Editing Menus
              
 
       F2  "Texture List"
-             2 tabs
-                tab with only textures listed in texturereset
-                tab with only textures used in map, including vslot textures
+             tab - only textures listed in texturereset
+             tab - only textures used in map, including vslot textures
+             tab - Find and Replace?
 
       F3  "Add Mapmodel"
              ...
@@ -129,7 +134,6 @@ Editing Menus
       F12 "Screenshot"
 
 
-
 ===============================================================
 HUD Gun Models
    Rifle
@@ -164,8 +168,10 @@ MAP Shipwreck CTF
 MAP Turbine ARENA
    Desert Theme
 
+
 ===============================================================
 MAP Ot ARENA
    Theme?
+
 
 ===============================================================
