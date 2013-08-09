@@ -693,8 +693,18 @@ extern PFNGLISVERTEXARRAYPROC      glIsVertexArray_;
 #define GL_SAMPLE_SHADING                 0x8C36
 #define GL_MIN_SAMPLE_SHADING_VALUE       0x8C37
 typedef void (APIENTRYP PFNGLMINSAMPLESHADINGPROC) (GLfloat value);
+typedef void (APIENTRYP PFNGLBLENDEQUATIONIPROC) (GLuint buf, GLenum mode);
+typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEIPROC) (GLuint buf, GLenum modeRGB, GLenum modeAlpha);
+typedef void (APIENTRYP PFNGLBLENDFUNCIPROC) (GLuint buf, GLenum src, GLenum dst);
+typedef void (APIENTRYP PFNGLBLENDFUNCSEPARATEIPROC) (GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
 #endif
 
 // GL_ARB_sample_shading
 extern PFNGLMINSAMPLESHADINGPROC glMinSampleShading_;
+
+// GL_ARB_draw_buffers_blend
+extern PFNGLBLENDEQUATIONIPROC glBlendEquationi_;
+extern PFNGLBLENDEQUATIONSEPARATEIPROC glBlendEquationSeparatei_;
+extern PFNGLBLENDFUNCIPROC glBlendFunci_;
+extern PFNGLBLENDFUNCSEPARATEIPROC glBlendFuncSeparatei_;
 
