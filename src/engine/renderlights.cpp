@@ -1404,6 +1404,8 @@ void viewrh()
 
 PackNode shadowatlaspacker(0, 0, SHADOWATLAS_SIZE, SHADOWATLAS_SIZE);
 
+extern int smminradius;
+
 struct lightinfo
 {
     float sx1, sy1, sx2, sy2, sz1, sz2;
@@ -1430,6 +1432,8 @@ struct lightinfo
         spotx.rescale(spotscale);
         spoty.rescale(spotscale);
     }
+
+    bool noshadow() const { return flags&L_NOSHADOW || radius <= smminradius; }
 };
 
 struct shadowcachekey
@@ -2123,6 +2127,8 @@ static inline bool sortlights(int x, int y)
     const lightinfo &xl = lights[x], &yl = lights[y];
     if(!xl.spot) { if(yl.spot) return true; }
     else if(!yl.spot) return false;
+    if(!xl.noshadow()) { if(yl.noshadow()) return true; }
+    else if(!yl.noshadow()) return false;
     if(xl.sz1 < yl.sz1) return true;
     else if(xl.sz1 > yl.sz1) return false;
     return xl.dist - xl.radius < yl.dist - yl.radius;
@@ -2247,7 +2253,6 @@ VAR(batchsunlight, 0, 1, 1);
 FVAR(lightradiustweak, 1, 1.11f, 2);
 
 VAR(lighttilestrip, 0, 1, 1);
-VAR(lighttilestripthreshold, 1, 8, 8);
 
 static inline void lightquad(float z = -1)
 {
@@ -2519,7 +2524,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             {
                 int n = min(tile.length() - i, lighttilebatch);
                 bool shadowmap = false, spotlight = false;
-                if(n > 0)
+                if(n)
                 {
                     lightinfo &l = lights[tile[i]];
                     shadowmap = l.shadowmap >= 0;
@@ -2532,20 +2537,22 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                 }
 
                 int striplength = 1;
-                if(lighttilestrip && n >= min(min(lighttilebatch, lighttilestripthreshold), tile.length() - i))
+                if(lighttilestrip) for(int k = x+1; k < btx2; k++)
                 {
-                    for(int k = x+1; k < btx2; k++)
+                    if(skips[k] != i || (tilemask && !(tilemask[y]&(1<<k)))) break;
+                    vector<int> &striptile = lighttiles[y][k];
+                    if(n)
                     {
-                        vector<int> &striptile = lighttiles[y][k];
-                        if((tilemask && !(tilemask[y]&(1<<k))) ||
-                           skips[k] != i ||
-                           striptile.length() < i+n ||
-                           (n > 0 && memcmp(&tile[i], &striptile[i], n*sizeof(int))) ||
-                           n < min(min(lighttilebatch, lighttilestripthreshold), striptile.length()-i))
-                            break;
-                        skips[k] = max(i+n, 1);
-                        striplength++;
+                        if(striptile.length() < i+n || memcmp(&tile[i], &striptile[i], n*sizeof(int))) break;
+                        else if(n < lighttilebatch && striptile.length() > i+n)
+                        {
+                            lightinfo &l = lights[striptile[i+n]];
+                            if((l.shadowmap >= 0) == shadowmap && (l.spot > 0) == spotlight) break;
+                        }
                     }
+                    else if(striptile.length()) break;
+                    skips[k] = max(i+n, 1);
+                    striplength++;
                 }
 
                 float sx1 = 1, sy1 = 1, sx2 = -1, sy2 = -1, sz1 = 1, sz2 = -1;
@@ -2779,7 +2786,7 @@ void collectlights()
     {
         int idx = lightorder[i];
         lightinfo &l = lights[idx];
-        if(l.flags&L_NOSHADOW || l.radius <= smminradius || l.radius >= worldsize) continue;
+        if(l.noshadow() || l.radius >= worldsize) continue;
         vec bbmin, bbmax;
         if(l.spot > 0)
         {
@@ -2842,7 +2849,7 @@ void packlights()
     {
         int idx = lightorder[i];
         lightinfo &l = lights[idx];
-        if(l.flags&L_NOSHADOW || l.radius <= smminradius) continue;
+        if(l.noshadow()) continue;
         if(l.query && l.query->owner == &l && checkquery(l.query)) continue;
 
         float prec = smprec, lod;
@@ -2875,7 +2882,7 @@ void packlights()
         lightinfo &l = lights[idx];
         if(l.shadowmap >= 0) continue;
 
-        if(!(l.flags&L_NOSHADOW) && !smnoshadow && l.radius > smminradius)
+        if(!l.noshadow() && !smnoshadow)
         {
             if(l.query && l.query->owner == &l && checkquery(l.query)) { lightsoccluded++; continue; }
             float prec = smprec, lod;
