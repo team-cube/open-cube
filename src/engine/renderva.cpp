@@ -1687,6 +1687,7 @@ void rendergeom()
             va->query = NULL;
             va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
             if(va->occluded >= OCCLUDE_GEOM) continue;
+            blends += va->blends;
             renderva(cur, va, RENDERPASS_GBUFFER);
         }
         if(geombatches.length()) renderbatches(cur, RENDERPASS_GBUFFER);
