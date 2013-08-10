@@ -565,7 +565,7 @@ void setupmsbuffer(int w, int h)
 
     maskgbuffer("cngd");
 
-    ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && glineardepth)) && hasDS ? 2 : (msaastencil ? 1 : 0);
+    ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
     GLenum fixed = hasMSS && multisampledaa() ? GL_TRUE : GL_FALSE;
@@ -712,7 +712,7 @@ void setupgbuffer()
     gh = sh;
 
     hdrformat = gethdrformat(hdr ? hdrprec : 0);
-    ghasstencil = (gdepthstencil > 1 || (gdepthstencil && glineardepth)) && hasDS ? 2 : (gstencil ? 1 : 0);
+    ghasstencil = (gdepthstencil > 1 || (gdepthstencil && gdepthformat)) && hasDS ? 2 : (gstencil ? 1 : 0);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
     if(msaasamples) setupmsbuffer(gw, gh);
@@ -727,7 +727,7 @@ void setupgbuffer()
         glRenderbufferStorage_(GL_RENDERBUFFER, ghasstencil > 1 ? stencilformat : GL_DEPTH_COMPONENT, gw, gh);
         glBindRenderbuffer_(GL_RENDERBUFFER, 0);
     }
-    if(!msaasamples || ghasstencil == 1)
+    if(!msaasamples && ghasstencil == 1)
     {
         if(!gstencilrb) glGenRenderbuffers_(1, &gstencilrb);
         glBindRenderbuffer_(GL_RENDERBUFFER, gstencilrb);
@@ -1640,7 +1640,7 @@ struct lightbatch
     }
 };
 
-static inline bool hthash(const lightbatch *l)
+static inline uint hthash(const lightbatch *l)
 {
     uint h = 0;
     loopv(l->lights) h = ((h<<8)+h)^l->lights[i];
@@ -2316,8 +2316,6 @@ static inline void lightquad(float z, float sx1, float sy1, float sx2, float sy2
     gle::attribf(sx1, sy1, z);
 }
 
-VAR(numlightbatches, 1, 0, 0);
- 
 void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 = 1, const uint *tilemask = NULL, int stencilmask = 0, int msaapass = 0)
 {
     Shader *s = drawtex == DRAWTEX_MINIMAP ? deferredminimapshader : (msaapass <= 0 ? deferredlightshader : (msaapass > 1 ? deferredmsaasampleshader : deferredmsaapixelshader));
@@ -2430,8 +2428,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     lightmatrix.identity();
     GLOBALPARAM(lightmatrix, lightmatrix);
 
-    numlightbatches = lightbatches.length();
- 
     if(sunpass)
     {
         int tx1 = max(int(floor((bsx1*0.5f+0.5f)*vieww)), 0), ty1 = max(int(floor((bsy1*0.5f+0.5f)*viewh)), 0),
@@ -2886,6 +2882,7 @@ static inline void addlighttiles(const lightinfo &l, int idx)
 
 VAR(lightsvisible, 1, 0, 0);
 VAR(lightsoccluded, 1, 0, 0);
+VARN(lightbatches, lightbatchesused, 1, 0, 0);
 
 void packlights()
 {
@@ -2983,6 +2980,7 @@ void packlights()
             if(lighttilestrip) prevbatch = batch;
         }
     }    
+    lightbatchesused = lightbatches.length();
 }
 
 static inline void nogiquad(int x, int y, int w, int h)

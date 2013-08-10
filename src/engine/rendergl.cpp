@@ -876,9 +876,6 @@ void gl_checkextensions()
     }
     else if(intel)
     {
-#ifdef WIN32
-        gdepthstencil = 0; // workaround for buggy stencil on windows ivy bridge driver
-#endif
         glineardepth = 1; // causes massive slowdown in windows driver (and sometimes in linux driver) if not using linear depth
         lighttilebatch = 4;
         if(mesa) batchsunlight = 0; // causes massive slowdown in linux driver
