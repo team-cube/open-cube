@@ -125,7 +125,7 @@ void setmapfilenames(const char *fname, const char *cname = 0)
     if(savebak==1) formatstring(bakname, "media/%s.BAK", mapname);
     else formatstring(bakname, "media/%s_%d.BAK", mapname, totalmillis);
     formatstring(cfgname, "media/%s/%s.cfg", pakname, mcfgname);
-    formatstring(picname, "media/%s.jpg", mapname);
+    formatstring(picname, "media/%s.png", mapname);
 
     path(ogzname);
     path(bakname);

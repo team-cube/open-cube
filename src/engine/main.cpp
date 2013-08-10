@@ -234,8 +234,6 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
                 pophudmatrix();
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }
-            settexture("media/interface/mapshot_frame.png", 3);
-            bgquad(x, y, sz, sz);
             if(mapname)
             {
                 float tw = text_widthf(mapname),
