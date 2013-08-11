@@ -1177,11 +1177,11 @@ void computezoom()
     }
 }
 
-FVARP(zoomsens, 1e-3f, 1, 1000);
+FVARP(zoomsens, 1e-4f, 1, 1e4f);
 FVARP(zoomaccel, 0, 0, 1000);
 VARP(zoomautosens, 0, 1, 1);
-FVARP(sensitivity, 1e-3f, 3, 1000);
-FVARP(sensitivityscale, 1e-3f, 1, 1000);
+FVARP(sensitivity, 1e-4f, 3, 1e4f);
+FVARP(sensitivityscale, 1e-4f, 100, 1e4f);
 VARP(invmouse, 0, 0, 1);
 FVARP(mouseaccel, 0, 0, 1000);
 
@@ -1220,7 +1220,7 @@ void mousemove(int dx, int dy)
         }
     }
     if(curaccel && curtime && (dx || dy)) cursens += curaccel * sqrtf(dx*dx + dy*dy)/curtime;
-    cursens /= 100.0f*sensitivityscale;
+    cursens /= sensitivityscale;
     camera1->yaw += dx*cursens;
     camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
     fixcamerarange();

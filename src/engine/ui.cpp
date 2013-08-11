@@ -2894,7 +2894,7 @@ namespace UI
     ICOMMAND(uivslotview, "iffe", (int *index, float *minw, float *minh, uint *children),
         BUILD(VSlotViewer, o, o->setup(*index, *minw, *minh), children));
 
-    FVAR(uisensitivity, 1e-3f, 1, 1e3f);
+    FVAR(uisensitivity, 1e-4f, 1, 1e4f);
 
     bool hascursor()
     {
