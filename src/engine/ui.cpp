@@ -135,9 +135,12 @@ namespace UI
     static int buildchild = -1;
 
     #define BUILD(type, o, setup, contents) do { \
-        type *o = buildparent->buildtype<type>(); \
-        setup; \
-        o->buildchildren(contents); \
+        if(buildparent) \
+        { \
+            type *o = buildparent->buildtype<type>(); \
+            setup; \
+            o->buildchildren(contents); \
+        } \
     } while(0)
 
     struct Object
@@ -954,9 +957,12 @@ namespace UI
     };
 
     #define BUILDCOLUMNS(type, o, setup, columndata, contents) do { \
-        type *o = buildparent->buildtype<type>(); \
-        setup; \
-        o->buildchildren(columndata, contents); \
+        if(buildparent) \
+        { \
+            type *o = buildparent->buildtype<type>(); \
+            setup; \
+            o->buildchildren(columndata, contents); \
+        } \
     } while(0)
 
     struct Table : Object
