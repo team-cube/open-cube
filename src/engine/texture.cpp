@@ -2211,27 +2211,6 @@ Texture *loadthumbnail(Slot &slot)
 
 // environment mapped reflections
 
-void forcecubemapload(GLuint tex)
-{
-    extern int ati_cubemap_bug;
-    if(!ati_cubemap_bug || !tex) return;
-
-    SETSHADER(forcecubemap);
-
-    GLenum depthtest = glIsEnabled(GL_DEPTH_TEST), blend = glIsEnabled(GL_BLEND);
-    if(depthtest) glDisable(GL_DEPTH_TEST);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
-    if(!blend) glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    gle::defvertex();
-    gle::begin(GL_TRIANGLES);
-    loopi(3) gle::attribf(0, 0, 0);
-    gle::end();
-    gle::disable();
-    if(!blend) glDisable(GL_BLEND);
-    if(depthtest) glEnable(GL_DEPTH_TEST);
-}
-
 extern const cubemapside cubemapsides[6] =
 {
     { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "lf", false, true,  true  },
@@ -2351,7 +2330,6 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
             createtexture(!i ? t->id : 0, t->w, t->h, s.data, 3, mipit ? 2 : 1, component, side.target, s.w, s.h, s.pitch, false, format, true);
         }
     }
-    forcecubemapload(t->id);
     return t;
 }
 
@@ -2452,7 +2430,6 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur)
     glViewport(0, 0, screenw, screenh);
     delete[] pixels;
     clientkeepalive();
-    forcecubemapload(tex);
     return tex;
 }
 
