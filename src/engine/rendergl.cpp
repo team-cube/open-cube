@@ -1220,7 +1220,7 @@ void mousemove(int dx, int dy)
         }
     }
     if(curaccel && curtime && (dx || dy)) cursens += curaccel * sqrtf(dx*dx + dy*dy)/curtime;
-    cursens /= 33.0f*sensitivityscale;
+    cursens /= 100.0f*sensitivityscale;
     camera1->yaw += dx*cursens;
     camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
     fixcamerarange();
