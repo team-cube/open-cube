@@ -3,7 +3,6 @@ Nieb's Personal Todo (Procrastination) List
 ===============================================================
 MAP Complex ARENA
    MapModels
-      copy paper box
       wall clock
       copy machine
       fire extinguisher
