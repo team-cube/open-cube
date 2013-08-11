@@ -6,7 +6,6 @@ MAP Complex ARENA
       copy paper box
       wall clock
       copy machine
-      desk
       fire extinguisher
       garbage can
       wall pictures
