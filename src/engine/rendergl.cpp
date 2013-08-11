@@ -865,7 +865,7 @@ void gl_checkextensions()
     if(ati)
     {
         //conoutf(CON_WARN, "WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
-        msaalineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
+        msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
         msaadepthstencil = gdepthstencil = 1; // some older ATI GPUs do not support reading from depth-stencil textures, so only use depth-stencil renderbuffer for now
         if(checkseries(renderer, "Radeon HD", 4000, 5199)) ati_pf_bug = 1;
         // On Catalyst 10.2, issuing an occlusion query on the first draw using a given cubemap texture causes a nasty crash
