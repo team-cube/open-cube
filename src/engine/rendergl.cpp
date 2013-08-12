@@ -2256,7 +2256,7 @@ void gl_drawmainmenu()
         glViewport(0, 0, hudw, hudh);
         glClear(GL_COLOR_BUFFER_BIT);
     }
-    renderbackground(NULL, NULL, NULL, NULL, true, true);
+    renderbackground(NULL, NULL, NULL, NULL, true);
 }
 
 VARNP(damagecompass, usedamagecompass, 0, 1, 1);

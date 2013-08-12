@@ -2427,7 +2427,7 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur)
         createtexture(tex, texsize, texsize, dst, 3, 2, GL_RGB5, side.target);
     }
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-    glViewport(hudx, hudy, hudw, hudh);
+    glViewport(0, 0, hudw, hudh);
     delete[] pixels;
     clientkeepalive();
     return tex;

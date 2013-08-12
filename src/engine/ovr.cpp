@@ -90,8 +90,7 @@ namespace ovr
 
     void update()
     {
-        if(!ovr::enabled) return;
-
+        if(!enabled) return;
         float lastyaw = yaw, lastpitch = pitch;
         getorient();
         modifyorient(yaw - lastyaw, pitch - lastpitch);

@@ -498,6 +498,7 @@ namespace UI
         uint *contents, *onshow, *onhide;
         bool allowinput;
         float px, py, px2, py2;
+        vec2 sscale, soffset;
 
         Window(const char *name, const char *contents, const char *onshow, const char *onhide, bool allowinput = true) :
             name(newstring(name)),
@@ -505,7 +506,8 @@ namespace UI
             onshow(onshow && onshow[0] ? compilecode(onshow) : NULL),
             onhide(onhide && onhide[0] ? compilecode(onhide) : NULL),
             allowinput(allowinput),
-            px(0), py(0), px2(0), py2(0)
+            px(0), py(0), px2(0), py2(0),
+            sscale(1, 1), soffset(0, 0)
         {
         }
         ~Window()
@@ -554,7 +556,6 @@ namespace UI
             window = this;
 
             projection();
-            resethudmatrix();
             hudshader->set();
 
             glEnable(GL_BLEND);
@@ -613,14 +614,19 @@ namespace UI
             py = (sy - 0.5f)*scale + 0.5f;
             py2 = (sy + sh - 0.5f)*scale + 0.5f;
             hudmatrix.ortho(px, px2, py2, py, -1, 1);
+            resethudmatrix();
+            sscale = vec2(hudmatrix.a.x, hudmatrix.b.y).mul(0.5f);
+            soffset = vec2(hudmatrix.d.x, hudmatrix.d.y).mul(0.5f).add(0.5f);
         }
 
         void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
         {
-            sx1 = clamp(int(floor((x1-px)/(px2-px)*hudw)), 0, hudw);
-            sy1 = clamp(int(floor(hudh - (y2-py)/(py2-py)*hudh)), 0, hudh);
-            sx2 = clamp(int(ceil((x2-px)/(px2-px)*hudw)), 0, hudw);
-            sy2 = clamp(int(ceil(hudh - (y1-py)/(py2-py)*hudh)), 0, hudh);
+            vec2 s1 = vec2(x1, y2).mul(sscale).add(soffset),
+                 s2 = vec2(x2, y1).mul(sscale).add(soffset);
+            sx1 = clamp(int(floor(s1.x*hudw)), 0, hudw);
+            sy1 = clamp(int(floor(s1.y*hudh)), 0, hudh);
+            sx2 = clamp(int(ceil(s2.x*hudw)), 0, hudw);
+            sy2 = clamp(int(ceil(s2.y*hudh)), 0, hudh);
         }
     };
 
