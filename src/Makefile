@@ -2,6 +2,7 @@ CXXFLAGS= -O3 -fomit-frame-pointer
 override CXXFLAGS+= -Wall -fsigned-char -fno-exceptions -fno-rtti
 
 PLATFORM= $(shell uname -s)
+PLATFORM_ARCH= $(shell uname -m)
 PLATFORM_PREFIX= native
 
 INCLUDES= -Ishared -Iengine -Ifpsgame -Ienet/include
@@ -55,11 +56,20 @@ CLIENT_LIBS= -Lenet/.libs -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lS
 endif
 ifeq ($(PLATFORM),Linux)
 CLIENT_LIBS+= -lrt
+	ifneq (,$(OVR))
+		CLIENT_INCLUDES+= -ILibOVR/Include -DHAS_OVR=1
+		ifneq (,$(findstring 64,$(PLATFORM_ARCH)))
+			CLIENT_LIBS+= -LLibOVR/Lib/Linux/Release/x86_64 -lovr -ludev -lXinerama
+		else
+			CLIENT_LIBS+= -LLibOVR/Lib/Linux/Release/i386 -lovr -ludev -lXinerama
+		endif
+	endif
 else
 ifneq (,$(findstring GNU,$(PLATFORM))) 
 CLIENT_LIBS+= -lrt 
 endif 
 endif
+
 CLIENT_OBJS= \
 	shared/crypto.o \
 	shared/geom.o \
@@ -85,6 +95,7 @@ CLIENT_OBJS= \
 	engine/octa.o \
 	engine/octaedit.o \
 	engine/octarender.o \
+	engine/ovr.o \
 	engine/physics.o \
 	engine/pvs.o \
 	engine/rendergl.o \
@@ -328,6 +339,10 @@ engine/octarender.o: shared/glexts.h shared/glemu.h shared/iengine.h
 engine/octarender.o: shared/igame.h engine/world.h engine/octa.h
 engine/octarender.o: engine/light.h engine/texture.h engine/bih.h
 engine/octarender.o: engine/model.h
+engine/ovr.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
+engine/ovr.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+engine/ovr.o: shared/iengine.h shared/igame.h engine/world.h engine/octa.h
+engine/ovr.o: engine/light.h engine/texture.h engine/bih.h engine/model.h
 engine/physics.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/physics.o: shared/ents.h shared/command.h shared/glexts.h
 engine/physics.o: shared/glemu.h shared/iengine.h shared/igame.h

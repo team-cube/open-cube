@@ -76,6 +76,9 @@
     <ClCompile Include="..\engine\octarender.cpp">
       <Filter>engine</Filter>
     </ClCompile>
+    <ClCompile Include="..\engine\ovr.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
     <ClCompile Include="..\fpsgame\pch.cpp">
       <Filter>fpsgame</Filter>
     </ClCompile>

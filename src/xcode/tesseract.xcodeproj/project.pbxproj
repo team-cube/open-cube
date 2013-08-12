@@ -31,6 +31,7 @@
 		B9AC7AE10D06DB44005506F8 /* octa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A960D06DB44005506F8 /* octa.cpp */; };
 		B9AC7AE30D06DB44005506F8 /* octaedit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A980D06DB44005506F8 /* octaedit.cpp */; };
 		B9AC7AE40D06DB44005506F8 /* octarender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A990D06DB44005506F8 /* octarender.cpp */; };
+		B9AC7AE40D06DB44005506F8 /* ovr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A990D06DB44005506F8 /* ovr.cpp */; };
 		B9AC7AE50D06DB44005506F8 /* physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9A0D06DB44005506F8 /* physics.cpp */; };
 		B9AC7AE60D06DB44005506F8 /* rendergl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */; };
 		B9AC7AE70D06DB44005506F8 /* rendermodel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */; };
@@ -145,6 +146,7 @@
 		B9AC7A970D06DB44005506F8 /* octa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = octa.h; sourceTree = "<group>"; };
 		B9AC7A980D06DB44005506F8 /* octaedit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octaedit.cpp; sourceTree = "<group>"; };
 		B9AC7A990D06DB44005506F8 /* octarender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octarender.cpp; sourceTree = "<group>"; };
+		B9AC7A990D06DB44005506F8 /* ovr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ovr.cpp; sourceTree = "<group>"; };
 		B9AC7A9A0D06DB44005506F8 /* physics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = physics.cpp; sourceTree = "<group>"; };
 		B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendergl.cpp; sourceTree = "<group>"; };
 		B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rendermodel.cpp; sourceTree = "<group>"; };
@@ -357,6 +359,7 @@
 				D1C660C90D5467C8002E52C1 /* pvs.cpp */,
 				B9AC7A980D06DB44005506F8 /* octaedit.cpp */,
 				B9AC7A990D06DB44005506F8 /* octarender.cpp */,
+				B9AC7A990D06DB44005506F8 /* ovr.cpp */,
 				B9AC7A9B0D06DB44005506F8 /* rendergl.cpp */,
 				B9AC7A9C0D06DB44005506F8 /* rendermodel.cpp */,
 				B9AC7A9D0D06DB44005506F8 /* renderparticles.cpp */,
@@ -554,6 +557,7 @@
 				B9AC7AE10D06DB44005506F8 /* octa.cpp in Sources */,
 				B9AC7AE30D06DB44005506F8 /* octaedit.cpp in Sources */,
 				B9AC7AE40D06DB44005506F8 /* octarender.cpp in Sources */,
+				B9AC7AE40D06DB44005506F8 /* ovr.cpp in Sources */,
 				B9AC7AE50D06DB44005506F8 /* physics.cpp in Sources */,
 				B9AC7AE60D06DB44005506F8 /* rendergl.cpp in Sources */,
 				B9AC7AE70D06DB44005506F8 /* rendermodel.cpp in Sources */,

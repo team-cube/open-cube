@@ -758,8 +758,8 @@ void updatemumble()
     mumbleinfo->timestamp = ++timestamp;
 
     mumbleinfo->pos = mumblevec(player->o, true);
-    mumbleinfo->front = mumblevec(vec(RAD*player->yaw, RAD*player->pitch));
-    mumbleinfo->top = mumblevec(vec(RAD*player->yaw, RAD*(player->pitch+90)));
+    mumbleinfo->front = mumblevec(vec(player->yaw*RAD, player->pitch*RAD));
+    mumbleinfo->top = mumblevec(vec(player->yaw*RAD, (player->pitch+90)*RAD));
 #endif
 }
 

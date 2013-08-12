@@ -578,7 +578,7 @@ namespace UI
 
         void adjustlayout()
         {
-            float aspect = float(screenw)/screenh,
+            float aspect = float(hudw)/hudh,
                   sh = max(max(h, w/aspect), 1.0f),
                   sw = aspect*sh,
                   sx = 0.5f*(1 - sw),
@@ -602,7 +602,7 @@ namespace UI
 
         void projection()
         {
-            float aspect = float(screenw)/screenh,
+            float aspect = float(hudw)/hudh,
                   sh = max(max(h, w/aspect), 1.0f),
                   sw = aspect*sh,
                   sx = 0.5f*(1 - sw),
@@ -617,10 +617,10 @@ namespace UI
 
         void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
         {
-            sx1 = clamp(int(floor((x1-px)/(px2-px)*screenw)), 0, screenw);
-            sy1 = clamp(int(floor(screenh - (y2-py)/(py2-py)*screenh)), 0, screenh);
-            sx2 = clamp(int(ceil((x2-px)/(px2-px)*screenw)), 0, screenw);
-            sy2 = clamp(int(ceil(screenh - (y1-py)/(py2-py)*screenh)), 0, screenh);
+            sx1 = clamp(int(floor((x1-px)/(px2-px)*hudw)), 0, hudw);
+            sy1 = clamp(int(floor(hudh - (y2-py)/(py2-py)*hudh)), 0, hudh);
+            sx2 = clamp(int(ceil((x2-px)/(px2-px)*hudw)), 0, hudw);
+            sy2 = clamp(int(ceil(hudh - (y1-py)/(py2-py)*hudh)), 0, hudh);
         }
     };
 
@@ -2925,8 +2925,8 @@ namespace UI
     bool movecursor(int dx, int dy)
     {
         if(!hascursor()) return false;
-        cursorx = clamp(cursorx + dx*uisensitivity/screenw, 0.0f, 1.0f);
-        cursory = clamp(cursory + dy*uisensitivity/screenh, 0.0f, 1.0f);
+        cursorx = clamp(cursorx + dx*uisensitivity/hudw, 0.0f, 1.0f);
+        cursory = clamp(cursory + dy*uisensitivity/hudh, 0.0f, 1.0f);
         return true;
     }
 

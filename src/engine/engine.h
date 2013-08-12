@@ -28,7 +28,7 @@ extern const uchar faceedgesidx[6][4];
 extern bool inbetweenframes, renderedframe;
 
 extern SDL_Window *screen;
-extern int screenw, screenh, renderw, renderh;
+extern int screenw, screenh, renderw, renderh, hudx, hudy, hudw, hudh;
 
 extern vector<int> entgroup;
 
@@ -60,6 +60,8 @@ extern font *curfont;
 extern Shader *textshader;
 extern const matrix3x4 *textmatrix;
 extern float textscale;
+
+extern void reloadfonts();
 
 // texture
 extern int hwtexsize, hwcubetexsize, hwmaxaniso, maxtexsize, hwtexunits, hwvtexunits;
@@ -95,6 +97,8 @@ extern void compactmruvslots();
 extern void compactvslots(cube *c, int n = 8);
 extern void compactvslot(int &index);
 extern int compactvslots();
+extern void reloadtextures();
+extern void cleanuptextures();
 
 // pvs
 extern void clearpvs();
@@ -117,7 +121,7 @@ extern int glversion, glslversion;
 
 enum { DRAWTEX_NONE = 0, DRAWTEX_ENVMAP, DRAWTEX_MINIMAP, DRAWTEX_MODELPREVIEW };
 
-extern int vieww, viewh;
+extern int vieww, viewh, viewidx;
 extern int fov;
 extern float curfov, fovy, aspect, forceaspect;
 extern float nearplane;
@@ -141,10 +145,12 @@ extern void glerror(const char *file, int line, GLenum error);
 extern void gl_checkextensions();
 extern void gl_init();
 extern void gl_resize();
-extern void cleangl();
-extern void gl_drawframe();
+extern void gl_drawview();
 extern void gl_drawmainmenu();
 extern void gl_drawhud();
+extern void gl_setupframe(bool force = false);
+extern void gl_drawframe();
+extern void cleanupgl();
 extern void drawminimap();
 extern void enablepolygonoffset(GLenum type);
 extern void disablepolygonoffset(GLenum type);
@@ -176,6 +182,27 @@ namespace modelpreview
 struct timer;
 extern timer *begintimer(const char *name, bool gpu = true);
 extern void endtimer(timer *t);
+
+namespace ovr
+{
+    extern int enabled;
+    extern int lensw, lensh;
+    extern GLuint lensfbo[2], lenstex[2];
+    extern float viewoffset, distortoffset, distortscale, fovy;
+    extern float yaw, pitch, roll;
+
+    extern void init();
+    extern void destroy();
+    extern bool enable();
+    extern void disable();
+    extern void setup();
+    extern void cleanup();
+    extern void update();
+    extern void warp();
+    extern void ortho(glmatrix &m, float dist = 0, float fov = 0);
+
+    static inline float modifyroll(float r) { return ovr::enabled ? r + roll : r; }
+}
 
 // renderextras
 extern void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius = 0);
@@ -287,6 +314,7 @@ extern void rendershadowatlas();
 extern void renderrsmgeom(bool dyntex = false);
 extern void renderradiancehints();
 extern void clearradiancehintscache();
+extern void cleanuplights();
 
 extern int calcbbsidemask(const vec &bbmin, const vec &bbmax, const vec &lightpos, float lightradius, float bias);
 extern int calcspheresidemask(const vec &p, float radius, float bias);
@@ -332,10 +360,10 @@ extern void renderao();
 extern void loadhdrshaders(int aa = AA_UNUSED);
 extern void processhdr(GLuint outfbo = 0, int aa = AA_UNUSED);
 extern void readhdr(int w, int h, GLenum format, GLenum type, void *dst, GLenum target = 0, GLuint tex = 0);
-extern void setupframe();
+extern void setuplights();
 extern void setupgbuffer();
 extern GLuint shouldscale();
-extern void doscale();
+extern void doscale(GLuint outfbo = 0);
 extern bool debuglights();
 extern void cleanuplights();
 
@@ -397,6 +425,7 @@ extern void renderrefractmask();
 extern void renderalphageom(int side);
 extern void rendermapmodels();
 extern void renderoutline();
+extern void cleanupva();
 
 extern bool isfoggedsphere(float rad, const vec &cv);
 extern int isvisiblesphere(float rad, const vec &cv);
@@ -590,6 +619,7 @@ enum { TI_CONSOLE = 1<<0, TI_GUI = 1<<1 };
 extern void textinput(bool on, int mask = ~0);
 
 // physics
+extern void modifyorient(float yaw, float pitch);
 extern void mousemove(int dx, int dy);
 extern bool pointincube(const clipplanes &p, const vec &v);
 extern bool overlapsdynent(const vec &o, float radius);
@@ -653,6 +683,7 @@ extern void seedparticles();
 extern void updateparticles();
 extern void renderparticles();
 extern bool printparticles(extentity &e, char *buf, int len);
+extern void cleanupparticles();
 
 // decal
 enum { DB_OPAQUE = 0, DB_TRANSPARENT, NUMDB };
@@ -660,6 +691,7 @@ enum { DB_OPAQUE = 0, DB_TRANSPARENT, NUMDB };
 extern void initdecals();
 extern void cleardecals();
 extern void renderdecals(int db = DB_OPAQUE);
+extern void cleanupdecals();
 
 // rendersky
 extern int skytexture, skyshadow, explicitsky;
@@ -667,6 +699,7 @@ extern int skytexture, skyshadow, explicitsky;
 extern void drawskybox(int farplane);
 extern bool limitsky();
 extern bool renderexplicitsky(bool outline = false);
+extern void cleanupsky();
 
 // ui
 
@@ -735,6 +768,7 @@ extern int calcblendlayer(int x1, int y1, int x2, int y2);
 extern void updateblendtextures(int x1 = 0, int y1 = 0, int x2 = worldsize, int y2 = worldsize);
 extern void bindblendtexture(const ivec &p);
 extern void clearblendtextures();
+extern void cleanupblendmap();
 
 // recorder
 

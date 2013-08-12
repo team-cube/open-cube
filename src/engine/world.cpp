@@ -1122,18 +1122,19 @@ void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spaw
     }
     if(pick!=-1)
     {
+        const vector<extentity *> &ents = entities::getents();
         d->pitch = 0;
         d->roll = 0;
         for(int attempt = pick;;)
         {
-            d->o = entities::getents()[attempt]->o;
-            d->yaw = entities::getents()[attempt]->attr1;
+            d->o = ents[attempt]->o;
+            d->yaw = ents[attempt]->attr1;
             if(entinmap(d, true)) break;
             attempt = findentity(ET_PLAYERSTART, attempt+1, -1, tag);
             if(attempt<0 || attempt==pick)
             {
-                d->o = entities::getents()[attempt]->o;
-                d->yaw = entities::getents()[attempt]->attr1;
+                d->o = ents[attempt]->o;
+                d->yaw = ents[attempt]->attr1;
                 entinmap(d);
                 break;
             }
@@ -1145,6 +1146,7 @@ void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spaw
         d->o.z += 1;
         entinmap(d);
     }
+    if(d == player) ovr::reset();
 }
 
 void splitocta(cube *c, int size)
@@ -1179,6 +1181,7 @@ void resetmap()
 void startmap(const char *name)
 {
     game::startmap(name);
+    ovr::reset();
 }
 
 bool emptymap(int scale, bool force, const char *mname, bool usecfg)    // main empty world creation routine

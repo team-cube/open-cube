@@ -19,12 +19,14 @@ void cleanup()
     extern void clear_models();  clear_models();
     extern void clear_sound();   clear_sound();
     closelogfile();
+    ovr::destroy();
     SDL_Quit();
 }
 
+extern void writeinitcfg();
+
 void quit()                     // normal exit
 {
-    extern void writeinitcfg();
     writeinitcfg();
     writeservercfg();
     abortconnect();
@@ -65,7 +67,7 @@ void fatal(const char *s, ...)    // failure exit
 }
 
 SDL_Window *screen = NULL;
-int screenw = 0, screenh = 0, renderw = 0, renderh = 0, desktopw = 0, desktoph = 0;
+int screenw = 0, screenh = 0, desktopw = 0, desktoph = 0;
 SDL_GLContext glcontext = NULL;
 
 int curtime = 0, totalmillis = 1, lastmillis = 1;
@@ -149,7 +151,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
 
     stopsounds(); // stop sounds while loading
 
-    int w = screenw, h = screenh;
+    int w = hudw, h = hudh;
     if(forceaspect) w = int(ceil(h*forceaspect));
     getbackgroundres(w, h);
     gettextres(w, h);
@@ -191,7 +193,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
 
         float lh = 0.5f*min(w, h), lw = lh*2,
               lx = 0.5f*(w - lw), ly = 0.5f*(h*0.5f - lh);
-        settexture((maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize) >= 1024 && (screenw > 1280 || screenh > 800) ? "<premul>media/interface/logo_1024.png" : "<premul>media/interface/logo.png", 3);
+        settexture((maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize) >= 1024 && (hudw > 1280 || hudh > 800) ? "<premul>media/interface/logo_1024.png" : "<premul>media/interface/logo.png", 3);
         bgquad(lx, ly, lw, lh);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -292,7 +294,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
 
     if(background) restorebackground();
 
-    int w = screenw, h = screenh;
+    int w = hudw, h = hudh;
     if(forceaspect) w = int(ceil(h*forceaspect));
     getbackgroundres(w, h);
     gettextres(w, h);
@@ -432,7 +434,9 @@ void setfullscreen(bool enable)
         SDL_SetWindowSize(screen, scr_w, scr_h);
         if(initwindowpos)
         {
-            SDL_SetWindowPosition(screen, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+            int winx = SDL_WINDOWPOS_CENTERED, winy = SDL_WINDOWPOS_CENTERED;
+            if(ovr::enabled) winx = winy = 0;
+            SDL_SetWindowPosition(screen, winx, winy);
             initwindowpos = false;
         }
     }
@@ -452,16 +456,8 @@ void screenres(int w, int h)
     {
         scr_w = min(scr_w, desktopw);
         scr_h = min(scr_h, desktoph);
-        if(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN)
-        {
-            renderw = min(scr_w, screenw);
-            renderh = min(scr_h, screenh);
-            gl_resize();
-        }
-        else
-        {
-            SDL_SetWindowSize(screen, scr_w, scr_h);
-        }
+        if(SDL_GetWindowFlags(screen) & SDL_WINDOW_FULLSCREEN) gl_resize();
+        else SDL_SetWindowSize(screen, scr_w, scr_h);
     }
     else
     {
@@ -524,7 +520,7 @@ void setupscreen()
     scr_w = min(scr_w, desktopw);
     scr_h = min(scr_h, desktoph);
 
-    int winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
+    int winx = SDL_WINDOWPOS_UNDEFINED, winy = SDL_WINDOWPOS_UNDEFINED, winw = scr_w, winh = scr_h, flags = SDL_WINDOW_RESIZABLE;
     if(fullscreen)
     {
         winw = desktopw;
@@ -532,11 +528,12 @@ void setupscreen()
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
         initwindowpos = true;
     }
+    if(ovr::enabled) winx = winy = 0;
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-    screen = SDL_CreateWindow("Tesseract", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, winw, winh, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
+    screen = SDL_CreateWindow("Tesseract", winx, winy, winw, winh, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS | flags);
     if(!screen) fatal("failed to create OpenGL window: %s", SDL_GetError());
 
     SDL_SetWindowMinimumSize(screen, SCR_MINW, SCR_MINH);
@@ -563,6 +560,8 @@ void setupscreen()
     SDL_GetWindowSize(screen, &screenw, &screenh);
     renderw = min(scr_w, screenw);
     renderh = min(scr_h, screenh);
+    hudw = screenw;
+    hudh = screenh;
 
     restorevsync();
 }
@@ -573,16 +572,6 @@ void resetgl()
 
     renderbackground("resetting OpenGL");
 
-    extern void cleanupva();
-    extern void cleanupparticles();
-    extern void cleanupdecals();
-    extern void cleanupsky();
-    extern void cleanupmodels();
-    extern void cleanuptextures();
-    extern void cleanupblendmap();
-    extern void cleanuplights();
-    extern void cleanupshaders();
-    extern void cleanupgl();
     recorder::cleanup();
     cleanupva();
     cleanupparticles();
@@ -601,9 +590,6 @@ void resetgl()
 
     gl_init();
 
-    extern void reloadfonts();
-    extern void reloadtextures();
-    extern void reloadshaders();
     inbetweenframes = false;
     if(!reloadtexture(*notexture) ||
        !reloadtexture("<premul>media/interface/logo.png") ||
@@ -792,8 +778,6 @@ void checkinput()
                             scr_w = clamp(screenw, SCR_MINW, SCR_MAXW);
                             scr_h = clamp(screenh, SCR_MINH, SCR_MAXH);
                         }
-                        renderw = min(scr_w, screenw);
-                        renderh = min(scr_h, screenh);
                         gl_resize();
                         break;
                 }
@@ -1192,6 +1176,7 @@ int main(int argc, char **argv)
         updatetime();
 
         checkinput();
+        ovr::update();
         UI::update();
         menuprocess();
         tryedit();
@@ -1212,11 +1197,10 @@ int main(int argc, char **argv)
 
         if(minimized) continue;
 
-        if(!mainmenu) setupframe();
+        gl_setupframe();
 
         inbetweenframes = false;
-        if(mainmenu) gl_drawmainmenu();
-        else gl_drawframe();
+        gl_drawframe();
         swapbuffers();
         renderedframe = inbetweenframes = true;
     }

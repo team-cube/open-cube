@@ -2427,7 +2427,7 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur)
         createtexture(tex, texsize, texsize, dst, 3, 2, GL_RGB5, side.target);
     }
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, screenw, screenh);
+    glViewport(hudx, hudy, hudw, hudh);
     delete[] pixels;
     clientkeepalive();
     return tex;
@@ -2457,7 +2457,7 @@ void genenvmaps()
     if(envmaps.empty()) return;
     renderprogress(0, "generating environment maps...");
     int lastprogress = SDL_GetTicks();
-    setupframe();
+    gl_setupframe(true);
     loopv(envmaps)
     {
         envmap &em = envmaps[i];

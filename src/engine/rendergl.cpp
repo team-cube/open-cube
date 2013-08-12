@@ -918,7 +918,7 @@ timer *findtimer(const char *name, bool gpu)
 
 timer *begintimer(const char *name, bool gpu)
 {
-    if(!usetimers || inbetweenframes || (gpu && !hasTQ)) return NULL;
+    if(!usetimers || viewidx || inbetweenframes || (gpu && !hasTQ)) return NULL;
     timer *t = findtimer(name, gpu);
     if(t->gpu)
     {
@@ -1003,14 +1003,13 @@ void printtimers(int conw, int conh)
 
 void gl_resize()
 {
-    glViewport(0, 0, screenw, screenh);
+    gl_setupframe();
+    glViewport(0, 0, hudw, hudh);
 }
 
 void gl_init()
 {
     GLERROR;
-
-    gl_resize();
 
     glClearColor(0, 0, 0, 0);
     glClearDepth(1);
@@ -1031,23 +1030,22 @@ void gl_init()
     renderpath = R_GLSLANG;
 
     gle::setup();
-
-    extern void setupshaders();
     setupshaders();
-
-    static const char * const rpnames[1] = { "GLSL shader" };
-    conoutf(CON_INIT, "Rendering using the OpenGL %s path.", rpnames[renderpath]);
-
     setuptexcompress();
 
     GLERROR;
+
+    gl_resize();
+
+    static const char * const rpnames[1] = { "GLSL shader" };
+    conoutf(CON_INIT, "Rendering using the OpenGL %s path.", rpnames[renderpath]);
 }
 
 VAR(wireframe, 0, 0, 1);
 
 ICOMMAND(getcamyaw, "", (), floatret(camera1->yaw));
 ICOMMAND(getcampitch, "", (), floatret(camera1->pitch));
-ICOMMAND(getcamroll, "", (), floatret(camera1->roll));
+ICOMMAND(getcamroll, "", (), floatret(ovr::modifyroll(camera1->roll)));
 ICOMMAND(getcampos, "", (),
 {
     defformatstring(pos, "%s %s %s", floatstr(camera1->o.x), floatstr(camera1->o.y), floatstr(camera1->o.z));
@@ -1060,10 +1058,13 @@ void setcammatrix()
 {
     // move from RH to Z-up LH quake style worldspace
     cammatrix = viewmatrix;
-    cammatrix.rotate_around_y(camera1->roll*RAD);
+    cammatrix.rotate_around_y((!drawtex ? ovr::modifyroll(camera1->roll) : camera1->roll)*RAD);
     cammatrix.rotate_around_x(camera1->pitch*-RAD);
     cammatrix.rotate_around_z(camera1->yaw*-RAD);
     cammatrix.translate(vec(camera1->o).neg());
+
+    if(!drawtex && ovr::enabled)
+        cammatrix.jitter((viewidx ? -1 : 1) * ovr::viewoffset, 0);
 
     cammatrix.transposedtransformnormal(vec(viewmatrix.b), camdir);
     cammatrix.transposedtransformnormal(vec(viewmatrix.a).neg(), camright);
@@ -1078,7 +1079,13 @@ void setcammatrix()
 
 void setcamprojmatrix(bool init = true, bool flush = false)
 {
-    if(init) setcammatrix();
+    if(init)
+    {
+        setcammatrix();
+
+        if(ovr::enabled && !drawtex)
+            projmatrix.jitter((viewidx ? -1 : 1) * ovr::distortoffset, 0);
+    }
 
     jitteraa(init);
 
@@ -1103,6 +1110,7 @@ int hudmatrixpos = 0;
 void resethudmatrix()
 {
     hudmatrixpos = 0;
+    if(ovr::enabled) ovr::ortho(hudmatrix);
     GLOBALPARAM(hudmatrix, hudmatrix);
 }
 
@@ -1128,7 +1136,7 @@ void pophudmatrix(bool flush, bool flushparams)
     }
 }
 
-int vieww = -1, viewh = -1;
+int vieww = -1, viewh = -1, viewidx = 0;
 float curfov = 100, curavatarfov = 65, fovy, aspect;
 int farplane;
 VARP(zoominvel, 0, 250, 5000);
@@ -1202,6 +1210,18 @@ void fixcamerarange()
     while(camera1->yaw>=360.0f) camera1->yaw -= 360.0f;
 }
 
+void modifyorient(float yaw, float pitch)
+{
+    camera1->yaw += yaw;
+    camera1->pitch += pitch;
+    fixcamerarange();
+    if(camera1!=player && !detachedcamera)
+    {
+        player->yaw = camera1->yaw;
+        player->pitch = camera1->pitch;
+    }
+}
+
 void mousemove(int dx, int dy)
 {
     if(!game::allowmouselook()) return;
@@ -1221,14 +1241,7 @@ void mousemove(int dx, int dy)
     }
     if(curaccel && curtime && (dx || dy)) cursens += curaccel * sqrtf(dx*dx + dy*dy)/curtime;
     cursens /= sensitivityscale;
-    camera1->yaw += dx*cursens;
-    camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
-    fixcamerarange();
-    if(camera1!=player && !detachedcamera)
-    {
-        player->yaw = camera1->yaw;
-        player->pitch = camera1->pitch;
-    }
+    modifyorient(dx*cursens, dy*cursens*(invmouse ? 1 : -1));
 }
 
 void recomputecamera()
@@ -1259,7 +1272,7 @@ void recomputecamera()
 
         matrix3x3 orient;
         orient.identity();
-        orient.rotate_around_y(camera1->roll*RAD);
+        orient.rotate_around_y(ovr::modifyroll(camera1->roll)*RAD);
         orient.rotate_around_x(camera1->pitch*-RAD);
         orient.rotate_around_z(camera1->yaw*-RAD);
         vec dir = vec(orient.b).neg(), side = vec(orient.a).neg(), up = orient.c;
@@ -1344,11 +1357,12 @@ void renderavatar()
 {
     if(!isthirdperson())
     {
-        projmatrix.perspective(curavatarfov, aspect, nearplane, farplane);
+        glmatrix oldprojmatrix = projmatrix;
+        if(!ovr::enabled) projmatrix.perspective(curavatarfov, aspect, nearplane, farplane);
         projmatrix.scalez(avatardepth);
         setcamprojmatrix(false);
         game::renderavatar();
-        projmatrix.perspective(fovy, aspect, nearplane, farplane);
+        projmatrix = oldprojmatrix;
         setcamprojmatrix(false);
     }
 }
@@ -1831,7 +1845,7 @@ void drawminimap()
     drawtex = DRAWTEX_MINIMAP;
 
     GLERROR;
-    setupframe();
+    gl_setupframe(true);
 
     int size = 1<<minimapsize, sizelimit = min(hwtexsize, min(gw, gh));
     while(size > sizelimit) size /= 2;
@@ -1936,7 +1950,7 @@ void drawminimap()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, screenw, screenh);
+    glViewport(0, 0, hudw, hudh);
 }
 
 void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapside &side)
@@ -2127,15 +2141,10 @@ namespace modelpreview
 
 int xtraverts, xtravertsva;
 
-void gl_drawframe()
+void gl_drawview()
 {
-    synctimers();
-
     GLuint scalefbo = shouldscale();
     if(scalefbo) { vieww = gw; viewh = gh; }
-    else { vieww = screenw; viewh = screenh; }
-    aspect = forceaspect ? forceaspect : screenw/float(screenh);
-    fovy = 2*atan2(tan(curfov/2*RAD), aspect)/RAD;
 
     float fogmargin = 1 + WATER_AMPLITUDE + nearplane;
     int fogmat = lookupmaterial(vec(camera1->o.x, camera1->o.y, camera1->o.z - fogmargin))&(MATF_VOLUME|MATF_INDEX), abovemat = MAT_AIR;
@@ -2162,9 +2171,6 @@ void gl_drawframe()
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-
-    xtravertsva = xtraverts = glde = gbatches = vtris = vverts = 0;
-    flipqueries();
 
     ldrscale = hdr ? 0.5f : 1;
     ldrscaleb = ldrscale/255;
@@ -2236,24 +2242,21 @@ void gl_drawframe()
 
     if(fogoverlay && fogmat != MAT_AIR) drawfogoverlay(fogmat, fogbelow, clamp(fogbelow, 0.0f, 1.0f), abovemat);
 
-    doaa(setuppostfx(vieww, viewh, scalefbo), processhdr);
-    renderpostfx(scalefbo);
-    if(scalefbo) doscale();
-
-    UI::render();
-
-    gl_drawhud();
+    GLuint outfbo = scalefbo ? scalefbo : ovr::lensfbo[viewidx];
+    doaa(setuppostfx(vieww, viewh, outfbo), processhdr);
+    renderpostfx(outfbo);
+    if(scalefbo) doscale(ovr::lensfbo[viewidx]);
 }
 
 void gl_drawmainmenu()
 {
-    xtravertsva = xtraverts = glde = gbatches = vtris = vverts = 0;
-
+    if(ovr::enabled)
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER, ovr::lensfbo[viewidx]);
+        glViewport(0, 0, hudw, hudh);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
     renderbackground(NULL, NULL, NULL, NULL, true, true);
-
-    UI::render();
-
-    gl_drawhud();
 }
 
 VARNP(damagecompass, usedamagecompass, 0, 1, 1);
@@ -2270,10 +2273,12 @@ void damagecompass(int n, const vec &loc)
     if(!usedamagecompass || minimized) return;
     vec delta(loc);
     delta.sub(camera1->o);
-    float yaw, pitch;
-    if(delta.magnitude()<4) yaw = camera1->yaw;
-    else vectoyawpitch(delta, yaw, pitch);
-    yaw -= camera1->yaw;
+    float yaw = 0, pitch;
+    if(delta.magnitude() > 4)
+    {
+        vectoyawpitch(delta, yaw, pitch);
+        yaw -= camera1->yaw;
+    }
     if(yaw >= 360) yaw = fmod(yaw, 360);
     else if(yaw < 0) yaw = 360 - fmod(-yaw, 360);
     int dir = (int(yaw+22.5f)%360)/45;
@@ -2456,7 +2461,7 @@ FVARP(conscale, 1e-3f, 0.33f, 1e3f);
 
 void gl_drawhud()
 {
-    int w = screenw, h = screenh;
+    int w = hudw, h = hudh;
     if(forceaspect) w = int(ceil(h*forceaspect));
 
     gettextres(w, h);
@@ -2624,11 +2629,49 @@ void gl_drawhud()
     }
 }
 
+int renderw = 0, renderh = 0, hudx = 0, hudy = 0, hudw = 0, hudh = 0;
+
+void gl_setupframe(bool force)
+{
+    extern int scr_w, scr_h;
+    renderw = min(scr_w, screenw);
+    renderh = min(scr_h, screenh);
+    hudw = screenw;
+    hudh = screenh;
+    ovr::setup();
+    if(mainmenu && !force) return;
+    setuplights();
+}
+
+void gl_drawframe()
+{
+    synctimers();
+    xtravertsva = xtraverts = glde = gbatches = vtris = vverts = 0;
+    flipqueries();
+    aspect = forceaspect ? forceaspect : hudw/float(hudh);
+    fovy = ovr::enabled ? ovr::fovy/RAD : 2*atan2(tan(curfov/2*RAD), aspect)/RAD;
+    vieww = hudw;
+    viewh = hudh;
+    loopi(2)
+    {
+        if(mainmenu) gl_drawmainmenu();
+        else gl_drawview();
+        UI::render();
+        gl_drawhud();
+        if(!ovr::enabled) break;
+        ovr::warp();
+        ++viewidx;
+        hudx += hudw;
+    }
+    viewidx = 0;
+    hudx = 0;
+}
 
 void cleanupgl()
 {
     clearminimap();
     cleanuptimers();
     gle::cleanup();
+    ovr::cleanup();
 }
 
