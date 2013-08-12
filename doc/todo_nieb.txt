@@ -6,7 +6,6 @@ MAP Complex ARENA
       wall clock
       copy machine
       fire extinguisher
-      garbage can
       wall pictures
       projector
       projector screen
