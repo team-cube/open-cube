@@ -352,9 +352,9 @@ namespace game
         float dist = projdist(o, dir, v);
         if(dist<guns[gun].exprad)
         {
-            int damage = (int)(qdam*(1-dist/EXP_DISTSCALE/guns[gun].exprad));
+            float damage = qdam*(1-dist/EXP_DISTSCALE/guns[gun].exprad);
             if(o==at) damage /= EXP_SELFDAMDIV;
-            hit(damage, o, at, dir, gun, dist);
+            if(damage > 0) hit(max(int(damage), 1), o, at, dir, gun, dist);
         }
     }
 
@@ -362,16 +362,16 @@ namespace game
     {
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
         playsound(gun!=GUN_GL ? S_RLHIT : S_FEXPLODE, &v);
-        particle_fireball(v, guns[gun].exprad, gun!=GUN_GL ? PART_EXPLOSION : PART_EXPLOSION_BLUE, gun!=GUN_GL ? -1 : int((guns[gun].exprad-4.0f)*15), gun!=GUN_GL ? 0xFF8080 : 0x80FFFF, 4.0f);
+        particle_fireball(v, guns[gun].exprad, gun!=GUN_GL ? PART_EXPLOSION : PART_EXPLOSION_BLUE, int(guns[gun].exprad*20), gun!=GUN_GL ? 0xFF8080 : 0x80FFFF, 4.0f);
         int numdebris = rnd(maxdebris-5)+5;
         vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL)
         {
-            debrisorigin.add(vec(debrisvel).mul(8));
-            adddynlight(safe ? v : debrisorigin, 1.15f*guns[gun].exprad, vec(4, 3.0f, 2.0), 700, 100, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
+            debrisorigin.add(vec(debrisvel).mul(5));
+            adddynlight(safe ? v : debrisorigin, guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
         }
-        else if(gun==GUN_GL) adddynlight(v, 1.15f*guns[gun].exprad, vec(1.0f, 3.0f, 4.0), 600, 100, 0, 8, vec(0.5f, 2, 2));
-        else adddynlight(v, 1.15f*guns[gun].exprad, vec(2, 1.5f, 1), 700, 100);
+        else if(gun==GUN_GL) adddynlight(v, guns[gun].exprad, vec(1.0f, 3.0f, 4.0), 200, 25, 0, 8, vec(0.5f, 2, 2));
+        else adddynlight(v, guns[gun].exprad, vec(2, 1.5f, 1), 200, 25);
         if(numdebris)
         {
             loopi(numdebris)
@@ -389,7 +389,7 @@ namespace game
     void projsplash(projectile &p, const vec &v, dynent *safe)
     {
         explode(p.local, p.owner, v, safe, guns[p.gun].damage, p.gun);
-        adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), guns[p.gun].exprad/2);
+        adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), guns[p.gun].exprad*0.75f);
     }
 
     void explodeeffects(int gun, fpsent *d, bool local, int id)
@@ -406,7 +406,7 @@ namespace game
                         vec pos(p.o);
                         pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
                         explode(p.local, p.owner, pos, NULL, 0, GUN_RL);
-                        adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), guns[gun].exprad/2);
+                        adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), guns[gun].exprad*0.75f);
                         projs.remove(i);
                         break;
                     }

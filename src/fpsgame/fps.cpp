@@ -821,7 +821,7 @@ namespace game
         }
     }
 
-    int selectcrosshair(float &r, float &g, float &b)
+    int selectcrosshair(vec &col)
     {
         fpsent *d = hudplayer();
         if(d->state==CS_SPECTATOR || d->state==CS_DEAD) return -1;
@@ -833,19 +833,22 @@ namespace game
         else if(teamcrosshair)
         {
             dynent *o = intersectclosest(d->o, worldpos, d);
-            if(o && o->type==ENT_PLAYER && isteam(((fpsent *)o)->team, d->team))
+            if(o && o->type==ENT_PLAYER && validteam(d->team) && ((fpsent *)o)->team == d->team)
             {
                 crosshair = 1;
-                r = g = 0;
+               
+                col = vec::hexcolor(teamtextcolor[d->team]); 
             }
         }
 
+#if 0
         if(crosshair!=1 && !editmode)
         {
             if(d->health<=25) { r = 1.0f; g = b = 0; }
             else if(d->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
         }
-        if(d->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
+#endif
+        if(d->gunwait) col.mul(0.5f);
         return crosshair;
     }
 

@@ -279,15 +279,15 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 #define MAXRAYS 20
 #define EXP_SELFDAMDIV 2
 #define EXP_SELFPUSH 2.5f
-#define EXP_DISTSCALE 1.5f
+#define EXP_DISTSCALE 1
 
 static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl; const char *name, *file; } guns[NUMGUNS] =
 {
     { S_PUNCH1,    250,   1,   0,   0,  0,   14,  1,   0,  0,    0, "melee",  "melee"},
     { S_SG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
     { S_CG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
-    { S_RLFIRE,    800,   1,   0, 320, 10, 1024,  1, 160, 20,    0, "rocket", "rocket"},
-    { S_RIFLE,    1500,   1,   0,   0, 30, 2048,  1,  80,  0,    0, "rifle",  "rifle" },
+    { S_RLFIRE,    800,   1,   0, 480, 10, 1024,  1,5000, 10,    0, "rocket", "rocket"},
+    { S_RIFLE,     800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, "rifle",  "rifle" },
     { S_FLAUNCH,     0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
     { S_PISTOL,      0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     }
 };

@@ -2166,10 +2166,9 @@ namespace server
             loopj(i) if(hits[j].target==h.target) { dup = true; break; }
             if(dup) continue;
 
-            int damage = guns[gun].damage;
-            damage = int(damage*(1-h.dist/EXP_DISTSCALE/guns[gun].exprad));
+            float damage = guns[gun].damage*(1-h.dist/EXP_DISTSCALE/guns[gun].exprad);
             if(target==ci) damage /= EXP_SELFDAMDIV;
-            dodamage(target, ci, damage, gun, h.dir);
+            if(damage > 0) dodamage(target, ci, max(int(damage), 1), gun, h.dir);
         }
     }
 
