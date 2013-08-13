@@ -140,7 +140,7 @@ namespace server
         void reset()
         {
             if(state!=CS_SPECTATOR) state = editstate = CS_DEAD;
-            maxhealth = 100;
+            maxhealth = 1;
             rockets.reset();
 
             timeplayed = 0;
@@ -172,13 +172,12 @@ namespace server
     {
         uint ip;
         string name;
-        int maxhealth, frags, flags, deaths, teamkills, shotdamage, damage;
+        int frags, flags, deaths, teamkills, shotdamage, damage;
         int timeplayed;
         float effectiveness;
 
         void save(gamestate &gs)
         {
-            maxhealth = gs.maxhealth;
             frags = gs.frags;
             flags = gs.flags;
             deaths = gs.deaths;
@@ -191,8 +190,6 @@ namespace server
 
         void restore(gamestate &gs)
         {
-            if(gs.health==gs.maxhealth) gs.health = maxhealth;
-            gs.maxhealth = maxhealth;
             gs.frags = frags;
             gs.flags = flags;
             gs.deaths = deaths;

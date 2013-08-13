@@ -286,7 +286,7 @@ static const struct guninfo { int sound, attackdelay, damage, spread, projspeed,
     { S_PUNCH1,    250,   1,   0,   0,  0,   14,  1,   0,  0,    0, "melee",  "melee"},
     { S_SG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
     { S_CG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
-    { S_RLFIRE,    800,   1,   0, 320, 10, 1024,  1, 160, 40,    0, "rocket", "rocket"},
+    { S_RLFIRE,    800,   1,   0, 320, 10, 1024,  1, 160, 20,    0, "rocket", "rocket"},
     { S_RIFLE,    1500,   1,   0,   0, 30, 2048,  1,  80,  0,    0, "rifle",  "rifle" },
     { S_FLAUNCH,     0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
     { S_PISTOL,      0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     }
@@ -302,7 +302,7 @@ struct fpsstate
     int ammo[NUMGUNS];
     int aitype, skill;
 
-    fpsstate() : maxhealth(100), aitype(AI_NONE), skill(0) {}
+    fpsstate() : maxhealth(1), aitype(AI_NONE), skill(0) {}
 
     void baseammo(int gun, int k = 2, int scale = 1)
     {
@@ -364,7 +364,6 @@ struct fpsstate
         }
         else
         {
-            health = 100;
             gunselect = GUN_RIFLE;
             ammo[GUN_RIFLE] = 100;
             ammo[GUN_RL] = 100;
