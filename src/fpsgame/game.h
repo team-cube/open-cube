@@ -283,13 +283,13 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 
 static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl; const char *name, *file; } guns[NUMGUNS] =
 {
-    { S_PUNCH1,    250,  50,   0,   0,  0,   14,  1,  80,  0,    0, "fist",            "fist"   },
-    { S_SG,       1400,  10, 400,   0, 20, 1024, 20,  80,  0,    0, "shotgun",         "shotg"  },
-    { S_CG,        100,  30, 100,   0,  7, 1024,  1,  80,  0,    0, "chaingun",        "chaing" },
-    { S_RLFIRE,    800, 120,   0, 320, 10, 1024,  1, 160, 40,    0, "rocketlauncher",  "rocket" },
-    { S_RIFLE,    1500, 100,   0,   0, 30, 2048,  1,  80,  0,    0, "rifle",           "rifle"  },
-    { S_FLAUNCH,   600,  90,   0, 200, 10, 1024,  1, 250, 45, 1500, "grenadelauncher", "gl"     },
-    { S_PISTOL,    500,  35,  50,   0,  7, 1024,  1,  80,  0,    0, "pistol",          "pistol" }
+    { S_PUNCH1,    250,   1,   0,   0,  0,   14,  1,   0,  0,    0, "melee",  "melee"},
+    { S_SG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
+    { S_CG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
+    { S_RLFIRE,    800,   1,   0, 320, 10, 1024,  1, 160, 40,    0, "rocket", "rocket"},
+    { S_RIFLE,    1500,   1,   0,   0, 30, 2048,  1,  80,  0,    0, "rifle",  "rifle" },
+    { S_FLAUNCH,     0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
+    { S_PISTOL,      0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     }
 };
 
 #include "ai.h"

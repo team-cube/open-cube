@@ -47,7 +47,7 @@ namespace game
 
     static const playermodelinfo playermodels[1] =
     {
-        { { "player", "player/blue", "player/red" }, { "player/hudguns", "player/hudguns/blue", "player/hudguns/red" }, { "player", "player_blue", "player_red" }, true }
+        { { "player", "player/blue", "player/red" }, { "hudgun", "hudgun", "hudgun" }, { "player", "player_blue", "player_red" }, true }
     };
 
     int chooserandomplayermodel(int seed)
