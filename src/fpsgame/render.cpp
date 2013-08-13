@@ -124,7 +124,7 @@ namespace game
 
     void renderplayer(fpsent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
     {
-        int lastaction = d->lastaction, hold = d->gunselect==GUN_PISTOL ? 0 : (ANIM_HOLD1+d->gunselect)|ANIM_LOOP, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
+        int lastaction = d->lastaction, hold = d->gunselect != GUN_MELEE ? (ANIM_HOLD1+d->gunselect)|ANIM_LOOP : 0, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
         if(intermission && d->state!=CS_DEAD)
         {
             hold = attack = ANIM_LOSE|ANIM_LOOP;
@@ -137,9 +137,9 @@ namespace game
             delay = 1000;
         }
         modelattach a[5];
-        static const char * const vweps[] = {"worldgun/fist", "worldgun/shotg", "worldgun/chaing", "worldgun/rocket", "worldgun/rifle", "worldgun/gl", "worldgun/pistol"};
+        static const char * const vweps[] = {NULL, "worldgun/rocket", "worldgun/rifle"};
         int ai = 0;
-        if(d->gunselect<=GUN_PISTOL)
+        if(vweps[d->gunselect])
         {
             int vanim = ANIM_VWEP_IDLE|ANIM_LOOP, vtime = 0;
             if(lastaction && d->lastattackgun==d->gunselect && lastmillis < lastaction + delay)
@@ -302,8 +302,6 @@ namespace game
 
     void drawhudmodel(fpsent *d, int anim, float speed = 0, int base = 0)
     {
-        if(d->gunselect>GUN_PISTOL) return;
-
         vec sway;
         vecfromyawpitch(d->yaw, 0, 0, 1, sway);
         float steps = swaydist/swaystep*M_PI;
@@ -353,9 +351,9 @@ namespace game
         {
             previewent = new fpsent;
             previewent->o = vec(0, 0.9f*(previewent->eyeheight + previewent->aboveeye), previewent->eyeheight - (previewent->eyeheight + previewent->aboveeye)/2);
-            loopi(GUN_PISTOL-GUN_FIST) previewent->ammo[GUN_FIST+1+i] = 1;
+            loopi(NUMGUNS-1) previewent->ammo[i+1] = 1;
         }
-        previewent->gunselect = clamp(weap, int(GUN_FIST), int(GUN_PISTOL));
+        previewent->gunselect = validgun(weap) ? weap : GUN_MELEE;
         previewent->yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;
@@ -415,9 +413,7 @@ namespace game
 
     void preloadsounds()
     {
-        for(int i = S_JUMP; i <= S_SPLASH2; i++) preloadsound(i);
-        for(int i = S_JUMPPAD; i <= S_PISTOL; i++) preloadsound(i);
-        for(int i = S_BURN; i <= S_HIT; i++) preloadsound(i);
+        for(int i = S_JUMP; i <= S_DIE2; i++) preloadsound(i);
     }
 
     void preload()

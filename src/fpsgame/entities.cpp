@@ -24,26 +24,30 @@ namespace entities
 
     const char *itemname(int i)
     {
+        return NULL;
+#if 0
         int t = ents[i]->type;
-        if(t<I_SHELLS || t>I_YELLOWARMOUR) return NULL;
-        return itemstats[t-I_SHELLS].name;
+        if(!validitem(t)) return NULL;
+        return itemstats[t-I_FIRST].name;
+#endif
     }
 
     int itemicon(int i)
     {
+        return -1;
+#if 0
         int t = ents[i]->type;
-        if(t<I_SHELLS || t>I_YELLOWARMOUR) return -1;
-        return itemstats[t-I_SHELLS].icon;
+        if(!validitem(t)) return -1;
+        return itemstats[t-I_FIRST].icon;
+#endif
     }
 
     const char *entmdlname(int type)
     {
-        static const char * const entmdlnames[] =
+        static const char * const entmdlnames[MAXENTTYPES] =
         {
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            "ammo/shells", "ammo/bullets", "ammo/rockets", "ammo/rrounds", "ammo/grenades", "ammo/cartridges",
-            "health", "armor/green", "armor/yellow", "teleport",
-            NULL, NULL, NULL,
+            "teleport", NULL, NULL, 
             NULL
         };
         return entmdlnames[type];
@@ -93,7 +97,7 @@ namespace entities
                     if(e.attr2 < 0) continue;
                     break;
                 default:
-                    if(!e.spawned() || e.type < I_SHELLS || e.type > I_YELLOWARMOUR) continue;
+                    if(!e.spawned() || !validitem(e.type)) continue;
                     break;
             }
             const char *mdlname = entmodel(e);
@@ -108,15 +112,12 @@ namespace entities
 
     void addammo(int type, int &v, bool local)
     {
-        itemstat &is = itemstats[type-I_SHELLS];
+#if 0
+        itemstat &is = itemstats[type-I_FIRST];
         v += is.add;
         if(v>is.max) v = is.max;
         if(local) msgsound(is.sound);
-    }
-
-    void repammo(fpsent *d, int type, bool local)
-    {
-        addammo(type, d->ammo[type-I_SHELLS+GUN_SG], local);
+#endif
     }
 
     // these two functions are called when the server acknowledges that you really
@@ -124,20 +125,20 @@ namespace entities
 
     void pickupeffects(int n, fpsent *d)
     {
+#if 0
         if(!ents.inrange(n)) return;
         int type = ents[n]->type;
-        if(type<I_SHELLS || type>I_YELLOWARMOUR) return;
+        if(!validitem(type)) return;
         ents[n]->clearspawned();
         if(!d) return;
-        itemstat &is = itemstats[type-I_SHELLS];
+        itemstat &is = itemstats[type-I_FIRST];
         if(d!=player1 || isthirdperson())
         {
             //particle_text(d->abovehead(), is.name, PART_TEXT, 2000, 0xFFC864, 4.0f, -8);
             particle_icon(d->abovehead(), is.icon%4, is.icon/4, PART_HUD_ICON_GREY, 2000, 0xFFFFFF, 2.0f, -8);
         }
-        playsound(itemstats[type-I_SHELLS].sound, d!=player1 ? &d->o : NULL, NULL, 0, 0, 0, -1, 0, 1500);
+        playsound(itemstats[type-I_FIRST].sound, d!=player1 ? &d->o : NULL, NULL, 0, 0, 0, -1, 0, 1500);
         d->pickup(type);
-#if 0
         if(d==player1) switch(type)
         {
         }
@@ -292,7 +293,7 @@ namespace entities
     void putitems(packetbuf &p)            // puts items in network stream and also spawns them locally
     {
         putint(p, N_ITEMLIST);
-        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR)
+        loopv(ents) if(validitem(ents[i]->type))
         {
             putint(p, i);
             putint(p, ents[i]->type);
@@ -304,7 +305,7 @@ namespace entities
 
     void spawnitems(bool force)
     {
-        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_YELLOWARMOUR)
+        loopv(ents) if(validitem(ents[i]->type))
         {
             ents[i]->setspawned(force || !server::delayspawn(ents[i]->type));
         }
@@ -374,15 +375,11 @@ namespace entities
     const char *entnameinfo(entity &e) { return ""; }
     const char *entname(int i)
     {
-        static const char * const entnames[] =
+        static const char * const entnames[MAXENTTYPES] =
         {
             "none?", "light", "mapmodel", "playerstart", "envmap", "particles", "sound", "spotlight",
-            "shells", "bullets", "rockets", "riflerounds", "grenades", "cartridges",
-            "health", "greenarmour", "yellowarmour",
-            "teleport", "teledest",
-            "jumppad",
-            "flag",
-            ""
+            "teleport", "teledest", "jumppad",
+            "flag"
         };
         return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
     }

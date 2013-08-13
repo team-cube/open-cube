@@ -1183,13 +1183,13 @@ namespace game
         if(resume && d==player1)
         {
             getint(p);
-            loopi(GUN_PISTOL-GUN_SG+1) getint(p);
+            loopi(NUMGUNS-1) getint(p);
         }
         else
         {
             int gun = getint(p);
-            d->gunselect = clamp(gun, int(GUN_FIST), int(GUN_PISTOL));
-            loopi(GUN_PISTOL-GUN_SG+1) d->ammo[GUN_SG+i] = getint(p);
+            d->gunselect = clamp(gun, 0, NUMGUNS-1);
+            loopi(NUMGUNS-1) d->ammo[i+1] = getint(p);
         }
     }
 
@@ -1438,8 +1438,8 @@ namespace game
                 loopk(3) to[k] = getint(p)/DMF;
                 fpsent *s = getclient(scn);
                 if(!s) break;
-                if(gun>GUN_FIST && gun<=GUN_PISTOL && s->ammo[gun]) s->ammo[gun]--;
-                s->gunselect = clamp(gun, (int)GUN_FIST, (int)GUN_PISTOL);
+                s->gunselect = validgun(gun) ? gun : GUN_MELEE;
+                s->ammo[s->gunselect] -= guns[s->gunselect].use;
                 s->gunwait = guns[s->gunselect].attackdelay;
                 int prevaction = s->lastaction;
                 s->lastaction = lastmillis;
@@ -1508,7 +1508,7 @@ namespace game
             {
                 if(!d) return;
                 int gun = getint(p);
-                d->gunselect = clamp(gun, int(GUN_FIST), int(GUN_PISTOL));
+                d->gunselect = validgun(gun) ? gun : GUN_MELEE;
                 playsound(S_WEAPLOAD, &d->o);
                 break;
             }

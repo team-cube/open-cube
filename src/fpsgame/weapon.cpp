@@ -44,16 +44,15 @@ namespace game
 
     int getweapon(const char *name)
     {
-        const char *abbrevs[] = { "FI", "SG", "CG", "RL", "RI", "GL", "PI" };
         if(isdigit(name[0])) return parseint(name);
-        else loopi(sizeof(abbrevs)/sizeof(abbrevs[0])) if(!strcasecmp(abbrevs[i], name)) return i;
+        else loopi(sizeof(guns)/sizeof(guns[0])) if(!strcasecmp(guns[i].name, name)) return i;
         return -1;
     }
 
     void setweapon(const char *name, bool force = false)
     {
         int gun = getweapon(name);
-        if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
+        if(player1->state!=CS_ALIVE || !validgun(gun)) return;
         if(force || player1->ammo[gun]) gunselect(gun, player1);
         else playsound(S_NOAMMO);
     }
@@ -77,8 +76,8 @@ namespace game
     }
     ICOMMAND(cycleweapon, "V", (tagval *args, int numargs),
     {
-         int numguns = min(numargs, 7);
-         int guns[7];
+         int numguns = min(numargs, 3);
+         int guns[3];
          loopi(numguns) guns[i] = getweapon(args[i].getstr());
          cycleweapon(numguns, guns);
     });
@@ -87,27 +86,22 @@ namespace game
     {
         if(d->state!=CS_ALIVE) return;
         int s = d->gunselect;
-        if     (s!=GUN_CG     && d->ammo[GUN_CG])     s = GUN_CG;
-        else if(s!=GUN_RL     && d->ammo[GUN_RL])     s = GUN_RL;
-        else if(s!=GUN_SG     && d->ammo[GUN_SG])     s = GUN_SG;
-        else if(s!=GUN_RIFLE  && d->ammo[GUN_RIFLE])  s = GUN_RIFLE;
-        else if(s!=GUN_GL     && d->ammo[GUN_GL])     s = GUN_GL;
-        else if(s!=GUN_PISTOL && d->ammo[GUN_PISTOL]) s = GUN_PISTOL;
-        else                                          s = GUN_FIST;
-
+        if(s!=GUN_ROCKET && d->ammo[GUN_ROCKET])     s = GUN_ROCKET;
+        else if(s!=GUN_RIFLE && d->ammo[GUN_RIFLE])  s = GUN_RIFLE;
+        else                                         s = GUN_MELEE;
         gunselect(s, d);
     }
 
     ICOMMAND(weapon, "V", (tagval *args, int numargs),
     {
         if(player1->state!=CS_ALIVE) return;
-        loopi(7)
+        loopi(3)
         {
             const char *name = i < numargs ? args[i].getstr() : "";
             if(name[0])
             {
                 int gun = getweapon(name);
-                if(gun >= GUN_FIST && gun <= GUN_PISTOL && gun != player1->gunselect && player1->ammo[gun]) { gunselect(gun, player1); return; }
+                if(validgun(gun) && gun != player1->gunselect && player1->ammo[gun]) { gunselect(gun, player1); return; }
             } else { weaponswitch(player1); return; }
         }
         playsound(S_NOAMMO);
@@ -323,9 +317,9 @@ namespace game
                 {
                     damageblend(damage);
                     damagecompass(damage, at ? at->o : f->o);
-                    playsound(S_PAIN6);
+                    playsound(S_PAIN2);
                 }
-                else playsound(S_PAIN1+rnd(5), &f->o);
+                else playsound(S_PAIN1, &f->o);
             }
         }
     }
@@ -360,19 +354,14 @@ namespace game
     void explode(bool local, fpsent *owner, const vec &v, const vec &vel, dynent *safe, int damage, int gun)
     {
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
-        playsound(gun!=GUN_GL ? S_RLHIT : S_FEXPLODE, &v);
-        particle_fireball(v, guns[gun].exprad, gun!=GUN_GL ? PART_EXPLOSION : PART_EXPLOSION_BLUE, int(guns[gun].exprad*20), gun!=GUN_GL ? 0xFF8080 : 0x80FFFF, 4.0f);
+        playsound(S_ROCKETEXPLODE, &v);
+        particle_fireball(v, guns[gun].exprad, PART_EXPLOSION, int(guns[gun].exprad*20), 0xFF8080, 4.0f);
         int numdebris = rnd(maxdebris-5)+5;
-        vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
-        if(gun==GUN_RL)
-        {
-            debrisorigin.add(vec(debrisvel).mul(5));
-            adddynlight(safe ? v : debrisorigin, guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
-        }
-        else if(gun==GUN_GL) adddynlight(v, guns[gun].exprad, vec(1.0f, 3.0f, 4.0), 200, 25, 0, 8, vec(0.5f, 2, 2));
-        else adddynlight(v, guns[gun].exprad, vec(2, 1.5f, 1), 200, 25);
+        vec debrisorigin = vec(v).sub(vec(vel).mul(5));
+        adddynlight(safe ? v : debrisorigin, guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
         if(numdebris)
         {
+            vec debrisvel = vec(vel).neg();
             loopi(numdebris)
                 spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);
         }
@@ -396,7 +385,7 @@ namespace game
         if(local) return;
         switch(gun)
         {
-            case GUN_RL:
+            case GUN_ROCKET:
                 loopv(projs)
                 {
                     projectile &p = projs[i];
@@ -404,7 +393,7 @@ namespace game
                     {
                         vec pos(p.o);
                         pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                        explode(p.local, p.owner, pos, p.dir, NULL, 0, GUN_RL);
+                        explode(p.local, p.owner, pos, p.dir, NULL, 0, GUN_ROCKET);
                         adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), guns[gun].exprad*0.75f);
                         projs.remove(i);
                         break;
@@ -485,44 +474,16 @@ namespace game
 
     void shoteffects(int gun, const vec &from, const vec &to, fpsent *d, bool local, int id, int prevaction)     // create visual effect from a shot
     {
-        int sound = guns[gun].sound, pspeed = 25;
+        int sound = guns[gun].sound;
         switch(gun)
         {
-            case GUN_FIST:
+            case GUN_MELEE:
                 break;
 
-            case GUN_SG:
-            {
-                if(!local) createrays(gun, from, to);
-                if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, 200, PART_MUZZLE_FLASH3, 0xFFFFFF, 2.75f, d);
-                loopi(guns[gun].rays)
-                {
-                    particle_splash(PART_SPARK, 20, 250, rays[i], 0xB49B4B, 0.24f);
-                    particle_flare(hudgunorigin(gun, from, rays[i], d), rays[i], 300, PART_STREAK, 0xFFC864, 0.28f);
-                    if(!local) adddecal(DECAL_BULLET, rays[i], vec(from).sub(rays[i]).normalize(), 2.0f);
-                }
-                if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 30, vec(1.0f, 0.75f, 0.5f), 100, 100, DL_FLASH, 0, vec(0, 0, 0), d);
-                break;
-            }
-
-            case GUN_CG:
-            case GUN_PISTOL:
-            {
-                particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
-                particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_STREAK, 0xFFC864, 0.28f);
-                if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, gun==GUN_CG ? 100 : 200, PART_MUZZLE_FLASH1, 0xFFFFFF, gun==GUN_CG ? 2.25f : 1.25f, d);
-                if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
-                if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), gun==GUN_CG ? 30 : 15, vec(1.0f, 0.75f, 0.5f), gun==GUN_CG ? 50 : 100, gun==GUN_CG ? 50 : 100, DL_FLASH, 0, vec(0, 0, 0), d);
-                break;
-            }
-
-            case GUN_RL:
+            case GUN_ROCKET:
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 250, PART_MUZZLE_FLASH2, 0xFFFFFF, 3.0f, d);
-                pspeed = guns[gun].projspeed;
-                newprojectile(from, to, (float)pspeed, local, id, d, gun);
+                newprojectile(from, to, guns[gun].projspeed, local, id, d, gun);
                 break;
 
             case GUN_RIFLE:
@@ -628,7 +589,7 @@ namespace game
             shorten(from, to, dist);
             hitpush(guns[d->gunselect].damage, o, d, from, to, d->gunselect, 1);
         }
-        else if(d->gunselect!=GUN_FIST) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), d->gunselect==GUN_RIFLE ? 3.0f : 2.0f);
+        else if(d->gunselect!=GUN_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), d->gunselect==GUN_RIFLE ? 3.0f : 2.0f);
     }
 
     void shoot(fpsent *d, const vec &targ)
@@ -650,7 +611,8 @@ namespace game
             }
             return;
         }
-        if(d->gunselect) d->ammo[d->gunselect]--;
+        d->ammo[d->gunselect] -= guns[d->gunselect].use;
+
         vec from = d->o;
         vec to = targ;
 
@@ -686,7 +648,7 @@ namespace game
         }
 
         d->gunwait = guns[d->gunselect].attackdelay;
-        if(d->gunselect == GUN_PISTOL && d->ai) d->gunwait += int(d->gunwait*(((101-d->skill)+rnd(111-d->skill))/100.f));
+        if(d->gunselect != GUN_MELEE && d->ai) d->gunwait += int(d->gunwait*(((101-d->skill)+rnd(111-d->skill))/100.f));
         d->totalshots += guns[d->gunselect].damage*guns[d->gunselect].rays;
     }
 
@@ -695,7 +657,7 @@ namespace game
         loopv(projs)
         {
             projectile &p = projs[i];
-            if(p.gun!=GUN_RL) continue;
+            if(p.gun!=GUN_ROCKET) continue;
             vec pos(p.o);
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             adddynlight(pos, 20, vec(1, 0.75f, 0.5f));
@@ -751,7 +713,7 @@ namespace game
         loopv(projs)
         {
             projectile &p = projs[i];
-            if(p.gun!=GUN_RL) continue;
+            if(p.gun!=GUN_ROCKET) continue;
             float dist = min(p.o.dist(p.to)/32.0f, 1.0f);
             vec pos = vec(p.o).add(vec(p.offset).mul(dist*p.offsetmillis/float(OFFSETMILLIS))),
                 v = dist < 1e-6f ? p.dir : vec(p.to).sub(pos).normalize();

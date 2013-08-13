@@ -325,8 +325,8 @@ namespace game
         ai::damaged(d, actor);
 
         if(d->health<=0) { if(local) killed(d, actor); }
-        else if(d==h) playsound(S_PAIN6);
-        else playsound(S_PAIN1+rnd(5), &d->o);
+        else if(d==h) playsound(S_PAIN2);
+        else playsound(S_PAIN1, &d->o);
     }
 
     VARP(deathscore, 0, 1, 1);
@@ -345,14 +345,14 @@ namespace game
             if(!restore) d->deaths++;
             //d->pitch = 0;
             d->roll = 0;
-            playsound(S_DIE1+rnd(2));
+            playsound(S_DIE2);
         }
         else
         {
             d->move = d->strafe = 0;
             d->resetinterp();
             d->smoothmillis = 0;
-            playsound(S_DIE1+rnd(2), &d->o);
+            playsound(S_DIE1, &d->o);
         }
     }
 
@@ -569,8 +569,8 @@ namespace game
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel, int material)
     {
-        if     (waterlevel>0) { if(material!=MAT_LAVA) playsound(S_SPLASH1, d==player1 ? NULL : &d->o); }
-        else if(waterlevel<0) playsound(material==MAT_LAVA ? S_BURN : S_SPLASH2, d==player1 ? NULL : &d->o);
+        if     (waterlevel>0) { if(material!=MAT_LAVA) playsound(S_SPLASHOUT, d==player1 ? NULL : &d->o); }
+        else if(waterlevel<0) playsound(material==MAT_LAVA ? S_BURN : S_SPLASHIN, d==player1 ? NULL : &d->o);
         if     (floorlevel>0) { if(d==player1 || d->type!=ENT_PLAYER || ((fpsent *)d)->ai) msgsound(S_JUMP, d); }
         else if(floorlevel<0) { if(d==player1 || d->type!=ENT_PLAYER || ((fpsent *)d)->ai) msgsound(S_LAND, d); }
     }
@@ -680,70 +680,9 @@ namespace game
         }
     }
 
-    int ammohudup[3] = { GUN_CG, GUN_RL, GUN_GL },
-        ammohuddown[3] = { GUN_RIFLE, GUN_SG, GUN_PISTOL },
-        ammohudcycle[7] = { -1, -1, -1, -1, -1, -1, -1 };
-
-    ICOMMAND(ammohudup, "V", (tagval *args, int numargs),
-    {
-        loopi(3) ammohudup[i] = i < numargs ? getweapon(args[i].getstr()) : -1;
-    });
-
-    ICOMMAND(ammohuddown, "V", (tagval *args, int numargs),
-    {
-        loopi(3) ammohuddown[i] = i < numargs ? getweapon(args[i].getstr()) : -1;
-    });
-
-    ICOMMAND(ammohudcycle, "V", (tagval *args, int numargs),
-    {
-        loopi(7) ammohudcycle[i] = i < numargs ? getweapon(args[i].getstr()) : -1;
-    });
-
-    VARP(ammohud, 0, 1, 1);
-
-    void drawammohud(fpsent *d)
-    {
-        float x = HICON_X + 2*HICON_STEP, y = HICON_Y, sz = HICON_SIZE;
-        pushhudmatrix();
-        hudmatrix.scale(1/3.2f, 1/3.2f, 1);
-        flushhudmatrix();
-        float xup = (x+sz)*3.2f, yup = y*3.2f + 0.1f*sz;
-        loopi(3)
-        {
-            int gun = ammohudup[i];
-            if(gun < GUN_FIST || gun > GUN_PISTOL || gun == d->gunselect || !d->ammo[gun]) continue;
-            drawicon(HICON_FIST+gun, xup, yup, sz);
-            yup += sz;
-        }
-        float xdown = x*3.2f - sz, ydown = (y+sz)*3.2f - 0.1f*sz;
-        loopi(3)
-        {
-            int gun = ammohuddown[3-i-1];
-            if(gun < GUN_FIST || gun > GUN_PISTOL || gun == d->gunselect || !d->ammo[gun]) continue;
-            ydown -= sz;
-            drawicon(HICON_FIST+gun, xdown, ydown, sz);
-        }
-        int offset = 0, num = 0;
-        loopi(7)
-        {
-            int gun = ammohudcycle[i];
-            if(gun < GUN_FIST || gun > GUN_PISTOL) continue;
-            if(gun == d->gunselect) offset = i + 1;
-            else if(d->ammo[gun]) num++;
-        }
-        float xcycle = (x+sz/2)*3.2f + 0.5f*num*sz, ycycle = y*3.2f-sz;
-        loopi(7)
-        {
-            int gun = ammohudcycle[(i + offset)%7];
-            if(gun < GUN_FIST || gun > GUN_PISTOL || gun == d->gunselect || !d->ammo[gun]) continue;
-            xcycle -= sz;
-            drawicon(HICON_FIST+gun, xcycle, ycycle, sz);
-        }
-        pophudmatrix();
-    }
-
     void drawhudicons(fpsent *d)
     {
+#if 0
         pushhudmatrix();
         hudmatrix.scale(2, 2, 1);
         flushhudmatrix();
@@ -759,9 +698,9 @@ namespace game
         drawicon(HICON_HEALTH, HICON_X, HICON_Y);
         if(d->state!=CS_DEAD)
         {
-            drawicon(HICON_FIST+d->gunselect, HICON_X + 2*HICON_STEP, HICON_Y);
-            if(ammohud) drawammohud(d);
+            drawicon(HICON_MELEE+d->gunselect, HICON_X + 2*HICON_STEP, HICON_Y);
         }
+#endif
     }
 
     void gameplayhud(int w, int h)

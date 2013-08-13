@@ -11,8 +11,8 @@ enum
     ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT,
     ANIM_CROUCH, ANIM_CROUCH_FORWARD, ANIM_CROUCH_BACKWARD, ANIM_CROUCH_LEFT, ANIM_CROUCH_RIGHT,
 
-    ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3, ANIM_HOLD4, ANIM_HOLD5, ANIM_HOLD6, ANIM_HOLD7,
-    ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3, ANIM_ATTACK4, ANIM_ATTACK5, ANIM_ATTACK6, ANIM_ATTACK7,
+    ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3,
+    ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3,
     ANIM_PAIN,
     ANIM_JUMP, ANIM_SINK, ANIM_SWIM,
     ANIM_CROUCH_JUMP, ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
@@ -28,8 +28,8 @@ static const char * const animnames[] =
     "dead", "dying", "idle",
     "forward", "backward", "left", "right",
     "crouch", "crouch forward", "crouch backward", "crouch left", "crouch right",
-    "hold 1", "hold 2", "hold 3", "hold 4", "hold 5", "hold 6", "hold 7",
-    "attack 1", "attack 2", "attack 3", "attack 4", "attack 5", "attack 6", "attack 7",
+    "hold 1", "hold 2", "hold 3",
+    "attack 1", "attack 2", "attack 3",
     "pain",
     "jump", "sink", "swim",
     "crouch jump", "crouch sink", "crouch swim",
@@ -65,21 +65,23 @@ enum                            // static entity types
     PARTICLES = ET_PARTICLES,
     MAPSOUND = ET_SOUND,
     SPOTLIGHT = ET_SPOTLIGHT,
-    I_SHELLS, I_BULLETS, I_ROCKETS, I_ROUNDS, I_GRENADES, I_CARTRIDGES,
-    I_HEALTH,
-    I_GREENARMOUR, I_YELLOWARMOUR,
     TELEPORT,                   // attr1 = idx, attr2 = model, attr3 = tag
     TELEDEST,                   // attr1 = angle, attr2 = idx
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
     FLAG,                       // attr1 = angle, attr2 = team
-    MAXENTTYPES
+    MAXENTTYPES,
+
+    I_FIRST = 0,
+    I_LAST = -1
 };
 
-struct fpsentity : extentity
+struct gameentity : extentity
 {
 };
 
-enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, NUMGUNS };
+enum { GUN_MELEE = 0, GUN_ROCKET, GUN_RIFLE, NUMGUNS };
+
+#define validgun(n) ((n) >= 0 && (n) < NUMGUNS)
 
 enum
 {
@@ -135,27 +137,19 @@ static const char * const mastermodeicons[] =  { "server", "server", "serverlock
 // hardcoded sounds, defined in sounds.cfg
 enum
 {
-    S_JUMP = 0, S_LAND, S_RIFLE, S_PUNCH1, S_SG, S_CG,
-    S_RLFIRE, S_RLHIT, S_WEAPLOAD, S_ITEMAMMO, S_ITEMHEALTH,
-    S_ITEMARMOUR, S_ITEMPUP, S_ITEMSPAWN, S_TELEPORT, S_NOAMMO, S_PUPOUT,
-    S_PAIN1, S_PAIN2, S_PAIN3, S_PAIN4, S_PAIN5, S_PAIN6,
-    S_DIE1, S_DIE2,
-    S_FLAUNCH, S_FEXPLODE,
-    S_SPLASH1, S_SPLASH2,
-    S_JUMPPAD, S_PISTOL,
+    S_JUMP = 0, S_LAND,
+    S_SPLASHIN, S_SPLASHOUT, S_BURN,
+    S_ITEMSPAWN, S_TELEPORT, S_JUMPPAD,
+    S_MELEE, S_ROCKET, S_ROCKETEXPLODE, S_RIFLE, 
+    S_WEAPLOAD, S_NOAMMO, S_HIT,
+    S_PAIN1, S_PAIN2, S_DIE1, S_DIE2,
 
     S_FLAGPICKUP,
     S_FLAGDROP,
     S_FLAGRETURN,
     S_FLAGSCORE,
     S_FLAGRESET,
-    S_FLAGFAIL,
-
-    S_BURN,
-    S_CHAINSAW_ATTACK,
-    S_CHAINSAW_IDLE,
-
-    S_HIT
+    S_FLAGFAIL
 };
 
 // network messages codes, c2s, c2c, s2c
@@ -195,7 +189,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_CONNECT, 0, N_SERVINFO, 0, N_WELCOME, 1, N_INITCLIENT, 0, N_POS, 0, N_TEXT, 0, N_SOUND, 2, N_CDIS, 2,
     N_SHOOT, 0, N_EXPLODE, 0, N_SUICIDE, 1,
     N_DIED, 5, N_DAMAGE, 5, N_HITPUSH, 7, N_SHOTFX, 10, N_EXPLODEFX, 4,
-    N_TRYSPAWN, 1, N_SPAWNSTATE, 12, N_SPAWN, 3, N_FORCEDEATH, 2,
+    N_TRYSPAWN, 1, N_SPAWNSTATE, 8, N_SPAWN, 3, N_FORCEDEATH, 2,
     N_GUNSELECT, 2, N_TAUNT, 1,
     N_MAPCHANGE, 0, N_MAPVOTE, 0, N_TEAMINFO, 0, N_ITEMSPAWN, 2, N_ITEMPICKUP, 2, N_ITEMACC, 3,
     N_PING, 2, N_PONG, 2, N_CLIENTPING, 2,
@@ -235,27 +229,8 @@ struct demoheader
 
 enum
 {
-    HICON_BLUE_ARMOUR = 0,
-    HICON_GREEN_ARMOUR,
-    HICON_YELLOW_ARMOUR,
-
-    HICON_HEALTH,
-
-    HICON_FIST,
-    HICON_SG,
-    HICON_CG,
-    HICON_RL,
-    HICON_RIFLE,
-    HICON_GL,
-    HICON_PISTOL,
-
-    HICON_QUAD,
-
-    HICON_RED_FLAG,
+    HICON_RED_FLAG = 0,
     HICON_BLUE_FLAG,
-    HICON_NEUTRAL_FLAG,
-
-    HICON_TOKEN,
 
     HICON_X       = 20,
     HICON_Y       = 1650,
@@ -265,108 +240,67 @@ enum
     HICON_SPACE   = 40
 };
 
+#if 0
 static struct itemstat { int add, max, sound; const char *name; int icon, info; } itemstats[] =
 {
-    {10,    30,    S_ITEMAMMO,   "SG", HICON_SG, GUN_SG},
-    {20,    60,    S_ITEMAMMO,   "CG", HICON_CG, GUN_CG},
-    {5,     15,    S_ITEMAMMO,   "RL", HICON_RL, GUN_RL},
-    {5,     15,    S_ITEMAMMO,   "RI", HICON_RIFLE, GUN_RIFLE},
-    {10,    30,    S_ITEMAMMO,   "GL", HICON_GL, GUN_GL},
-    {30,    120,   S_ITEMAMMO,   "PI", HICON_PISTOL, GUN_PISTOL},
-    {25,    100,   S_ITEMHEALTH, "H", HICON_HEALTH, -1}
 };
+#endif
 
-#define MAXRAYS 20
+#define validitem(n) false
+
+#define MAXRAYS 4
 #define EXP_SELFDAMDIV 2
 #define EXP_SELFPUSH 2.5f
 #define EXP_DISTSCALE 1
 
-static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl; const char *name, *file; } guns[NUMGUNS] =
+static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; const char *name, *file; } guns[NUMGUNS] =
 {
-    { S_PUNCH1,    250,   1,   0,   0,  0,   14,  1,   0,  0,    0, "melee",  "melee"},
-    { S_SG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
-    { S_CG,          0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
-    { S_RLFIRE,    800,   1,   0, 480, 10, 1024,  1,5000, 10,    0, "rocket", "rocket"},
-    { S_RIFLE,     800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, "rifle",  "rifle" },
-    { S_FLAUNCH,     0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     },
-    { S_PISTOL,      0,   0,   0,   0,  0,    0,  0,   0,  0,    0, "0",      "0"     }
+    { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",  "melee"},
+    { S_ROCKET,  800,   1,   0, 480, 10, 1024,  1,5000, 10,    0, 0, "rocket", "rocket"},
+    { S_RIFLE,   800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "rifle",  "rifle" }
 };
 
 #include "ai.h"
 
-// inherited by fpsent and server clients
-struct fpsstate
+// inherited by gameent and server clients
+struct gamestate
 {
     int health, maxhealth;
     int gunselect, gunwait;
     int ammo[NUMGUNS];
     int aitype, skill;
 
-    fpsstate() : maxhealth(1), aitype(AI_NONE), skill(0) {}
-
-    void baseammo(int gun, int k = 2, int scale = 1)
-    {
-        ammo[gun] = (itemstats[gun-GUN_SG].add*k)/scale;
-    }
-
-    void addammo(int gun, int k = 1, int scale = 1)
-    {
-        itemstat &is = itemstats[gun-GUN_SG];
-        ammo[gun] = min(ammo[gun] + (is.add*k)/scale, is.max);
-    }
-
-    bool hasmaxammo(int type)
-    {
-       const itemstat &is = itemstats[type-I_SHELLS];
-       return ammo[type-I_SHELLS+GUN_SG]>=is.max;
-    }
+    gamestate() : maxhealth(1), aitype(AI_NONE), skill(0) {}
 
     bool canpickup(int type)
     {
-        if(type<I_SHELLS || type>I_YELLOWARMOUR) return false;
-        itemstat &is = itemstats[type-I_SHELLS];
-        switch(type)
-        {
-            case I_HEALTH: return health<maxhealth;
-            default: return ammo[is.info]<is.max;
-        }
+        return validitem(type);
     }
 
     void pickup(int type)
     {
-        if(type<I_SHELLS || type>I_YELLOWARMOUR) return;
-        itemstat &is = itemstats[type-I_SHELLS];
-        switch(type)
-        {
-            case I_HEALTH:
-                health = min(health+is.add, maxhealth);
-                break;
-            default:
-                ammo[is.info] = min(ammo[is.info]+is.add, is.max);
-                break;
-        }
     }
 
     void respawn()
     {
         health = maxhealth;
-        gunselect = GUN_FIST;
+        gunselect = GUN_MELEE;
         gunwait = 0;
         loopi(NUMGUNS) ammo[i] = 0;
-        ammo[GUN_FIST] = 1;
+        ammo[GUN_MELEE] = 1;
     }
 
     void spawnstate(int gamemode)
     {
         if(m_demo)
         {
-            gunselect = GUN_FIST;
+            gunselect = GUN_MELEE;
         }
         else
         {
             gunselect = GUN_RIFLE;
-            ammo[GUN_RIFLE] = 100;
-            ammo[GUN_RL] = 100;
+            ammo[GUN_RIFLE] = 1;
+            ammo[GUN_ROCKET] = 1;
         }
     }
 
@@ -379,7 +313,7 @@ struct fpsstate
 
     int hasammo(int gun, int exclude = -1)
     {
-        return gun >= 0 && gun <= NUMGUNS && gun != exclude && ammo[gun] > 0;
+        return validgun(gun) && gun != exclude && ammo[gun] > 0;
     }
 };
 
@@ -393,7 +327,7 @@ static inline int teamnumber(const char *name) { loopi(MAXTEAMS) if(!strcmp(team
 #define validteam(n) ((n) >= 1 && (n) <= MAXTEAMS)
 #define teamname(n) (teamnames[validteam(n) ? (n) : 0])
 
-struct fpsent : dynent, fpsstate
+struct gameent : dynent, gamestate
 {
     int weight;                         // affects the effectiveness of hitpush
     int clientnum, privilege, lastupdate, plag, ping;
@@ -416,18 +350,18 @@ struct fpsent : dynent, fpsstate
 
     vec muzzle;
 
-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
+    gameent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
     {
         name[0] = info[0] = 0;
         respawn();
     }
-    ~fpsent()
+    ~gameent()
     {
         freeeditinfo(edit);
         if(ai) delete ai;
     }
 
-    void hitpush(int damage, const vec &dir, fpsent *actor, int gun)
+    void hitpush(int damage, const vec &dir, gameent *actor, int gun)
     {
         vec push(dir);
         push.mul((actor==this && guns[gun].exprad ? EXP_SELFPUSH : 1.0f)*guns[gun].hitpush*damage/weight);
@@ -437,7 +371,7 @@ struct fpsent : dynent, fpsstate
     void respawn()
     {
         dynent::reset();
-        fpsstate::respawn();
+        gamestate::respawn();
         respawned = suicided = -1;
         lastaction = 0;
         lastattackgun = gunselect;
@@ -486,17 +420,15 @@ namespace entities
 
     extern void preloadentities();
     extern void renderentities();
-    extern void checkitems(fpsent *d);
+    extern void checkitems(gameent *d);
     extern void resetspawns();
     extern void spawnitems(bool force = false);
     extern void putitems(packetbuf &p);
     extern void setspawn(int i, bool on);
-    extern void teleport(int n, fpsent *d);
-    extern void pickupeffects(int n, fpsent *d);
-    extern void teleporteffects(fpsent *d, int tp, int td, bool local = true);
-    extern void jumppadeffects(fpsent *d, int jp, bool local = true);
-
-    extern void repammo(fpsent *d, int type, bool local = true);
+    extern void teleport(int n, gameent *d);
+    extern void pickupeffects(int n, gameent *d);
+    extern void teleporteffects(gameent *d, int tp, int td, bool local = true);
+    extern void jumppadeffects(gameent *d, int jp, bool local = true);
 }
 
 namespace game
@@ -509,57 +441,57 @@ namespace game
 
         virtual void preload() {}
         virtual float clipconsole(float w, float h) { return 0; }
-        virtual void drawhud(fpsent *d, int w, int h) {}
+        virtual void drawhud(gameent *d, int w, int h) {}
         virtual void rendergame() {}
-        virtual void respawned(fpsent *d) {}
+        virtual void respawned(gameent *d) {}
         virtual void setup() {}
-        virtual void checkitems(fpsent *d) {}
-        virtual int respawnwait(fpsent *d) { return 0; }
-        virtual void pickspawn(fpsent *d) { findplayerspawn(d, -1, m_teammode ? d->team : 0); }
+        virtual void checkitems(gameent *d) {}
+        virtual int respawnwait(gameent *d) { return 0; }
+        virtual void pickspawn(gameent *d) { findplayerspawn(d, -1, m_teammode ? d->team : 0); }
         virtual void senditems(packetbuf &p) {}
-        virtual void removeplayer(fpsent *d) {}
+        virtual void removeplayer(gameent *d) {}
         virtual void gameover() {}
         virtual bool hidefrags() { return false; }
         virtual int getteamscore(int team) { return 0; }
         virtual void getteamscores(vector<teamscore> &scores) {}
-        virtual void aifind(fpsent *d, ai::aistate &b, vector<ai::interest> &interests) {}
-        virtual bool aicheck(fpsent *d, ai::aistate &b) { return false; }
-        virtual bool aidefend(fpsent *d, ai::aistate &b) { return false; }
-        virtual bool aipursue(fpsent *d, ai::aistate &b) { return false; }
+        virtual void aifind(gameent *d, ai::aistate &b, vector<ai::interest> &interests) {}
+        virtual bool aicheck(gameent *d, ai::aistate &b) { return false; }
+        virtual bool aidefend(gameent *d, ai::aistate &b) { return false; }
+        virtual bool aipursue(gameent *d, ai::aistate &b) { return false; }
     };
 
     extern clientmode *cmode;
     extern void setclientmode();
 
-    // fps
+    // game
     extern int nextmode;
     extern string clientmap;
     extern bool intermission;
     extern int maptime, maprealtime, maplimit;
-    extern fpsent *player1;
-    extern vector<fpsent *> players, clients;
+    extern gameent *player1;
+    extern vector<gameent *> players, clients;
     extern int lastspawnattempt;
     extern int lasthit;
     extern int following;
     extern int smoothmove, smoothdist;
 
     extern bool clientoption(const char *arg);
-    extern fpsent *getclient(int cn);
-    extern fpsent *newclient(int cn);
-    extern const char *colorname(fpsent *d, const char *name = NULL, const char *alt = NULL, const char *color = "");
-    extern const char *teamcolorname(fpsent *d, const char *alt = "you");
+    extern gameent *getclient(int cn);
+    extern gameent *newclient(int cn);
+    extern const char *colorname(gameent *d, const char *name = NULL, const char *alt = NULL, const char *color = "");
+    extern const char *teamcolorname(gameent *d, const char *alt = "you");
     extern const char *teamcolor(const char *prefix, const char *suffix, int team, const char *alt);
-    extern fpsent *pointatplayer();
-    extern fpsent *hudplayer();
-    extern fpsent *followingplayer();
+    extern gameent *pointatplayer();
+    extern gameent *hudplayer();
+    extern gameent *followingplayer();
     extern void stopfollowing();
     extern void clientdisconnected(int cn, bool notify = true);
     extern void clearclients(bool notify = true);
     extern void startgame();
-    extern void spawnplayer(fpsent *);
-    extern void deathstate(fpsent *d, bool restore = false);
-    extern void damaged(int damage, fpsent *d, fpsent *actor, bool local = true);
-    extern void killed(fpsent *d, fpsent *actor);
+    extern void spawnplayer(gameent *);
+    extern void deathstate(gameent *d, bool restore = false);
+    extern void damaged(int damage, gameent *d, gameent *actor, bool local = true);
+    extern void killed(gameent *d, gameent *actor);
     extern void timeupdate(int timeremain);
     extern void msgsound(int n, physent *d = NULL);
     extern void drawicon(int icon, float x, float y, float sz = 120);
@@ -582,41 +514,41 @@ namespace game
     extern void stopdemo();
     extern void changemap(const char *name, int mode);
     extern void c2sinfo(bool force = false);
-    extern void sendposition(fpsent *d, bool reliable = false);
+    extern void sendposition(gameent *d, bool reliable = false);
 
     // weapon
     extern int getweapon(const char *name);
-    extern void shoot(fpsent *d, const vec &targ);
-    extern void shoteffects(int gun, const vec &from, const vec &to, fpsent *d, bool local, int id, int prevaction);
-    extern void explode(bool local, fpsent *owner, const vec &v, const vec &vel, dynent *safe, int dam, int gun);
-    extern void explodeeffects(int gun, fpsent *d, bool local, int id = 0);
-    extern void damageeffect(int damage, fpsent *d, bool thirdperson = true);
-    extern void gibeffect(int damage, const vec &vel, fpsent *d);
+    extern void shoot(gameent *d, const vec &targ);
+    extern void shoteffects(int gun, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction);
+    extern void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int dam, int gun);
+    extern void explodeeffects(int gun, gameent *d, bool local, int id = 0);
+    extern void damageeffect(int damage, gameent *d, bool thirdperson = true);
+    extern void gibeffect(int damage, const vec &vel, gameent *d);
     extern float intersectdist;
     extern bool intersect(dynent *d, const vec &from, const vec &to, float &dist = intersectdist);
-    extern dynent *intersectclosest(const vec &from, const vec &to, fpsent *at, float &dist = intersectdist);
+    extern dynent *intersectclosest(const vec &from, const vec &to, gameent *at, float &dist = intersectdist);
     extern void clearbouncers();
     extern void updatebouncers(int curtime);
-    extern void removebouncers(fpsent *owner);
+    extern void removebouncers(gameent *owner);
     extern void renderbouncers();
     extern void clearprojectiles();
     extern void updateprojectiles(int curtime);
-    extern void removeprojectiles(fpsent *owner);
+    extern void removeprojectiles(gameent *owner);
     extern void renderprojectiles();
     extern void preloadbouncers();
-    extern void removeweapons(fpsent *owner);
+    extern void removeweapons(gameent *owner);
     extern void updateweapons(int curtime);
-    extern void gunselect(int gun, fpsent *d);
-    extern void weaponswitch(fpsent *d);
+    extern void gunselect(int gun, gameent *d);
+    extern void weaponswitch(gameent *d);
     extern void avoidweapons(ai::avoidset &obstacles, float radius);
 
     // scoreboard
     extern void showscores(bool on);
-    extern void getbestplayers(vector<fpsent *> &best);
+    extern void getbestplayers(vector<gameent *> &best);
     extern void getbestteams(vector<int> &best);
     extern void clearteaminfo();
     extern void setteaminfo(int team, int frags);
-    extern void removegroupedplayer(fpsent *d);
+    extern void removegroupedplayer(gameent *d);
 
     // render
     struct playermodelinfo
@@ -628,14 +560,14 @@ namespace game
 
     extern int playermodel, teamskins, testteam;
 
-    extern void saveragdoll(fpsent *d);
+    extern void saveragdoll(gameent *d);
     extern void clearragdolls();
     extern void moveragdolls();
     extern void changedplayermodel();
-    extern const playermodelinfo &getplayermodelinfo(fpsent *d);
+    extern const playermodelinfo &getplayermodelinfo(gameent *d);
     extern int chooserandomplayermodel(int seed);
     extern void swayhudgun(int curtime);
-    extern vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d);
+    extern vec hudgunorigin(int gun, const vec &from, const vec &to, gameent *d);
 }
 
 namespace server

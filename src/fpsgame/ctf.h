@@ -338,8 +338,7 @@ struct ctfclientmode : clientmode
     {
         preloadmodel("flags/red");
         preloadmodel("flags/blue");
-        static const int sounds[] = { S_FLAGPICKUP, S_FLAGDROP, S_FLAGRETURN, S_FLAGSCORE, S_FLAGRESET, S_FLAGFAIL };
-        loopi(sizeof(sounds)/sizeof(sounds[0])) preloadsound(sounds[i]);
+        for(int i = S_FLAGPICKUP; i <= S_FLAGFAIL; i++) preloadsound(i);
     }
 
     void drawblip(fpsent *d, float x, float y, float s, const vec &pos, bool flagblip)
@@ -766,18 +765,20 @@ struct ctfclientmode : clientmode
                 {
                     bool guard = false;
                     if((f.owner && f.team != f.owner->team) || f.droptime || targets.empty()) guard = true;
+#if 0
                     else if(d->hasammo(d->ai->weappref))
                     { // see if we can relieve someone who only has a piece of crap
                         fpsent *t;
                         loopvk(targets) if((t = getclient(targets[k])))
                         {
-                            if((t->ai && !t->hasammo(t->ai->weappref)) || (!t->ai && (t->gunselect == GUN_FIST || t->gunselect == GUN_PISTOL)))
+                            if((t->ai && !t->hasammo(t->ai->weappref)) || (!t->ai && t->gunselect == GUN_MELEE))
                             {
                                 guard = true;
                                 break;
                             }
                         }
                     }
+#endif
                     if(guard)
                     { // defend the flag
                         ai::interest &n = interests.add();

@@ -844,7 +844,7 @@ namespace server
     ctfservmode ctfmode;
     servmode *smode = NULL;
 
-    bool canspawnitem(int type) { return type>=I_SHELLS && type<=I_YELLOWARMOUR; }
+    bool canspawnitem(int type) { return validitem(type); }
 
     int spawntime(int type)
     {
@@ -853,15 +853,6 @@ namespace server
         int sec = 0;
         switch(type)
         {
-            case I_SHELLS:
-            case I_BULLETS:
-            case I_ROCKETS:
-            case I_ROUNDS:
-            case I_GRENADES:
-            case I_CARTRIDGES: sec = np*4; break;
-            case I_HEALTH: sec = np*5; break;
-            case I_GREENARMOUR: sec = 20; break;
-            case I_YELLOWARMOUR: sec = 30; break;
         }
         return sec*1000;
     }
@@ -870,9 +861,6 @@ namespace server
     {
         switch(type)
         {
-            case I_GREENARMOUR:
-            case I_YELLOWARMOUR:
-                return true;
             default:
                 return false;
         }
@@ -1673,7 +1661,7 @@ namespace server
         putint(p, gs.health);
         putint(p, gs.maxhealth);
         putint(p, gs.gunselect);
-        loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
+        loopi(NUMGUNS-1) putint(p, gs.ammo[i+1]);
     }
 
     void spawnstate(clientinfo *ci)
@@ -1689,7 +1677,7 @@ namespace server
         spawnstate(ci);
         sendf(ci->ownernum, 1, "rii5v", N_SPAWNSTATE, ci->clientnum, gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
+            gs.gunselect, NUMGUNS-1, &gs.ammo[1]);
         gs.lastspawn = gamemillis;
     }
 
@@ -1874,7 +1862,7 @@ namespace server
             gs.state, gs.frags, gs.flags,
             gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
+            gs.gunselect, NUMGUNS-1, &gs.ammo[1], -1);
     }
 
     void sendinitclient(clientinfo *ci)
@@ -2148,7 +2136,7 @@ namespace server
         gamestate &gs = ci->state;
         switch(gun)
         {
-            case GUN_RL:
+            case GUN_ROCKET:
                 if(!gs.rockets.remove(id)) return;
                 break;
 
@@ -2178,10 +2166,10 @@ namespace server
         int wait = millis - gs.lastshot;
         if(!gs.isalive(gamemillis) ||
            wait<gs.gunwait ||
-           gun<GUN_FIST || gun>GUN_PISTOL ||
+           !validgun(gun) ||
            gs.ammo[gun]<=0 || (guns[gun].range && from.dist(to) > guns[gun].range + 1))
             return;
-        if(gun!=GUN_FIST) gs.ammo[gun]--;
+        gs.ammo[gun] -= guns[gun].use;
         gs.lastshot = millis;
         gs.gunwait = guns[gun].attackdelay;
         sendf(-1, 1, "rii9x", N_SHOTFX, ci->clientnum, gun, id,
@@ -2191,7 +2179,7 @@ namespace server
         gs.shotdamage += guns[gun].damage*guns[gun].rays;
         switch(gun)
         {
-            case GUN_RL: gs.rockets.add(id); break;
+            case GUN_ROCKET: gs.rockets.add(id); break;
             default:
             {
                 int totalrays = 0, maxrays = guns[gun].rays;
@@ -2936,7 +2924,7 @@ namespace server
             {
                 int gunselect = getint(p);
                 if(!cq || cq->state.state!=CS_ALIVE) break;
-                cq->state.gunselect = gunselect >= GUN_FIST && gunselect <= GUN_PISTOL ? gunselect : GUN_FIST;
+                cq->state.gunselect = validgun(gunselect) ? gunselect : GUN_MELEE;
                 QUEUE_AI;
                 QUEUE_MSG;
                 break;
@@ -2948,7 +2936,7 @@ namespace server
                 if(!cq || (cq->state.state!=CS_ALIVE && cq->state.state!=CS_DEAD) || ls!=cq->state.lifesequence || cq->state.lastspawn<0) break;
                 cq->state.lastspawn = -1;
                 cq->state.state = CS_ALIVE;
-                cq->state.gunselect = gunselect >= GUN_FIST && gunselect <= GUN_PISTOL ? gunselect : GUN_FIST;
+                cq->state.gunselect = validgun(gunselect) ? gunselect : GUN_MELEE;
                 cq->exceeded = 0;
                 if(smode) smode->spawned(cq);
                 QUEUE_AI;

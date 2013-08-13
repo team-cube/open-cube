@@ -602,7 +602,7 @@ namespace ai
                     addwaypoint(e.o);
                     break;
                 default:
-                    if(e.type >= I_SHELLS && e.type <= I_YELLOWARMOUR) addwaypoint(e.o);
+                    if(validitem(e.type)) addwaypoint(e.o);
                     break;
             }
         }
