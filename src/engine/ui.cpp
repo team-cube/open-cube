@@ -581,10 +581,21 @@ namespace UI
         {
             float aspect = float(hudw)/hudh,
                   sh = max(max(h, w/aspect), 1.0f),
-                  sw = aspect*sh,
-                  sx = 0.5f*(1 - sw),
-                  sy = 0.5f*(1 - sh);
-            Object::adjustlayout(sx, sy, sw, sh);
+                  sw = aspect*sh;
+#if 1
+            Object::adjustlayout(0, 0, sw, sh);
+            px = 0;
+            px2 = sw;
+            py = 0;
+            py2 = sh;
+#else
+            float scale = max(1/maxscale, 1.0f);
+            Object::adjustlayout(0, 0, scale*sw, sh);
+            px = 0;
+            px2 = px + scale*sw;
+            py = -0.5f*sh*(scale - 1);
+            py2 = py + scale*sh;
+#endif
         }
 
         #define DOSTATE(flags, func) \
@@ -603,16 +614,6 @@ namespace UI
 
         void projection()
         {
-            float aspect = float(hudw)/hudh,
-                  sh = max(max(h, w/aspect), 1.0f),
-                  sw = aspect*sh,
-                  sx = 0.5f*(1 - sw),
-                  sy = 0.5f*(1 - sh),
-                  scale = max((y + h)/(sh*maxscale), 1.0f);
-            px = (sx - 0.5f)*scale + 0.5f;
-            px2 = (sx + sw - 0.5f)*scale + 0.5f;
-            py = (sy - 0.5f)*scale + 0.5f;
-            py2 = (sy + sh - 0.5f)*scale + 0.5f;
             hudmatrix.ortho(px, px2, py2, py, -1, 1);
             resethudmatrix();
             sscale = vec2(hudmatrix.a.x, hudmatrix.b.y).mul(0.5f);
