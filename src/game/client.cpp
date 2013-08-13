@@ -12,7 +12,7 @@ namespace game
         return clamp(max(minimapradius.x, minimapradius.y)/3, float(minradarscale), float(maxradarscale));
     }
 
-    void drawminimap(fpsent *d, float x, float y, float s)
+    void drawminimap(gameent *d, float x, float y, float s)
     {
         vec pos = vec(d->o).sub(minimapcenter).mul(minimapscale).add(0.5f), dir;
         vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
@@ -47,7 +47,7 @@ namespace game
         gle::end();
     }
 
-    void drawteammate(fpsent *d, float x, float y, float s, fpsent *o, float scale)
+    void drawteammate(gameent *d, float x, float y, float s, gameent *o, float scale)
     {
         vec dir = d->o;
         dir.sub(o->o).div(scale);
@@ -71,14 +71,14 @@ namespace game
         settexture(blipname, 3);
     }
 
-    void drawteammates(fpsent *d, float x, float y, float s)
+    void drawteammates(gameent *d, float x, float y, float s)
     {
         if(!radarteammates) return;
         float scale = calcradarscale();
         int alive = 0, dead = 0;
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(o != d && o->state == CS_ALIVE && o->team == d->team)
             {
                 if(!alive++)
@@ -94,7 +94,7 @@ namespace game
         if(alive) gle::end();
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(o != d && o->state == CS_DEAD && o->team == d->team)
             {
                 if(!dead++)
@@ -268,34 +268,34 @@ namespace game
 
     const char *getclientname(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d ? d->name : "";
     }
     ICOMMAND(getclientname, "i", (int *cn), result(getclientname(*cn)));
 
     ICOMMAND(getclientcolorname, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d) result(colorname(d));
     });
 
     int getclientteam(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return m_teammode && d && validteam(d->team) ? d->team : 0;
     }
     ICOMMAND(getclientteam, "i", (int *cn), intret(getclientteam(*cn)));
 
     int getclientmodel(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d ? d->playermodel : -1;
     }
     ICOMMAND(getclientmodel, "i", (int *cn), intret(getclientmodel(*cn)));
 
     const char *getclienticon(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         if(!d || d->state==CS_SPECTATOR) return "spectator";
         const playermodelinfo &mdl = getplayermodelinfo(d);
         return m_teammode && validteam(d->team) ? mdl.icon[d->team] : mdl.icon[0];
@@ -304,33 +304,33 @@ namespace game
 
     ICOMMAND(getclientfrags, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d) intret(d->frags);
     });
 
     ICOMMAND(getclientflags, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d) intret(d->flags);
     });
 
     bool ismaster(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d && d->privilege >= PRIV_MASTER;
     }
     ICOMMAND(ismaster, "i", (int *cn), intret(ismaster(*cn) ? 1 : 0));
 
     bool isauth(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d && d->privilege >= PRIV_AUTH;
     }
     ICOMMAND(isauth, "i", (int *cn), intret(isauth(*cn) ? 1 : 0));
 
     bool isadmin(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d && d->privilege >= PRIV_ADMIN;
     }
     ICOMMAND(isadmin, "i", (int *cn), intret(isadmin(*cn) ? 1 : 0));
@@ -340,26 +340,26 @@ namespace game
 
     bool isspectator(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         return d && d->state==CS_SPECTATOR;
     }
     ICOMMAND(isspectator, "i", (int *cn), intret(isspectator(*cn) ? 1 : 0));
 
     ICOMMAND(islagged, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d) intret(d->state==CS_LAGGED ? 1 : 0);
     });
 
     ICOMMAND(isdead, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d) intret(d->state==CS_DEAD ? 1 : 0);
     });
 
     bool isai(int cn, int type)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         int aitype = type > 0 && type < AI_MAX ? type : AI_BOT;
         return d && d->aitype==aitype;
     }
@@ -377,13 +377,13 @@ namespace game
         // try case sensitive first
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(!strcmp(arg, o->name)) return o->clientnum;
         }
         // nothing found, try case insensitive
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(!strcasecmp(arg, o->name)) return o->clientnum;
         }
         return -1;
@@ -443,7 +443,7 @@ namespace game
 
     void ignore(int cn)
     {
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         if(!d || d == player1) return;
         conoutf("ignoring %s", d->name);
         if(ignores.find(cn) < 0) ignores.add(cn);
@@ -452,7 +452,7 @@ namespace game
     void unignore(int cn)
     {
         if(ignores.find(cn) < 0) return;
-        fpsent *d = getclient(cn);
+        gameent *d = getclient(cn);
         if(d) conoutf("stopped ignoring %s", d->name);
         ignores.removeobj(cn);
     }
@@ -679,7 +679,7 @@ namespace game
         }
     }
 
-    void printvar(fpsent *d, ident *id)
+    void printvar(gameent *d, ident *id)
     {
         if(id) switch(id->type)
         {
@@ -781,7 +781,7 @@ namespace game
                 case 'r': reliable = true; break;
                 case 'c':
                 {
-                    fpsent *d = va_arg(args, fpsent *);
+                    gameent *d = va_arg(args, gameent *);
                     mcn = !d || d == player1 ? -1 : d->clientnum;
                     break;
                 }
@@ -879,7 +879,7 @@ namespace game
 
     ICOMMAND(servcmd, "C", (char *cmd), addmsg(N_SERVCMD, "rs", cmd));
 
-    static void sendposition(fpsent *d, packetbuf &q)
+    static void sendposition(gameent *d, packetbuf &q)
     {
         putint(q, N_POS);
         putuint(q, d->clientnum);
@@ -935,7 +935,7 @@ namespace game
         }
     }
 
-    void sendposition(fpsent *d, bool reliable)
+    void sendposition(gameent *d, bool reliable)
     {
         if(d->state != CS_ALIVE && d->state != CS_EDITING) return;
         packetbuf q(100, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
@@ -947,14 +947,14 @@ namespace game
     {
         loopv(players)
         {
-            fpsent *d = players[i];
+            gameent *d = players[i];
             if((d == player1 || d->ai) && (d->state == CS_ALIVE || d->state == CS_EDITING))
             {
                 packetbuf q(100);
                 sendposition(d, q);
                 for(int j = i+1; j < players.length(); j++)
                 {
-                    fpsent *d = players[j];
+                    gameent *d = players[j];
                     if((d == player1 || d->ai) && (d->state == CS_ALIVE || d->state == CS_EDITING))
                         sendposition(d, q);
                 }
@@ -1038,7 +1038,7 @@ namespace game
         sendclientpacket(p.finalize(), 1);
     }
 
-    void updatepos(fpsent *d)
+    void updatepos(gameent *d)
     {
         // update the position of other clients in the game in our world
         // don't care if he's in the scenery or other players,
@@ -1100,7 +1100,7 @@ namespace game
                 }
                 else falling = vec(0, 0, 0);
                 int seqcolor = (physstate>>3)&1;
-                fpsent *d = getclient(cn);
+                gameent *d = getclient(cn);
                 if(!d || d->lifesequence < 0 || seqcolor!=(d->lifesequence&1) || d->state==CS_DEAD) continue;
                 float oldyaw = d->yaw, oldpitch = d->pitch, oldroll = d->roll;
                 d->yaw = yaw;
@@ -1146,7 +1146,7 @@ namespace game
             case N_TELEPORT:
             {
                 int cn = getint(p), tp = getint(p), td = getint(p);
-                fpsent *d = getclient(cn);
+                gameent *d = getclient(cn);
                 if(!d || d->lifesequence < 0 || d->state==CS_DEAD) continue;
                 entities::teleporteffects(d, tp, td, false);
                 break;
@@ -1155,7 +1155,7 @@ namespace game
             case N_JUMPPAD:
             {
                 int cn = getint(p), jp = getint(p);
-                fpsent *d = getclient(cn);
+                gameent *d = getclient(cn);
                 if(!d || d->lifesequence < 0 || d->state==CS_DEAD) continue;
                 entities::jumppadeffects(d, jp, false);
                 break;
@@ -1167,9 +1167,9 @@ namespace game
         }
     }
 
-    void parsestate(fpsent *d, ucharbuf &p, bool resume = false)
+    void parsestate(gameent *d, ucharbuf &p, bool resume = false)
     {
-        if(!d) { static fpsent dummy; d = &dummy; }
+        if(!d) { static gameent dummy; d = &dummy; }
         if(resume)
         {
             if(d==player1) getint(p);
@@ -1195,7 +1195,7 @@ namespace game
 
     extern int deathscore;
 
-    void parsemessages(int cn, fpsent *d, ucharbuf &p)
+    void parsemessages(int cn, gameent *d, ucharbuf &p)
     {
         static char text[MAXTRANS];
         int type;
@@ -1233,7 +1233,7 @@ namespace game
             {
                 bool val = getint(p) > 0;
                 int cn = getint(p);
-                fpsent *a = cn >= 0 ? getclient(cn) : NULL;
+                gameent *a = cn >= 0 ? getclient(cn) : NULL;
                 if(!demopacket)
                 {
                     gamepaused = val;
@@ -1247,7 +1247,7 @@ namespace game
             case N_GAMESPEED:
             {
                 int val = clamp(getint(p), 10, 1000), cn = getint(p);
-                fpsent *a = cn >= 0 ? getclient(cn) : NULL;
+                gameent *a = cn >= 0 ? getclient(cn) : NULL;
                 if(!demopacket) gamespeed = val;
                 if(a) conoutf("%s set gamespeed to %d", colorname(a), val);
                 else conoutf("gamespeed is %d", val);
@@ -1282,7 +1282,7 @@ namespace game
             case N_SAYTEAM:
             {
                 int tcn = getint(p);
-                fpsent *t = getclient(tcn);
+                gameent *t = getclient(tcn);
                 getstring(text, p);
                 filtertext(text, text);
                 if(!t || isignored(t->clientnum)) break;
@@ -1304,7 +1304,7 @@ namespace game
             case N_FORCEDEATH:
             {
                 int cn = getint(p);
-                fpsent *d = cn==player1->clientnum ? player1 : newclient(cn);
+                gameent *d = cn==player1->clientnum ? player1 : newclient(cn);
                 if(!d) break;
                 if(d==player1)
                 {
@@ -1331,7 +1331,7 @@ namespace game
             case N_INITCLIENT:            // another client either connected or changed name/team
             {
                 int cn = getint(p);
-                fpsent *d = newclient(cn);
+                gameent *d = newclient(cn);
                 if(!d)
                 {
                     getstring(text, p);
@@ -1406,7 +1406,7 @@ namespace game
             case N_SPAWNSTATE:
             {
                 int scn = getint(p);
-                fpsent *s = getclient(scn);
+                gameent *s = getclient(scn);
                 if(!s) { parsestate(NULL, p); break; }
                 if(s->state==CS_DEAD && s->lastpain) saveragdoll(s);
                 if(s==player1)
@@ -1436,7 +1436,7 @@ namespace game
                 vec from, to;
                 loopk(3) from[k] = getint(p)/DMF;
                 loopk(3) to[k] = getint(p)/DMF;
-                fpsent *s = getclient(scn);
+                gameent *s = getclient(scn);
                 if(!s) break;
                 s->gunselect = validgun(gun) ? gun : GUN_MELEE;
                 s->ammo[s->gunselect] -= guns[s->gunselect].use;
@@ -1451,7 +1451,7 @@ namespace game
             case N_EXPLODEFX:
             {
                 int ecn = getint(p), gun = getint(p), id = getint(p);
-                fpsent *e = getclient(ecn);
+                gameent *e = getclient(ecn);
                 if(!e) break;
                 explodeeffects(gun, e, false, id);
                 break;
@@ -1462,7 +1462,7 @@ namespace game
                     acn = getint(p),
                     damage = getint(p),
                     health = getint(p);
-                fpsent *target = getclient(tcn),
+                gameent *target = getclient(tcn),
                        *actor = getclient(acn);
                 if(!target || !actor) break;
                 target->health = health;
@@ -1474,7 +1474,7 @@ namespace game
             case N_HITPUSH:
             {
                 int tcn = getint(p), gun = getint(p), damage = getint(p);
-                fpsent *target = getclient(tcn);
+                gameent *target = getclient(tcn);
                 vec dir;
                 loopk(3) dir[k] = getint(p)/DNF;
                 if(target) target->hitpush(damage * (target->health<=0 ? deadpush : 1), dir, NULL, gun);
@@ -1484,7 +1484,7 @@ namespace game
             case N_DIED:
             {
                 int vcn = getint(p), acn = getint(p), frags = getint(p), tfrags = getint(p);
-                fpsent *victim = getclient(vcn),
+                gameent *victim = getclient(vcn),
                        *actor = getclient(acn);
                 if(!actor) break;
                 actor->frags = frags;
@@ -1526,7 +1526,7 @@ namespace game
                 {
                     int cn = getint(p);
                     if(p.overread() || cn<0) break;
-                    fpsent *d = (cn == player1->clientnum ? player1 : newclient(cn));
+                    gameent *d = (cn == player1->clientnum ? player1 : newclient(cn));
                     parsestate(d, p, true);
                 }
                 break;
@@ -1551,7 +1551,7 @@ namespace game
             case N_ITEMACC:            // server acknowledges that I picked up this item
             {
                 int i = getint(p), cn = getint(p);
-                fpsent *d = getclient(cn);
+                gameent *d = getclient(cn);
                 entities::pickupeffects(i, d);
                 break;
             }
@@ -1559,7 +1559,7 @@ namespace game
             case N_CLIPBOARD:
             {
                 int cn = getint(p), unpacklen = getint(p), packlen = getint(p);
-                fpsent *d = getclient(cn);
+                gameent *d = getclient(cn);
                 ucharbuf q = p.subbuf(max(packlen, 0));
                 if(d) unpackeditinfo(d->edit, q.buf, q.maxlen, unpacklen);
                 break;
@@ -1698,7 +1698,7 @@ namespace game
                 loopv(players) players[i]->privilege = PRIV_NONE;
                 while((mn = getint(p))>=0 && !p.overread())
                 {
-                    fpsent *m = mn==player1->clientnum ? player1 : newclient(mn);
+                    gameent *m = mn==player1->clientnum ? player1 : newclient(mn);
                     int priv = getint(p);
                     if(m) m->privilege = priv;
                 }
@@ -1737,7 +1737,7 @@ namespace game
             case N_SPECTATOR:
             {
                 int sn = getint(p), val = getint(p);
-                fpsent *s;
+                gameent *s;
                 if(sn==player1->clientnum)
                 {
                     s = player1;
@@ -1766,7 +1766,7 @@ namespace game
             case N_SETTEAM:
             {
                 int wn = getint(p), team = getint(p), reason = getint(p);
-                fpsent *w = getclient(wn);
+                gameent *w = getclient(wn);
                 if(!w) return;
                 w->team = validteam(team) ? team : 0;
                 static const char * const fmt[2] = { "%s switched to team %s", "%s forced to team %s"};
@@ -1822,7 +1822,7 @@ namespace game
                 string name;
                 getstring(text, p);
                 filtertext(name, text, false, MAXNAMELEN);
-                fpsent *b = newclient(bn);
+                gameent *b = newclient(bn);
                 if(!b) break;
                 ai::init(b, at, on, sk, bn, pm, name, team);
                 break;
@@ -1975,7 +1975,7 @@ namespace game
         int i = parseplayer(arg);
         if(i>=0)
         {
-            fpsent *d = getclient(i);
+            gameent *d = getclient(i);
             if(!d || d==player1) return;
             player1->o = d->o;
             vec dir;

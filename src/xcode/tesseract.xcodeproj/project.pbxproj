@@ -48,7 +48,7 @@
 		B9AC7AF40D06DB44005506F8 /* water.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AA90D06DB44005506F8 /* water.cpp */; };
 		B9AC7AF50D06DB44005506F8 /* world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AAA0D06DB44005506F8 /* world.cpp */; };
 		B9AC7AF70D06DB44005506F8 /* worldio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AAC0D06DB44005506F8 /* worldio.cpp */; };
-		B9AC7AFB0D06DB44005506F8 /* fps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AB10D06DB44005506F8 /* fps.cpp */; };
+		B9AC7AFB0D06DB44005506F8 /* game.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AB10D06DB44005506F8 /* game.cpp */; };
 		B9AC7B0D0D06DB44005506F8 /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AC50D06DB44005506F8 /* geom.cpp */; };
 		B9AC7B110D06DB44005506F8 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7AC90D06DB44005506F8 /* pch.cpp */; };
 		B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7ACD0D06DB44005506F8 /* tools.cpp */; };
@@ -166,7 +166,7 @@
 		B9AC7AAA0D06DB44005506F8 /* world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = world.cpp; sourceTree = "<group>"; };
 		B9AC7AAB0D06DB44005506F8 /* world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = world.h; sourceTree = "<group>"; };
 		B9AC7AAC0D06DB44005506F8 /* worldio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worldio.cpp; sourceTree = "<group>"; };
-		B9AC7AB10D06DB44005506F8 /* fps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fps.cpp; sourceTree = "<group>"; };
+		B9AC7AB10D06DB44005506F8 /* game.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = game.cpp; sourceTree = "<group>"; };
 		B9AC7AB40D06DB44005506F8 /* game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = game.h; sourceTree = "<group>"; };
 		B9AC7AC20D06DB44005506F8 /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = command.h; sourceTree = "<group>"; };
 		B9AC7AC30D06DB44005506F8 /* cube.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cube.h; sourceTree = "<group>"; };
@@ -292,7 +292,7 @@
 			children = (
 				B90ADCEE09B344D800A5B00B /* enet */,
 				B9AC7A830D06DB44005506F8 /* engine */,
-				B9AC7AAD0D06DB44005506F8 /* fpsgame */,
+				B9AC7AAD0D06DB44005506F8 /* game */,
 				B9AC7AC10D06DB44005506F8 /* shared */,
 			);
 			name = "Other Sources";
@@ -404,7 +404,7 @@
 			path = ../engine;
 			sourceTree = SOURCE_ROOT;
 		};
-		B9AC7AAD0D06DB44005506F8 /* fpsgame */ = {
+		B9AC7AAD0D06DB44005506F8 /* game */ = {
 			isa = PBXGroup;
 			children = (
 				D11B024A0F830BA400334D69 /* ai.cpp */,
@@ -415,15 +415,15 @@
 				D1D07EFC0F645590007098A8 /* server.cpp */,
 				D11B024D0F830BA400334D69 /* waypoint.cpp */,
 				D1D07EFD0F645590007098A8 /* weapon.cpp */,
-				B9AC7AB10D06DB44005506F8 /* fps.cpp */,
+				B9AC7AB10D06DB44005506F8 /* game.cpp */,
 				D11B024B0F830BA400334D69 /* ai.h */,
 				D11B024C0F830BA400334D69 /* aiman.h */,
 				D1DE11180E21986800FA387C /* extinfo.h */,
 				D123F95A0DA8B312001DB09F /* ctf.h */,
 				B9AC7AB40D06DB44005506F8 /* game.h */,
 			);
-			name = fpsgame;
-			path = ../fpsgame;
+			name = game;
+			path = ../game;
 			sourceTree = SOURCE_ROOT;
 		};
 		B9AC7AC10D06DB44005506F8 /* shared */ = {
@@ -574,7 +574,7 @@
 				B9AC7AF40D06DB44005506F8 /* water.cpp in Sources */,
 				B9AC7AF50D06DB44005506F8 /* world.cpp in Sources */,
 				B9AC7AF70D06DB44005506F8 /* worldio.cpp in Sources */,
-				B9AC7AFB0D06DB44005506F8 /* fps.cpp in Sources */,
+				B9AC7AFB0D06DB44005506F8 /* game.cpp in Sources */,
 				B9AC7B0D0D06DB44005506F8 /* geom.cpp in Sources */,
 				B9AC7B110D06DB44005506F8 /* pch.cpp in Sources */,
 				B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */,

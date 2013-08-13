@@ -12,7 +12,7 @@ namespace game
                 conoutf(CON_ERROR, "unknown command-line option: %s", args[i]);
     }
 
-    const char *gameident() { return "fps"; }
+    const char *gameident() { return "Tesseract"; }
 }
 
 extern ENetAddress masteraddress;
@@ -114,7 +114,7 @@ namespace server
         }
     };
 
-    struct gamestate : fpsstate
+    struct servstate : gamestate
     {
         vec o;
         int state, editstate;
@@ -125,7 +125,7 @@ namespace server
         int lasttimeplayed, timeplayed;
         float effectiveness;
 
-        gamestate() : state(CS_DEAD), editstate(CS_DEAD), lifesequence(0) {}
+        servstate() : state(CS_DEAD), editstate(CS_DEAD), lifesequence(0) {}
 
         bool isalive(int gamemillis)
         {
@@ -154,7 +154,7 @@ namespace server
 
         void respawn()
         {
-            fpsstate::respawn();
+            gamestate::respawn();
             o = vec(-1e10f, -1e10f, -1e10f);
             deadflush = 0;
             lastspawn = -1;
@@ -176,7 +176,7 @@ namespace server
         int timeplayed;
         float effectiveness;
 
-        void save(gamestate &gs)
+        void save(servstate &gs)
         {
             frags = gs.frags;
             flags = gs.flags;
@@ -188,7 +188,7 @@ namespace server
             effectiveness = gs.effectiveness;
         }
 
-        void restore(gamestate &gs)
+        void restore(servstate &gs)
         {
             gs.frags = frags;
             gs.flags = flags;
@@ -212,7 +212,7 @@ namespace server
         int privilege;
         bool connected, local, timesync;
         int gameoffset, lastevent, pushed, exceeded;
-        gamestate state;
+        servstate state;
         vector<gameevent *> events;
         vector<uchar> position, messages;
         uchar *wsdata;
@@ -1655,7 +1655,7 @@ namespace server
     }
 
     template<class T>
-    void sendstate(gamestate &gs, T &p)
+    void sendstate(servstate &gs, T &p)
     {
         putint(p, gs.lifesequence);
         putint(p, gs.health);
@@ -1666,14 +1666,14 @@ namespace server
 
     void spawnstate(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         gs.spawnstate(gamemode);
         gs.lifesequence = (gs.lifesequence + 1)&0x7F;
     }
 
     void sendspawn(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         spawnstate(ci);
         sendf(ci->ownernum, 1, "rii5v", N_SPAWNSTATE, ci->clientnum, gs.lifesequence,
             gs.health, gs.maxhealth,
@@ -1808,7 +1808,7 @@ namespace server
             }
             else
             {
-                gamestate &gs = ci->state;
+                servstate &gs = ci->state;
                 spawnstate(ci);
                 putint(p, N_SPAWNSTATE);
                 putint(p, ci->clientnum);
@@ -1857,7 +1857,7 @@ namespace server
 
     void sendresume(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         sendf(-1, 1, "ri3i6vi", N_RESUME, ci->clientnum,
             gs.state, gs.frags, gs.flags,
             gs.lifesequence,
@@ -2068,7 +2068,7 @@ namespace server
 
     void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
     {
-        gamestate &ts = target->state;
+        servstate &ts = target->state;
         ts.dodamage(damage);
         if(target!=actor && !isteam(target->team, actor->team)) actor->state.damage += damage;
         sendf(-1, 1, "ri5", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.health);
@@ -2111,7 +2111,7 @@ namespace server
 
     void suicide(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         if(gs.state!=CS_ALIVE) return;
         int fragvalue = smode ? smode->fragvalue(ci, ci) : -1;
         ci->state.frags += fragvalue;
@@ -2133,7 +2133,7 @@ namespace server
 
     void explodeevent::process(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         switch(gun)
         {
             case GUN_ROCKET:
@@ -2162,7 +2162,7 @@ namespace server
 
     void shotevent::process(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         int wait = millis - gs.lastshot;
         if(!gs.isalive(gamemillis) ||
            wait<gs.gunwait ||
@@ -2201,7 +2201,7 @@ namespace server
 
     void pickupevent::process(clientinfo *ci)
     {
-        gamestate &gs = ci->state;
+        servstate &gs = ci->state;
         if(m_mp(gamemode) && !gs.isalive(gamemillis)) return;
         pickup(ent, ci->clientnum);
     }

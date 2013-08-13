@@ -25,7 +25,7 @@ namespace game
         t.frags = frags;
     }
 
-    static inline bool playersort(const fpsent *a, const fpsent *b)
+    static inline bool playersort(const gameent *a, const gameent *b)
     {
         if(a->state==CS_SPECTATOR)
         {
@@ -43,11 +43,11 @@ namespace game
         return strcmp(a->name, b->name) < 0;
     }
 
-    void getbestplayers(vector<fpsent *> &best)
+    void getbestplayers(vector<gameent *> &best)
     {
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(o->state!=CS_SPECTATOR) best.add(o);
         }
         best.sort(playersort);
@@ -80,7 +80,7 @@ namespace game
         }
     }
 
-    static vector<fpsent *> teamplayers[1+MAXTEAMS], spectators;
+    static vector<gameent *> teamplayers[1+MAXTEAMS], spectators;
 
     static void groupplayers()
     {
@@ -88,7 +88,7 @@ namespace game
         spectators.setsize(0);
         loopv(players)
         {
-            fpsent *o = players[i];
+            gameent *o = players[i];
             if(!showconnecting && !o->name[0]) continue;
             if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
             int team = m_teammode && validteam(o->team) ? o->team : 0;
@@ -98,7 +98,7 @@ namespace game
         spectators.sort(playersort);
     }
 
-    void removegroupedplayer(fpsent *d)
+    void removegroupedplayer(gameent *d)
     {
         loopi(1+MAXTEAMS) teamplayers[i].removeobj(d);
         spectators.removeobj(d);
@@ -115,7 +115,7 @@ namespace game
     {
         if(*team > MAXTEAMS) return;
         loopstart(id, stack);
-        vector<fpsent *> &p = *team < 0 ? spectators : teamplayers[*team];
+        vector<gameent *> &p = *team < 0 ? spectators : teamplayers[*team];
         loopv(p)
         {
             loopiter(id, stack, p[i]->clientnum);
@@ -126,7 +126,7 @@ namespace game
 
     ICOMMAND(scoreboardstatus, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d)
         {
             int status = d->state!=CS_DEAD ? 0xFFFFFF : 0x606060;
@@ -141,7 +141,7 @@ namespace game
 
     ICOMMAND(scoreboardpj, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d && d != player1)
         {
             if(d->state==CS_LAGGED) result("LAG");
@@ -151,7 +151,7 @@ namespace game
 
     ICOMMAND(scoreboardping, "i", (int *cn),
     {
-        fpsent *d = getclient(*cn);
+        gameent *d = getclient(*cn);
         if(d)
         {
             if(!showpj && d->state==CS_LAGGED) result("LAG");

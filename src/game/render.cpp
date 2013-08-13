@@ -2,7 +2,7 @@
 
 namespace game
 {
-    vector<fpsent *> bestplayers;
+    vector<gameent *> bestplayers;
     vector<int> bestteams;
 
     VARP(ragdoll, 0, 1, 1);
@@ -12,12 +12,12 @@ namespace game
     VARP(forceplayermodels, 0, 0, 1);
     VARP(hidedead, 0, 0, 1);
 
-    vector<fpsent *> ragdolls;
+    vector<gameent *> ragdolls;
 
-    void saveragdoll(fpsent *d)
+    void saveragdoll(gameent *d)
     {
         if(!d->ragdoll || !ragdollmillis || (!ragdollfade && lastmillis > d->lastpain + ragdollmillis)) return;
-        fpsent *r = new fpsent(*d);
+        gameent *r = new gameent(*d);
         r->lastupdate = ragdollfade && lastmillis > d->lastpain + max(ragdollmillis - ragdollfade, 0) ? lastmillis - max(ragdollmillis - ragdollfade, 0) : d->lastpain;
         r->edit = NULL;
         r->ai = NULL;
@@ -35,7 +35,7 @@ namespace game
     {
         loopv(ragdolls)
         {
-            fpsent *d = ragdolls[i];
+            gameent *d = ragdolls[i];
             if(lastmillis > d->lastupdate + ragdollmillis)
             {
                 delete ragdolls.remove(i--);
@@ -61,7 +61,7 @@ namespace game
         return &playermodels[n];
     }
 
-    const playermodelinfo &getplayermodelinfo(fpsent *d)
+    const playermodelinfo &getplayermodelinfo(gameent *d)
     {
         const playermodelinfo *mdl = getplayermodelinfo(d==player1 || forceplayermodels ? playermodel : d->playermodel);
         if(!mdl) mdl = getplayermodelinfo(playermodel);
@@ -74,7 +74,7 @@ namespace game
         if(player1->ragdoll) cleanragdoll(player1);
         loopv(ragdolls)
         {
-            fpsent *d = ragdolls[i];
+            gameent *d = ragdolls[i];
             if(!d->ragdoll) continue;
             if(!forceplayermodels)
             {
@@ -85,7 +85,7 @@ namespace game
         }
         loopv(players)
         {
-            fpsent *d = players[i];
+            gameent *d = players[i];
             if(d == player1 || !d->ragdoll) continue;
             if(!forceplayermodels)
             {
@@ -122,7 +122,7 @@ namespace game
     VAR(testanims, 0, 0, 1);
     VAR(testpitch, -90, 0, 90);
 
-    void renderplayer(fpsent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
+    void renderplayer(gameent *d, const playermodelinfo &mdl, int team, float fade, bool mainpass = true)
     {
         int lastaction = d->lastaction, hold = d->gunselect != GUN_MELEE ? (ANIM_HOLD1+d->gunselect)|ANIM_LOOP : 0, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
         if(intermission && d->state!=CS_DEAD)
@@ -228,10 +228,10 @@ namespace game
             else getbestplayers(bestplayers);
         }
 
-        fpsent *exclude = isthirdperson() ? NULL : followingplayer();
+        gameent *exclude = isthirdperson() ? NULL : followingplayer();
         loopv(players)
         {
-            fpsent *d = players[i];
+            gameent *d = players[i];
             if(d == player1 || d->state==CS_SPECTATOR || d->state==CS_SPAWNING || d->lifesequence < 0 || d == exclude || (d->state==CS_DEAD && hidedead)) continue;
             int team = m_teammode && validteam(d->team) ? d->team : 0;
             renderplayer(d, getplayermodelinfo(d), team, 1);
@@ -240,7 +240,7 @@ namespace game
         }
         loopv(ragdolls)
         {
-            fpsent *d = ragdolls[i];
+            gameent *d = ragdolls[i];
             float fade = 1.0f;
             if(ragdollmillis && ragdollfade)
                 fade -= clamp(float(lastmillis - (d->lastupdate + max(ragdollmillis - ragdollfade, 0)))/min(ragdollmillis, ragdollfade), 0.0f, 1.0f);
@@ -270,7 +270,7 @@ namespace game
 
     void swayhudgun(int curtime)
     {
-        fpsent *d = hudplayer();
+        gameent *d = hudplayer();
         if(d->state != CS_SPECTATOR)
         {
             if(d->physstate >= PHYS_SLOPE)
@@ -300,7 +300,7 @@ namespace game
         hudent() { type = ENT_CAMERA; }
     } guninterp;
 
-    void drawhudmodel(fpsent *d, int anim, float speed = 0, int base = 0)
+    void drawhudmodel(gameent *d, int anim, float speed = 0, int base = 0)
     {
         vec sway;
         vecfromyawpitch(d->yaw, 0, 0, 1, sway);
@@ -321,7 +321,7 @@ namespace game
 
     void drawhudgun()
     {
-        fpsent *d = hudplayer();
+        gameent *d = hudplayer();
         if(d->state==CS_SPECTATOR || d->state==CS_EDITING || !hudgun || editmode)
         {
             d->muzzle = player1->muzzle = vec(-1, -1, -1);
@@ -346,10 +346,10 @@ namespace game
 
     void renderplayerpreview(int model, int team, int weap)
     {
-        static fpsent *previewent = NULL;
+        static gameent *previewent = NULL;
         if(!previewent)
         {
-            previewent = new fpsent;
+            previewent = new gameent;
             previewent->o = vec(0, 0.9f*(previewent->eyeheight + previewent->aboveeye), previewent->eyeheight - (previewent->eyeheight + previewent->aboveeye)/2);
             loopi(NUMGUNS-1) previewent->ammo[i+1] = 1;
         }
@@ -360,7 +360,7 @@ namespace game
         renderplayer(previewent, *mdlinfo, validteam(team) ? team : 0, 1, false);
     }
 
-    vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d)
+    vec hudgunorigin(int gun, const vec &from, const vec &to, gameent *d)
     {
         if(d->muzzle.x >= 0) return d->muzzle;
         vec offset(from);

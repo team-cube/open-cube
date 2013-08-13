@@ -4,8 +4,8 @@
     <ClCompile Include="..\engine\aa.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\ai.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\ai.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\bih.cpp">
       <Filter>engine</Filter>
@@ -16,8 +16,8 @@
     <ClCompile Include="..\engine\client.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\client.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\client.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\command.cpp">
       <Filter>engine</Filter>
@@ -34,11 +34,11 @@
     <ClCompile Include="..\engine\dynlight.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\entities.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\entities.cpp">
+      <Filter>game</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\fps.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\game.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\geom.cpp">
       <Filter>shared</Filter>
@@ -79,8 +79,8 @@
     <ClCompile Include="..\engine\ovr.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\pch.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\pch.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\pch.cpp">
       <Filter>shared</Filter>
@@ -94,7 +94,7 @@
     <ClCompile Include="..\engine\pvs.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\render.cpp">
+    <ClCompile Include="..\game\render.cpp">
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\rendergl.cpp">
@@ -118,14 +118,14 @@
     <ClCompile Include="..\engine\renderva.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\scoreboard.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\scoreboard.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\server.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\server.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\server.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\serverbrowser.cpp">
       <Filter>engine</Filter>
@@ -151,11 +151,11 @@
     <ClCompile Include="..\engine\water.cpp">
       <Filter>engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\waypoint.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\waypoint.cpp">
+      <Filter>game</Filter>
     </ClCompile>
-    <ClCompile Include="..\fpsgame\weapon.cpp">
-      <Filter>fpsgame</Filter>
+    <ClCompile Include="..\game\weapon.cpp">
+      <Filter>game</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\world.cpp">
       <Filter>engine</Filter>
@@ -168,11 +168,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fpsgame\ai.h">
-      <Filter>fpsgame</Filter>
+    <ClInclude Include="..\game\ai.h">
+      <Filter>game</Filter>
     </ClInclude>
-    <ClInclude Include="..\fpsgame\aiman.h">
-      <Filter>fpsgame</Filter>
+    <ClInclude Include="..\game\aiman.h">
+      <Filter>game</Filter>
     </ClInclude>
     <ClInclude Include="..\engine\animmodel.h">
       <Filter>engine</Filter>
@@ -183,8 +183,8 @@
     <ClInclude Include="..\shared\command.h">
       <Filter>shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\fpsgame\ctf.h">
-      <Filter>fpsgame</Filter>
+    <ClInclude Include="..\game\ctf.h">
+      <Filter>game</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\cube.h">
       <Filter>shared</Filter>
@@ -198,11 +198,11 @@
     <ClInclude Include="..\engine\explosion.h">
       <Filter>engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\fpsgame\extinfo.h">
-      <Filter>fpsgame</Filter>
+    <ClInclude Include="..\game\extinfo.h">
+      <Filter>game</Filter>
     </ClInclude>
-    <ClInclude Include="..\fpsgame\game.h">
-      <Filter>fpsgame</Filter>
+    <ClInclude Include="..\game\game.h">
+      <Filter>game</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\geom.h">
       <Filter>shared</Filter>
@@ -293,7 +293,7 @@
     <Filter Include="engine">
       <UniqueIdentifier>{37ef9828-d87f-413d-93ee-effc029b6a73}</UniqueIdentifier>
     </Filter>
-    <Filter Include="fpsgame">
+    <Filter Include="game">
       <UniqueIdentifier>{9b7a70df-c8ed-4662-8380-4ffe119eb216}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

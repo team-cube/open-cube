@@ -5,7 +5,7 @@ PLATFORM= $(shell uname -s)
 PLATFORM_ARCH= $(shell uname -m)
 PLATFORM_PREFIX= native
 
-INCLUDES= -Ishared -Iengine -Ifpsgame -Ienet/include
+INCLUDES= -Ishared -Iengine -Igame -Ienet/include
 
 STRIP=
 ifeq (,$(findstring -g,$(CXXFLAGS)))
@@ -114,17 +114,17 @@ CLIENT_OBJS= \
 	engine/water.o \
 	engine/world.o \
 	engine/worldio.o \
-	fpsgame/ai.o \
-	fpsgame/client.o \
-	fpsgame/entities.o \
-	fpsgame/fps.o \
-	fpsgame/render.o \
-	fpsgame/scoreboard.o \
-	fpsgame/server.o \
-	fpsgame/waypoint.o \
-	fpsgame/weapon.o
+	game/ai.o \
+	game/client.o \
+	game/entities.o \
+	game/game.o \
+	game/render.o \
+	game/scoreboard.o \
+	game/server.o \
+	game/waypoint.o \
+	game/weapon.o
 
-CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch fpsgame/game.h.gch
+CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch game/game.h.gch
 
 ifneq (,$(findstring MINGW,$(PLATFORM)))
 SERVER_INCLUDES= -DSTANDALONE $(INCLUDES) -Iinclude
@@ -142,8 +142,8 @@ SERVER_OBJS= \
 	engine/command-standalone.o \
 	engine/server-standalone.o \
 	engine/worldio-standalone.o \
-	fpsgame/entities-standalone.o \
-	fpsgame/server-standalone.o
+	game/entities-standalone.o \
+	game/server-standalone.o
 
 MASTER_OBJS= \
 	shared/crypto-standalone.o \
@@ -174,7 +174,7 @@ clean:
 	-$(RM) $(CLIENT_PCH) $(CLIENT_OBJS) $(SERVER_OBJS) $(MASTER_OBJS) tess_client tess_server tess_master
 
 fixspace:
-	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.c shared/*.cpp shared/*.h engine/*.cpp engine/*.h fpsgame/*.cpp fpsgame/*.h
+	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.c shared/*.cpp shared/*.h engine/*.cpp engine/*.h game/*.cpp game/*.h
 
 %.h.gch: %.h
 	$(CXX) $(CXXFLAGS) -o $(subst .h.gch,.tmp.h.gch,$@) $(subst .h.gch,.h,$@)
@@ -186,7 +186,7 @@ fixspace:
 $(CLIENT_OBJS): CXXFLAGS += $(CLIENT_INCLUDES)
 $(filter shared/%,$(CLIENT_OBJS)): $(filter shared/%,$(CLIENT_PCH))
 $(filter engine/%,$(CLIENT_OBJS)): $(filter engine/%,$(CLIENT_PCH))
-$(filter fpsgame/%,$(CLIENT_OBJS)): $(filter fpsgame/%,$(CLIENT_PCH))
+$(filter game/%,$(CLIENT_OBJS)): $(filter game/%,$(CLIENT_PCH))
 
 $(SERVER_OBJS): CXXFLAGS += $(SERVER_INCLUDES)
 $(filter-out $(SERVER_OBJS),$(MASTER_OBJS)): CXXFLAGS += $(SERVER_INCLUDES)
@@ -230,13 +230,13 @@ endif
 endif
 
 depend:
-	makedepend -Y -Ishared -Iengine -Ifpsgame $(subst .o,.cpp,$(CLIENT_OBJS))
-	makedepend -a -o.h.gch -Y -Ishared -Iengine -Ifpsgame $(subst .h.gch,.h,$(CLIENT_PCH))
-	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Ifpsgame $(subst -standalone.o,.cpp,$(SERVER_OBJS))
-	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Ifpsgame $(subst -standalone.o,.cpp,$(filter-out $(SERVER_OBJS), $(MASTER_OBJS)))
+	makedepend -Y -Ishared -Iengine -Igame $(subst .o,.cpp,$(CLIENT_OBJS))
+	makedepend -a -o.h.gch -Y -Ishared -Iengine -Igame $(subst .h.gch,.h,$(CLIENT_PCH))
+	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Igame $(subst -standalone.o,.cpp,$(SERVER_OBJS))
+	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Igame $(subst -standalone.o,.cpp,$(filter-out $(SERVER_OBJS), $(MASTER_OBJS)))
 
 engine/engine.h.gch: shared/cube.h.gch
-fpsgame/game.h.gch: shared/cube.h.gch
+game/game.h.gch: shared/cube.h.gch
 
 # DO NOT DELETE
 
@@ -439,38 +439,34 @@ engine/worldio.o: shared/ents.h shared/command.h shared/glexts.h
 engine/worldio.o: shared/glemu.h shared/iengine.h shared/igame.h
 engine/worldio.o: engine/world.h engine/octa.h engine/light.h
 engine/worldio.o: engine/texture.h engine/bih.h engine/model.h
-fpsgame/ai.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/ai.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
-fpsgame/ai.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/client.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/client.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/client.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/client.o: fpsgame/ctf.h
-fpsgame/entities.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/entities.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/entities.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/entities.o: fpsgame/ai.h
-fpsgame/fps.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/fps.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
-fpsgame/fps.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/render.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/render.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/render.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/scoreboard.o: fpsgame/game.h shared/cube.h shared/tools.h
-fpsgame/scoreboard.o: shared/geom.h shared/ents.h shared/command.h
-fpsgame/scoreboard.o: shared/glexts.h shared/glemu.h shared/iengine.h
-fpsgame/scoreboard.o: shared/igame.h fpsgame/ai.h
-fpsgame/server.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/server.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/server.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/server.o: fpsgame/ctf.h fpsgame/extinfo.h fpsgame/aiman.h
-fpsgame/waypoint.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/waypoint.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/waypoint.o: shared/glemu.h shared/iengine.h shared/igame.h
-fpsgame/waypoint.o: fpsgame/ai.h
-fpsgame/weapon.o: fpsgame/game.h shared/cube.h shared/tools.h shared/geom.h
-fpsgame/weapon.o: shared/ents.h shared/command.h shared/glexts.h
-fpsgame/weapon.o: shared/glemu.h shared/iengine.h shared/igame.h fpsgame/ai.h
+game/ai.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/ai.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/ai.o: shared/iengine.h shared/igame.h game/ai.h
+game/client.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/client.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/client.o: shared/iengine.h shared/igame.h game/ai.h game/ctf.h
+game/entities.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/entities.o: shared/ents.h shared/command.h shared/glexts.h
+game/entities.o: shared/glemu.h shared/iengine.h shared/igame.h game/ai.h
+game/game.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/game.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/game.o: shared/iengine.h shared/igame.h game/ai.h
+game/render.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/render.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/render.o: shared/iengine.h shared/igame.h game/ai.h
+game/scoreboard.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/scoreboard.o: shared/ents.h shared/command.h shared/glexts.h
+game/scoreboard.o: shared/glemu.h shared/iengine.h shared/igame.h game/ai.h
+game/server.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/server.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/server.o: shared/iengine.h shared/igame.h game/ai.h game/ctf.h
+game/server.o: game/extinfo.h game/aiman.h
+game/waypoint.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/waypoint.o: shared/ents.h shared/command.h shared/glexts.h
+game/waypoint.o: shared/glemu.h shared/iengine.h shared/igame.h game/ai.h
+game/weapon.o: game/game.h shared/cube.h shared/tools.h shared/geom.h
+game/weapon.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+game/weapon.o: shared/iengine.h shared/igame.h game/ai.h
 
 shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
 shared/cube.h.gch: shared/command.h shared/glexts.h shared/glemu.h
@@ -480,9 +476,9 @@ engine/engine.h.gch: shared/command.h shared/glexts.h shared/glemu.h
 engine/engine.h.gch: shared/iengine.h shared/igame.h engine/world.h
 engine/engine.h.gch: engine/octa.h engine/light.h engine/texture.h
 engine/engine.h.gch: engine/bih.h engine/model.h
-fpsgame/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
-fpsgame/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
-fpsgame/game.h.gch: shared/iengine.h shared/igame.h fpsgame/ai.h
+game/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
+game/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
+game/game.h.gch: shared/iengine.h shared/igame.h game/ai.h
 
 shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
@@ -502,13 +498,13 @@ engine/server-standalone.o: shared/iengine.h shared/igame.h engine/world.h
 engine/worldio-standalone.o: engine/engine.h shared/cube.h shared/tools.h
 engine/worldio-standalone.o: shared/geom.h shared/ents.h shared/command.h
 engine/worldio-standalone.o: shared/iengine.h shared/igame.h engine/world.h
-fpsgame/entities-standalone.o: fpsgame/game.h shared/cube.h shared/tools.h
-fpsgame/entities-standalone.o: shared/geom.h shared/ents.h shared/command.h
-fpsgame/entities-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/server-standalone.o: fpsgame/game.h shared/cube.h shared/tools.h
-fpsgame/server-standalone.o: shared/geom.h shared/ents.h shared/command.h
-fpsgame/server-standalone.o: shared/iengine.h shared/igame.h fpsgame/ai.h
-fpsgame/server-standalone.o: fpsgame/ctf.h fpsgame/extinfo.h fpsgame/aiman.h
+game/entities-standalone.o: game/game.h shared/cube.h shared/tools.h
+game/entities-standalone.o: shared/geom.h shared/ents.h shared/command.h
+game/entities-standalone.o: shared/iengine.h shared/igame.h game/ai.h
+game/server-standalone.o: game/game.h shared/cube.h shared/tools.h
+game/server-standalone.o: shared/geom.h shared/ents.h shared/command.h
+game/server-standalone.o: shared/iengine.h shared/igame.h game/ai.h
+game/server-standalone.o: game/ctf.h game/extinfo.h game/aiman.h
 
 engine/master-standalone.o: shared/cube.h shared/tools.h shared/geom.h
 engine/master-standalone.o: shared/ents.h shared/command.h shared/iengine.h

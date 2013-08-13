@@ -65,7 +65,7 @@ bool loadents(const char *fname, vector<entity> &ents, uint *crc)
     }
 
     string gametype;
-    copystring(gametype, "fps");
+    gametype[0] = '\0';
     bool samegame = true;
     int len = f->getchar();
     f->read(gametype, len+1);
@@ -759,7 +759,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     if(dbgvars) conoutf(CON_DEBUG, "read %d vars", hdr.numvars);
 
     string gametype;
-    copystring(gametype, "fps");
+    gametype[0] = '\0';
     bool samegame = true;
     int len = f->getchar();
     f->read(gametype, len+1);

@@ -199,7 +199,7 @@ namespace ai
 
     vector<wpcache::node *> wpcachestack;
 
-    int closestwaypoint(const vec &pos, float mindist, bool links, fpsent *d)
+    int closestwaypoint(const vec &pos, float mindist, bool links, gameent *d)
     {
         if(waypoints.empty()) return -1;
         if(clearedwpcaches) buildwpcache();
@@ -352,7 +352,7 @@ namespace ai
         for(int i = lastwpcache; i < waypoints.length(); i++) { CHECKNEAR(i); }
     }
 
-    int avoidset::remap(fpsent *d, int n, vec &pos, bool retry)
+    int avoidset::remap(gameent *d, int n, vec &pos, bool retry)
     {
         if(!obstacles.empty())
         {
@@ -402,7 +402,7 @@ namespace ai
 
     static inline float heapscore(waypoint *q) { return q->score(); }
 
-    bool route(fpsent *d, int node, int goal, vector<int> &route, const avoidset &obstacles, int retries)
+    bool route(gameent *d, int node, int goal, vector<int> &route, const avoidset &obstacles, int retries)
     {
         if(waypoints.empty() || !iswaypoint(node) || !iswaypoint(goal) || goal == node || !waypoints[node].links[0])
             return false;
@@ -518,12 +518,12 @@ namespace ai
         return false;
     }
 
-    static inline bool shoulddrop(fpsent *d)
+    static inline bool shoulddrop(gameent *d)
     {
         return !d->ai && (dropwaypoints || !loadedwaypoints[0]);
     }
 
-    void inferwaypoints(fpsent *d, const vec &o, const vec &v, float mindist)
+    void inferwaypoints(gameent *d, const vec &o, const vec &v, float mindist)
     {
         if(!shouldnavigate()) return;
         if(shoulddrop(d))
@@ -544,7 +544,7 @@ namespace ai
         else d->lastnode = closestwaypoint(v, WAYPOINTRADIUS*2, false, d);
     }
 
-    void navigate(fpsent *d)
+    void navigate(gameent *d)
     {
         vec v(d->feetpos());
         if(d->state != CS_ALIVE) { d->lastnode = -1; return; }

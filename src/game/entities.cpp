@@ -123,7 +123,7 @@ namespace entities
     // these two functions are called when the server acknowledges that you really
     // picked up the item (in multiplayer someone may grab it before you).
 
-    void pickupeffects(int n, fpsent *d)
+    void pickupeffects(int n, gameent *d)
     {
 #if 0
         if(!ents.inrange(n)) return;
@@ -147,7 +147,7 @@ namespace entities
 
     // these functions are called when the client touches the item
 
-    void teleporteffects(fpsent *d, int tp, int td, bool local)
+    void teleporteffects(gameent *d, int tp, int td, bool local)
     {
         if(ents.inrange(tp) && ents[tp]->type == TELEPORT)
         {
@@ -177,7 +177,7 @@ namespace entities
         }
     }
 
-    void jumppadeffects(fpsent *d, int jp, bool local)
+    void jumppadeffects(gameent *d, int jp, bool local)
     {
         if(ents.inrange(jp) && ents[jp]->type == JUMPPAD)
         {
@@ -202,7 +202,7 @@ namespace entities
         }
     }
 
-    void teleport(int n, fpsent *d)     // also used by monsters
+    void teleport(int n, gameent *d)     // also used by monsters
     {
         int e = -1, tag = ents[n]->attr1, beenhere = -1;
         for(;;)
@@ -233,7 +233,7 @@ namespace entities
         }
     }
 
-    void trypickup(int n, fpsent *d)
+    void trypickup(int n, gameent *d)
     {
         switch(ents[n]->type)
         {
@@ -276,7 +276,7 @@ namespace entities
         }
     }
 
-    void checkitems(fpsent *d)
+    void checkitems(gameent *d)
     {
         if(d->state!=CS_ALIVE) return;
         vec o = d->feetpos();
@@ -313,8 +313,8 @@ namespace entities
 
     void setspawn(int i, bool on) { if(ents.inrange(i)) ents[i]->setspawned(on); }
 
-    extentity *newentity() { return new fpsentity(); }
-    void deleteentity(extentity *e) { delete (fpsentity *)e; }
+    extentity *newentity() { return new gameentity(); }
+    void deleteentity(extentity *e) { delete (gameentity *)e; }
 
     void clearents()
     {

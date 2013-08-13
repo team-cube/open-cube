@@ -21,7 +21,7 @@ struct ctfclientmode : clientmode
 #ifdef SERVMODE
         int owner, dropcount, dropper;
 #else
-        fpsent *owner;
+        gameent *owner;
         float dropangle, spawnangle;
         vec interploc;
         float interpangle;
@@ -88,7 +88,7 @@ struct ctfclientmode : clientmode
 #ifdef SERVMODE
     void ownflag(int i, int owner, int owntime)
 #else
-    void ownflag(int i, fpsent *owner, int owntime)
+    void ownflag(int i, gameent *owner, int owntime)
 #endif
     {
         flag &f = flags[i];
@@ -341,7 +341,7 @@ struct ctfclientmode : clientmode
         for(int i = S_FLAGPICKUP; i <= S_FLAGFAIL; i++) preloadsound(i);
     }
 
-    void drawblip(fpsent *d, float x, float y, float s, const vec &pos, bool flagblip)
+    void drawblip(gameent *d, float x, float y, float s, const vec &pos, bool flagblip)
     {
         float scale = calcradarscale();
         vec dir = d->o;
@@ -355,7 +355,7 @@ struct ctfclientmode : clientmode
         drawradar(x + s*0.5f*(1.0f + dir.x + xoffset), y + s*0.5f*(1.0f + dir.y + yoffset), size*s);
     }
 
-    void drawblip(fpsent *d, float x, float y, float s, int i, bool flagblip)
+    void drawblip(gameent *d, float x, float y, float s, int i, bool flagblip)
     {
         flag &f = flags[i];
         setbliptex(f.team, flagblip ? "_flag" : "");
@@ -367,7 +367,7 @@ struct ctfclientmode : clientmode
         return (h*(1 + 1 + 10))/(4*10);
     }
 
-    void drawhud(fpsent *d, int w, int h)
+    void drawhud(gameent *d, int w, int h)
     {
         if(d->state == CS_ALIVE)
         {
@@ -426,7 +426,7 @@ struct ctfclientmode : clientmode
         }
     }
 
-    void removeplayer(fpsent *d)
+    void removeplayer(gameent *d)
     {
         loopv(flags) if(flags[i].owner == d)
         {
@@ -545,7 +545,7 @@ struct ctfclientmode : clientmode
         return teamcolor("", "'s flag", f.team, "a flag");
     }
 
-    void dropflag(fpsent *d, int i, int version, const vec &droploc)
+    void dropflag(gameent *d, int i, int version, const vec &droploc)
     {
         if(!flags.inrange(i)) return;
         flag &f = flags[i];
@@ -593,7 +593,7 @@ struct ctfclientmode : clientmode
             particle_flare(fromexp, toexp, 600, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
     }
 
-    void returnflag(fpsent *d, int i, int version)
+    void returnflag(gameent *d, int i, int version)
     {
         if(!flags.inrange(i)) return;
         flag &f = flags[i];
@@ -617,7 +617,7 @@ struct ctfclientmode : clientmode
         playsound(S_FLAGRESET);
     }
 
-    void scoreflag(fpsent *d, int relay, int relayversion, int goal, int goalversion, int goalspawn, int team, int score, int dflags)
+    void scoreflag(gameent *d, int relay, int relayversion, int goal, int goalversion, int goalspawn, int team, int score, int dflags)
     {
         setscore(team, score);
         if(flags.inrange(goal))
@@ -643,7 +643,7 @@ struct ctfclientmode : clientmode
         if(score >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s captured %d flags", teamcolor("team ", "", team, "a team"), score);
     }
 
-    void takeflag(fpsent *d, int i, int version)
+    void takeflag(gameent *d, int i, int version)
     {
         if(!flags.inrange(i)) return;
         flag &f = flags[i];
@@ -656,7 +656,7 @@ struct ctfclientmode : clientmode
         playsound(S_FLAGPICKUP);
     }
 
-    void checkitems(fpsent *d)
+    void checkitems(gameent *d)
     {
         vec o = d->feetpos();
         loopv(flags)
@@ -675,7 +675,7 @@ struct ctfclientmode : clientmode
        }
     }
 
-    void respawned(fpsent *d)
+    void respawned(gameent *d)
     {
         vec o = d->feetpos();
         d->flagpickup = 0;
@@ -687,12 +687,12 @@ struct ctfclientmode : clientmode
        }
     }
 
-    int respawnwait(fpsent *d)
+    int respawnwait(gameent *d)
     {
         return max(0, RESPAWNSECS-(lastmillis-d->lastpain)/1000);
     }
 
-    bool aihomerun(fpsent *d, ai::aistate &b)
+    bool aihomerun(gameent *d, ai::aistate &b)
     {
         vec pos = d->feetpos();
         loopk(2)
@@ -722,7 +722,7 @@ struct ctfclientmode : clientmode
         return false;
     }
 
-    bool aicheck(fpsent *d, ai::aistate &b)
+    bool aicheck(gameent *d, ai::aistate &b)
     {
         static vector<int> takenflags;
         takenflags.setsize(0);
@@ -742,7 +742,7 @@ struct ctfclientmode : clientmode
         return false;
     }
 
-    void aifind(fpsent *d, ai::aistate &b, vector<ai::interest> &interests)
+    void aifind(gameent *d, ai::aistate &b, vector<ai::interest> &interests)
     {
         vec pos = d->feetpos();
         loopvj(flags)
@@ -754,8 +754,8 @@ struct ctfclientmode : clientmode
                 targets.setsize(0);
                 bool home = f.team == d->team;
                 ai::checkothers(targets, d, home ? ai::AI_S_DEFEND : ai::AI_S_PURSUE, ai::AI_T_AFFINITY, j, true);
-                fpsent *e = NULL;
-                loopi(numdynents()) if((e = (fpsent *)iterdynents(i)) && !e->ai && e->state == CS_ALIVE && isteam(d->team, e->team))
+                gameent *e = NULL;
+                loopi(numdynents()) if((e = (gameent *)iterdynents(i)) && !e->ai && e->state == CS_ALIVE && isteam(d->team, e->team))
                 { // try to guess what non ai are doing
                     vec ep = e->feetpos();
                     if(targets.find(e->clientnum) < 0 && (ep.squaredist(f.pos()) <= (FLAGRADIUS*FLAGRADIUS*4) || f.owner == e))
@@ -768,7 +768,7 @@ struct ctfclientmode : clientmode
 #if 0
                     else if(d->hasammo(d->ai->weappref))
                     { // see if we can relieve someone who only has a piece of crap
-                        fpsent *t;
+                        gameent *t;
                         loopvk(targets) if((t = getclient(targets[k])))
                         {
                             if((t->ai && !t->hasammo(t->ai->weappref)) || (!t->ai && t->gunselect == GUN_MELEE))
@@ -802,7 +802,7 @@ struct ctfclientmode : clientmode
                     }
                     else
                     { // help by defending the attacker
-                        fpsent *t;
+                        gameent *t;
                         loopvk(targets) if((t = getclient(targets[k])))
                         {
                             ai::interest &n = interests.add();
@@ -818,7 +818,7 @@ struct ctfclientmode : clientmode
         }
     }
 
-    bool aidefend(fpsent *d, ai::aistate &b)
+    bool aidefend(gameent *d, ai::aistate &b)
     {
         loopv(flags)
         {
@@ -836,8 +836,8 @@ struct ctfclientmode : clientmode
                 static vector<int> targets; // build a list of others who are interested in this
                 targets.setsize(0);
                 ai::checkothers(targets, d, ai::AI_S_DEFEND, ai::AI_T_AFFINITY, b.target, true);
-                fpsent *e = NULL;
-                loopi(numdynents()) if((e = (fpsent *)iterdynents(i)) && !e->ai && e->state == CS_ALIVE && isteam(d->team, e->team))
+                gameent *e = NULL;
+                loopi(numdynents()) if((e = (gameent *)iterdynents(i)) && !e->ai && e->state == CS_ALIVE && isteam(d->team, e->team))
                 { // try to guess what non ai are doing
                     vec ep = e->feetpos();
                     if(targets.find(e->clientnum) < 0 && (ep.squaredist(f.pos()) <= (FLAGRADIUS*FLAGRADIUS*4) || f.owner == e))
@@ -870,7 +870,7 @@ struct ctfclientmode : clientmode
         return false;
     }
 
-    bool aipursue(fpsent *d, ai::aistate &b)
+    bool aipursue(gameent *d, ai::aistate &b)
     {
         if(flags.inrange(b.target))
         {
@@ -933,7 +933,7 @@ case N_DROPFLAG:
     int ocn = getint(p), flag = getint(p), version = getint(p);
     vec droploc;
     loopk(3) droploc[k] = getint(p)/DMF;
-    fpsent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
+    gameent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
     if(o && m_ctf) ctfmode.dropflag(o, flag, version, droploc);
     break;
 }
@@ -941,7 +941,7 @@ case N_DROPFLAG:
 case N_SCOREFLAG:
 {
     int ocn = getint(p), relayflag = getint(p), relayversion = getint(p), goalflag = getint(p), goalversion = getint(p), goalspawn = getint(p), team = getint(p), score = getint(p), oflags = getint(p);
-    fpsent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
+    gameent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
     if(o && m_ctf) ctfmode.scoreflag(o, relayflag, relayversion, goalflag, goalversion, goalspawn, team, score, oflags);
     break;
 }
@@ -949,7 +949,7 @@ case N_SCOREFLAG:
 case N_RETURNFLAG:
 {
     int ocn = getint(p), flag = getint(p), version = getint(p);
-    fpsent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
+    gameent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
     if(o && m_ctf) ctfmode.returnflag(o, flag, version);
     break;
 }
@@ -957,7 +957,7 @@ case N_RETURNFLAG:
 case N_TAKEFLAG:
 {
     int ocn = getint(p), flag = getint(p), version = getint(p);
-    fpsent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
+    gameent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
     if(o && m_ctf) ctfmode.takeflag(o, flag, version);
     break;
 }

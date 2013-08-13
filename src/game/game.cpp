@@ -8,8 +8,8 @@ namespace game
 
     int following = -1, followdir = 0;
 
-    fpsent *player1 = NULL;         // our client
-    vector<fpsent *> players;       // other clients
+    gameent *player1 = NULL;         // our client
+    vector<gameent *> players;       // other clients
     int savedammo[NUMGUNS];
 
     bool clientoption(const char *arg) { return false; }
@@ -25,7 +25,7 @@ namespace game
 
     ICOMMAND(getfollow, "", (),
     {
-        fpsent *f = followingplayer();
+        gameent *f = followingplayer();
         intret(f ? f->clientnum : -1);
     });
 
@@ -73,7 +73,7 @@ namespace game
         clearbouncers();
     }
 
-    fpsent *spawnstate(fpsent *d)              // reset player state not persistent accross spawns
+    gameent *spawnstate(gameent *d)              // reset player state not persistent accross spawns
     {
         d->respawn();
         d->spawnstate(gamemode);
@@ -97,7 +97,7 @@ namespace game
         }
     }
 
-    fpsent *pointatplayer()
+    gameent *pointatplayer()
     {
         loopv(players) if(players[i] != player1 && intersect(players[i], player1->o, worldpos)) return players[i];
         return NULL;
@@ -111,24 +111,24 @@ namespace game
         conoutf("follow off");
     }
 
-    fpsent *followingplayer()
+    gameent *followingplayer()
     {
         if(player1->state!=CS_SPECTATOR || following<0) return NULL;
-        fpsent *target = getclient(following);
+        gameent *target = getclient(following);
         if(target && target->state!=CS_SPECTATOR) return target;
         return NULL;
     }
 
-    fpsent *hudplayer()
+    gameent *hudplayer()
     {
         if(thirdperson) return player1;
-        fpsent *target = followingplayer();
+        gameent *target = followingplayer();
         return target ? target : player1;
     }
 
     void setupcamera()
     {
-        fpsent *target = followingplayer();
+        gameent *target = followingplayer();
         if(target)
         {
             player1->yaw = target->yaw;
@@ -140,7 +140,7 @@ namespace game
 
     bool detachcamera()
     {
-        fpsent *d = hudplayer();
+        gameent *d = hudplayer();
         return d->state==CS_DEAD;
     }
 
@@ -157,7 +157,7 @@ namespace game
     VARP(smoothmove, 0, 75, 100);
     VARP(smoothdist, 0, 32, 64);
 
-    void predictplayer(fpsent *d, bool move)
+    void predictplayer(gameent *d, bool move)
     {
         d->o = d->newpos;
         d->yaw = d->newyaw;
@@ -184,7 +184,7 @@ namespace game
     {
         loopv(players)
         {
-            fpsent *d = players[i];
+            gameent *d = players[i];
             if(d == player1 || d->ai) continue;
 
             if(d->state==CS_DEAD && d->ragdoll) moveragdoll(d);
@@ -243,7 +243,7 @@ namespace game
         if(player1->clientnum>=0) c2sinfo();   // do this last, to reduce the effective frame lag
     }
 
-    void spawnplayer(fpsent *d)   // place at random spawn
+    void spawnplayer(gameent *d)   // place at random spawn
     {
         if(cmode) cmode->pickspawn(d);
         else findplayerspawn(d, -1, m_teammode ? d->team : 0);
@@ -297,19 +297,19 @@ namespace game
     bool allowmove(physent *d)
     {
         if(d->type!=ENT_PLAYER) return true;
-        return !((fpsent *)d)->lasttaunt || lastmillis-((fpsent *)d)->lasttaunt>=1000;
+        return !((gameent *)d)->lasttaunt || lastmillis-((gameent *)d)->lasttaunt>=1000;
     }
 
     VARP(hitsound, 0, 0, 1);
 
-    void damaged(int damage, fpsent *d, fpsent *actor, bool local)
+    void damaged(int damage, gameent *d, gameent *actor, bool local)
     {
         if((d->state!=CS_ALIVE && d->state != CS_LAGGED && d->state != CS_SPAWNING) || intermission) return;
 
         if(local) damage = d->dodamage(damage);
         else if(actor==player1) return;
 
-        fpsent *h = hudplayer();
+        gameent *h = hudplayer();
         if(h!=player1 && actor==h && d!=actor)
         {
             if(hitsound && lasthit != lastmillis) playsound(S_HIT);
@@ -331,7 +331,7 @@ namespace game
 
     VARP(deathscore, 0, 1, 1);
 
-    void deathstate(fpsent *d, bool restore)
+    void deathstate(gameent *d, bool restore)
     {
         d->state = CS_DEAD;
         d->lastpain = lastmillis;
@@ -358,7 +358,7 @@ namespace game
 
     VARP(teamcolorfrags, 0, 1, 1);
 
-    void killed(fpsent *d, fpsent *actor)
+    void killed(gameent *d, gameent *actor)
     {
         if(d->state==CS_EDITING)
         {
@@ -369,7 +369,7 @@ namespace game
         }
         else if((d->state!=CS_ALIVE && d->state != CS_LAGGED && d->state != CS_SPAWNING) || intermission) return;
 
-        fpsent *h = followingplayer();
+        gameent *h = followingplayer();
         if(!h) h = player1;
         int contype = d==h || actor==h ? CON_FRAG_SELF : CON_FRAG_OTHER;
         const char *dname = "", *aname = "";
@@ -433,9 +433,9 @@ namespace game
     ICOMMAND(gettotaldamage, "", (), intret(player1->totaldamage));
     ICOMMAND(gettotalshots, "", (), intret(player1->totalshots));
 
-    vector<fpsent *> clients;
+    vector<gameent *> clients;
 
-    fpsent *newclient(int cn)   // ensure valid entity
+    gameent *newclient(int cn)   // ensure valid entity
     {
         if(cn < 0 || cn > max(0xFF, MAXCLIENTS + MAXBOTS))
         {
@@ -448,7 +448,7 @@ namespace game
         while(cn >= clients.length()) clients.add(NULL);
         if(!clients[cn])
         {
-            fpsent *d = new fpsent;
+            gameent *d = new gameent;
             d->clientnum = cn;
             clients[cn] = d;
             players.add(d);
@@ -456,7 +456,7 @@ namespace game
         return clients[cn];
     }
 
-    fpsent *getclient(int cn)   // ensure valid entity
+    gameent *getclient(int cn)   // ensure valid entity
     {
         if(cn == player1->clientnum) return player1;
         return clients.inrange(cn) ? clients[cn] : NULL;
@@ -471,7 +471,7 @@ namespace game
             else stopfollowing();
         }
         unignore(cn);
-        fpsent *d = clients[cn];
+        gameent *d = clients[cn];
         if(!d) return;
         if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
         removeweapons(d);
@@ -491,7 +491,7 @@ namespace game
 
     void initclient()
     {
-        player1 = spawnstate(new fpsent);
+        player1 = spawnstate(new gameent);
         players.add(player1);
     }
 
@@ -508,7 +508,7 @@ namespace game
         // reset perma-state
         loopv(players)
         {
-            fpsent *d = players[i];
+            gameent *d = players[i];
             d->frags = d->flags = 0;
             d->deaths = 0;
             d->totaldamage = 0;
@@ -571,8 +571,8 @@ namespace game
     {
         if     (waterlevel>0) { if(material!=MAT_LAVA) playsound(S_SPLASHOUT, d==player1 ? NULL : &d->o); }
         else if(waterlevel<0) playsound(material==MAT_LAVA ? S_BURN : S_SPLASHIN, d==player1 ? NULL : &d->o);
-        if     (floorlevel>0) { if(d==player1 || d->type!=ENT_PLAYER || ((fpsent *)d)->ai) msgsound(S_JUMP, d); }
-        else if(floorlevel<0) { if(d==player1 || d->type!=ENT_PLAYER || ((fpsent *)d)->ai) msgsound(S_LAND, d); }
+        if     (floorlevel>0) { if(d==player1 || d->type!=ENT_PLAYER || ((gameent *)d)->ai) msgsound(S_JUMP, d); }
+        else if(floorlevel<0) { if(d==player1 || d->type!=ENT_PLAYER || ((gameent *)d)->ai) msgsound(S_LAND, d); }
     }
 
     void dynentcollide(physent *d, physent *o, const vec &dir)
@@ -588,7 +588,7 @@ namespace game
         }
         else
         {
-            if(d->type==ENT_PLAYER && ((fpsent *)d)->ai)
+            if(d->type==ENT_PLAYER && ((gameent *)d)->ai)
                 addmsg(N_SOUND, "ci", d, n);
             playsound(n, &d->o);
         }
@@ -602,7 +602,7 @@ namespace game
         return NULL;
     }
 
-    bool duplicatename(fpsent *d, const char *name = NULL, const char *alt = NULL)
+    bool duplicatename(gameent *d, const char *name = NULL, const char *alt = NULL)
     {
         if(!name) name = d->name;
         if(alt && d != player1 && !strcmp(name, alt)) return true;
@@ -610,7 +610,7 @@ namespace game
         return false;
     }
 
-    const char *colorname(fpsent *d, const char *name, const char * alt, const char *color)
+    const char *colorname(gameent *d, const char *name, const char * alt, const char *color)
     {
         if(!name) name = alt && d == player1 ? alt : d->name;
         bool dup = !name[0] || duplicatename(d, name, alt) || d->aitype != AI_NONE;
@@ -624,7 +624,7 @@ namespace game
 
     VARP(teamcolortext, 0, 1, 1);
 
-    const char *teamcolorname(fpsent *d, const char *alt)
+    const char *teamcolorname(gameent *d, const char *alt)
     {
         if(!teamcolortext || !m_teammode || !validteam(d->team)) return colorname(d, NULL, alt);
         return colorname(d, NULL, alt, teamtextcode[d->team]);
@@ -638,10 +638,10 @@ namespace game
 
     void suicide(physent *d)
     {
-        if(d==player1 || (d->type==ENT_PLAYER && ((fpsent *)d)->ai))
+        if(d==player1 || (d->type==ENT_PLAYER && ((gameent *)d)->ai))
         {
             if(d->state!=CS_ALIVE) return;
-            fpsent *pl = (fpsent *)d;
+            gameent *pl = (gameent *)d;
             if(!m_mp(gamemode)) killed(pl, pl);
             else
             {
@@ -680,7 +680,7 @@ namespace game
         }
     }
 
-    void drawhudicons(fpsent *d)
+    void drawhudicons(gameent *d)
     {
 #if 0
         pushhudmatrix();
@@ -715,7 +715,7 @@ namespace game
             text_boundsf("  ", pw, ph);
             text_boundsf("SPECTATOR", tw, th);
             th = max(th, ph);
-            fpsent *f = followingplayer();
+            gameent *f = followingplayer();
             text_boundsf(f ? colorname(f) : " ", fw, fh);
             fh = max(fh, ph);
             draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
@@ -731,7 +731,7 @@ namespace game
             }
         }
 
-        fpsent *d = hudplayer();
+        gameent *d = hudplayer();
         if(d->state!=CS_EDITING)
         {
             if(d->state!=CS_SPECTATOR) drawhudicons(d);
@@ -762,7 +762,7 @@ namespace game
 
     int selectcrosshair(vec &col)
     {
-        fpsent *d = hudplayer();
+        gameent *d = hudplayer();
         if(d->state==CS_SPECTATOR || d->state==CS_DEAD) return -1;
 
         if(d->state!=CS_ALIVE) return 0;
@@ -772,7 +772,7 @@ namespace game
         else if(teamcrosshair)
         {
             dynent *o = intersectclosest(d->o, worldpos, d);
-            if(o && o->type==ENT_PLAYER && validteam(d->team) && ((fpsent *)o)->team == d->team)
+            if(o && o->type==ENT_PLAYER && validteam(d->team) && ((gameent *)o)->team == d->team)
             {
                 crosshair = 1;
                

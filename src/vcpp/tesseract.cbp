@@ -26,7 +26,7 @@
 					<Add directory="..\engine" />
 					<Add directory="..\shared" />
 					<Add directory="..\vcpp" />
-					<Add directory="..\fpsgame" />
+					<Add directory="..\game" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="..\vcpp" />
@@ -70,7 +70,7 @@
 					<Add directory="..\engine" />
 					<Add directory="..\shared" />
 					<Add directory="..\vcpp" />
-					<Add directory="..\fpsgame" />
+					<Add directory="..\game" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="..\vcpp" />
@@ -162,23 +162,23 @@
 		<Unit filename="..\engine\world.cpp" />
 		<Unit filename="..\engine\world.h" />
 		<Unit filename="..\engine\worldio.cpp" />
-		<Unit filename="..\fpsgame\ai.cpp" />
-		<Unit filename="..\fpsgame\ai.h" />
-		<Unit filename="..\fpsgame\aiman.h" />
-		<Unit filename="..\fpsgame\client.cpp" />
-		<Unit filename="..\fpsgame\ctf.h" />
-		<Unit filename="..\fpsgame\entities.cpp" />
-		<Unit filename="..\fpsgame\extinfo.h" />
-		<Unit filename="..\fpsgame\fps.cpp" />
-		<Unit filename="..\fpsgame\game.h">
+		<Unit filename="..\game\ai.cpp" />
+		<Unit filename="..\game\ai.h" />
+		<Unit filename="..\game\aiman.h" />
+		<Unit filename="..\game\client.cpp" />
+		<Unit filename="..\game\ctf.h" />
+		<Unit filename="..\game\entities.cpp" />
+		<Unit filename="..\game\extinfo.h" />
+		<Unit filename="..\game\game.cpp" />
+		<Unit filename="..\game\game.h">
 			<Option compile="1" />
 			<Option weight="0" />
 		</Unit>
-		<Unit filename="..\fpsgame\render.cpp" />
-		<Unit filename="..\fpsgame\scoreboard.cpp" />
-		<Unit filename="..\fpsgame\server.cpp" />
-		<Unit filename="..\fpsgame\waypoint.cpp" />
-		<Unit filename="..\fpsgame\weapon.cpp" />
+		<Unit filename="..\game\render.cpp" />
+		<Unit filename="..\game\scoreboard.cpp" />
+		<Unit filename="..\game\server.cpp" />
+		<Unit filename="..\game\waypoint.cpp" />
+		<Unit filename="..\game\weapon.cpp" />
 		<Unit filename="..\include\GL\glext.h" />
 		<Unit filename="..\include\SDL.h" />
 		<Unit filename="..\include\SDL_active.h" />

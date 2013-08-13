@@ -33,7 +33,7 @@ namespace ai
         return viewfieldx(x)*3.f/4.f;
     }
 
-    bool canmove(fpsent *d)
+    bool canmove(gameent *d)
     {
         return d->state != CS_DEAD && !intermission;
     }
@@ -48,13 +48,13 @@ namespace ai
         return guns[weap].range + 4;
     }
 
-    bool weaprange(fpsent *d, int weap, float dist)
+    bool weaprange(gameent *d, int weap, float dist)
     {
         float mindist = weapmindist(weap), maxdist = weapmaxdist(weap);
         return dist >= mindist*mindist && dist <= maxdist*maxdist;
     }
 
-    bool targetable(fpsent *d, fpsent *e)
+    bool targetable(gameent *d, gameent *e)
     {
         if(d == e || !canmove(d)) return false;
         return e->state == CS_ALIVE && !isteam(d->team, e->team);
@@ -73,7 +73,7 @@ namespace ai
         return false;
     }
 
-    bool cansee(fpsent *d, vec &x, vec &y, vec &targ)
+    bool cansee(gameent *d, vec &x, vec &y, vec &targ)
     {
         aistate &b = d->ai->getstate();
         if(canmove(d) && b.type != AI_S_WAIT)
@@ -81,19 +81,19 @@ namespace ai
         return false;
     }
 
-    bool canshoot(fpsent *d, fpsent *e)
+    bool canshoot(gameent *d, gameent *e)
     {
         if(weaprange(d, d->gunselect, e->o.squaredist(d->o)) && targetable(d, e))
             return d->ammo[d->gunselect] > 0 && lastmillis - d->lastaction >= d->gunwait;
         return false;
     }
 
-    bool canshoot(fpsent *d)
+    bool canshoot(gameent *d)
     {
         return !d->ai->becareful && d->ammo[d->gunselect] > 0 && lastmillis - d->lastaction >= d->gunwait;
     }
 
-    bool hastarget(fpsent *d, aistate &b, fpsent *e, float yaw, float pitch, float dist)
+    bool hastarget(gameent *d, aistate &b, gameent *e, float yaw, float pitch, float dist)
     { // add margins of error
         if(weaprange(d, d->gunselect, dist) || (d->skill <= 100 && !rnd(d->skill)))
         {
@@ -107,7 +107,7 @@ namespace ai
         return false;
     }
 
-    vec getaimpos(fpsent *d, fpsent *e)
+    vec getaimpos(gameent *d, gameent *e)
     {
         vec o = e->o;
         if(d->gunselect == GUN_ROCKET) o.z += (e->aboveeye*0.2f)-(0.8f*d->eyeheight);
@@ -127,21 +127,21 @@ namespace ai
         return o;
     }
 
-    void create(fpsent *d)
+    void create(gameent *d)
     {
         if(!d->ai) d->ai = new aiinfo;
     }
 
-    void destroy(fpsent *d)
+    void destroy(gameent *d)
     {
         if(d->ai) DELETEP(d->ai);
     }
 
-    void init(fpsent *d, int at, int ocn, int sk, int bn, int pm, const char *name, int team)
+    void init(gameent *d, int at, int ocn, int sk, int bn, int pm, const char *name, int team)
     {
         loadwaypoints();
 
-        fpsent *o = newclient(ocn);
+        gameent *o = newclient(ocn);
 
         d->aitype = at;
 
@@ -204,12 +204,12 @@ namespace ai
         }
     }
 
-    bool checkothers(vector<int> &targets, fpsent *d, int state, int targtype, int target, bool teams, int *members)
+    bool checkothers(vector<int> &targets, gameent *d, int state, int targtype, int target, bool teams, int *members)
     { // checks the states of other ai for a match
         targets.setsize(0);
         loopv(players)
         {
-            fpsent *e = players[i];
+            gameent *e = players[i];
             if(targets.find(e->clientnum) >= 0) continue;
             if(teams && d && !isteam(d->team, e->team)) continue;
             if(members) (*members)++;
@@ -223,7 +223,7 @@ namespace ai
         return !targets.empty();
     }
 
-    bool makeroute(fpsent *d, aistate &b, int node, bool changed, int retries)
+    bool makeroute(gameent *d, aistate &b, int node, bool changed, int retries)
     {
         if(!iswaypoint(d->lastnode)) return false;
         if(changed && d->ai->route.length() > 1 && d->ai->route[0] == node) return true;
@@ -237,13 +237,13 @@ namespace ai
         return false;
     }
 
-    bool makeroute(fpsent *d, aistate &b, const vec &pos, bool changed, int retries)
+    bool makeroute(gameent *d, aistate &b, const vec &pos, bool changed, int retries)
     {
         int node = closestwaypoint(pos, SIGHTMIN, true);
         return makeroute(d, b, node, changed, retries);
     }
 
-    bool randomnode(fpsent *d, aistate &b, const vec &pos, float guard, float wander)
+    bool randomnode(gameent *d, aistate &b, const vec &pos, float guard, float wander)
     {
         static vector<int> candidates;
         candidates.setsize(0);
@@ -257,25 +257,25 @@ namespace ai
         return false;
     }
 
-    bool randomnode(fpsent *d, aistate &b, float guard, float wander)
+    bool randomnode(gameent *d, aistate &b, float guard, float wander)
     {
         return randomnode(d, b, d->feetpos(), guard, wander);
     }
 
-    bool badhealth(fpsent *d)
+    bool badhealth(gameent *d)
     {
         //if(d->skill <= 100) return d->health <= (111-d->skill)/4;
         return false;
     }
 
-    bool enemy(fpsent *d, aistate &b, const vec &pos, float guard = SIGHTMIN, int pursue = 0)
+    bool enemy(gameent *d, aistate &b, const vec &pos, float guard = SIGHTMIN, int pursue = 0)
     {
-        fpsent *t = NULL;
+        gameent *t = NULL;
         vec dp = d->headpos();
         float mindist = guard*guard, bestdist = 1e16f;
         loopv(players)
         {
-            fpsent *e = players[i];
+            gameent *e = players[i];
             if(e == d || !targetable(d, e)) continue;
             vec ep = getaimpos(d, e);
             float dist = ep.squaredist(dp);
@@ -289,7 +289,7 @@ namespace ai
         return false;
     }
 
-    bool patrol(fpsent *d, aistate &b, const vec &pos, float guard, float wander, int walk, bool retry)
+    bool patrol(gameent *d, aistate &b, const vec &pos, float guard, float wander, int walk, bool retry)
     {
         vec feet = d->feetpos();
         if(walk == 2 || b.override || (walk && feet.squaredist(pos) <= guard*guard) || !makeroute(d, b, pos))
@@ -314,7 +314,7 @@ namespace ai
         return true;
     }
 
-    bool defend(fpsent *d, aistate &b, const vec &pos, float guard, float wander, int walk)
+    bool defend(gameent *d, aistate &b, const vec &pos, float guard, float wander, int walk)
     {
         bool hasenemy = enemy(d, b, pos, wander, d->gunselect == GUN_MELEE ? 1 : 0);
         if(!walk)
@@ -329,7 +329,7 @@ namespace ai
         return patrol(d, b, pos, guard, wander, walk);
     }
 
-    bool violence(fpsent *d, aistate &b, fpsent *e, int pursue)
+    bool violence(gameent *d, aistate &b, gameent *e, int pursue)
     {
         if(e && targetable(d, e))
         {
@@ -349,17 +349,17 @@ namespace ai
         return false;
     }
 
-    bool target(fpsent *d, aistate &b, int pursue = 0, bool force = false, float mindist = 0.f)
+    bool target(gameent *d, aistate &b, int pursue = 0, bool force = false, float mindist = 0.f)
     {
-        static vector<fpsent *> hastried; hastried.setsize(0);
+        static vector<gameent *> hastried; hastried.setsize(0);
         vec dp = d->headpos();
         while(true)
         {
             float dist = 1e16f;
-            fpsent *t = NULL;
+            gameent *t = NULL;
             loopv(players)
             {
-                fpsent *e = players[i];
+                gameent *e = players[i];
                 if(e == d || hastried.find(e) >= 0 || !targetable(d, e)) continue;
                 vec ep = getaimpos(d, e);
                 float v = ep.squaredist(dp);
@@ -381,18 +381,18 @@ namespace ai
 
     int isgoodammo(int gun) { return gun == GUN_ROCKET || gun == GUN_RIFLE; }
 
-    bool hasgoodammo(fpsent *d)
+    bool hasgoodammo(gameent *d)
     {
         static const int goodguns[] = { GUN_ROCKET, GUN_RIFLE };
         loopi(sizeof(goodguns)/sizeof(goodguns[0])) if(d->hasammo(goodguns[0])) return true;
         return false;
     }
 
-    void assist(fpsent *d, aistate &b, vector<interest> &interests, bool all, bool force)
+    void assist(gameent *d, aistate &b, vector<interest> &interests, bool all, bool force)
     {
         loopv(players)
         {
-            fpsent *e = players[i];
+            gameent *e = players[i];
             if(e == d || (!all && e->aitype != AI_NONE) || !isteam(d->team, e->team)) continue;
             interest &n = interests.add();
             n.state = AI_S_DEFEND;
@@ -403,7 +403,7 @@ namespace ai
         }
     }
 
-    static void tryitem(fpsent *d, extentity &e, int id, aistate &b, vector<interest> &interests, bool force = false)
+    static void tryitem(gameent *d, extentity &e, int id, aistate &b, vector<interest> &interests, bool force = false)
     {
         float score = 0;
         switch(e.type)
@@ -420,7 +420,7 @@ namespace ai
         }
     }
 
-    void items(fpsent *d, aistate &b, vector<interest> &interests, bool force = false)
+    void items(gameent *d, aistate &b, vector<interest> &interests, bool force = false)
     {
         loopv(entities::ents)
         {
@@ -432,7 +432,7 @@ namespace ai
 
     static vector<int> targets;
 
-    bool parseinterests(fpsent *d, aistate &b, vector<interest> &interests, bool override, bool ignore)
+    bool parseinterests(gameent *d, aistate &b, vector<interest> &interests, bool override, bool ignore)
     {
         while(!interests.empty())
         {
@@ -459,7 +459,7 @@ namespace ai
         return false;
     }
 
-    bool find(fpsent *d, aistate &b, bool override = false)
+    bool find(gameent *d, aistate &b, bool override = false)
     {
         static vector<interest> interests;
         interests.setsize(0);
@@ -484,7 +484,7 @@ namespace ai
         return parseinterests(d, b, interests, override);
     }
 
-    bool findassist(fpsent *d, aistate &b, bool override = false)
+    bool findassist(gameent *d, aistate &b, bool override = false)
     {
         static vector<interest> interests;
         interests.setsize(0);
@@ -514,7 +514,7 @@ namespace ai
         return false;
     }
 
-    void damaged(fpsent *d, fpsent *e)
+    void damaged(gameent *d, gameent *e)
     {
         if(d->ai && canmove(d) && targetable(d, e)) // see if this ai is interested in a grudge
         {
@@ -525,7 +525,7 @@ namespace ai
         {
             loopv(targets)
             {
-                fpsent *t = getclient(targets[i]);
+                gameent *t = getclient(targets[i]);
                 if(!t->ai || !canmove(t) || !targetable(t, e)) continue;
                 aistate &c = t->ai->getstate();
                 if(violence(t, c, e, d->gunselect == GUN_MELEE ? 1 : 0)) return;
@@ -541,7 +541,7 @@ namespace ai
             pos = dir.mul(2*getworldsize()).add(o); //otherwise 3dgui won't work when outside of map
     }
 
-    void setup(fpsent *d)
+    void setup(gameent *d)
     {
         d->ai->clearsetup();
         d->ai->reset(true);
@@ -552,12 +552,12 @@ namespace ai
         findorientation(dp, d->yaw, d->pitch, d->ai->target);
     }
 
-    void spawned(fpsent *d)
+    void spawned(gameent *d)
     {
         if(d->ai) setup(d);
     }
 
-    void killed(fpsent *d, fpsent *e)
+    void killed(gameent *d, gameent *e)
     {
         if(d->ai) d->ai->reset();
     }
@@ -570,7 +570,7 @@ namespace ai
         {
             loopv(players) if(players[i] && players[i]->ai && players[i]->aitype == AI_BOT && players[i]->canpickup(e.type))
             {
-                fpsent *d = players[i];
+                gameent *d = players[i];
                 bool wantsitem = false;
                 switch(e.type)
                 {
@@ -594,13 +594,13 @@ namespace ai
         }
     }
 
-    bool check(fpsent *d, aistate &b)
+    bool check(gameent *d, aistate &b)
     {
         if(cmode && cmode->aicheck(d, b)) return true;
         return false;
     }
 
-    int dowait(fpsent *d, aistate &b)
+    int dowait(gameent *d, aistate &b)
     {
         d->ai->clear(true); // ensure they're clean
         if(check(d, b) || find(d, b)) return 1;
@@ -614,7 +614,7 @@ namespace ai
         return 0; // but don't pop the state
     }
 
-    int dodefend(fpsent *d, aistate &b)
+    int dodefend(gameent *d, aistate &b)
     {
         if(d->state == CS_ALIVE)
         {
@@ -634,7 +634,7 @@ namespace ai
                 case AI_T_PLAYER:
                 {
                     if(check(d, b)) return 1;
-                    fpsent *e = getclient(b.target);
+                    gameent *e = getclient(b.target);
                     if(e && e->state == CS_ALIVE) return defend(d, b, e->feetpos()) ? 1 : 0;
                     break;
                 }
@@ -644,7 +644,7 @@ namespace ai
         return 0;
     }
 
-    int dointerest(fpsent *d, aistate &b)
+    int dointerest(gameent *d, aistate &b)
     {
         if(d->state != CS_ALIVE) return 0;
         switch(b.targtype)
@@ -672,7 +672,7 @@ namespace ai
         return 0;
     }
 
-    int dopursue(fpsent *d, aistate &b)
+    int dopursue(gameent *d, aistate &b)
     {
         if(d->state == CS_ALIVE)
         {
@@ -695,7 +695,7 @@ namespace ai
                 case AI_T_PLAYER:
                 {
                     //if(check(d, b)) return 1;
-                    fpsent *e = getclient(b.target);
+                    gameent *e = getclient(b.target);
                     if(e && e->state == CS_ALIVE)
                     {
                         float guard = SIGHTMIN, wander = guns[d->gunselect].range;
@@ -710,7 +710,7 @@ namespace ai
         return 0;
     }
 
-    int closenode(fpsent *d)
+    int closenode(gameent *d)
     {
         vec pos = d->feetpos();
         int node1 = -1, node2 = -1;
@@ -731,7 +731,7 @@ namespace ai
         return node1 >= 0 ? node1 : node2;
     }
 
-    int wpspot(fpsent *d, int n, bool check = false)
+    int wpspot(gameent *d, int n, bool check = false)
     {
         if(iswaypoint(n)) loopk(2)
         {
@@ -747,7 +747,7 @@ namespace ai
         return 0;
     }
 
-    int randomlink(fpsent *d, int n)
+    int randomlink(gameent *d, int n)
     {
         if(iswaypoint(n) && waypoints[n].haslinks())
         {
@@ -764,7 +764,7 @@ namespace ai
         return -1;
     }
 
-    bool anynode(fpsent *d, aistate &b, int len = NUMPREVNODES)
+    bool anynode(gameent *d, aistate &b, int len = NUMPREVNODES)
     {
         if(iswaypoint(d->lastnode)) loopk(2)
         {
@@ -786,7 +786,7 @@ namespace ai
         return false;
     }
 
-    bool checkroute(fpsent *d, int n)
+    bool checkroute(gameent *d, int n)
     {
         if(d->ai->route.empty() || !d->ai->route.inrange(n)) return false;
         int last = d->ai->lastcheck ? lastmillis-d->ai->lastcheck : 0;
@@ -821,7 +821,7 @@ namespace ai
         return false;
     }
 
-    bool hunt(fpsent *d, aistate &b)
+    bool hunt(gameent *d, aistate &b)
     {
         if(!d->ai->route.empty())
         {
@@ -850,7 +850,7 @@ namespace ai
         return anynode(d, b);
     }
 
-    void jumpto(fpsent *d, aistate &b, const vec &pos)
+    void jumpto(gameent *d, aistate &b, const vec &pos)
     {
         vec off = vec(pos).sub(d->feetpos()), dir(off.x, off.y, 0);
         bool sequenced = d->ai->blockseq || d->ai->targseq, offground = d->timeinair && !d->inwater,
@@ -866,7 +866,7 @@ namespace ai
                 float radius = 18*18;
                 loopv(entities::ents) if(entities::ents[i]->type == JUMPPAD)
                 {
-                    fpsentity &e = *(fpsentity *)entities::ents[i];
+                    gameentity &e = *(gameentity *)entities::ents[i];
                     if(e.o.squaredist(pos) <= radius) { jump = false; break; }
                 }
             }
@@ -942,7 +942,7 @@ namespace ai
         fixrange(yaw, pitch);
     }
 
-    bool lockon(fpsent *d, fpsent *e, float maxdist)
+    bool lockon(gameent *d, gameent *e, float maxdist)
     {
         if(d->gunselect == GUN_MELEE && !d->blocked && !d->timeinair)
         {
@@ -953,7 +953,7 @@ namespace ai
         return false;
     }
 
-    int process(fpsent *d, aistate &b)
+    int process(gameent *d, aistate &b)
     {
         int result = 0, stupify = d->skill <= 10+rnd(15) ? rnd(d->skill*1000) : 0, skmod = 101-d->skill;
         float frame = d->skill <= 100 ? float(lastmillis-d->ai->lastrun)/float(max(skmod,1)*10) : 1;
@@ -980,11 +980,11 @@ namespace ai
 
         if(!d->ai->dontmove) jumpto(d, b, d->ai->spot);
 
-        fpsent *e = getclient(d->ai->enemy);
+        gameent *e = getclient(d->ai->enemy);
         bool enemyok = e && targetable(d, e);
         if(!enemyok || d->skill >= 50)
         {
-            fpsent *f = (fpsent *)intersectclosest(dp, d->ai->target, d);
+            gameent *f = (gameent *)intersectclosest(dp, d->ai->target, d);
             if(f)
             {
                 if(targetable(d, f))
@@ -1092,7 +1092,7 @@ namespace ai
         return result;
     }
 
-    bool hasrange(fpsent *d, fpsent *e, int weap)
+    bool hasrange(gameent *d, gameent *e, int weap)
     {
         if(!e) return true;
         if(targetable(d, e))
@@ -1104,9 +1104,9 @@ namespace ai
         return false;
     }
 
-    bool request(fpsent *d, aistate &b)
+    bool request(gameent *d, aistate &b)
     {
-        fpsent *e = getclient(d->ai->enemy);
+        gameent *e = getclient(d->ai->enemy);
         if(!d->hasammo(d->gunselect) || !hasrange(d, e, d->gunselect) || (d->gunselect != d->ai->weappref && (!isgoodammo(d->gunselect) || d->hasammo(d->ai->weappref))))
         {
             static const int gunprefs[] = { GUN_ROCKET, GUN_RIFLE, GUN_MELEE };
@@ -1125,7 +1125,7 @@ namespace ai
         return process(d, b) >= 2;
     }
 
-    void timeouts(fpsent *d, aistate &b)
+    void timeouts(gameent *d, aistate &b)
     {
         if(d->blocked)
         {
@@ -1188,7 +1188,7 @@ namespace ai
         }
     }
 
-    void logic(fpsent *d, aistate &b, bool run)
+    void logic(gameent *d, aistate &b, bool run)
     {
         bool allowmove = canmove(d) && b.type != AI_S_WAIT;
         if(d->state != CS_ALIVE || !allowmove) d->stopmoving();
@@ -1236,7 +1236,7 @@ namespace ai
         avoidweapons(obstacles, guessradius);
     }
 
-    void think(fpsent *d, bool run)
+    void think(gameent *d, bool run)
     {
         // the state stack works like a chain of commands, certain commands simply replace each other
         // others spawn new commands to the stack the ai reads the top command from the stack and executes
@@ -1289,7 +1289,7 @@ namespace ai
         d->ai->lastrun = lastmillis;
     }
 
-    void drawroute(fpsent *d, float amt = 1.f)
+    void drawroute(gameent *d, float amt = 1.f)
     {
         int last = -1;
         loopvrev(d->ai->route)
@@ -1339,7 +1339,7 @@ namespace ai
             loopv(players) if(players[i]->ai) total++;
             loopv(players) if(players[i]->state == CS_ALIVE && players[i]->ai)
             {
-                fpsent *d = players[i];
+                gameent *d = players[i];
                 vec pos = d->abovehead();
                 pos.z += 3;
                 alive++;
@@ -1379,7 +1379,7 @@ namespace ai
                         particle_textcopy(pos, guns[d->ai->weappref].name, PART_TEXT, 1);
                         pos.z += 2;
                     }
-                    fpsent *e = getclient(d->ai->enemy);
+                    gameent *e = getclient(d->ai->enemy);
                     if(e)
                     {
                         particle_textcopy(pos, colorname(e), PART_TEXT, 1);
