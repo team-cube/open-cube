@@ -194,10 +194,10 @@ namespace ovr
         }
         else
         {
-            if(ovralignx > 0) x += screenw - 2*hudw;
-            else if(!ovralignx) x += (screenw - 2*hudw)/2;
-            if(ovraligny < 0) y += screenh - hudh;
-            else if(!ovraligny) y += (screenh - hudh)/2;
+            if(ovralignx > 0) x += max(screenw - 2*hudw, 0);
+            else if(!ovralignx) x += max(screenw - 2*hudw, 0)/2;
+            if(ovraligny < 0) y += max(screenh - hudh, 0);
+            else if(!ovraligny) y += max(screenh - hudh, 0)/2;
         }
         if(x >= screenw || y >= screenh) return;
         glBindFramebuffer_(GL_FRAMEBUFFER, 0);
