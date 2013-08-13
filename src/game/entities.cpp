@@ -47,7 +47,7 @@ namespace entities
         static const char * const entmdlnames[MAXENTTYPES] =
         {
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            "teleport", NULL, NULL, 
+            "teleport", NULL, NULL,
             NULL
         };
         return entmdlnames[type];

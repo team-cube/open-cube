@@ -424,20 +424,20 @@ namespace game
         {
             projectile &p = projs[i];
             p.offsetmillis = max(p.offsetmillis-time, 0);
-            vec v;
-            float dist = p.to.dist(p.o, v);
-            float dtime = dist*1000/p.speed;
-            if(time > dtime) dtime = time;
-            v.mul(time/dtime);
-            v.add(p.o);
+            vec dv;
+            float dist = p.to.dist(p.o, dv);
+            dv.mul(time/max(dist*1000/p.speed, float(time)));
+            vec v = vec(p.o).add(dv);
             bool exploded = false;
             hits.setsize(0);
             if(p.local)
             {
+                vec halfdv = vec(dv).mul(0.5f), bo = vec(p.o).add(halfdv);
+                float br = max(fabs(halfdv.x), fabs(halfdv.y)) + 1;
                 loopj(numdynents())
                 {
                     dynent *o = iterdynents(j);
-                    if(p.owner==o || o->o.reject(v, 10.0f)) continue;
+                    if(p.owner==o || o->o.reject(bo, o->radius + br)) continue;
                     if(projdamage(o, p, v)) { exploded = true; break; }
                 }
             }
@@ -456,7 +456,7 @@ namespace game
                 {
                     vec pos(v);
                     pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                    particle_splash(PART_FIREBALL3, 1, 1, pos, 0xFFFFFF, 4.8f, 150, 20);
+                    particle_splash(PART_FIREBALL3, 1, 1, pos, 0xFFFFFF, 2.4f, 150, 20);
                     regular_particle_splash(PART_SMOKE, 2, 300, pos, 0x404040, 2.4f, 50, -20);
                 }
             }
