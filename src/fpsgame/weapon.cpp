@@ -335,21 +335,20 @@ namespace game
         hit(damage, d, at, vec(to).sub(from).normalize(), gun, from.dist(to), rays);
     }
 
-    float projdist(dynent *o, vec &dir, const vec &v)
+    float projdist(dynent *o, vec &dir, const vec &v, const vec &vel)
     {
         vec middle = o->o;
         middle.z += (o->aboveeye-o->eyeheight)/2;
         float dist = middle.dist(v, dir);
-        dir.div(dist);
-        if(dist<0) dist = 0;
+        dir.add(vec(vel).mul(5)).normalize();
         return dist;
     }
 
-    void radialeffect(dynent *o, const vec &v, int qdam, fpsent *at, int gun)
+    void radialeffect(dynent *o, const vec &v, const vec &vel, int qdam, fpsent *at, int gun)
     {
         if(o->state!=CS_ALIVE) return;
         vec dir;
-        float dist = projdist(o, dir, v);
+        float dist = projdist(o, dir, v, vel);
         if(dist<guns[gun].exprad)
         {
             float damage = qdam*(1-dist/EXP_DISTSCALE/guns[gun].exprad);
@@ -358,7 +357,7 @@ namespace game
         }
     }
 
-    void explode(bool local, fpsent *owner, const vec &v, dynent *safe, int damage, int gun)
+    void explode(bool local, fpsent *owner, const vec &v, const vec &vel, dynent *safe, int damage, int gun)
     {
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
         playsound(gun!=GUN_GL ? S_RLHIT : S_FEXPLODE, &v);
@@ -382,13 +381,13 @@ namespace game
         {
             dynent *o = iterdynents(i);
             if(o==safe) continue;
-            radialeffect(o, v, damage, owner, gun);
+            radialeffect(o, v, vel, damage, owner, gun);
         }
     }
 
     void projsplash(projectile &p, const vec &v, dynent *safe)
     {
-        explode(p.local, p.owner, v, safe, guns[p.gun].damage, p.gun);
+        explode(p.local, p.owner, v, p.dir, safe, guns[p.gun].damage, p.gun);
         adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), guns[p.gun].exprad*0.75f);
     }
 
@@ -405,7 +404,7 @@ namespace game
                     {
                         vec pos(p.o);
                         pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                        explode(p.local, p.owner, pos, NULL, 0, GUN_RL);
+                        explode(p.local, p.owner, pos, p.dir, NULL, 0, GUN_RL);
                         adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), guns[gun].exprad*0.75f);
                         projs.remove(i);
                         break;
@@ -423,7 +422,7 @@ namespace game
         if(!intersect(o, p.o, v)) return false;
         projsplash(p, v, o);
         vec dir;
-        projdist(o, dir, v);
+        projdist(o, dir, v, p.dir);
         hit(guns[p.gun].damage, o, p.owner, dir, p.gun, 0);
         return true;
     }
