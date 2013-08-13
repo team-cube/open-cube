@@ -266,7 +266,9 @@ namespace game
         vec p = d->o;
         p.z += 0.6f*(d->eyeheight + d->aboveeye) - d->eyeheight;
         if(blood) particle_splash(PART_BLOOD, damage/10, 1000, p, 0x60FFFF, 2.96f);
+#if 0
         if(thirdperson) particle_textcopy(d->abovehead(), tempformatstring("%d", damage), PART_TEXT, 2000, 0xFF4B19, 4.0f, -8);
+#endif
     }
 
     void spawnbouncer(const vec &p, const vec &vel, gameent *d, int type)
