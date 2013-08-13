@@ -1173,11 +1173,7 @@ int main(int argc, char **argv)
     identflags &= ~IDF_PERSIST;
 
     initing = INIT_GAME;
-    string gamecfgname;
-    copystring(gamecfgname, "config/game_");
-    concatstring(gamecfgname, game::gameident());
-    concatstring(gamecfgname, ".cfg");
-    execfile(gamecfgname);
+    execfile(game::gameconfig());
 
     game::loadconfigs();
     initing = NOT_INITING;
