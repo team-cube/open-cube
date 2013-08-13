@@ -7,7 +7,7 @@
 
 namespace ovr
 {
-    float fitx = -1.0f, fity = 0.0f, viewoffset = 0.0f, distortoffset = 0.0f, distortscale = 1.0f, fovy = 0.0f;
+    float fitx = -1.0f, fity = 0.0f, viewoffset = 0.0f, distortoffset = 0.0f, distortscale = 1.0f, fov = 0.0f;
     float yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
 
     GLuint lensfbo[2] = { 0, 0 }, lenstex[2] = { 0, 0 };
@@ -59,8 +59,8 @@ namespace ovr
                      r2*hmdinfo.DistortionK[3])));
     }
 
-    FVAR(ovrhuddist, 0.01f, 0.8f, 100);
-    FVAR(ovrhudfov, 10, 85, 150);
+    FVAR(ovrhuddist, 0.01f, 1, 100);
+    FVAR(ovrhudfov, 10, 75, 150);
 
     void ortho(glmatrix &m, float dist, float fov)
     {
@@ -96,6 +96,8 @@ namespace ovr
         modifyorient(yaw - lastyaw, pitch - lastpitch);
     }
 
+    VARP(ovrautofov, 0, 0, 1);
+
     void recalc()
     {
         if(hmdinfo.HScreenSize > 0.140f) { fitx = -1.0f; fity = 0.0f; }
@@ -112,7 +114,12 @@ namespace ovr
         }
         else distortscale = 1.0f;
 
-        fovy = 2.0f*atan2(0.5f*hmdinfo.VScreenSize*distortscale, hmdinfo.EyeToScreenDistance);
+        if(ovrautofov)
+        {
+            float aspect = forceaspect ? forceaspect : hudw/float(hudh);
+            fov = 2*atan(0.5f*hmdinfo.VScreenSize*distortscale*aspect/hmdinfo.EyeToScreenDistance)/RAD;
+        }
+        else fov = 0;
     }
 
     void setup()

@@ -188,7 +188,7 @@ namespace ovr
     extern int enabled;
     extern int lensw, lensh;
     extern GLuint lensfbo[2], lenstex[2];
-    extern float viewoffset, distortoffset, distortscale, fovy;
+    extern float viewoffset, distortoffset, distortscale, fov;
     extern float yaw, pitch, roll;
 
     extern void init();

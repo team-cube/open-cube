@@ -1358,7 +1358,9 @@ void renderavatar()
     if(!isthirdperson())
     {
         glmatrix oldprojmatrix = projmatrix;
-        if(!ovr::enabled) projmatrix.perspective(curavatarfov, aspect, nearplane, farplane);
+        float avatarfovy = curavatarfov;
+        if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
+        projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
         projmatrix.scalez(avatardepth);
         setcamprojmatrix(false);
         game::renderavatar();
@@ -2649,7 +2651,9 @@ void gl_drawframe()
     xtravertsva = xtraverts = glde = gbatches = vtris = vverts = 0;
     flipqueries();
     aspect = forceaspect ? forceaspect : hudw/float(hudh);
-    fovy = ovr::enabled ? ovr::fovy/RAD : 2*atan2(tan(curfov/2*RAD), aspect)/RAD;
+    float fovx = curfov;
+    if(ovr::enabled && ovr::fov) fovx *= ovr::fov/fov;
+    fovy = 2*atan2(tan(fovx/2*RAD), aspect)/RAD;
     vieww = hudw;
     viewh = hudh;
     loopi(2)
