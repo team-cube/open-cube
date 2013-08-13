@@ -97,15 +97,15 @@ namespace UI
         ALIGN_VMASK   = 0xC,
         ALIGN_VSHIFT  = 2,
         ALIGN_VNONE   = 0<<2,
-        ALIGN_BOTTOM  = 1<<2,
+        ALIGN_TOP     = 1<<2,
         ALIGN_VCENTER = 2<<2,
-        ALIGN_TOP     = 3<<2,
+        ALIGN_BOTTOM  = 3<<2,
 
         CLAMP_MASK    = 0xF0,
         CLAMP_LEFT    = 0x10,
         CLAMP_RIGHT   = 0x20,
-        CLAMP_BOTTOM  = 0x40,
-        CLAMP_TOP     = 0x80,
+        CLAMP_TOP     = 0x40,
+        CLAMP_BOTTOM  = 0x80,
 
         NO_ADJUST     = ALIGN_HNONE | ALIGN_VNONE,
     };
@@ -246,17 +246,17 @@ namespace UI
 
             switch(adjust&ALIGN_VMASK)
             {
-                case ALIGN_BOTTOM:  y = py; break;
+                case ALIGN_TOP:     y = py; break;
                 case ALIGN_VCENTER: y = py + (ph - h) / 2; break;
-                case ALIGN_TOP:     y = py + ph - h; break;
+                case ALIGN_BOTTOM:  y = py + ph - h; break;
             }
 
             if(adjust&CLAMP_MASK)
             {
                 if(adjust&CLAMP_LEFT)   { w += x - px; x = px; }
                 if(adjust&CLAMP_RIGHT)    w = px + pw - x;
-                if(adjust&CLAMP_BOTTOM) { h += y - py; y = py; }
-                if(adjust&CLAMP_TOP)      h = py + ph - y;
+                if(adjust&CLAMP_TOP)    { h += y - py; y = py; }
+                if(adjust&CLAMP_BOTTOM)   h = py + ph - y;
             }
 
             adjustchildren();
@@ -269,13 +269,13 @@ namespace UI
             adjust |= (clamp(yalign, -1, 1)+2)<<ALIGN_VSHIFT;
         }
 
-        void setclamp(int left, int right, int bottom, int top)
+        void setclamp(int left, int right, int top, int bottom)
         {
             adjust &= ~CLAMP_MASK;
             if(left) adjust |= CLAMP_LEFT;
             if(right) adjust |= CLAMP_RIGHT;
-            if(bottom) adjust |= CLAMP_BOTTOM;
             if(top) adjust |= CLAMP_TOP;
+            if(bottom) adjust |= CLAMP_BOTTOM;
         }
 
         virtual bool target(float cx, float cy)
@@ -2695,17 +2695,17 @@ namespace UI
         if(buildparent) loopi(buildchild) buildparent->children[i]->setalign(*xalign, *yalign);
     });
 
-    ICOMMAND(uiclamp, "iiii", (int *left, int *right, int *bottom, int *top),
+    ICOMMAND(uiclamp, "iiii", (int *left, int *right, int *top, int *bottom),
     {
-        if(buildparent) buildparent->setclamp(*left, *right, *bottom, *top);
+        if(buildparent) buildparent->setclamp(*left, *right, *top, *bottom);
     });
-    ICOMMANDNS("uiclamp-", uiclamp_, "iiii", (int *left, int *right, int *bottom, int *top),
+    ICOMMANDNS("uiclamp-", uiclamp_, "iiii", (int *left, int *right, int *top, int *bottom),
     {
-        if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setclamp(*left, *right, *bottom, *top);
+        if(buildparent && buildchild > 0) buildparent->children[buildchild-1]->setclamp(*left, *right, *top, *bottom);
     });
-    ICOMMANDNS("uiclamp*", uiclamp__, "iiii", (int *left, int *right, int *bottom, int *top),
+    ICOMMANDNS("uiclamp*", uiclamp__, "iiii", (int *left, int *right, int *top, int *bottom),
     {
-        if(buildparent) loopi(buildchild) buildparent->children[i]->setclamp(*left, *right, *bottom, *top);
+        if(buildparent) loopi(buildchild) buildparent->children[i]->setclamp(*left, *right, *top, *bottom);
     });
 
     ICOMMAND(uigroup, "e", (uint *children),
