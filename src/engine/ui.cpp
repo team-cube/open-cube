@@ -1549,6 +1549,58 @@ namespace UI
         }
     };
 
+    struct Triangle : Filler
+    {
+        enum { SOLID = 0, OUTLINE };
+
+        int type;
+        vec2 a, b, c;
+        Color color;
+
+        void setup(const Color &color_, float w = 0, float h = 0, int angle = 0, int type_ = SOLID)
+        {
+            a = vec2(0, -h*2.0f/3);
+            b = vec2(-w/2, h/3);
+            c = vec2(w/2, h/3);
+            if(angle)
+            {
+                vec2 rot = sincosmod360(-angle);
+                a.rotate_around_z(rot);
+                b.rotate_around_z(rot);
+                c.rotate_around_z(rot);
+            }
+            vec2 bbmin = vec2(a).min(b).min(c);
+            a.sub(bbmin);
+            b.sub(bbmin);
+            c.sub(bbmin);
+            vec2 bbmax = vec2(a).max(b).max(c);
+
+            Filler::setup(bbmax.x, bbmax.y);
+
+            color = color_;
+            type = type_;
+        }
+
+        static const char *typestr() { return "#Triangle"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            Object::draw(sx, sy);
+
+            hudnotextureshader->set();
+            color.init();
+            gle::defvertex(2);
+            gle::begin(type == OUTLINE ? GL_LINE_LOOP : GL_TRIANGLES);
+            gle::attrib(vec2(sx, sy).add(a));
+            gle::attrib(vec2(sx, sy).add(b));
+            gle::attrib(vec2(sx, sy).add(c));
+            gle::end();
+            gle::colorf(1, 1, 1);
+            hudshader->set();
+        }
+    };
+
     // default size of text in terms of rows per screenful
     VARP(uitextrows, 1, 24, 200);
 
@@ -2802,6 +2854,12 @@ namespace UI
 
     ICOMMAND(uiline, "iffe", (int *c, float *minw, float *minh, uint *children),
         BUILD(Line, o, o->setup(Color(*c), *minw, *minh), children));
+
+    ICOMMAND(uitriangle, "iffie", (int *c, float *minw, float *minh, int *angle, uint *children),
+        BUILD(Triangle, o, o->setup(Color(*c), *minw, *minh, *angle, Triangle::SOLID), children));
+
+    ICOMMAND(uitriangleoutline, "iffie", (int *c, float *minw, float *minh, int *angle, uint *children),
+        BUILD(Triangle, o, o->setup(Color(*c), *minw, *minh, *angle, Triangle::OUTLINE), children));
 
     static inline void buildtext(tagval &t, float scale, const Color &color, float wrap, uint *children)
     {
