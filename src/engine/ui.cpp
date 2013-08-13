@@ -1549,13 +1549,25 @@ namespace UI
         }
     };
 
-    struct Triangle : Filler
+    struct Shape : Filler
     {
         enum { SOLID = 0, OUTLINE };
 
         int type;
-        vec2 a, b, c;
         Color color;
+
+        void setup(const Color &color_, int type_ = SOLID, float minw_ = 0, float minh_ = 0)
+        {
+            Filler::setup(minw_, minh_);
+
+            color = color_;
+            type = type_;
+        }
+    };
+
+    struct Triangle : Shape
+    {
+        vec2 a, b, c;
 
         void setup(const Color &color_, float w = 0, float h = 0, int angle = 0, int type_ = SOLID)
         {
@@ -1575,10 +1587,7 @@ namespace UI
             c.sub(bbmin);
             vec2 bbmax = vec2(a).max(b).max(c);
 
-            Filler::setup(bbmax.x, bbmax.y);
-
-            color = color_;
-            type = type_;
+            Shape::setup(color_, type_, bbmax.x, bbmax.y);
         }
 
         static const char *typestr() { return "#Triangle"; }
@@ -1596,6 +1605,54 @@ namespace UI
             gle::attrib(vec2(sx, sy).add(b));
             gle::attrib(vec2(sx, sy).add(c));
             gle::end();
+            gle::colorf(1, 1, 1);
+            hudshader->set();
+        }
+    };
+
+    struct Circle : Shape
+    {
+        float radius;
+
+        void setup(const Color &color_, float size, int type_ = SOLID)
+        {
+            Shape::setup(color_, type_, size, size);
+
+            radius = size/2;
+        }
+
+        static const char *typestr() { return "#Circle"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            Object::draw(sx, sy);
+
+            hudnotextureshader->set();
+            color.init();
+            gle::defvertex(2);
+            vec2 center(sx + radius, sy + radius);
+            if(type == OUTLINE)
+            {
+                gle::begin(GL_LINE_LOOP);
+                for(int angle = 0; angle < 360; angle += 360/15)
+                    gle::attrib(vec2(sincos360[angle]).mul(radius).add(center));
+                gle::end();
+            }
+            else
+            {
+                gle::begin(GL_TRIANGLE_FAN);
+                gle::attrib(center);
+                gle::attribf(center.x + radius, center.y);
+                for(int angle = 360/15; angle < 360; angle += 360/15)
+                {
+                    vec2 p = vec2(sincos360[angle]).mul(radius).add(center);
+                    gle::attrib(p);
+                    gle::attrib(p);
+                }
+                gle::attribf(center.x + radius, center.y);
+                gle::end();
+            }
             gle::colorf(1, 1, 1);
             hudshader->set();
         }
@@ -2860,6 +2917,12 @@ namespace UI
 
     ICOMMAND(uitriangleoutline, "iffie", (int *c, float *minw, float *minh, int *angle, uint *children),
         BUILD(Triangle, o, o->setup(Color(*c), *minw, *minh, *angle, Triangle::OUTLINE), children));
+
+    ICOMMAND(uicircle, "ife", (int *c, float *size, uint *children),
+        BUILD(Circle, o, o->setup(Color(*c), *size, Circle::SOLID), children));
+
+    ICOMMAND(uicircleoutline, "ife", (int *c, float *size, uint *children),
+        BUILD(Circle, o, o->setup(Color(*c), *size, Circle::OUTLINE), children));
 
     static inline void buildtext(tagval &t, float scale, const Color &color, float wrap, uint *children)
     {
