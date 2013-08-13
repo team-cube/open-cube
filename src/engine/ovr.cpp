@@ -125,8 +125,10 @@ namespace ovr
     void setup()
     {
         if(!enabled) return;
-        renderw /= 2;
-        hudw /= 2;
+        hudw = min(hudw/2, int(hmdinfo.HResolution/2));
+        hudh = min(hudh, (hudw*int(hmdinfo.VResolution))/int(hmdinfo.HResolution/2));
+        renderw = min(renderw/2, hudw);
+        renderh = min(renderh, hudh);
         recalc();
         if(hudw == lensw && hudh == lensh) return;
         lensw = hudw;
@@ -151,6 +153,11 @@ namespace ovr
 
     void cleanup()
     {
+        if(lensfbo[0])
+        {
+            glBindFramebuffer_(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, screenw, screenh);
+        }
         loopi(2)
         {
             if(lensfbo[i]) { glDeleteFramebuffers_(1, &lensfbo[i]); lensfbo[i] = 0; }
@@ -162,7 +169,7 @@ namespace ovr
     void warp()
     {
         glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-        glViewport(hudx, hudy, hudw, hudh);
+        glViewport(hudx, screenh - hudh, hudw, hudh);
         glBindTexture(GL_TEXTURE_RECTANGLE, lenstex[viewidx]);
         SETSHADER(ovrwarp);
         LOCALPARAMF(lenscenter, (1 + (viewidx ? -1 : 1)*distortoffset)*0.5f*hudw, 0.5f*hudh);
@@ -204,7 +211,18 @@ namespace ovr
                     getorient();
                 }
                 conoutf("detected %s (%s), %ux%u, %.1fcm x %.1fcm, %s", hmdinfo.ProductName, hmdinfo.Manufacturer, hmdinfo.HResolution, hmdinfo.VResolution, hmdinfo.HScreenSize*100.0f, hmdinfo.VScreenSize*100.0f, sensor ? "using sensor" : "no sensor");
-                if(screen) SDL_SetWindowPosition(screen, 0, 0);
+                if(screen)
+                {
+                    SDL_SetWindowPosition(screen, 0, 0);
+                    loopi(3)
+                    {
+                        glBindFramebuffer_(GL_FRAMEBUFFER, 0);
+                        glViewport(0, 0, screenw, screenh);
+                        glClearColor(0, 0, 0, 0);
+                        glClear(GL_COLOR_BUFFER_BIT);
+                        SDL_GL_SwapWindow(screen);
+                    }
+                }
             }
             else { hmd->Release(); hmd = NULL; }
         }
