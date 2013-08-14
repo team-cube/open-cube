@@ -79,6 +79,7 @@ namespace ai
                 bbmax.max(vec(w.o).add(radius));
             }
             if(first < last) lastwp = max(lastwp, last-1);
+            nodes.reserve(indices.length());
             build(indices.getbuf(), indices.length(), bbmin, bbmax);
         }
 
