@@ -4,14 +4,14 @@ Nieb's Personal Todo (Procrastination) List
 MAP Complex ARENA
    MapModels
       wall clock
-      copy machine
       fire extinguisher
       wall pictures
       projector
       projector screen
-      server rack
-      fire ex sign
       conference table?
+
+      copy machine
+      server rack
 
 
 ===============================================================
