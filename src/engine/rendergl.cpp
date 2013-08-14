@@ -2335,9 +2335,9 @@ void drawdamagecompass(int w, int h)
 int damageblendmillis = 0;
 
 VARFP(damagescreen, 0, 1, 1, { if(!damagescreen) damageblendmillis = 0; });
-VARP(damagescreenfactor, 1, 7, 100);
+VARP(damagescreenfactor, 1, 75, 100);
 VARP(damagescreenalpha, 1, 45, 100);
-VARP(damagescreenfade, 0, 125, 1000);
+VARP(damagescreenfade, 0, 1000, 1000);
 VARP(damagescreenmin, 1, 10, 1000);
 VARP(damagescreenmax, 1, 100, 1000);
 
