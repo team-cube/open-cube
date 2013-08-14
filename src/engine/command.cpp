@@ -3563,39 +3563,39 @@ void sortlist(char *list, ident *x, ident *y, uint *body, uint *unique)
 COMMAND(sortlist, "srree");
 
 #define MATHCMD(name, fmt, type, op, initval, unaryop) \
-    ICOMMANDS(name, fmt "1V", (tagval *args, int numargs), \
+    ICOMMANDS(name, #fmt "1V", (tagval *args, int numargs), \
     { \
         type val; \
         if(numargs >= 2) \
         { \
-            val = args[0].get##type(); \
-            type val2 = args[1].get##type(); \
+            val = args[0].fmt; \
+            type val2 = args[1].fmt; \
             op; \
-            for(int i = 2; i < numargs; i++) { val2 = args[i].get##type(); op; } \
+            for(int i = 2; i < numargs; i++) { val2 = args[i].fmt; op; } \
         } \
-        else { val = numargs > 0 ? args[0].get##type() : initval; unaryop; } \
+        else { val = numargs > 0 ? args[0].fmt : initval; unaryop; } \
         type##ret(val); \
     })
-#define MATHICMDN(name, op, initval, unaryop) MATHCMD(#name, "i", int, val = val op val2, initval, unaryop)
+#define MATHICMDN(name, op, initval, unaryop) MATHCMD(#name, i, int, val = val op val2, initval, unaryop)
 #define MATHICMD(name, initval, unaryop) MATHICMDN(name, name, initval, unaryop)
-#define MATHFCMDN(name, op, initval, unaryop) MATHCMD(#name "f", "f", float, val = val op val2, initval, unaryop)
+#define MATHFCMDN(name, op, initval, unaryop) MATHCMD(#name "f", f, float, val = val op val2, initval, unaryop)
 #define MATHFCMD(name, initval, unaryop) MATHFCMDN(name, name, initval, unaryop)
 
 #define CMPCMD(name, fmt, type, op) \
-    ICOMMANDS(name, fmt "1V", (tagval *args, int numargs), \
+    ICOMMANDS(name, #fmt "1V", (tagval *args, int numargs), \
     { \
         bool val; \
         if(numargs >= 2) \
         { \
-            val = args[0].get##type() op args[1].get##type(); \
-            for(int i = 2; i < numargs && val; i++) val = args[i-1].get##type() op args[i].get##type(); \
+            val = args[0].fmt op args[1].fmt; \
+            for(int i = 2; i < numargs && val; i++) val = args[i-1].fmt op args[i].fmt; \
         } \
-        else val = (numargs > 0 ? args[0].get##type() : 0) op 0; \
+        else val = (numargs > 0 ? args[0].fmt : 0) op 0; \
         intret(int(val)); \
     })
-#define CMPICMDN(name, op) CMPCMD(#name, "i", int, op)
+#define CMPICMDN(name, op) CMPCMD(#name, i, int, op)
 #define CMPICMD(name) CMPICMDN(name, name)
-#define CMPFCMDN(name, op) CMPCMD(#name "f", "f", float, op)
+#define CMPFCMDN(name, op) CMPCMD(#name "f", f, float, op)
 #define CMPFCMD(name) CMPFCMDN(name, name)
 
 MATHICMD(+, 0, );
@@ -3654,11 +3654,11 @@ ICOMMANDK(||, ID_OR, "E1V", (tagval *args, int numargs),
 
 #define DIVCMD(name, fmt, type, op) MATHCMD(#name, fmt, type, { if(val2) op; else val = 0; }, 0, )
 
-DIVCMD(div, "i", int, val /= val2);
-DIVCMD(mod, "i", int, val %= val2);
-DIVCMD(divf, "f", float, val /= val2);
-DIVCMD(modf, "f", float, val = fmod(val, val2));
-MATHCMD("pow", "f", float, val = pow(val, val2), 0, );
+DIVCMD(div, i, int, val /= val2);
+DIVCMD(mod, i, int, val %= val2);
+DIVCMD(divf, f, float, val /= val2);
+DIVCMD(modf, f, float, val = fmod(val, val2));
+MATHCMD("pow", f, float, val = pow(val, val2), 0, );
 
 ICOMMAND(sin, "f", (float *a), floatret(sin(*a*RAD)));
 ICOMMAND(cos, "f", (float *a), floatret(cos(*a*RAD)));
@@ -3673,17 +3673,17 @@ ICOMMAND(log10, "f", (float *a), floatret(log10(*a)));
 ICOMMAND(exp, "f", (float *a), floatret(exp(*a)));
 
 #define MINMAXCMD(name, fmt, type, op) \
-    ICOMMAND(name, fmt "1V", (tagval *args, int numargs), \
+    ICOMMAND(name, #fmt "1V", (tagval *args, int numargs), \
     { \
-        type val = numargs > 0 ? args[0].get##type() : 0; \
-        for(int i = 1; i < numargs; i++) val = op(val, args[i].get##type()); \
+        type val = numargs > 0 ? args[0].fmt : 0; \
+        for(int i = 1; i < numargs; i++) val = op(val, args[i].fmt); \
         type##ret(val); \
     })
 
-MINMAXCMD(min, "i", int, min);
-MINMAXCMD(max, "i", int, max);
-MINMAXCMD(minf, "f", float, min);
-MINMAXCMD(maxf, "f", float, max);
+MINMAXCMD(min, i, int, min);
+MINMAXCMD(max, i, int, max);
+MINMAXCMD(minf, f, float, min);
+MINMAXCMD(maxf, f, float, max);
 
 ICOMMAND(abs, "i", (int *n), intret(abs(*n)));
 ICOMMAND(absf, "f", (float *n), floatret(fabs(*n)));
