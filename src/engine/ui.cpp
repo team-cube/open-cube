@@ -524,18 +524,6 @@ namespace UI
 
         void build();
 
-        void setonshow(const char *s = NULL)
-        {
-            if(onshow) freecode(onshow);
-            onshow = s && s[0] ? compilecode(s) : NULL;
-        }
-
-        void setonhide(const char *s = NULL)
-        {
-            if(onhide) freecode(onhide);
-            onhide = s && s[0] ? compilecode(s) : NULL;
-        }
- 
         void hide()
         {
             if(onhide) execute(onhide);
@@ -2759,9 +2747,6 @@ namespace UI
 
     ICOMMAND(uiallowinput, "b", (int *val), { if(window) { if(*val >= 0) window->allowinput = *val!=0; intret(window->allowinput ? 1 : 0); } });
     ICOMMAND(uieschide, "b", (int *val), { if(window) { if(*val >= 0) window->eschide = *val!=0; intret(window->eschide ? 1 : 0); } });
-
-    ICOMMAND(uionshow, "e", (uint *onshow), { if(window && window->state&STATE_HIDDEN) execute(onshow); });
-    ICOMMAND(uionhide, "s", (char *onhide), { if(window) window->setonhide(onhide); });
 
     bool showui(const char *name)
     {
