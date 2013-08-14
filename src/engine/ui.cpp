@@ -496,16 +496,16 @@ namespace UI
 
         char *name;
         uint *contents, *onshow, *onhide;
-        bool allowinput;
+        bool allowinput, eschide;
         float px, py, px2, py2;
         vec2 sscale, soffset;
 
-        Window(const char *name, const char *contents, const char *onshow, const char *onhide, bool allowinput = true) :
+        Window(const char *name, const char *contents, const char *onshow, const char *onhide) :
             name(newstring(name)),
             contents(compilecode(contents)),
             onshow(onshow && onshow[0] ? compilecode(onshow) : NULL),
             onhide(onhide && onhide[0] ? compilecode(onhide) : NULL),
-            allowinput(allowinput),
+            allowinput(true), eschide(true),
             px(0), py(0), px2(0), py2(0),
             sscale(1, 1), soffset(0, 0)
         {
@@ -539,6 +539,7 @@ namespace UI
         void setup()
         {
             Object::setup();
+            allowinput = eschide = true;
             px = py = px2 = py2 = 0;
         }
 
@@ -746,14 +747,16 @@ namespace UI
 
     void Window::escrelease(float cx, float cy)
     {
-        world->hide(this);
+        if(eschide) world->hide(this);
     }
 
     void Window::build()
     {
         reset(world);
         setup();
+        window = this;
         buildchildren(contents);
+        window = NULL;
     }
 
     struct HorizontalList : Object
@@ -2723,12 +2726,15 @@ namespace UI
         }
     };
 
-    ICOMMAND(newui, "ssssb", (char *name, char *contents, char *onshow, char *onhide, int *allowinput),
+    ICOMMAND(newui, "ssss", (char *name, char *contents, char *onshow, char *onhide),
     {
         Window *window = windows.find(name, NULL);
         if(window) { world->hide(window); windows.remove(name); delete window; }
-        windows[name] = new Window(name, contents, onshow, onhide, *allowinput!=0);
+        windows[name] = new Window(name, contents, onshow, onhide);
     });
+
+    ICOMMAND(uiallowinput, "b", (int *val), { if(window) { if(*val >= 0) window->allowinput = *val!=0; intret(window->allowinput ? 1 : 0); } });
+    ICOMMAND(uieschide, "b", (int *val), { if(window) { if(*val >= 0) window->eschide = *val!=0; intret(window->eschide ? 1 : 0); } });
 
     bool showui(const char *name)
     {
@@ -2760,6 +2766,7 @@ namespace UI
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
     ICOMMAND(toggleui, "s", (char *name), intret(toggleui(name) ? 1 : 0));
     ICOMMAND(holdui, "sD", (char *name, int *down), holdui(name, *down!=0));
+    ICOMMAND(uiname, "", (), { if(window) result(window->name); });
 
     #define IFSTATEVAL(state,t,f) { if(state) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }
     #define DOSTATE(flags, func) \
