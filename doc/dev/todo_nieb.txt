@@ -10,7 +10,6 @@ MAP Complex ARENA
       projector
       projector screen
       server rack
-      room signs
       fire ex sign
       conference table?
 
