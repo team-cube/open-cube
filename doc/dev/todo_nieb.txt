@@ -121,15 +121,6 @@ UI Stuff
                 undo size
                 ...
 
-      F10 "Default Editbind Quick Reference"
-             A list of all the default editing keybinds
-                Visual, with pic of keyboard?
-                   hover over keys to show what they do?
-
-      F11 "Show Console"
-
-      F12 "Screenshot"
-
 
 ===============================================================
 HUD Gun Models
