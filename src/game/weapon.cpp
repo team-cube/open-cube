@@ -13,7 +13,9 @@ namespace game
     };
     vector<hitmsg> hits;
 
-    VARP(maxdebris, 10, 25, 1000);
+    #define MINDEBRIS 3
+    VARP(maxdebris, MINDEBRIS, 10, 100);
+    VARP(maxgibs, 0, 4, 100);
 
     ICOMMAND(getweapon, "", (), intret(player1->gunselect));
 
@@ -282,9 +284,9 @@ namespace game
 
     void gibeffect(int damage, const vec &vel, gameent *d)
     {
-        if(!blood || damage <= 0) return;
+        if(!blood || !maxgibs || damage < 0) return;
         vec from = d->abovehead();
-        loopi(min(damage/25, 40)+1) spawnbouncer(from, vel, d, BNC_GIBS);
+        loopi(rnd(maxgibs)+1) spawnbouncer(from, vel, d, BNC_GIBS);
     }
 
     void hit(int damage, dynent *d, gameent *at, const vec &vel, int gun, float info1, int info2 = 1)
@@ -358,7 +360,7 @@ namespace game
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
         playsound(S_ROCKETEXPLODE, &v);
         particle_fireball(v, 1.15f*guns[gun].exprad, PART_EXPLOSION, int(guns[gun].exprad*20), 0xFF8080, 4.0f);
-        int numdebris = rnd(maxdebris-5)+5;
+        int numdebris = rnd(maxdebris-MINDEBRIS)+MINDEBRIS;
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
         adddynlight(safe ? v : debrisorigin, 2*guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
         if(numdebris)
