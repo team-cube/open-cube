@@ -2485,6 +2485,8 @@ void gl_drawhud()
 
     glEnable(GL_BLEND);
 
+    debugparticles();
+
     if(!mainmenu)
     {
         drawdamagescreen(w, h);

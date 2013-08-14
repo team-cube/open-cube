@@ -179,6 +179,16 @@ template<size_t N> inline void formatstring(char (&d)[N], const char *fmt, ...)
     va_end(v);
 }
 
+template<size_t N> inline void concformatstring(char (&d)[N], const char *fmt, ...) PRINTFARGS(2, 3);
+template<size_t N> inline void concformatstring(char (&d)[N], const char *fmt, ...)
+{
+    va_list v;
+    va_start(v, fmt);
+    int len = strlen(d);
+    vformatstring(d + len, fmt, v, int(N) - len);
+    va_end(v);
+}
+
 extern char *tempformatstring(const char *fmt, ...) PRINTFARGS(1, 2);
 
 #define defformatstring(d,...) string d; formatstring(d, __VA_ARGS__)

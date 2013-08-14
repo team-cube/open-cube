@@ -684,6 +684,7 @@ extern void clearparticles();
 extern void clearparticleemitters();
 extern void seedparticles();
 extern void updateparticles();
+extern void debugparticles();
 extern void renderparticles();
 extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();

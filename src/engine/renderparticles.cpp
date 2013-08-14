@@ -160,6 +160,7 @@ struct partrenderer
     int texclamp;
     uint type;
     int collide;
+    string info;
 
     partrenderer(const char *texname, int texclamp, int type, int collide = 0)
         : tex(NULL), texname(texname), texclamp(texclamp), type(type), collide(collide)
@@ -231,6 +232,24 @@ struct partrenderer
                 }
                 else blend = 0;
             }
+        }
+    }
+
+    void debuginfo()
+    {
+        formatstring(info, "%d\t%s(", count(), partnames[type&0xFF]);
+        if(type&PT_LERP) concatstring(info, "l,");
+        if(type&PT_MOD) concatstring(info, "m,");
+        if(type&PT_RND4) concatstring(info, "r,");
+        if(type&PT_TRACK) concatstring(info, "t,");
+        if(type&PT_FLIP) concatstring(info, "f,");
+        if(collide) concatstring(info, "c,");
+        int len = strlen(info);
+        info[len-1] = info[len-1] == ',' ? ')' : '\0';
+        if(texname)
+        {
+            const char *title = strrchr(texname, '/')+1;
+            if(title) concformatstring(info, ": %s", title);
         }
     }
 };
@@ -888,38 +907,23 @@ void removetrackedparticles(physent *owner)
     loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->resettracked(owner);
 }
 
-VAR(debugparticles, 0, 0, 1);
+VARN(debugparticles, dbgparts, 0, 0, 1);
+
+void debugparticles()
+{
+    if(!dbgparts) return;
+    int n = sizeof(parts)/sizeof(parts[0]);
+    pushhudmatrix();
+    hudmatrix.ortho(0, FONTH*n*2*vieww/float(viewh), FONTH*n*2, 0, -1, 1); // squeeze into top-left corner
+    flushhudmatrix();
+    loopi(n) draw_text(parts[i]->info, FONTH, (i+n/2)*FONTH);
+    pophudmatrix();
+}
 
 void renderparticles()
 {
     //want to debug BEFORE the lastpass render (that would delete particles)
-    if(debugparticles)
-    {
-        int n = sizeof(parts)/sizeof(parts[0]);
-        hudmatrix.ortho(0, FONTH*n*2*vieww/float(viewh), FONTH*n*2, 0, -1, 1); // squeeze into top-left corner
-        resethudmatrix();
-        hudshader->set();
-
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        loopi(n)
-        {
-            int type = parts[i]->type;
-            const char *title = parts[i]->texname ? strrchr(parts[i]->texname, '/')+1 : NULL;
-            string info = "";
-            if(type&PT_LERP) concatstring(info, "l,");
-            if(type&PT_MOD) concatstring(info, "m,");
-            if(type&PT_RND4) concatstring(info, "r,");
-            if(type&PT_TRACK) concatstring(info, "t,");
-            if(type&PT_FLIP) concatstring(info, "f,");
-            if(parts[i]->collide) concatstring(info, "c,");
-            if(info[0]) info[strlen(info)-1] = '\0';
-            defformatstring(ds, "%d\t%s(%s) %s", parts[i]->count(), partnames[type&0xFF], info, title ? title : "");
-            draw_text(ds, FONTH, (i+n/2)*FONTH);
-        }
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-    }
+    if(dbgparts) loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->debuginfo();
 
     bool rendered = false;
     uint lastflags = PT_LERP|PT_SHADER, flagmask = PT_LERP|PT_MOD|PT_BRIGHT|PT_NOTEX|PT_SOFT|PT_SHADER;
