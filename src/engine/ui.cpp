@@ -720,6 +720,12 @@ namespace UI
             return true;
         }
 
+        bool hidetop()
+        {
+            loopwindowsrev(w, { if(w->allowinput && !(w->state&STATE_HIDDEN)) { hide(w, i); return true; } });
+            return false;
+        }
+
         int hideall()
         {
             int hidden = 0;
@@ -2764,6 +2770,8 @@ namespace UI
 
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
+    ICOMMAND(hidetopui, "", (), intret(world->hidetop() ? 1 : 0));
+    ICOMMAND(hideallui, "", (), intret(world->hideall()));
     ICOMMAND(toggleui, "s", (char *name), intret(toggleui(name) ? 1 : 0));
     ICOMMAND(holdui, "sD", (char *name, int *down), holdui(name, *down!=0));
     ICOMMAND(uiname, "", (), { if(window) result(window->name); });
