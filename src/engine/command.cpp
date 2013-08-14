@@ -2994,6 +2994,8 @@ void floatret(float v)
 
 #undef ICOMMANDNAME
 #define ICOMMANDNAME(name) _stdcmd
+#undef ICOMMANDSNAME
+#define ICOMMANDSNAME _stdcmd
 
 ICOMMANDK(do, ID_DO, "e", (uint *body), executeret(body, *commandret));
 ICOMMANDK(if, ID_IF, "tee", (tagval *cond, uint *t, uint *f), executeret(getbool(*cond) ? t : f, *commandret));
@@ -3560,34 +3562,72 @@ void sortlist(char *list, ident *x, ident *y, uint *body, uint *unique)
 }
 COMMAND(sortlist, "srree");
 
-ICOMMAND(+, "ii", (int *a, int *b), intret(*a + *b));
-ICOMMAND(*, "ii", (int *a, int *b), intret(*a * *b));
-ICOMMAND(-, "ii", (int *a, int *b), intret(*a - *b));
-ICOMMAND(+f, "ff", (float *a, float *b), floatret(*a + *b));
-ICOMMAND(*f, "ff", (float *a, float *b), floatret(*a * *b));
-ICOMMAND(-f, "ff", (float *a, float *b), floatret(*a - *b));
-ICOMMAND(=, "ii", (int *a, int *b), intret((int)(*a == *b)));
-ICOMMAND(!=, "ii", (int *a, int *b), intret((int)(*a != *b)));
-ICOMMAND(<, "ii", (int *a, int *b), intret((int)(*a < *b)));
-ICOMMAND(>, "ii", (int *a, int *b), intret((int)(*a > *b)));
-ICOMMAND(<=, "ii", (int *a, int *b), intret((int)(*a <= *b)));
-ICOMMAND(>=, "ii", (int *a, int *b), intret((int)(*a >= *b)));
-ICOMMAND(=f, "ff", (float *a, float *b), intret((int)(*a == *b)));
-ICOMMAND(!=f, "ff", (float *a, float *b), intret((int)(*a != *b)));
-ICOMMAND(<f, "ff", (float *a, float *b), intret((int)(*a < *b)));
-ICOMMAND(>f, "ff", (float *a, float *b), intret((int)(*a > *b)));
-ICOMMAND(<=f, "ff", (float *a, float *b), intret((int)(*a <= *b)));
-ICOMMAND(>=f, "ff", (float *a, float *b), intret((int)(*a >= *b)));
-ICOMMAND(^, "ii", (int *a, int *b), intret(*a ^ *b));
+#define MATHCMD(name, fmt, type, op, initval, unaryop) \
+    ICOMMANDS(name, fmt "1V", (tagval *args, int numargs), \
+    { \
+        type val; \
+        if(numargs >= 2) \
+        { \
+            val = args[0].get##type(); \
+            type val2 = args[1].get##type(); \
+            op; \
+            for(int i = 2; i < numargs; i++) { val2 = args[i].get##type(); op; } \
+        } \
+        else { val = numargs > 0 ? args[0].get##type() : initval; unaryop; } \
+        type##ret(val); \
+    })
+#define MATHICMDN(name, op, initval, unaryop) MATHCMD(#name, "i", int, val = val op val2, initval, unaryop)
+#define MATHICMD(name, initval, unaryop) MATHICMDN(name, name, initval, unaryop)
+#define MATHFCMDN(name, op, initval, unaryop) MATHCMD(#name "f", "f", float, val = val op val2, initval, unaryop)
+#define MATHFCMD(name, initval, unaryop) MATHFCMDN(name, name, initval, unaryop)
+
+#define CMPCMD(name, fmt, type, op) \
+    ICOMMANDS(name, fmt "1V", (tagval *args, int numargs), \
+    { \
+        bool val; \
+        if(numargs >= 2) \
+        { \
+            val = args[0].get##type() op args[1].get##type(); \
+            for(int i = 2; i < numargs && val; i++) val = args[i-1].get##type() op args[i].get##type(); \
+        } \
+        else val = (numargs > 0 ? args[0].get##type() : 0) op 0; \
+        intret(int(val)); \
+    })
+#define CMPICMDN(name, op) CMPCMD(#name, "i", int, op)
+#define CMPICMD(name) CMPICMDN(name, name)
+#define CMPFCMDN(name, op) CMPCMD(#name "f", "f", float, op)
+#define CMPFCMD(name) CMPFCMDN(name, name)
+
+MATHICMD(+, 0, );
+MATHICMD(*, 1, );
+MATHICMD(-, 0, val = -val);
+CMPICMDN(=, ==);
+CMPICMD(!=);
+CMPICMD(<);
+CMPICMD(>);
+CMPICMD(<=);
+CMPICMD(>=);
+MATHICMD(^, 0, val = ~val);
+MATHICMDN(~, ^, 0, val = ~val);
+MATHICMD(&, 0, );
+MATHICMD(|, 0, );
+MATHICMD(^~, 0, );
+MATHICMD(&~, 0, );
+MATHICMD(|~, 0, );
+MATHICMD(<<, 0, );
+MATHICMD(>>, 0, );
+
+MATHFCMD(+, 0, );
+MATHFCMD(*, 1, );
+MATHFCMD(-, 0, val = -val);
+CMPFCMDN(=, ==);
+CMPFCMD(!=);
+CMPFCMD(<);
+CMPFCMD(>);
+CMPFCMD(<=);
+CMPFCMD(>=);
+
 ICOMMANDK(!, ID_NOT, "t", (tagval *a), intret(getbool(*a) ? 0 : 1));
-ICOMMAND(&, "ii", (int *a, int *b), intret(*a & *b));
-ICOMMAND(|, "ii", (int *a, int *b), intret(*a | *b));
-ICOMMAND(~, "i", (int *a), intret(~*a));
-ICOMMAND(^~, "ii", (int *a, int *b), intret(*a ^ ~*b));
-ICOMMAND(&~, "ii", (int *a, int *b), intret(*a & ~*b));
-ICOMMAND(|~, "ii", (int *a, int *b), intret(*a | ~*b));
-ICOMMAND(<<, "ii", (int *a, int *b), intret(*a << *b));
-ICOMMAND(>>, "ii", (int *a, int *b), intret(*a >> *b));
 ICOMMANDK(&&, ID_AND, "E1V", (tagval *args, int numargs),
 {
     if(!numargs) intret(1);
@@ -3611,10 +3651,15 @@ ICOMMANDK(||, ID_OR, "E1V", (tagval *args, int numargs),
     }
 });
 
-ICOMMAND(div, "ii", (int *a, int *b), intret(*b ? *a / *b : 0));
-ICOMMAND(mod, "ii", (int *a, int *b), intret(*b ? *a % *b : 0));
-ICOMMAND(divf, "ff", (float *a, float *b), floatret(*b ? *a / *b : 0));
-ICOMMAND(modf, "ff", (float *a, float *b), floatret(*b ? fmod(*a, *b) : 0));
+
+#define DIVCMD(name, fmt, type, op) MATHCMD(#name, fmt, type, { if(val2) op; else val = 0; }, 0, )
+
+DIVCMD(div, "i", int, val /= val2);
+DIVCMD(mod, "i", int, val %= val2);
+DIVCMD(divf, "f", float, val /= val2);
+DIVCMD(modf, "f", float, val = fmod(val, val2));
+MATHCMD("pow", "f", float, val = pow(val, val2), 0, );
+
 ICOMMAND(sin, "f", (float *a), floatret(sin(*a*RAD)));
 ICOMMAND(cos, "f", (float *a), floatret(cos(*a*RAD)));
 ICOMMAND(tan, "f", (float *a), floatret(tan(*a*RAD)));
@@ -3622,35 +3667,24 @@ ICOMMAND(asin, "f", (float *a), floatret(asin(*a)/RAD));
 ICOMMAND(acos, "f", (float *a), floatret(acos(*a)/RAD));
 ICOMMAND(atan, "f", (float *a), floatret(atan(*a)/RAD));
 ICOMMAND(sqrt, "f", (float *a), floatret(sqrt(*a)));
-ICOMMAND(pow, "ff", (float *a, float *b), floatret(pow(*a, *b)));
 ICOMMAND(loge, "f", (float *a), floatret(log(*a)));
 ICOMMAND(log2, "f", (float *a), floatret(log(*a)/M_LN2));
 ICOMMAND(log10, "f", (float *a), floatret(log10(*a)));
 ICOMMAND(exp, "f", (float *a), floatret(exp(*a)));
-ICOMMAND(min, "V", (tagval *args, int numargs),
-{
-    int val = numargs > 0 ? args[numargs - 1].getint() : 0;
-    loopi(numargs - 1) val = min(val, args[i].getint());
-    intret(val);
-});
-ICOMMAND(max, "V", (tagval *args, int numargs),
-{
-    int val = numargs > 0 ? args[numargs - 1].getint() : 0;
-    loopi(numargs - 1) val = max(val, args[i].getint());
-    intret(val);
-});
-ICOMMAND(minf, "V", (tagval *args, int numargs),
-{
-    float val = numargs > 0 ? args[numargs - 1].getfloat() : 0.0f;
-    loopi(numargs - 1) val = min(val, args[i].getfloat());
-    floatret(val);
-});
-ICOMMAND(maxf, "V", (tagval *args, int numargs),
-{
-    float val = numargs > 0 ? args[numargs - 1].getfloat() : 0.0f;
-    loopi(numargs - 1) val = max(val, args[i].getfloat());
-    floatret(val);
-});
+
+#define MINMAXCMD(name, fmt, type, op) \
+    ICOMMAND(name, fmt "1V", (tagval *args, int numargs), \
+    { \
+        type val = numargs > 0 ? args[0].get##type() : 0; \
+        for(int i = 1; i < numargs; i++) val = op(val, args[i].get##type()); \
+        type##ret(val); \
+    })
+
+MINMAXCMD(min, "i", int, min);
+MINMAXCMD(max, "i", int, max);
+MINMAXCMD(minf, "f", float, min);
+MINMAXCMD(maxf, "f", float, max);
+
 ICOMMAND(abs, "i", (int *n), intret(abs(*n)));
 ICOMMAND(absf, "f", (float *n), floatret(fabs(*n)));
 
@@ -3673,6 +3707,7 @@ ICOMMAND(cond, "ee2V", (tagval *args, int numargs),
         }
     }
 });
+
 #define CASECOMMAND(name, fmt, type, acc, compare) \
     ICOMMAND(name, fmt "te2V", (tagval *args, int numargs), \
     { \
@@ -3687,18 +3722,34 @@ ICOMMAND(cond, "ee2V", (tagval *args, int numargs),
             } \
         } \
     })
+
 CASECOMMAND(case, "i", int, args[0].getint(), args[i].type == VAL_NULL || args[i].getint() == val);
 CASECOMMAND(casef, "f", float, args[0].getfloat(), args[i].type == VAL_NULL || args[i].getfloat() == val);
 CASECOMMAND(cases, "s", const char *, args[0].getstr(), args[i].type == VAL_NULL || !strcmp(args[i].getstr(), val));
 
 ICOMMAND(rnd, "ii", (int *a, int *b), intret(*a - *b > 0 ? rnd(*a - *b) + *b : *b));
-ICOMMAND(strcmp, "ss", (char *a, char *b), intret(strcmp(a,b)==0));
-ICOMMAND(=s, "ss", (char *a, char *b), intret(strcmp(a,b)==0));
-ICOMMAND(!=s, "ss", (char *a, char *b), intret(strcmp(a,b)!=0));
-ICOMMAND(<s, "ss", (char *a, char *b), intret(strcmp(a,b)<0));
-ICOMMAND(>s, "ss", (char *a, char *b), intret(strcmp(a,b)>0));
-ICOMMAND(<=s, "ss", (char *a, char *b), intret(strcmp(a,b)<=0));
-ICOMMAND(>=s, "ss", (char *a, char *b), intret(strcmp(a,b)>=0));
+
+#define CMPSCMD(name, op) \
+    ICOMMAND(name, "s1V", (tagval *args, int numargs), \
+    { \
+        bool val; \
+        if(numargs >= 2) \
+        { \
+            val = strcmp(args[0].s, args[1].s) op 0; \
+            for(int i = 2; i < numargs && val; i++) val = strcmp(args[i-1].s, args[i].s) op 0; \
+        } \
+        else val = (numargs > 0 ? args[0].s[0] : 0) op 0; \
+        intret(int(val)); \
+    })
+
+CMPSCMD(strcmp, ==);
+CMPSCMD(=s, ==);
+CMPSCMD(!=s, !=);
+CMPSCMD(<s, <);
+CMPSCMD(>s, >);
+CMPSCMD(<=s, <=);
+CMPSCMD(>=s, >=);
+
 ICOMMAND(echo, "C", (char *s), conoutf("\f1%s", s));
 ICOMMAND(error, "C", (char *s), conoutf(CON_ERROR, "%s", s));
 ICOMMAND(strstr, "ss", (char *a, char *b), { char *s = strstr(a, b); intret(s ? s-a : -1); });
