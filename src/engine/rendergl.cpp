@@ -2648,7 +2648,7 @@ void gl_setupframe(bool force)
     hudw = screenw;
     hudh = screenh;
     ovr::setup();
-    if(mainmenu && !force) return;
+    if(!force) return;
     setuplights();
 }
 

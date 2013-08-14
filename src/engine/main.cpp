@@ -1243,7 +1243,7 @@ int main(int argc, char **argv)
 
         if(minimized) continue;
 
-        gl_setupframe();
+        gl_setupframe(!mainmenu);
 
         inbetweenframes = false;
         gl_drawframe();
