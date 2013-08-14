@@ -2652,13 +2652,13 @@ static const uint *runcode(const uint *code, tagval &result)
                         goto exit;
                     }
                     case ID_VAR:
-                        if(callargs <= 1) printvar(id); else setvarchecked(id, &args[offset], callargs);
+                        if(callargs <= 0) printvar(id); else setvarchecked(id, &args[offset], callargs);
                         FORCERESULT;
                     case ID_FVAR:
-                        if(callargs <= 1) printvar(id); else setfvarchecked(id, forcefloat(args[offset]));
+                        if(callargs <= 0) printvar(id); else setfvarchecked(id, forcefloat(args[offset]));
                         FORCERESULT;
                     case ID_SVAR:
-                        if(callargs <= 1) printvar(id); else setsvarchecked(id, forcestr(args[offset]));
+                        if(callargs <= 0) printvar(id); else setsvarchecked(id, forcestr(args[offset]));
                         FORCERESULT;
                     case ID_ALIAS:
                         if(id->index < MAXARGS && !(aliasstack->usedargs&(1<<id->index))) FORCERESULT;
