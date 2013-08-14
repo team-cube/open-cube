@@ -49,8 +49,17 @@ void conoutf(int type, const char *fmt, ...)
     va_end(args);
 }
 
-VAR(fullconsole, 0, 0, 1);
-ICOMMAND(toggleconsole, "", (), { fullconsole ^= 1; });
+ICOMMAND(fullconsole, "iN$", (int *val, int *numargs, ident *id),
+{
+    if(*numargs > 0) UI::holdui("fullconsole", *val!=0);
+    else
+    {
+        int vis = UI::uivisible("fullconsole") ? 1 : 0;
+        if(*numargs < 0) intret(vis);
+        else printvar(id, vis);
+    }
+});
+ICOMMAND(toggleconsole, "", (), UI::toggleui("fullconsole"));
 
 float rendercommand(float x, float y, float w)
 {
@@ -92,7 +101,7 @@ void setconskip(int &skip, int filter, int n)
     }
 }
 
-ICOMMAND(conskip, "i", (int *n), setconskip(conskip, fullconsole ? fullconfilter : confilter, *n));
+ICOMMAND(conskip, "i", (int *n), setconskip(conskip, UI::uivisible("fullconsole") ? fullconfilter : confilter, *n));
 ICOMMAND(miniconskip, "i", (int *n), setconskip(miniconskip, miniconfilter, *n));
 
 ICOMMAND(clearconsole, "", (), { while(conlines.length()) delete[] conlines.pop().line; });
@@ -138,55 +147,24 @@ float drawconlines(int conskip, int confade, float conwidth, float conheight, fl
     return y+conoff;
 }
 
-void consolebox(float x1, float y1, float x2, float y2)
+float renderfullconsole(float w, float h)
 {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    settexture("media/interface/consolebox.png", 3);
-    gle::colorf(1, 1, 1);
-    gle::defvertex(2);
-    gle::deftexcoord0();
-    float tborder = 8/256.0f, xborder = FONTH/6.0f, yborder = FONTH/6.0f;
-    loopi(3)
-    {
-        float vy = 0, vy2 = 0, ty = 0, ty2 = 0;
-        switch(i)
-        {
-            case 0: vy = y1;         vy2 = y1+yborder; ty = 0;         ty2 = tborder; break;
-            case 1: vy = y1+yborder; vy2 = y2-yborder; ty = tborder;   ty2 = 1-tborder; break;
-            case 2: vy = y2-yborder; vy2 = y2;         ty = 1-tborder; ty2 = 1; break;
-        }
-        loopj(3)
-        {
-            float vx = 0, vx2 = 0, tx = 0, tx2 = 0;
-            switch(j)
-            {
-                case 0: vx = x1;         vx2 = x1+xborder; tx = 0;         tx2 = tborder; break;
-                case 1: vx = x1+xborder; vx2 = x2-xborder; tx = tborder;   tx2 = 1-tborder; break;
-                case 2: vx = x2-xborder; vx2 = x2;         tx = 1-tborder; tx2 = 1; break;
-            }
-            gle::begin(GL_TRIANGLE_STRIP);
-            gle::attribf(vx,  vy);  gle::attribf(tx,  ty);
-            gle::attribf(vx2, vy);  gle::attribf(tx2, ty);
-            gle::attribf(vx,  vy2); gle::attribf(tx,  ty2);
-            gle::attribf(vx2, vy2); gle::attribf(tx2, ty2);
-            gle::end();
-        }
-    }
+    float conpad = FONTH/2,
+          conheight = h - 2*conpad,
+          conwidth = w - 2*conpad;
+    drawconlines(conskip, 0, conwidth, conheight, conpad, fullconfilter);
+    return conheight + 2*conpad;
 }
 
-float renderconsole(float w, float h, float abovehud)                   // render buffer taking into account time & scrolling
+float renderconsole(float w, float h, float abovehud)
 {
-    float conpad = fullconsole ? 0 : FONTH/4,
-          conoff = fullconsole ? FONTH : FONTH/3,
-          conheight = min(fullconsole ? ((h*fullconsize/100)/FONTH)*FONTH : FONTH*consize, h - 2*(conpad + conoff)),
-          conwidth = w - 2*(conpad + conoff) - (fullconsole ? 0 : game::clipconsole(w, h));
-
-    if(fullconsole) consolebox(conpad, conpad, conwidth+conpad+2*conoff, conheight+conpad+2*conoff);
-
-    float y = drawconlines(conskip, fullconsole ? 0 : confade, conwidth, conheight, conpad+conoff, fullconsole ? fullconfilter : confilter);
-    if(!fullconsole && (miniconsize && miniconwidth))
-        drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*(conpad + conoff)))/100, min(float(FONTH*miniconsize), abovehud - y), conpad+conoff, miniconfilter, abovehud, -1);
-    return fullconsole ? conheight + 2*(conpad + conoff) : y;
+    float conpad = FONTH/2,
+          conheight = min(float(FONTH*consize), h - 2*conpad),
+          conwidth = w - 2*conpad - game::clipconsole(w, h);
+    float y = drawconlines(conskip, confade, conwidth, conheight, conpad, confilter);
+    if(miniconsize && miniconwidth)
+        drawconlines(miniconskip, miniconfade, (miniconwidth*(w - 2*conpad))/100, min(float(FONTH*miniconsize), abovehud - y), conpad, miniconfilter, abovehud, -1);
+    return y;
 }
 
 // keymap is defined externally in keymap.cfg

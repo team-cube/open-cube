@@ -763,7 +763,7 @@ namespace game
     int selectcrosshair(vec &col)
     {
         gameent *d = hudplayer();
-        if(d->state==CS_SPECTATOR || d->state==CS_DEAD) return -1;
+        if(d->state==CS_SPECTATOR || d->state==CS_DEAD || UI::uivisible("scoreboard")) return -1;
 
         if(d->state!=CS_ALIVE) return 0;
 

@@ -564,9 +564,12 @@ extern void checksleep(int millis);
 extern void clearsleep(bool clearoverrides = true);
 
 // console
+extern float conscale;
+
 extern void processkey(int code, bool isdown);
 extern void processtextinput(const char *str, int len);
 extern float rendercommand(float x, float y, float w);
+extern float renderfullconsole(float w, float h);
 extern float renderconsole(float w, float h, float abovehud);
 extern void conoutf(const char *s, ...) PRINTFARGS(1, 2);
 extern void conoutf(int type, const char *s, ...) PRINTFARGS(2, 3);

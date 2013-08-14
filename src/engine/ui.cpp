@@ -630,6 +630,16 @@ namespace UI
             sx2 = clamp(int(ceil(s2.x*hudw)), 0, hudw);
             sy2 = clamp(int(ceil(s2.y*hudh)), 0, hudh);
         }
+
+        void calcscissor(float x1, float y1, float x2, float y2, float &sx1, float &sy1, float &sx2, float &sy2)
+        {
+            vec2 s1 = vec2(x1, y2).mul(sscale).add(soffset).mul(2).sub(1).clamp(-1.0f, 1.0f),
+                 s2 = vec2(x2, y1).mul(sscale).add(soffset).mul(2).sub(1).clamp(-1.0f, 1.0f);
+            sx1 = s1.x;
+            sy1 = s1.y;
+            sx2 = s2.x;
+            sy2 = s2.y;
+        }
     };
 
     float Window::maxscale = 1;
@@ -1777,6 +1787,35 @@ namespace UI
         const char *getstr() const { return str; }
     };
 
+    struct Console : Filler
+    {
+        void setup(float minw_ = 0, float minh_ = 0)
+        {
+            Filler::setup(minw_, minh_);
+        }
+
+        static const char *typestr() { return "#Console"; }
+        const char *gettype() const { return typestr(); }
+
+        void draw(float sx, float sy)
+        {
+            Object::draw(sx, sy);
+
+            int tw = hudw, th = hudh;
+            if(forceaspect) tw = int(ceil(th*forceaspect));
+            gettextres(tw, th);
+            float sx1, sy1, sx2, sy2;
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            float xk = (sx2-sx1)/2*(tw/conscale), yk = (sy2-sy1)/2*(th/conscale);
+            pushhudmatrix();
+            hudmatrix.translate(sx, sy, 0);
+            hudmatrix.scale(w/xk, h/yk, 1);
+            flushhudmatrix();
+            renderfullconsole(xk, yk);
+            pophudmatrix();
+        }
+    };
+
     struct Clipper : Object
     {
         float clipw, cliph, virtw, virth;
@@ -2774,12 +2813,20 @@ namespace UI
         else hideui(name);
     }
 
+    bool uivisible(const char *name)
+    {
+        if(!name) return world->children.length() > 0;
+        Window *window = windows.find(name, NULL);
+        return window && world->children.find(window) >= 0;
+    }
+
     ICOMMAND(showui, "s", (char *name), intret(showui(name) ? 1 : 0));
     ICOMMAND(hideui, "s", (char *name), intret(hideui(name) ? 1 : 0));
     ICOMMAND(hidetopui, "", (), intret(world->hidetop() ? 1 : 0));
     ICOMMAND(hideallui, "", (), intret(world->hideall()));
     ICOMMAND(toggleui, "s", (char *name), intret(toggleui(name) ? 1 : 0));
     ICOMMAND(holdui, "sD", (char *name, int *down), holdui(name, *down!=0));
+    ICOMMAND(uivisible, "s", (char *name), intret(uivisible(name) ? 1 : 0));
     ICOMMAND(uiname, "", (), { if(window) result(window->name); });
 
     #define IFSTATEVAL(state,t,f) { if(state) { if(t->type == VAL_NULL) intret(1); else result(*t); } else if(f->type == VAL_NULL) intret(0); else result(*f); }
@@ -2985,6 +3032,9 @@ namespace UI
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+
+    ICOMMAND(uiconsole, "ffe", (float *minw, float *minh, uint *children),
+        BUILD(Console, o, o->setup(*minw, *minh), children));
 
     ICOMMAND(uifield, "riefe", (ident *var, int *length, uint *onchange, float *scale, uint *children),
         BUILD(Field, o, o->setup(var, *length, onchange, *scale <= 0 ? 1 : *scale), children));

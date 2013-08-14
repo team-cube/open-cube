@@ -416,6 +416,7 @@ namespace UI
     bool hideui(const char *name);
     bool toggleui(const char *name);
     void holdui(const char *name, bool on);
+    bool uivisible(const char *name);
 }
 
 // ragdoll
