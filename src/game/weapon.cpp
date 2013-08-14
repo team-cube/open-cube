@@ -357,10 +357,10 @@ namespace game
     {
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
         playsound(S_ROCKETEXPLODE, &v);
-        particle_fireball(v, guns[gun].exprad, PART_EXPLOSION, int(guns[gun].exprad*20), 0xFF8080, 4.0f);
+        particle_fireball(v, 1.15f*guns[gun].exprad, PART_EXPLOSION, int(guns[gun].exprad*20), 0xFF8080, 4.0f);
         int numdebris = rnd(maxdebris-5)+5;
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
-        adddynlight(safe ? v : debrisorigin, guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
+        adddynlight(safe ? v : debrisorigin, 2*guns[gun].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, guns[gun].exprad/2, vec(2.0, 1.5f, 1.0f));
         if(numdebris)
         {
             vec debrisvel = vec(vel).neg();
