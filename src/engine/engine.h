@@ -717,7 +717,7 @@ namespace UI
     bool movecursor(int dx, int dy);
     bool keypress(int code, bool isdown);
     bool textinput(const char *str, int len);
-    void limitscale(float scale);
+    float abovehud();
 
     void setup();
     void update();

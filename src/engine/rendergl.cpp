@@ -2464,7 +2464,6 @@ static time_t walltime = 0;
 
 VARP(showfps, 0, 1, 1);
 VARP(showfpsrange, 0, 0, 1);
-VAR(showeditstats, 0, 0, 1);
 VAR(statrate, 1, 200, 1000);
 
 FVARP(conscale, 1e-3f, 0.33f, 1e3f);
@@ -2496,7 +2495,7 @@ void gl_drawhud()
 
     hudshader->set();
 
-    float conw = w/conscale, conh = h/conscale, abovehud = conh - FONTH, limitgui = abovehud;
+    float conw = w/conscale, conh = h/conscale, abovehud = conh - FONTH;
     if(!hidehud && !mainmenu)
     {
         if(!hidestats)
@@ -2543,82 +2542,20 @@ void gl_drawhud()
                 }
             }
 
-            if(editmode || showeditstats)
-            {
-                static int laststats = 0, prevstats[7] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[7] = { 0, 0, 0, 0, 0, 0, 0 };
-                if(totalmillis - laststats >= statrate)
-                {
-                    memcpy(prevstats, curstats, sizeof(prevstats));
-                    laststats = totalmillis - (totalmillis%statrate);
-                }
-                int nextstats[7] =
-                {
-                    vtris*100/max(wtris, 1),
-                    vverts*100/max(wverts, 1),
-                    xtraverts/1024,
-                    xtravertsva/1024,
-                    glde,
-                    gbatches,
-                    getnumqueries()
-                };
-                loopi(7) if(prevstats[i]==curstats[i]) curstats[i] = nextstats[i];
-
-                abovehud -= 2*FONTH;
-                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovehud, wtris/1024, curstats[0], wverts/1024, curstats[1], curstats[2], curstats[3]);
-                draw_textf("ond:%d va:%d gl:%d(%d) oq:%d pvs:%d", FONTH/2, abovehud+FONTH, allocnodes*8, allocva, curstats[4], curstats[5], curstats[6], getnumviewcells());
-                limitgui = abovehud;
-            }
-
-            if(editmode)
-            {
-                abovehud -= FONTH;
-                draw_textf("cube %s%d%s", FONTH/2, abovehud, selchildcount<0 ? "1/" : "", abs(selchildcount), showmat && selchildmat > 0 ? getmaterialdesc(selchildmat, ": ") : "");
-
-                char *editinfo = execidentstr("edithud");
-                if(editinfo)
-                {
-                    if(editinfo[0])
-                    {
-                        int tw, th;
-                        text_bounds(editinfo, tw, th);
-                        th += FONTH-1; th -= th%FONTH;
-                        abovehud -= max(th, FONTH);
-                        draw_text(editinfo, FONTH/2, abovehud);
-                    }
-                    DELETEA(editinfo);
-                }
-            }
-            else
-            {
-                char *gameinfo = execidentstr("gamehud");
-                if(gameinfo)
-                {
-                    if(gameinfo[0])
-                    {
-                        int tw, th;
-                        text_bounds(gameinfo, tw, th);
-                        th += FONTH-1; th -= th%FONTH;
-                        roffset += max(th, FONTH);
-                        draw_text(gameinfo, conw-max(5*FONTH, 2*FONTH+tw), conh-FONTH/2-roffset);
-                    }
-                    DELETEA(gameinfo);
-                }
-            }
-
             pophudmatrix();
         }
 
-        if(hidestats || (!editmode && !showeditstats))
+        if(!editmode)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             game::gameplayhud(w, h);
-            limitgui = abovehud = min(abovehud, conh*game::abovegameplayhud(w, h));
+            abovehud = min(abovehud, conh*game::abovegameplayhud(w, h));
         }
 
         rendertexturepanel(w, h);
     }
 
-    UI::limitscale((2*limitgui - conh) / conh);
+    abovehud = min(abovehud, conh*UI::abovehud());
 
     pushhudmatrix();
     hudmatrix.scale(conscale, conscale, 1);

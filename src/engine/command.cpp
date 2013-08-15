@@ -506,6 +506,55 @@ char *svariable(const char *name, const char *cur, char **storage, identfun fun,
     return newstring(cur);
 }
 
+struct defvar : identval
+{
+    char *name;
+    uint *onchange;
+
+    defvar() : name(NULL), onchange(NULL) {}
+
+    ~defvar()
+    {
+        DELETEA(name);
+        if(onchange) freecode(onchange);
+    }
+
+    static void changed(ident *id)
+    {
+        defvar *v = (defvar *)id->storage.p;
+        if(v->onchange) execute(v->onchange);
+    }
+};
+
+hashnameset<defvar> defvars;
+
+#define DEFVAR(cmdname, fmt, args, body) \
+    ICOMMAND(cmdname, fmt, args, \
+    { \
+        if(idents.access(name)) { debugcode("cannot redefine %s as a variable", name); return; } \
+        name = newstring(name); \
+        defvar &def = defvars[name]; \
+        def.name = name; \
+        def.onchange = onchange[0] ? compilecode(onchange) : NULL; \
+        body; \
+    });
+#define DEFIVAR(cmdname, flags) \
+    DEFVAR(cmdname, "siiis", (char *name, int *min, int *cur, int *max, char *onchange), \
+        def.i = variable(name, *min, *cur, *max, &def.i, def.onchange ? defvar::changed : NULL, flags))
+#define DEFFVAR(cmdname, flags) \
+    DEFVAR(cmdname, "sfffs", (char *name, float *min, float *cur, float *max, char *onchange), \
+        def.f = fvariable(name, *min, *cur, *max, &def.f, def.onchange ? defvar::changed : NULL, flags))
+#define DEFSVAR(cmdname, flags) \
+    DEFVAR(cmdname, "sss", (char *name, char *cur, char *onchange), \
+        def.s = svariable(name, cur, &def.s, def.onchange ? defvar::changed : NULL, flags))
+
+DEFIVAR(defvar, 0);
+DEFIVAR(defvarp, IDF_PERSIST);
+DEFFVAR(deffvar, 0);
+DEFFVAR(deffvarp, IDF_PERSIST);
+DEFSVAR(defsvar, 0);
+DEFSVAR(defsvarp, IDF_PERSIST);
+
 #define _GETVAR(id, vartype, name, retval) \
     ident *id = idents.access(name); \
     if(!id || id->type!=vartype) return retval;

@@ -492,12 +492,10 @@ namespace UI
 
     struct Window : Object
     {
-        static float maxscale;
-
         char *name;
         uint *contents, *onshow, *onhide;
-        bool allowinput, eschide;
-        float px, py, px2, py2;
+        bool allowinput, eschide, abovehud;
+        float px, py, pw, ph;
         vec2 sscale, soffset;
 
         Window(const char *name, const char *contents, const char *onshow, const char *onhide) :
@@ -505,8 +503,8 @@ namespace UI
             contents(compilecode(contents)),
             onshow(onshow && onshow[0] ? compilecode(onshow) : NULL),
             onhide(onhide && onhide[0] ? compilecode(onhide) : NULL),
-            allowinput(true), eschide(true),
-            px(0), py(0), px2(0), py2(0),
+            allowinput(true), eschide(true), abovehud(false),
+            px(0), py(0), pw(0), ph(0),
             sscale(1, 1), soffset(0, 0)
         {
         }
@@ -540,7 +538,8 @@ namespace UI
         {
             Object::setup();
             allowinput = eschide = true;
-            px = py = px2 = py2 = 0;
+            abovehud = false;
+            px = py = pw = ph = 0;
         }
 
         void layout()
@@ -580,31 +579,18 @@ namespace UI
 
         void adjustlayout()
         {
-            float aspect = float(hudw)/hudh,
-                  sh = max(max(h, w/aspect), 1.0f),
-                  sw = aspect*sh;
-#if 1
-            Object::adjustlayout(0, 0, sw, sh);
-            px = 0;
-            px2 = sw;
-            py = 0;
-            py2 = sh;
-#else
-            float scale = max(1/maxscale, 1.0f);
-            Object::adjustlayout(0, 0, scale*sw, sh);
-            px = 0;
-            px2 = px + scale*sw;
-            py = -0.5f*sh*(scale - 1);
-            py2 = py + scale*sh;
-#endif
+            float aspect = float(hudw)/hudh;
+            ph = max(max(h, w/aspect), 1.0f);
+            pw = aspect*ph;
+            Object::adjustlayout(0, 0, pw, ph);
         }
 
         #define DOSTATE(flags, func) \
             void func##children(float cx, float cy, int mask, bool inside, int setflags) \
             { \
-                if(!allowinput || state&STATE_HIDDEN || px >= px2 || py >= py2) return; \
-                cx *= px2-px; cx += px - x; \
-                cy *= py2-py; cy += py - y; \
+                if(!allowinput || state&STATE_HIDDEN || pw <= 0 || ph <= 0) return; \
+                cx = cx*pw + px-x; \
+                cy = cy*ph + py-y; \
                 if(!inside || (cx >= 0 && cy >= 0 && cx < w && cy < h)) \
                     Object::func##children(cx, cy, mask, inside, setflags); \
             }
@@ -615,7 +601,7 @@ namespace UI
 
         void projection()
         {
-            hudmatrix.ortho(px, px2, py2, py, -1, 1);
+            hudmatrix.ortho(px, px + pw, py + ph, py, -1, 1);
             resethudmatrix();
             sscale = vec2(hudmatrix.a.x, hudmatrix.b.y).mul(0.5f);
             soffset = vec2(hudmatrix.d.x, hudmatrix.d.y).mul(0.5f).add(0.5f);
@@ -631,18 +617,11 @@ namespace UI
             sy2 = clamp(int(ceil(s2.y*hudh)), 0, hudh);
         }
 
-        void calcscissor(float x1, float y1, float x2, float y2, float &sx1, float &sy1, float &sx2, float &sy2)
+        float calcabovehud()
         {
-            vec2 s1 = vec2(x1, y2).mul(sscale).add(soffset).mul(2).sub(1).clamp(-1.0f, 1.0f),
-                 s2 = vec2(x2, y1).mul(sscale).add(soffset).mul(2).sub(1).clamp(-1.0f, 1.0f);
-            sx1 = s1.x;
-            sy1 = s1.y;
-            sx2 = s2.x;
-            sy2 = s2.y;
+            return 1 - (y*sscale.y + soffset.y);
         }
     };
-
-    float Window::maxscale = 1;
 
     static hashnameset<Window *> windows;
 
@@ -756,6 +735,13 @@ namespace UI
             loopwindows(w, w->draw());
 
             gle::disable();
+        }
+
+        float abovehud()
+        {
+            float y = 1;
+            loopwindows(w, { if(w->abovehud && !(w->state&STATE_HIDDEN)) y = min(y, w->calcabovehud()); });
+            return y;
         }
     };
 
@@ -2992,9 +2978,10 @@ namespace UI
     ICOMMAND(uicircleoutline, "ife", (int *c, float *size, uint *children),
         BUILD(Circle, o, o->setup(Color(*c), *size, Circle::OUTLINE), children));
 
-    static inline void buildtext(tagval &t, float scale, const Color &color, float wrap, uint *children)
+    static inline void buildtext(tagval &t, float scale, float scalemod, const Color &color, float wrap, uint *children)
     {
         if(scale <= 0) scale = 1;
+        scale *= scalemod;
         switch(t.type)
         {
             case VAL_INT:
@@ -3019,31 +3006,33 @@ namespace UI
     }
 
     ICOMMAND(uicolortext, "tife", (tagval *text, int *c, float *scale, uint *children),
-        buildtext(*text, *scale * uitextscale, Color(*c), -1, children));
+        buildtext(*text, *scale, uitextscale, Color(*c), -1, children));
 
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale * uitextscale, Color(255, 255, 255), -1, children));
+        buildtext(*text, *scale, uitextscale, Color(255, 255, 255), -1, children));
 
     ICOMMAND(uiwrapcolortext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
-        buildtext(*text, *scale * uitextscale, Color(*c), *wrap, children));
+        buildtext(*text, *scale, uitextscale, Color(*c), *wrap, children));
 
     ICOMMAND(uiwraptext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
-        buildtext(*text, *scale * uitextscale, Color(255, 255, 255), *wrap, children));
+        buildtext(*text, *scale, uitextscale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uicolorcontext, "tife", (tagval *text, int *c, float *scale, uint *children),
-        buildtext(*text, *scale * uicontextscale, Color(*c), -1, children));
+        buildtext(*text, *scale, uicontextscale, Color(*c), -1, children));
 
     ICOMMAND(uicontext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale * uicontextscale, Color(255, 255, 255), -1, children));
+        buildtext(*text, *scale, uicontextscale, Color(255, 255, 255), -1, children));
 
     ICOMMAND(uiwrapcolorcontext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
-        buildtext(*text, *scale * uicontextscale, Color(*c), *wrap, children));
+        buildtext(*text, *scale, uicontextscale, Color(*c), *wrap, children));
 
     ICOMMAND(uiwrapcontext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
-        buildtext(*text, *scale * uicontextscale, Color(255, 255, 255), *wrap, children));
+        buildtext(*text, *scale, uicontextscale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, (*scale <= 0 ? 1 : *scale) * uitextscale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+
+    ICOMMAND(uiabovehud, "", (), { if(window) window->abovehud = true; });
 
     ICOMMAND(uiconsole, "ffe", (float *minw, float *minh, uint *children),
         BUILD(Console, o, o->setup(*minw, *minh), children));
@@ -3177,11 +3166,6 @@ namespace UI
     bool textinput(const char *str, int len)
     {
         return world->textinput(str, len);
-    }
-
-    void limitscale(float scale)
-    {
-        Window::maxscale = scale;
     }
 
     void setup()

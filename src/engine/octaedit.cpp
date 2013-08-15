@@ -149,6 +149,7 @@ void toggleedit(bool force)
     keyrepeat(editmode, KR_EDITMODE);
     editing = entediting = editmode;
     if(!force) game::edittoggled(editmode);
+    execident("edittoggled");
 }
 
 bool noedit(bool view, bool msg)
@@ -223,6 +224,8 @@ cube &blockcube(int x, int y, int z, const block3 &b, int rgrid) // looks up a w
 int selchildcount = 0, selchildmat = -1;
 
 ICOMMAND(havesel, "", (), intret(havesel ? selchildcount : 0));
+ICOMMAND(selchildcount, "", (), { if(selchildcount < 0) result(tempformatstring("1/%d", -selchildcount)); else intret(selchildcount); });
+ICOMMAND(selchildmat, "s", (char *prefix), { if(selchildmat > 0) result(getmaterialdesc(selchildmat, prefix)); });
 
 void countselchild(cube *c, const ivec &cor, int size)
 {
@@ -2287,4 +2290,32 @@ void rendertexturepanel(int w, int h)
         hudshader->set();
     }
 }
+
+#define EDITSTAT(name, type, val) \
+    ICOMMAND(editstat##name, "", (), \
+    { \
+        extern int statrate; \
+        static int laststat = 0; \
+        static type prevstat = 0; \
+        static type curstat = 0; \
+        if(totalmillis - laststat >= statrate) \
+        { \
+            prevstat = curstat; \
+            laststat = totalmillis - (totalmillis%statrate); \
+        } \
+        if(prevstat == curstat) curstat = (val); \
+        type##ret(val); \
+    });
+EDITSTAT(wtr, int, wtris/1024);
+EDITSTAT(vtr, int, (vtris*100)/max(wtris, 1));
+EDITSTAT(wvt, int, wverts/1024);
+EDITSTAT(vvt, int, (vverts*100)/max(wverts, 1));
+EDITSTAT(evt, int, xtraverts/1024);
+EDITSTAT(eva, int, xtravertsva/1024);
+EDITSTAT(octa, int, allocnodes*8);
+EDITSTAT(va, int, allocva);
+EDITSTAT(glde, int, glde);
+EDITSTAT(geombatch, int, gbatches);
+EDITSTAT(oq, int, getnumqueries());
+EDITSTAT(pvs, int, getnumviewcells());
 
