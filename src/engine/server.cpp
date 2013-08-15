@@ -354,7 +354,7 @@ bool resolverwait(const char *name, ENetAddress *address)
     return enet_address_set_host(address, name) >= 0;
 }
 
-int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress, bool force)
+int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress, bool force = false)
 {
     int result = enet_socket_connect(sock, &remoteaddress);
     if(!result)
