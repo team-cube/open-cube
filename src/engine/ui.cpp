@@ -1679,6 +1679,7 @@ namespace UI
 
     // default size of text in terms of rows per screenful
     VARP(uitextrows, 1, 24, 200);
+    FVAR(uitextscale, 1, 0, 0);
 
     #define SETSTR(dst, src) do { \
         if(dst) { if(dst != src && strcmp(dst, src)) { delete[] dst; dst = newstring(src); } } \
@@ -1702,7 +1703,7 @@ namespace UI
         static const char *typestr() { return "#Text"; }
         const char *gettype() const { return typestr(); }
 
-        float drawscale() const { return scale / (FONTH * uitextrows); }
+        float drawscale() const { return scale / FONTH; }
 
         virtual const char *getstr() const { return ""; }
 
@@ -1787,6 +1788,8 @@ namespace UI
         const char *getstr() const { return str; }
     };
 
+    FVAR(uicontextscale, 1, 0, 0);
+
     struct Console : Filler
     {
         void setup(float minw_ = 0, float minh_ = 0)
@@ -1797,21 +1800,18 @@ namespace UI
         static const char *typestr() { return "#Console"; }
         const char *gettype() const { return typestr(); }
 
+        float drawscale() const { return uicontextscale / FONTH; }
+
         void draw(float sx, float sy)
         {
             Object::draw(sx, sy);
 
-            int tw = hudw, th = hudh;
-            if(forceaspect) tw = int(ceil(th*forceaspect));
-            gettextres(tw, th);
-            float sx1, sy1, sx2, sy2;
-            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
-            float xk = (sx2-sx1)/2*(tw/conscale), yk = (sy2-sy1)/2*(th/conscale);
+            float k = drawscale();
             pushhudmatrix();
             hudmatrix.translate(sx, sy, 0);
-            hudmatrix.scale(w/xk, h/yk, 1);
+            hudmatrix.scale(k, k, 1);
             flushhudmatrix();
-            renderfullconsole(xk, yk);
+            renderfullconsole(w/k, h/k);
             pophudmatrix();
         }
     };
@@ -2350,7 +2350,7 @@ namespace UI
             return true;
         }
 
-        float drawscale() const { return scale / (FONTH * uitextrows); }
+        float drawscale() const { return scale / FONTH; }
 
         void draw(float sx, float sy)
         {
@@ -3019,28 +3019,40 @@ namespace UI
     }
 
     ICOMMAND(uicolortext, "tife", (tagval *text, int *c, float *scale, uint *children),
-        buildtext(*text, *scale, Color(*c), -1, children));
+        buildtext(*text, *scale * uitextscale, Color(*c), -1, children));
 
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale, Color(255, 255, 255), -1, children));
+        buildtext(*text, *scale * uitextscale, Color(255, 255, 255), -1, children));
 
     ICOMMAND(uiwrapcolortext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
-        buildtext(*text, *scale, Color(*c), *wrap, children));
+        buildtext(*text, *scale * uitextscale, Color(*c), *wrap, children));
 
     ICOMMAND(uiwraptext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
-        buildtext(*text, *scale, Color(255, 255, 255), *wrap, children));
+        buildtext(*text, *scale * uitextscale, Color(255, 255, 255), *wrap, children));
+
+    ICOMMAND(uicolorcontext, "tife", (tagval *text, int *c, float *scale, uint *children),
+        buildtext(*text, *scale * uicontextscale, Color(*c), -1, children));
+
+    ICOMMAND(uicontext, "tfe", (tagval *text, float *scale, uint *children),
+        buildtext(*text, *scale * uicontextscale, Color(255, 255, 255), -1, children));
+
+    ICOMMAND(uiwrapcolorcontext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
+        buildtext(*text, *scale * uicontextscale, Color(*c), *wrap, children));
+
+    ICOMMAND(uiwrapcontext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
+        buildtext(*text, *scale * uicontextscale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
-        BUILD(TextEditor, o, o->setup(name, *length, *height, *scale <= 0 ? 1 : *scale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+        BUILD(TextEditor, o, o->setup(name, *length, *height, (*scale <= 0 ? 1 : *scale) * uitextscale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
 
     ICOMMAND(uiconsole, "ffe", (float *minw, float *minh, uint *children),
         BUILD(Console, o, o->setup(*minw, *minh), children));
 
     ICOMMAND(uifield, "riefe", (ident *var, int *length, uint *onchange, float *scale, uint *children),
-        BUILD(Field, o, o->setup(var, *length, onchange, *scale <= 0 ? 1 : *scale), children));
+        BUILD(Field, o, o->setup(var, *length, onchange, (*scale <= 0 ? 1 : *scale) * uitextscale), children));
 
     ICOMMAND(uikeyfield, "riefe", (ident *var, int *length, uint *onchange, float *scale, uint *children),
-        BUILD(KeyField, o, o->setup(var, *length, onchange, *scale <= 0 ? 1 : *scale), children));
+        BUILD(KeyField, o, o->setup(var, *length, onchange, (*scale <= 0 ? 1 : *scale) * uitextscale), children));
 
     ICOMMAND(uiimage, "sffe", (char *texname, float *minw, float *minh, uint *children),
         BUILD(Image, o, o->setup(textureload(texname, 3, true, false), *minw, *minh), children));
@@ -3185,6 +3197,16 @@ namespace UI
         DELETEP(world);
     }
 
+    void calctextscale()
+    {
+        uitextscale = 1.0f/uitextrows;
+
+        int tw = hudw, th = hudh;
+        if(forceaspect) tw = int(ceil(th*forceaspect));
+        gettextres(tw, th);
+        uicontextscale = (FONTH*conscale)/th;
+    }
+
     void update()
     {
         readyeditors();
@@ -3193,6 +3215,8 @@ namespace UI
         if(world->childstate&STATE_HOLD) world->setstate(STATE_HOLD, cursorx, cursory, STATE_HOLD, false);
         if(world->childstate&STATE_ALT_HOLD) world->setstate(STATE_ALT_HOLD, cursorx, cursory, STATE_ALT_HOLD, false);
         if(world->childstate&STATE_ESC_HOLD) world->setstate(STATE_ESC_HOLD, cursorx, cursory, STATE_ESC_HOLD, false);
+
+        calctextscale();
 
         world->build();
 
