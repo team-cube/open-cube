@@ -3213,5 +3213,10 @@ namespace UI
         world->adjustchildren();
         world->draw();
     }
+
+    float abovehud()
+    {
+        return world->abovehud();
+    }
 }
 
