@@ -1097,6 +1097,7 @@ void initserver(bool listen, bool dedicated)
 
     if(listen)
     {
+        dedicatedserver = dedicated;
         updatemasterserver();
         if(dedicated) rundedicatedserver(); // never returns
 #ifndef STANDALONE
