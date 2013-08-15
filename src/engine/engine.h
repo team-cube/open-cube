@@ -679,13 +679,15 @@ static inline model *loadmapmodel(int n)
 static inline mapmodelinfo *getmminfo(int n) { return mapmodels.inrange(n) ? &mapmodels[n] : NULL; }
 
 // renderparticles
+extern int particlelayers;
+
 extern void initparticles();
 extern void clearparticles();
 extern void clearparticleemitters();
 extern void seedparticles();
 extern void updateparticles();
 extern void debugparticles();
-extern void renderparticles();
+extern void renderparticles(bool mainpass = true);
 extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();
 

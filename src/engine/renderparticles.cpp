@@ -4,6 +4,7 @@
 
 Shader *particleshader = NULL, *particlenotextureshader = NULL, *particlesoftshader = NULL, *particletextshader = NULL;
 
+VARP(particlelayers, 0, 1, 1);
 FVARP(particlebright, 0, 2, 100);
 VARP(particlesize, 20, 100, 500);
 
@@ -14,7 +15,7 @@ VARP(softparticleblend, 1, 8, 64);
 // Automatically stops particles being emitted when paused or in reflective drawing
 VARP(emitmillis, 1, 17, 1000);
 static int lastemitframe = 0, emitoffset = 0;
-static bool canemit = false, regenemitters = false;
+static bool canemit = false, regenemitters = false, canstep = false;
 
 static bool canemitparticles()
 {
@@ -215,7 +216,7 @@ struct partrenderer
                 o.add(vec(d).mul(t/5000.0f));
                 o.z -= t*t/(2.0f * 5000.0f * p->gravity);
             }
-            if(collide && o.z < p->val)
+            if(collide && o.z < p->val && canstep)
             {
                 if(collide >= 0)
                 {
@@ -355,33 +356,32 @@ struct listrenderer : partrenderer
     virtual void endrender() = 0;
     virtual void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts) = 0;
 
+    bool renderpart(listparticle *p)
+    {
+        vec o, d;
+        int blend, ts;
+        calc(p, blend, ts, o, d);
+        if(blend <= 0) return false;
+        renderpart(p, o, d, blend, ts);
+        return p->fade > 5;
+    }
+
     void render()
     {
         startrender();
         if(tex) glBindTexture(GL_TEXTURE_2D, tex->id);
-
-        for(listparticle **prev = &list, *p = list; p; p = *prev)
+        if(canstep) for(listparticle **prev = &list, *p = list; p; p = *prev)
         {
-            vec o, d;
-            int blend, ts;
-            calc(p, blend, ts, o, d);
-            if(blend > 0)
-            {
-                renderpart(p, o, d, blend, ts);
-
-                if(p->fade > 5)
-                {
-                    prev = &p->next;
-                    continue;
-                }
+            if(renderpart(p)) prev = &p->next;
+            else
+            { // remove
+                *prev = p->next;
+                p->next = parempty;
+                killpart(p);
+                parempty = p;
             }
-            //remove
-            *prev = p->next;
-            p->next = parempty;
-            killpart(p);
-            parempty = p;
         }
-
+        else for(listparticle *p = list; p; p = p->next) renderpart(p);
         endrender();
     }
 };
@@ -920,10 +920,12 @@ void debugparticles()
     pophudmatrix();
 }
 
-void renderparticles()
+void renderparticles(bool mainpass)
 {
+    canstep = mainpass;
+
     //want to debug BEFORE the lastpass render (that would delete particles)
-    if(dbgparts) loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->debuginfo();
+    if(dbgparts && mainpass) loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->debuginfo();
 
     bool rendered = false;
     uint lastflags = PT_LERP|PT_SHADER, flagmask = PT_LERP|PT_MOD|PT_BRIGHT|PT_NOTEX|PT_SOFT|PT_SHADER;
