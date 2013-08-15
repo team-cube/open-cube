@@ -178,7 +178,7 @@ bool resolverwait(const char *name, ENetAddress *address)
 
 #define CONNLIMIT 20000
 
-int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &address, bool force)
+int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &address)
 {
     defformatstring(text, "connecting to %s... (esc to abort)", hostname);
     renderprogress(0, text);
@@ -553,7 +553,7 @@ void clearservers(bool full = false)
 
 void retrieveservers(vector<char> &data)
 {
-    ENetSocket sock = connectmaster();
+    ENetSocket sock = connectmaster(true);
     if(sock == ENET_SOCKET_NULL) return;
 
     extern char *mastername;
