@@ -354,11 +354,29 @@ bool resolverwait(const char *name, ENetAddress *address)
     return enet_address_set_host(address, name) >= 0;
 }
 
-int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress)
+int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress, bool force)
 {
     int result = enet_socket_connect(sock, &remoteaddress);
-    if(result<0) enet_socket_destroy(sock);
-    return result;
+    if(!result)
+    {
+        if(!force) return 0;
+        ENetSocketSet readset, writeset;
+        ENET_SOCKETSET_EMPTY(readset);
+        ENET_SOCKETSET_EMPTY(writeset);
+        ENET_SOCKETSET_ADD(readset, sock);
+        ENET_SOCKETSET_ADD(writeset, sock);
+        result = enet_socketset_select(sock, &readset, &writeset, 60000);
+        if(result > 0)
+        {
+            if(ENET_SOCKETSET_CHECK(readset, sock) || ENET_SOCKETSET_CHECK(writeset, sock))
+            {
+                int error = 0;
+                if(!enet_socket_get_option(sock, ENET_SOCKOPT_ERROR, &error) && !error) return 0;
+            }
+        }
+    }
+    enet_socket_destroy(sock);
+    return -1;
 }
 #endif
 

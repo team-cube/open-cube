@@ -178,7 +178,7 @@ bool resolverwait(const char *name, ENetAddress *address)
 
 #define CONNLIMIT 20000
 
-int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &address)
+int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &address, bool force)
 {
     defformatstring(text, "connecting to %s... (esc to abort)", hostname);
     renderprogress(0, text);
