@@ -356,9 +356,7 @@ bool resolverwait(const char *name, ENetAddress *address)
 
 int connectwithtimeout(ENetSocket sock, const char *hostname, const ENetAddress &remoteaddress)
 {
-    int result = enet_socket_connect(sock, &remoteaddress);
-    if(result < 0) enet_socket_destroy(sock);
-    return result;
+    return enet_socket_connect(sock, &remoteaddress);
 }
 #endif
 
@@ -394,7 +392,6 @@ VARF(masterport, 1, server::masterport(), 0xFFFF, disconnectmaster());
 ENetSocket connectmaster(bool wait)
 {
     if(!mastername[0]) return ENET_SOCKET_NULL;
-
     if(masteraddress.host == ENET_HOST_ANY)
     {
         if(isdedicatedserver()) logoutf("looking up %s...", mastername);
@@ -407,18 +404,14 @@ ENetSocket connectmaster(bool wait)
         if(isdedicatedserver()) logoutf("could not open master server socket");
         return ENET_SOCKET_NULL;
     }
-    if(!wait)
-    {
-        if(serveraddress.host == ENET_HOST_ANY || !enet_socket_bind(sock, &serveraddress))
-        {
-            enet_socket_set_option(sock, ENET_SOCKOPT_NONBLOCK, 1);
-            if(!enet_socket_connect(sock, &masteraddress)) return sock;
-        }
-    }
-    else if(!connectwithtimeout(sock, mastername, masteraddress))
+    if(wait || serveraddress.host == ENET_HOST_ANY || !enet_socket_bind(sock, &serveraddress))
     {
         enet_socket_set_option(sock, ENET_SOCKOPT_NONBLOCK, 1);
-        return sock;
+        if(wait)
+        {
+            if(!connectwithtimeout(sock, mastername, masteraddress)) return sock;
+        }
+        else if(!enet_socket_connect(sock, &masteraddress)) return sock;
     }
     enet_socket_destroy(sock);
     if(isdedicatedserver()) logoutf("could not connect to master server");
