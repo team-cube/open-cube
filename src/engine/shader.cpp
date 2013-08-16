@@ -126,7 +126,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
     if(glslversion < 140)
     {
         parts[numparts++] = "#extension GL_ARB_texture_rectangle : enable\n";
-        if(hasGPU4)
+        if(hasEGPU4)
             parts[numparts++] = "#extension GL_EXT_gpu_shader4 : enable\n";
     }
     if(glslversion < 150 && hasTMS)
@@ -161,7 +161,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             "#define shadow2DRect(sampler, coords) texture(sampler, coords)\n"
             "#define shadow2DRectOffset(sampler, coords, offset) textureOffset(sampler, coords, offset)\n";
     }
-    if(glslversion < 140 && !hasGPU4)
+    if(glslversion < 140 && !hasEGPU4)
     {
         parts[numparts++] =
             "#define texture2DRectOffset(sampler, coords, offset) texture2DRect(sampler, coords + vec2(offset))\n"
@@ -824,7 +824,7 @@ void setupshaders()
         maxtexoffset = val;
     }
     else mintexoffset = maxtexoffset = 0;
-    if(glslversion >= 140 || hasGPU4)
+    if(glslversion >= 140 || hasEGPU4)
     {
         mintexrectoffset = mintexoffset;
         maxtexrectoffset = maxtexoffset;
