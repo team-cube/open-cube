@@ -3,7 +3,6 @@ Nieb's Personal Todo (Procrastination) List
 ===============================================================
 MAP Complex ARENA
    MapModels
-      wall clock
       fire extinguisher
       wall pictures
       projector
@@ -12,6 +11,52 @@ MAP Complex ARENA
 
       copy machine
       server rack
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ===============================================================
