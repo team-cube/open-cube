@@ -9,7 +9,6 @@ MAP Complex ARENA
       projector screen
       conference table?
 
-      copy machine
       server rack
 
 
