@@ -447,15 +447,25 @@ static void setalias(const char *name, tagval &v)
     ident *id = idents.access(name);
     if(id)
     {
-        if(id->type == ID_ALIAS)
+        switch(id->type)
         {
-            if(id->index < MAXARGS) setarg(*id, v); else setalias(*id, v);
+            case ID_ALIAS:
+                if(id->index < MAXARGS) setarg(*id, v); else setalias(*id, v);
+                return;
+            case ID_VAR:
+                setvarchecked(id, v.getint());
+                break;
+            case ID_FVAR:
+                setfvarchecked(id, v.getfloat());
+                break;
+            case ID_SVAR:
+                setsvarchecked(id, v.getstr());
+                break;
+            default:
+                debugcode("cannot redefine builtin %s with an alias", id->name);
+                break;
         }
-        else
-        {
-            debugcode("cannot redefine builtin %s with an alias", id->name);
-            freearg(v);
-        }
+        freearg(v);
     }
     else if(checknumber(name))
     {
@@ -1608,11 +1618,24 @@ static void compilestatements(vector<uint> &code, const char *&p, int rettype, i
                 if(idname.str)
                 {
                     ident *id = newident(idname, IDF_UNKNOWN);
-                    if(id && id->type == ID_ALIAS)
+                    if(id) switch(id->type)
                     {
-                        if(!(more = compilearg(code, p, VAL_ANY, prevargs))) compilestr(code);
-                        code.add((id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8));
-                        goto endstatement;
+                        case ID_ALIAS:
+                            if(!(more = compilearg(code, p, VAL_ANY, prevargs))) compilestr(code);
+                            code.add((id->index < MAXARGS ? CODE_ALIASARG : CODE_ALIAS)|(id->index<<8));
+                            goto endstatement;
+                        case ID_VAR:
+                            if(!(more = compilearg(code, p, VAL_INT, prevargs))) compileint(code);
+                            code.add(CODE_IVAR1|(id->index<<8));
+                            goto endstatement;
+                        case ID_FVAR:
+                            if(!(more = compilearg(code, p, VAL_FLOAT, prevargs))) compilefloat(code);
+                            code.add(CODE_FVAR1|(id->index<<8));
+                            goto endstatement;
+                        case ID_SVAR:
+                            if(!(more = compilearg(code, p, VAL_CSTR, prevargs))) compilestr(code);
+                            code.add(CODE_SVAR1|(id->index<<8));
+                            goto endstatement;
                     }
                     compilestr(code, idname, true);
                 }
