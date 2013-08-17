@@ -1556,7 +1556,7 @@ namespace UI
 
     struct Shape : Filler
     {
-        enum { SOLID = 0, OUTLINE };
+        enum { SOLID = 0, OUTLINE, MODULATE };
 
         int type;
         Color color;
@@ -1602,6 +1602,7 @@ namespace UI
         {
             Object::draw(sx, sy);
 
+            if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
             hudnotextureshader->set();
             color.init();
             gle::defvertex(2);
@@ -1612,6 +1613,7 @@ namespace UI
             gle::end();
             gle::colorf(1, 1, 1);
             hudshader->set();
+            if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
     };
 
@@ -1646,6 +1648,7 @@ namespace UI
             }
             else
             {
+                if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
                 gle::begin(GL_TRIANGLE_FAN);
                 gle::attrib(center);
                 gle::attribf(center.x + radius, center.y);
@@ -1657,6 +1660,7 @@ namespace UI
                 }
                 gle::attribf(center.x + radius, center.y);
                 gle::end();
+                if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }
             gle::colorf(1, 1, 1);
             hudshader->set();
@@ -2972,11 +2976,17 @@ namespace UI
     ICOMMAND(uitriangleoutline, "iffie", (int *c, float *minw, float *minh, int *angle, uint *children),
         BUILD(Triangle, o, o->setup(Color(*c), *minw, *minh, *angle, Triangle::OUTLINE), children));
 
+    ICOMMAND(uimodtriangle, "iffie", (int *c, float *minw, float *minh, int *angle, uint *children),
+        BUILD(Triangle, o, o->setup(Color(*c), *minw, *minh, *angle, Triangle::MODULATE), children));
+
     ICOMMAND(uicircle, "ife", (int *c, float *size, uint *children),
         BUILD(Circle, o, o->setup(Color(*c), *size, Circle::SOLID), children));
 
     ICOMMAND(uicircleoutline, "ife", (int *c, float *size, uint *children),
         BUILD(Circle, o, o->setup(Color(*c), *size, Circle::OUTLINE), children));
+
+    ICOMMAND(uimodcircle, "ife", (int *c, float *size, uint *children),
+        BUILD(Circle, o, o->setup(Color(*c), *size, Circle::MODULATE), children));
 
     static inline void buildtext(tagval &t, float scale, float scalemod, const Color &color, float wrap, uint *children)
     {
