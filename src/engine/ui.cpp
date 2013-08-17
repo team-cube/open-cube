@@ -3011,6 +3011,9 @@ namespace UI
     ICOMMAND(uitext, "tfe", (tagval *text, float *scale, uint *children),
         buildtext(*text, *scale, uitextscale, Color(255, 255, 255), -1, children));
 
+    ICOMMAND(uitextfill, "ffe", (float *minw, float *minh, uint *children),
+        BUILD(Filler, o, o->setup(*minw * uitextscale*0.5f, *minh * uitextscale), children));
+
     ICOMMAND(uiwrapcolortext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
         buildtext(*text, *scale, uitextscale, Color(*c), *wrap, children));
 
@@ -3022,6 +3025,9 @@ namespace UI
 
     ICOMMAND(uicontext, "tfe", (tagval *text, float *scale, uint *children),
         buildtext(*text, *scale, uicontextscale, Color(255, 255, 255), -1, children));
+
+    ICOMMAND(uicontextfill, "ffe", (float *minw, float *minh, uint *children),
+        BUILD(Filler, o, o->setup(*minw * uicontextscale*0.5f, *minh * uicontextscale), children));
 
     ICOMMAND(uiwrapcolorcontext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
         buildtext(*text, *scale, uicontextscale, Color(*c), *wrap, children));
