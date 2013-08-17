@@ -474,7 +474,7 @@ namespace UI
                 int oldchild = buildchild;
                 buildparent = this;
                 buildchild = 0;
-                execute(contents);
+                executeret(contents);
                 while(children.length() > buildchild)
                     delete children.pop();
                 buildparent = oldparent;
@@ -925,10 +925,10 @@ namespace UI
             int oldchild = buildchild;
             buildparent = this;
             buildchild = 0;
-            execute(columndata);
+            executeret(columndata);
             if(columns != buildchild) while(children.length() > buildchild) delete children.pop();
             columns = buildchild;
-            if((*contents&CODE_OP_MASK) != CODE_EXIT) execute(contents);
+            if((*contents&CODE_OP_MASK) != CODE_EXIT) executeret(contents);
             while(children.length() > buildchild) delete children.pop();
             buildparent = oldparent;
             buildchild = oldchild;
@@ -1635,15 +1635,16 @@ namespace UI
         {
             Object::draw(sx, sy);
 
+            float r = radius <= 0 ? min(w, h) : radius;
             hudnotextureshader->set();
             color.init();
             gle::defvertex(2);
-            vec2 center(sx + radius, sy + radius);
+            vec2 center(sx + r, sy + r);
             if(type == OUTLINE)
             {
                 gle::begin(GL_LINE_LOOP);
                 for(int angle = 0; angle < 360; angle += 360/15)
-                    gle::attrib(vec2(sincos360[angle]).mul(radius).add(center));
+                    gle::attrib(vec2(sincos360[angle]).mul(r).add(center));
                 gle::end();
             }
             else
@@ -1651,14 +1652,14 @@ namespace UI
                 if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
                 gle::begin(GL_TRIANGLE_FAN);
                 gle::attrib(center);
-                gle::attribf(center.x + radius, center.y);
+                gle::attribf(center.x + r, center.y);
                 for(int angle = 360/15; angle < 360; angle += 360/15)
                 {
-                    vec2 p = vec2(sincos360[angle]).mul(radius).add(center);
+                    vec2 p = vec2(sincos360[angle]).mul(r).add(center);
                     gle::attrib(p);
                     gle::attrib(p);
                 }
-                gle::attribf(center.x + radius, center.y);
+                gle::attribf(center.x + r, center.y);
                 gle::end();
                 if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }

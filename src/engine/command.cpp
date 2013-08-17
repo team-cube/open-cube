@@ -3376,8 +3376,7 @@ void listfind(ident *id, const char *list, const uint *body)
     int n = 0;
     for(const char *s = list, *start, *end; parselist(s, start, end); n++)
     {
-        char *val = newstring(start, end-start);
-        setiter(*id, val, stack);
+        setiter(*id, newstring(start, end-start), stack);
         if(executebool(body)) { intret(n); goto found; }
     }
     intret(-1);
@@ -3386,6 +3385,52 @@ found:
 }
 COMMAND(listfind, "rse");
 
+void listassoc(ident *id, const char *list, const uint *body)
+{
+    if(id->type!=ID_ALIAS) return;
+    identstack stack;
+    int n = 0;
+    for(const char *s = list, *start, *end; parselist(s, start, end); n++)
+    {
+        setiter(*id, newstring(start, end-start), stack);
+        if(executebool(body)) { if(parselist(s, start, end)) stringret(newstring(start, end-start)); break; }
+        if(!parselist(s)) break; 
+    }
+    if(n) poparg(*id);
+}
+COMMAND(listassoc, "rse");
+
+#define LISTFIND(name, fmt, type, init, cmp) \
+    ICOMMAND(name, "s" fmt "i", (char *list, type *val, int *skip), \
+    { \
+        int n = 0; \
+        init; \
+        for(const char *s = list, *start, *end; parselist(s, start, end); n++) \
+        { \
+            if(cmp) { intret(n); return; } \
+            loopi(*skip) { if(!parselist(s)) goto notfound; n++; } \
+        } \
+    notfound: \
+        intret(-1); \
+    });
+LISTFIND(listfind=, "i", int, , parseint(start) == *val);
+LISTFIND(listfind=f, "f", float, , parsefloat(start) == *val);
+LISTFIND(listfind=s, "s", char, int len = (int)strlen(val), int(end-start) == len && !memcmp(start, val, len));
+
+#define LISTASSOC(name, fmt, type, init, cmp) \
+    ICOMMAND(name, "s" fmt, (char *list, type *val), \
+    { \
+        init; \
+        for(const char *s = list, *start, *end; parselist(s, start, end);) \
+        { \
+            if(cmp) { if(parselist(s, start, end)) stringret(newstring(start, end-start)); return; } \
+            if(!parselist(s)) break; \
+        } \
+    });
+LISTASSOC(listassoc=, "i", int, , parseint(start) == *val);
+LISTASSOC(listassoc=f, "f", float, , parsefloat(start) == *val);
+LISTASSOC(listassoc=s, "s", char, int len = (int)strlen(val), int(end-start) == len && !memcmp(start, val, len));
+ 
 void looplist(ident *id, const char *list, const uint *body)
 {
     if(id->type!=ID_ALIAS) return;
@@ -3393,13 +3438,43 @@ void looplist(ident *id, const char *list, const uint *body)
     int n = 0;
     for(const char *s = list, *start, *end; parselist(s, start, end); n++)
     {
-        char *val = newstring(start, end-start);
-        setiter(*id, val, stack);
+        setiter(*id, newstring(start, end-start), stack);
         execute(body);
     }
     if(n) poparg(*id);
 }
 COMMAND(looplist, "rse");
+
+void looplist2(ident *id, ident *id2, const char *list, const uint *body)
+{
+    if(id->type!=ID_ALIAS || id2->type!=ID_ALIAS) return;
+    identstack stack, stack2;
+    int n = 0;
+    for(const char *s = list, *start, *end; parselist(s, start, end); n += 2)
+    {
+        setiter(*id, newstring(start, end-start), stack);
+        setiter(*id2, parselist(s, start, end) ? newstring(start, end-start) : newstring(""), stack2); 
+        execute(body);
+    }
+    if(n) { poparg(*id); poparg(*id2); }
+}
+COMMAND(looplist2, "rrse");
+
+void looplist3(ident *id, ident *id2, ident *id3, const char *list, const uint *body)
+{
+    if(id->type!=ID_ALIAS || id2->type!=ID_ALIAS || id3->type!=ID_ALIAS) return;
+    identstack stack, stack2, stack3;
+    int n = 0;
+    for(const char *s = list, *start, *end; parselist(s, start, end); n += 3)
+    {
+        setiter(*id, newstring(start, end-start), stack);
+        setiter(*id2, parselist(s, start, end) ? newstring(start, end-start) : newstring(""), stack2);
+        setiter(*id3, parselist(s, start, end) ? newstring(start, end-start) : newstring(""), stack3);
+        execute(body);
+    }
+    if(n) { poparg(*id); poparg(*id2); poparg(*id3); }
+}
+COMMAND(looplist3, "rrrse");
 
 void looplistconc(ident *id, const char *list, const uint *body, bool space)
 {
