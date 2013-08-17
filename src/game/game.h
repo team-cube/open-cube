@@ -251,7 +251,7 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 #define MAXRAYS 4
 #define EXP_SELFDAMDIV 2
 #define EXP_SELFPUSH 2.5f
-#define EXP_DISTSCALE 1
+#define EXP_DISTSCALE 0.5f
 
 static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; const char *name, *file; } guns[NUMGUNS] =
 {

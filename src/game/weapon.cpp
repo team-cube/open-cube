@@ -337,9 +337,12 @@ namespace game
     {
         vec middle = o->o;
         middle.z += (o->aboveeye-o->eyeheight)/2;
-        float dist = middle.dist(v, dir);
-        dir.add(vec(vel).mul(5)).normalize();
-        return dist;
+        dir = vec(middle).sub(v).add(vec(vel).mul(5)).normalize();
+
+        float low = min(o->o.z - o->eyeheight + o->radius, middle.z),
+              high = max(o->o.z + o->aboveeye - o->radius, middle.z);
+        vec closest(o->o.x, o->o.y, clamp(v.z, low, high));
+        return max(closest.dist(v) - o->radius, 0.0f);
     }
 
     void radialeffect(dynent *o, const vec &v, const vec &vel, int qdam, gameent *at, int gun)
@@ -370,10 +373,11 @@ namespace game
                 spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);
         }
         if(!local) return;
-        loopi(numdynents())
+        int numdyn = numdynents();
+        loopi(numdyn)
         {
             dynent *o = iterdynents(i);
-            if(o==safe) continue;
+            if(o->o.reject(v, o->radius + guns[gun].exprad) || o==safe) continue;
             radialeffect(o, v, vel, damage, owner, gun);
         }
     }
