@@ -3394,7 +3394,7 @@ void listassoc(ident *id, const char *list, const uint *body)
     {
         setiter(*id, newstring(start, end-start), stack);
         if(executebool(body)) { if(parselist(s, start, end)) stringret(newstring(start, end-start)); break; }
-        if(!parselist(s)) break; 
+        if(!parselist(s)) break;
     }
     if(n) poparg(*id);
 }
@@ -3430,7 +3430,7 @@ LISTFIND(listfind=s, "s", char, int len = (int)strlen(val), int(end-start) == le
 LISTASSOC(listassoc=, "i", int, , parseint(start) == *val);
 LISTASSOC(listassoc=f, "f", float, , parsefloat(start) == *val);
 LISTASSOC(listassoc=s, "s", char, int len = (int)strlen(val), int(end-start) == len && !memcmp(start, val, len));
- 
+
 void looplist(ident *id, const char *list, const uint *body)
 {
     if(id->type!=ID_ALIAS) return;
@@ -3453,7 +3453,7 @@ void looplist2(ident *id, ident *id2, const char *list, const uint *body)
     for(const char *s = list, *start, *end; parselist(s, start, end); n += 2)
     {
         setiter(*id, newstring(start, end-start), stack);
-        setiter(*id2, parselist(s, start, end) ? newstring(start, end-start) : newstring(""), stack2); 
+        setiter(*id2, parselist(s, start, end) ? newstring(start, end-start) : newstring(""), stack2);
         execute(body);
     }
     if(n) { poparg(*id); poparg(*id2); }
