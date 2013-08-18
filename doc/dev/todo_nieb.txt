@@ -8,54 +8,7 @@ MAP Complex ARENA
       projector
       projector screen
       conference table?
-
       server rack
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ===============================================================
@@ -186,6 +139,10 @@ MAP Flagstone CTF
 Player Model
    Anims?
 
+
+===============================================================
+
+***First package release approximately here***
 
 ===============================================================
 MAP Shipwreck CTF
