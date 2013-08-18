@@ -91,7 +91,9 @@ enum
     M_EDIT       = 1<<3,
     M_DEMO       = 1<<4,
     M_LOCAL      = 1<<5,
-    M_LOBBY      = 1<<6
+    M_LOBBY      = 1<<6,
+    M_INSTA      = 1<<7,
+    M_ROCKET     = 1<<8
 };
 
 static struct gamemodeinfo
@@ -103,9 +105,12 @@ static struct gamemodeinfo
 {
     { "demo", M_DEMO | M_LOCAL, NULL},
     { "coop edit", M_EDIT, "Cooperative Editing: Edit maps with multiple players simultaneously." },
-    { "ffa", M_LOBBY, "Free For All: Collect items for ammo. Frag everyone to score points." },
-    { "teamplay", M_TEAM, "Teamplay: Collect items for ammo. Frag \fs\f3the enemy team\fr to score points for \fs\f1your team\fr." },
-    { "ctf", M_CTF | M_TEAM, "Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr. Collect items for ammo." }
+    { "instagib", M_LOBBY | M_INSTA, "Instagib: Frag everyone with rifles to score points." },
+    { "rocketgib", M_LOBBY | M_ROCKET, "Rocketgib: Frag everyone with rockets to score points." },
+    { "insta team", M_TEAM | M_INSTA, "Team Instagib: Frag \fs\f3the enemy team\fr to with rifles to score points for \fs\f1your team\fr." },
+    { "rocket team", M_TEAM | M_ROCKET, "Team Rocketgib: Frag \fs\f3the enemy team\fr to with rockets to score points for \fs\f1your team\fr." },
+    { "insta ctf", M_CTF | M_TEAM | M_INSTA, "Instagib Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "rocket ctf", M_CTF | M_TEAM | M_ROCKET, "Rocketgib Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
 };
 
 #define STARTGAMEMODE (-1)
@@ -120,6 +125,8 @@ static struct gamemodeinfo
 #define m_teammode     (m_check(gamemode, M_TEAM))
 #define m_overtime     (m_check(gamemode, M_OVERTIME))
 #define isteam(a,b)    (m_teammode && a==b)
+#define m_insta        (m_check(gamemode, M_INSTA))
+#define m_rocket       (m_check(gamemode, M_ROCKET))
 
 #define m_demo         (m_check(gamemode, M_DEMO))
 #define m_edit         (m_check(gamemode, M_EDIT))
@@ -292,14 +299,14 @@ struct gamestate
 
     void spawnstate(int gamemode)
     {
-        if(m_demo)
-        {
-            gunselect = GUN_MELEE;
-        }
-        else
+        if(m_insta)
         {
             gunselect = GUN_RIFLE;
             ammo[GUN_RIFLE] = 1;
+        }
+        else if(m_rocket)
+        {
+            gunselect = GUN_ROCKET;
             ammo[GUN_ROCKET] = 1;
         }
     }
