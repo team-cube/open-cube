@@ -3,7 +3,6 @@ Nieb's Personal Todo (Procrastination) List
 ===============================================================
 MAP Complex ARENA
    MapModels
-      fire extinguisher
       wall pictures
       projector
       projector screen
