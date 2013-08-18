@@ -309,6 +309,10 @@ struct gamestate
             gunselect = GUN_ROCKET;
             ammo[GUN_ROCKET] = 1;
         }
+        else if(m_edit)
+        {
+            loopi(NUMGUNS-1) ammo[1+i] = 1;
+        }
     }
 
     // just subtract damage here, can set death, etc. later in code calling this
