@@ -841,7 +841,6 @@ namespace game
     {
         connected = true;
         remote = _remote;
-        if(editmode) toggleedit();
     }
 
     void gamedisconnect(bool cleanup)
@@ -850,6 +849,7 @@ namespace game
         ignores.setsize(0);
         connected = remote = false;
         player1->clientnum = -1;
+        if(editmode) toggleedit();
         sessionid = 0;
         mastermode = MM_OPEN;
         messages.setsize(0);
