@@ -610,7 +610,7 @@ extern void renderprogress(float bar, const char *text, GLuint tex = 0, bool bac
 
 extern void getframemillis(float &avg, float &best, float &worst);
 extern void getfps(int &fps, int &bestdiff, int &worstdiff);
-extern void swapbuffers();
+extern void swapbuffers(bool overlay = true);
 extern int getclockmillis();
 
 enum { KR_CONSOLE = 1<<0, KR_GUI = 1<<1, KR_EDITMODE = 1<<2 };
@@ -781,7 +781,7 @@ extern void cleanupblendmap();
 namespace recorder
 {
     extern void stop();
-    extern void capture();
+    extern void capture(bool overlay = true);
     extern void cleanup();
 }
 

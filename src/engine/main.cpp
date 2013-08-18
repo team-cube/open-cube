@@ -285,7 +285,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
             hudx = 0;
         }
         else renderbackgroundview(w, h, caption, mapshot, mapname, mapinfo);
-        swapbuffers();
+        swapbuffers(false);
     }
 
     renderedframe = false;
@@ -411,7 +411,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
         if(background) restorebackground(w, h);
         renderprogressview(w, h, bar, text, tex);
     }
-    swapbuffers();
+    swapbuffers(false);
 }
 
 VARNP(relativemouse, userelativemouse, 0, 1, 1);
@@ -868,9 +868,9 @@ void checkinput()
     if(mousemoved) resetmousemotion();
 }
 
-void swapbuffers()
+void swapbuffers(bool overlay)
 {
-    recorder::capture();
+    recorder::capture(overlay);
     SDL_GL_SwapWindow(screen);
 }
 
