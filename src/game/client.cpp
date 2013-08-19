@@ -140,7 +140,7 @@ namespace game
         }
         else conoutf("your name is: %s", colorname(player1));
     }
-    ICOMMAND(name, "s", (char *s), switchname(s));
+    ICOMMAND(name, "sN", (char *s, int *numargs), { if(*numargs >= 0) switchname(s); else result(colorname(player1)); });
     ICOMMAND(getname, "", (), result(player1->name));
 
     void switchteam(const char *team)

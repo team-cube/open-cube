@@ -2101,6 +2101,7 @@ namespace UI
             case ID_FVAR: val = *id->storage.f; break;
             case ID_SVAR: val = parsefloat(*id->storage.s); break;
             case ID_ALIAS: val = id->getfloat(); break;
+            case ID_COMMAND: val = executefloat(id, NULL, 0, true); break;
         }
         return val;
     }
@@ -2113,6 +2114,13 @@ namespace UI
             case ID_FVAR: setfvarchecked(id, val); break;
             case ID_SVAR: setsvarchecked(id, floatstr(val)); break;
             case ID_ALIAS: alias(id->name, floatstr(val)); break;
+            case ID_COMMAND:
+            {
+                tagval t;
+                t.setfloat(val);
+                execute(id, &t, 1);
+                break;
+            }
         }
         if(onchange && (*onchange&CODE_OP_MASK) != CODE_EXIT) execute(onchange);
     }
@@ -2308,7 +2316,7 @@ namespace UI
             edit->linewrap = length < 0;
             edit->maxx = edit->linewrap ? -1 : length;
             edit->maxy = height <= 0 ? 1 : -1;
-            edit->pixelwidth = abs(length)*FONTH;
+            edit->pixelwidth = abs(length)*FONTW;
             if(edit->linewrap && edit->maxy == 1) edit->updateheight();
             else edit->pixelheight = FONTH*max(height, 1);
             scale = scale_;
@@ -2455,7 +2463,7 @@ namespace UI
 
     TextEditor *TextEditor::focus = NULL;
 
-    static const char *getsval(ident *id, const char *val = "")
+    static const char *getsval(ident *id, bool &shouldfree, const char *val = "")
     {
         switch(id->type)
         {
@@ -2463,6 +2471,7 @@ namespace UI
             case ID_FVAR: val = floatstr(*id->storage.f); break;
             case ID_SVAR: val = *id->storage.s; break;
             case ID_ALIAS: val = id->getstr(); break;
+            case ID_COMMAND: val = executestr(id, NULL, 0, true); shouldfree = true; break; 
         }
         return val;
     }
@@ -2475,6 +2484,13 @@ namespace UI
             case ID_FVAR: setfvarchecked(id, parsefloat(val)); break;
             case ID_SVAR: setsvarchecked(id, val); break;
             case ID_ALIAS: alias(id->name, val); break;
+            case ID_COMMAND:
+            {
+                tagval t;
+                t.setstr(newstring(val));
+                execute(id, &t, 1);
+                break;
+            }
         }
         if(onchange && (*onchange&CODE_OP_MASK) != CODE_EXIT) execute(onchange);
     }
@@ -2494,7 +2510,10 @@ namespace UI
                 if(id == id_) setsval(id, edit->lines[0].text, onchange);
                 changed = false;
             }
-            TextEditor::setup(id_->name, length, 0, scale, id != id_ || !isfocus() ? getsval(id_) : NULL, EDITORFOCUSED, keyfilter_);
+            bool shouldfree = false;
+            const char *initval = id != id_ || !isfocus() ? getsval(id_, shouldfree) : NULL;
+            TextEditor::setup(id_->name, length, 0, scale, initval, EDITORFOCUSED, keyfilter_);
+            if(shouldfree) delete[] initval;
             id = id_;
         }
 
