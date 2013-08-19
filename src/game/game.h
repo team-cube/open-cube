@@ -79,7 +79,7 @@ struct gameentity : extentity
 {
 };
 
-enum { GUN_MELEE = 0, GUN_ROCKET, GUN_RIFLE, NUMGUNS };
+enum { GUN_MELEE = 0, RUN_RIFLE, GUN_ROCKET, NUMGUNS };
 
 #define validgun(n) ((n) >= 0 && (n) < NUMGUNS)
 
