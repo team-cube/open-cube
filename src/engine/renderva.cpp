@@ -135,13 +135,13 @@ static inline void findvisiblevas(vector<vtxarray *> &vas)
         int prevvfc = v.curvfc;
         v.curvfc = fullvis ? VFC_FULL_VISIBLE : isvisiblecube(v.o, v.size);
         if(v.curvfc != VFC_NOT_VISIBLE)
-        {
+		{
             if(pvsoccluded(v.o, v.size))
             {
                 v.curvfc += PVS_FULL_VISIBLE - VFC_FULL_VISIBLE;
                 continue;
             }
-            bool resetchildren = resetocclude || prevvfc >= VFC_NOT_VISIBLE;
+            bool resetchildren = prevvfc >= VFC_NOT_VISIBLE || resetocclude;
             if(resetchildren)
             {
                 v.occluded = !v.texs ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
