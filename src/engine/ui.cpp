@@ -2471,7 +2471,7 @@ namespace UI
             case ID_FVAR: val = floatstr(*id->storage.f); break;
             case ID_SVAR: val = *id->storage.s; break;
             case ID_ALIAS: val = id->getstr(); break;
-            case ID_COMMAND: val = executestr(id, NULL, 0, true); shouldfree = true; break; 
+            case ID_COMMAND: val = executestr(id, NULL, 0, true); shouldfree = true; break;
         }
         return val;
     }
