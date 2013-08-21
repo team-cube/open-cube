@@ -3,7 +3,8 @@ Nieb's Personal Todo (Procrastination) List
 ===============================================================
 MAP Complex ARENA
    MapModels
-      wall pictures
+      signage
+
       projector
       projector screen
       conference table?
