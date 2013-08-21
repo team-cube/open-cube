@@ -6,7 +6,6 @@ MAP Complex ARENA
       projector?
       projector screen?
       conference table?
-      server rack?
 
 
 ===============================================================
