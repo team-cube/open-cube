@@ -5,7 +5,6 @@ MAP Complex ARENA
    MapModels
       projector?
       projector screen?
-      conference table?
 
 
 ===============================================================
