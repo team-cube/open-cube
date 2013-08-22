@@ -290,7 +290,6 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
                 {\
                     int c = uchar(str[i+1]);\
                     if(c=='\f') { if(str[i+2]) i++; continue; }\
-                    if(i-j > 16) break;\
                     if(!curfont->chars.inrange(c-curfont->charoffset)) break;\
                     float cw = scale*curfont->chars[c-curfont->charoffset].advance;\
                     if(cw <= 0 || w + cw > maxwidth) break;\
