@@ -295,7 +295,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
                     if(cw <= 0 || w + cw > maxwidth) break;\
                     w += cw;\
                 }\
-                if(x + w > maxwidth && x > 0) { TEXTLINE(j-1) x = 0; y += FONTH; }\
+                if(x + w > maxwidth && x > 0) { (void)j; TEXTLINE(j-1) x = 0; y += FONTH; }\
                 TEXTWORD\
             }\
             else { TEXTCHAR(i) }\
