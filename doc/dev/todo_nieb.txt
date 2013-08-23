@@ -1,8 +1,16 @@
+===============================================================
+Player Model
+   ...
+
 
 ===============================================================
-MAP Complex ARENA
-   MapModels
-      projector?
+HUD Gun Models
+   Rifle
+      ...
+   Rocket
+      ...
+   Knife/Blade?
+      for left-hand melee attack (or use gunbutt animation)
 
 
 ===============================================================
@@ -112,26 +120,12 @@ UI Stuff
                 ...
 
 
-===============================================================
-HUD Gun Models
-   Rifle
-      ...
-   Rocket
-      ...
-   Knife/Blade?
-      for left-hand melee attack (or use gunbutt animation)
-
 
 ===============================================================
 MAP Flagstone CTF
    Wild-West / Old Mine Theme
    New/Reworked layout
       accommodate new player movement speed
-
-
-===============================================================
-Player Model
-   Anims?
 
 
 ===============================================================
