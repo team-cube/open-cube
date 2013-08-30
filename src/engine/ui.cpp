@@ -1635,7 +1635,7 @@ namespace UI
         {
             Object::draw(sx, sy);
 
-            float r = radius <= 0 ? min(w, h) : radius;
+            float r = radius <= 0 ? min(w, h)/2 : radius;
             hudnotextureshader->set();
             color.init();
             gle::defvertex(2);
