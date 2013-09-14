@@ -3654,8 +3654,8 @@ ICOMMAND(loopfiles, "rsse", (ident *id, char *dir, char *ext, uint *body),
     if(files.length()) poparg(*id);
 });
 
-ICOMMAND(findfile, "s", (char *name), 
-{ 
+ICOMMAND(findfile, "s", (char *name),
+{
     string fname;
     copystring(fname, name);
     path(fname);

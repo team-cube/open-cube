@@ -1779,7 +1779,57 @@ namespace UI
         const char *getstr() const { return str; }
     };
 
-    FVAR(uicontextscale, 1, 0, 0);
+    struct Font : Object
+    {
+        ::font *font;
+
+        Font() : font(NULL) {}
+
+        void setup(const char *name)
+        {
+            Object::setup();
+
+            if(!font || !strcmp(font->name, name)) font = findfont(name);
+        }
+
+        void layout()
+        {
+            pushfont();
+            setfont(font);
+            Object::layout();
+            popfont();
+        }
+
+        void draw(float sx, float sy)
+        {
+            pushfont();
+            setfont(font);
+            Object::draw(sx, sy);
+            popfont();
+        }
+
+        void buildchildren(uint *contents)
+        {
+            pushfont();
+            setfont(font);
+            Object::buildchildren(contents);
+            popfont();
+        }
+
+        #define DOSTATE(flags, func) \
+            void func##children(float cx, float cy, int mask, bool inside, int setflags) \
+            { \
+                pushfont(); \
+                setfont(font); \
+                Object::func##children(cx, cy, mask, inside, setflags); \
+                popfont(); \
+            }
+        DOSTATES
+        #undef DOSTATE
+    };
+
+    float uicontextscale = 0;
+    ICOMMAND(uicontextscale, "", (), floatret(FONTH*uicontextscale));
 
     struct Console : Filler
     {
@@ -1791,7 +1841,7 @@ namespace UI
         static const char *typestr() { return "#Console"; }
         const char *gettype() const { return typestr(); }
 
-        float drawscale() const { return uicontextscale / FONTH; }
+        float drawscale() const { return uicontextscale; }
 
         void draw(float sx, float sy)
         {
@@ -3051,22 +3101,25 @@ namespace UI
         buildtext(*text, *scale, uitextscale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uicolorcontext, "tife", (tagval *text, int *c, float *scale, uint *children),
-        buildtext(*text, *scale, uicontextscale, Color(*c), -1, children));
+        buildtext(*text, *scale, FONTH*uicontextscale, Color(*c), -1, children));
 
     ICOMMAND(uicontext, "tfe", (tagval *text, float *scale, uint *children),
-        buildtext(*text, *scale, uicontextscale, Color(255, 255, 255), -1, children));
+        buildtext(*text, *scale, FONTH*uicontextscale, Color(255, 255, 255), -1, children));
 
     ICOMMAND(uicontextfill, "ffe", (float *minw, float *minh, uint *children),
-        BUILD(Filler, o, o->setup(*minw * uicontextscale*0.5f, *minh * uicontextscale), children));
+        BUILD(Filler, o, o->setup(*minw * FONTH*uicontextscale*0.5f, *minh * FONTH*uicontextscale), children));
 
     ICOMMAND(uiwrapcolorcontext, "tfife", (tagval *text, float *wrap, int *c, float *scale, uint *children),
-        buildtext(*text, *scale, uicontextscale, Color(*c), *wrap, children));
+        buildtext(*text, *scale, FONTH*uicontextscale, Color(*c), *wrap, children));
 
     ICOMMAND(uiwrapcontext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
-        buildtext(*text, *scale, uicontextscale, Color(255, 255, 255), *wrap, children));
+        buildtext(*text, *scale, FONTH*uicontextscale, Color(255, 255, 255), *wrap, children));
 
     ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
         BUILD(TextEditor, o, o->setup(name, *length, *height, (*scale <= 0 ? 1 : *scale) * uitextscale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+
+    ICOMMAND(uifont, "se", (char *name, uint *children),
+        BUILD(Font, o, o->setup(name), children));
 
     ICOMMAND(uiabovehud, "", (), { if(window) window->abovehud = true; });
 
@@ -3224,7 +3277,7 @@ namespace UI
         int tw = hudw, th = hudh;
         if(forceaspect) tw = int(ceil(th*forceaspect));
         gettextres(tw, th);
-        uicontextscale = (FONTH*conscale)/th;
+        uicontextscale = conscale/th;
     }
 
     void update()
