@@ -1826,6 +1826,33 @@ namespace UI
             }
         DOSTATES
         #undef DOSTATE
+
+        bool rawkey(int code, bool isdown)
+        {
+            pushfont();
+            setfont(font);
+            bool result = Object::rawkey(code, isdown);
+            popfont();
+            return result;
+        }
+
+        bool key(int code, bool isdown)
+        {
+            pushfont();
+            setfont(font);
+            bool result = Object::key(code, isdown);
+            popfont();
+            return result;
+        }
+
+        bool textinput(const char *str, int len)
+        {
+            pushfont();
+            setfont(font);
+            bool result = Object::textinput(str, len);
+            popfont();
+            return result;
+        }
     };
 
     float uicontextscale = 0;
