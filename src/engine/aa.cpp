@@ -365,6 +365,14 @@ static inline vec2 areaortho(float p1x, float p1y, float p2x, float p2y, float l
     return areaunderortho(vec2(p1x, p1y), vec2(p2x, p2y), left);
 }
 
+static inline void smootharea(float d, vec2 &a1, vec2 &a2)
+{
+    vec2 b1(sqrtf(a1.x*2)*0.5f, sqrtf(a1.y*2)*0.5f), b2(sqrtf(a2.x*2)*0.5f, sqrtf(a2.y*2)*0.5f);
+    float p = min(d * (1/32.0f), 1.0f);
+    a1.lerp(b1, a1, p);
+    a2.lerp(b2, a2, p);
+}
+
 vec2 areaortho(int pattern, float left, float right, float offset)
 {
     float d = left + right + 1, o1 = offset + 0.5f, o2 = offset - 0.5f;
@@ -373,7 +381,12 @@ vec2 areaortho(int pattern, float left, float right, float offset)
         case 0: return vec2(0, 0);
         case 1: return left <= right ? areaortho(0, o2, d/2, 0, left) : vec2(0, 0);
         case 2: return left >= right ? areaortho(d/2, 0, d, o2, left) : vec2(0, 0);
-        case 3: return areaortho(0, o2, d/2, 0, left).add(areaortho(d/2, 0, d, o2, left));
+        case 3:
+        {
+            vec2 a1 = areaortho(0, o2, d/2, 0, left), a2 = areaortho(d/2, 0, d, o2, left);
+            smootharea(d, a1, a2);
+            return a1.add(a2);
+        }
         case 4: return left <= right ? areaortho(0, o1, d/2, 0, left) : vec2(0, 0);
         case 5: return vec2(0, 0);
         case 6:
@@ -392,7 +405,12 @@ vec2 areaortho(int pattern, float left, float right, float offset)
         }
         case 10: return vec2(0, 0);
         case 11: return areaortho(0, o2, d, o1, left);
-        case 12: return areaortho(0, o1, d/2, 0, left).add(areaortho(d/2, 0, d, o1, left));
+        case 12:
+        {
+            vec2 a1 = areaortho(0, o1, d/2, 0, left), a2 = areaortho(d/2, 0, d, o1, left);
+            smootharea(d, a1, a2);
+            return a1.add(a2);
+        }
         case 13: return areaortho(0, o2, d, o1, left);
         case 14: return areaortho(0, o1, d, o2, left);
         case 15: return vec2(0, 0);
