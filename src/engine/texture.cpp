@@ -503,7 +503,7 @@ int formatsize(GLenum format)
     }
 }
 
-VARFP(usenp2, 0, 0, 1, initwarning("texture quality", INIT_LOAD));
+VARFP(usenp2, 0, 1, 1, initwarning("texture quality", INIT_LOAD));
 
 void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th)
 {
