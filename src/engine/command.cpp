@@ -3704,7 +3704,6 @@ void sortlist(char *list, ident *x, ident *y, uint *body, uint *unique)
 
     if(items.empty())
     {
-        cstr[0] = '\0';
         commandret->setstr(cstr);
         return;
     }
