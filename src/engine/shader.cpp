@@ -104,9 +104,49 @@ static void showglslinfo(GLenum type, GLuint obj, const char *name, const char *
     }
 }
 
+static const char *finddecls(const char *line)
+{
+    for(;;)
+    {
+        const char *start = line + strspn(line, " \t\r");
+        switch(*start)
+        {
+            case '\n':
+                line = start + 1;
+                continue;
+            case '#':
+                do
+                {
+                    start = strchr(start + 1, '\n');
+                    if(!start) return NULL;
+                } while(start[-1] == '\\');
+                line = start + 1;
+                continue;
+            case '/':
+                switch(start[1])
+                {
+                    case '/':
+                        start = strchr(start + 2, '\n');
+                        if(!start) return NULL;
+                        line = start + 1;
+                        continue;
+                    case '*':
+                        start = strstr(start + 2, "*/");
+                        if(!start) return NULL;
+                        line = start + 2;
+                        continue;
+                }
+                // fall-through
+            default:
+                return line;
+        }
+    }
+}
+
 static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *def, const char *name, bool msg = true)
 {
     const char *source = def + strspn(def, " \t\r\n");
+    char *modsource = NULL;
     const char *parts[16];
     int numparts = 0;
     static const struct { int version; const char * const header; } glslversions[] =
@@ -144,6 +184,25 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             parts[numparts++] = glslversion >= 330 || (glslversion >= 150 && hasEAL) ?
                 "#define fragdata(loc, name, type) layout(location = loc) out type name;\n" :
                 "#define fragdata(loc, name, type) out type name;\n";
+            if(glslversion <= 140)
+            {
+                const char *decls = finddecls(source);
+                if(decls)
+                {
+                    static const char * const prec = "precision highp float;\n";
+                    if(decls != source)
+                    {
+                        static const int preclen = strlen(prec);
+                        int beforelen = int(decls-source), afterlen = strlen(decls);
+                        modsource = newstring(beforelen + preclen + afterlen);
+                        memcpy(modsource, source, beforelen);
+                        memcpy(&modsource[beforelen], prec, preclen);
+                        memcpy(&modsource[beforelen + preclen], decls, afterlen);
+                        modsource[beforelen + preclen + afterlen] = '\0';
+                    }
+                    else parts[numparts++] = prec;
+                }
+            }
         }
         parts[numparts++] =
             "#define texture1D(sampler, coords) texture(sampler, coords)\n"
@@ -186,7 +245,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             parts[numparts++] = defs[i];
         }
     }
-    parts[numparts++] = source;
+    parts[numparts++] = modsource ? modsource : source;
 
     obj = glCreateShader_(type);
     glShaderSource_(obj, numparts, (const GLchar **)parts, NULL);
@@ -200,6 +259,8 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
         obj = 0;
     }
     else if(dbgshader > 1 && msg) showglslinfo(type, obj, name, parts, numparts);
+
+    if(modsource) delete[] modsource;
 }
 
 VAR(dbgubo, 0, 0, 1);
