@@ -184,7 +184,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             parts[numparts++] = glslversion >= 330 || (glslversion >= 150 && hasEAL) ?
                 "#define fragdata(loc, name, type) layout(location = loc) out type name;\n" :
                 "#define fragdata(loc, name, type) out type name;\n";
-            if(glslversion <= 140)
+            if(glslversion < 150)
             {
                 const char *decls = finddecls(source);
                 if(decls)
