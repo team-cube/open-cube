@@ -329,6 +329,10 @@ struct vec4
     vec4 &neg()              { neg3(); w = -w; return *this; }
     vec4 &clamp(float l, float h) { x = ::clamp(x, l, h); y = ::clamp(y, l, h); z = ::clamp(z, l, h); w = ::clamp(w, l, h); return *this; }
 
+    template<class A, class B>
+    vec4 &cross(const A &a, const B &b) { x = a.y*b.z-a.z*b.y; y = a.z*b.x-a.x*b.z; z = a.x*b.y-a.y*b.x; return *this; }
+    vec4 &cross(const vec &o, const vec &a, const vec &b) { return cross(vec(a).sub(o), vec(b).sub(o)); }
+
     void setxyz(const vec &v) { x = v.x; y = v.y; z = v.z; }
 
     vec4 &rotate_around_z(float c, float s) { float rx = x, ry = y; x = c*rx-s*ry; y = c*ry+s*rx; return *this; }
@@ -361,6 +365,12 @@ struct quat : vec4
         x = s*axis.x;
         y = s*axis.y;
         z = s*axis.z;
+    }
+    quat(const vec &u, const vec &v)
+    {
+        w = sqrtf(u.squaredlen() * v.squaredlen()) + u.dot(v);
+        cross(u, v);
+        normalize();
     }
     explicit quat(const vec &v)
     {
