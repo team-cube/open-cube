@@ -46,7 +46,10 @@ void setupcaustics(int tmu, float surface = -1e16f)
     if(surface > -1e15f)
     {
         float bz = surface + camera1->o.z + (vertwater ? WATER_AMPLITUDE : 0);
-        glmatrix m(vec4(s, 0), vec4(t, 0), vec4(0, 0, -1, bz));
+        matrix4 m(vec4(s.x, t.x,  0, 0),
+                    vec4(s.y, t.y,  0, 0),
+                    vec4(s.z, t.z, -1, 0),
+                    vec4(  0,   0, bz, 1));
         m.mul(worldmatrix);
         GLOBALPARAM(causticsmatrix, m);
         blendscale *= 0.5f;
@@ -115,8 +118,10 @@ void renderwaterfog(int mat, float surface)
     }
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    vec4 d = cammatrix.getrow(2);
-    glmatrix m(d, vec4(0, 1, 0, 0), vec4(0, 0, -1, bz));
+    matrix4 m(vec4(cammatrix.a.z, 0,  0, 0),
+                vec4(cammatrix.b.z, 1,  0, 0),
+                vec4(cammatrix.c.z, 0, -1, 0),
+                vec4(cammatrix.d.z, 0, bz, 1));
     m.mul(worldmatrix);
     GLOBALPARAM(waterfogmatrix, m);
 

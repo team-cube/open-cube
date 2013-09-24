@@ -3746,7 +3746,7 @@ void sortlist(char *list, ident *x, ident *y, uint *body, uint *unique)
             if(item.quotestart) { totalunique += item.quotelength(); numunique++; }
         }
     }
-            
+
     poparg(*x);
     poparg(*y);
 

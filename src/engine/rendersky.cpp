@@ -366,9 +366,8 @@ static void drawfogdome(int farplane)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glmatrix skymatrix = cammatrix, skyprojmatrix;
-    skymatrix.d = vec4(0, 0, 0, 1);
-    skymatrix.translate(0, 0, farplane*fogdomeheight*0.5f);
+    matrix4 skymatrix = cammatrix, skyprojmatrix;
+    skymatrix.settranslation(vec(cammatrix.c).mul(farplane*fogdomeheight*0.5f));
     skymatrix.scale(farplane/2, farplane/2, farplane*(0.5f - fogdomeheight*0.5f));
     skyprojmatrix.mul(projmatrix, skymatrix);
     LOCALPARAM(skymatrix, skyprojmatrix);
@@ -416,8 +415,8 @@ void drawskybox(int farplane)
 
     gle::color(vec::hexcolor(skyboxcolour));
 
-    glmatrix skymatrix = cammatrix, skyprojmatrix;
-    skymatrix.d = vec4(0, 0, 0, 1);
+    matrix4 skymatrix = cammatrix, skyprojmatrix;
+    skymatrix.settranslation(0, 0, 0);
     skymatrix.rotate_around_z((spinsky*lastmillis/1000.0f+yawsky)*-RAD);
     skyprojmatrix.mul(projmatrix, skymatrix);
     LOCALPARAM(skymatrix, skyprojmatrix);
@@ -439,7 +438,7 @@ void drawskybox(int farplane)
         gle::color(vec::hexcolor(cloudboxcolour), cloudboxalpha);
 
         skymatrix = cammatrix;
-        skymatrix.d = vec4(0, 0, 0, 1);
+        skymatrix.settranslation(0, 0, 0);
         skymatrix.rotate_around_z((spinclouds*lastmillis/1000.0f+yawclouds)*-RAD);
         skyprojmatrix.mul(projmatrix, skymatrix);
         LOCALPARAM(skymatrix, skyprojmatrix);
@@ -459,7 +458,7 @@ void drawskybox(int farplane)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         skymatrix = cammatrix;
-        skymatrix.d = vec4(0, 0, 0, 1);
+        skymatrix.settranslation(0, 0, 0);
         skymatrix.rotate_around_z((spincloudlayer*lastmillis/1000.0f+yawcloudlayer)*-RAD);
         skyprojmatrix.mul(projmatrix, skymatrix);
         LOCALPARAM(skymatrix, skyprojmatrix);

@@ -1112,7 +1112,7 @@ void setcamprojmatrix(bool init = true, bool flush = false)
     if(flush && Shader::lastshader) Shader::lastshader->flushparams();
 }
 
-glmatrix hudmatrix, hudmatrixstack[64];
+matrix4 hudmatrix, hudmatrixstack[64];
 int hudmatrixpos = 0;
 
 void resethudmatrix()
@@ -1278,11 +1278,11 @@ void recomputecamera()
         camera1->move = -1;
         camera1->eyeheight = camera1->aboveeye = camera1->radius = camera1->xradius = camera1->yradius = 2;
 
-        matrix3x3 orient;
+        matrix3 orient;
         orient.identity();
-        orient.rotate_around_y(ovr::modifyroll(camera1->roll)*RAD);
-        orient.rotate_around_x(camera1->pitch*-RAD);
-        orient.rotate_around_z(camera1->yaw*-RAD);
+        orient.rotate_around_z(camera1->yaw*RAD);
+        orient.rotate_around_x(camera1->pitch*RAD);
+        orient.rotate_around_y(ovr::modifyroll(camera1->roll)*-RAD);
         vec dir = vec(orient.b).neg(), side = vec(orient.a).neg(), up = orient.c;
 
         if(game::collidecamera())
@@ -1339,9 +1339,9 @@ float calcfrustumboundsphere(float nearplane, float farplane,  const vec &pos, c
     }
 }
 
-extern const glmatrix viewmatrix(vec(-1, 0, 0), vec(0, 0, 1), vec(0, -1, 0));
-extern const glmatrix invviewmatrix(vec(-1, 0, 0), vec(0, 0, -1), vec(0, 1, 0));
-glmatrix cammatrix, projmatrix, camprojmatrix, invcammatrix, invcamprojmatrix, invprojmatrix;
+extern const matrix4 viewmatrix(vec(-1, 0, 0), vec(0, 0, 1), vec(0, -1, 0));
+extern const matrix4 invviewmatrix(vec(-1, 0, 0), vec(0, 0, -1), vec(0, 1, 0));
+matrix4 cammatrix, projmatrix, camprojmatrix, invcammatrix, invcamprojmatrix, invprojmatrix;
 
 FVAR(nearplane, 0.01f, 0.54f, 2.0f);
 
@@ -1365,7 +1365,7 @@ void renderavatar()
 {
     if(!isthirdperson())
     {
-        glmatrix oldprojmatrix = projmatrix;
+        matrix4 oldprojmatrix = projmatrix;
         float avatarfovy = curavatarfov;
         if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
         projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
@@ -1381,7 +1381,7 @@ FVAR(polygonoffsetfactor, -1e4f, -3.0f, 1e4f);
 FVAR(polygonoffsetunits, -1e4f, -3.0f, 1e4f);
 FVAR(depthoffset, -1e4f, 0.01f, 1e4f);
 
-glmatrix nooffsetmatrix;
+matrix4 nooffsetmatrix;
 
 void enablepolygonoffset(GLenum type)
 {
@@ -2325,7 +2325,7 @@ void drawdamagecompass(int w, int h)
         float logscale = 32,
               scale = log(1 + (logscale - 1)*damagedirs[i]) / log(logscale),
               offset = -size/2.0f-min(h, w)/4.0f;
-        matrix3x4 m;
+        matrix4x3 m;
         m.identity();
         m.settranslation(w/2, h/2, 0);
         m.rotate_around_z(i*45*RAD);

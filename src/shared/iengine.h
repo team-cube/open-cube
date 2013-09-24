@@ -286,7 +286,7 @@ extern void damagecompass(int n, const vec &loc);
 extern vec minimapcenter, minimapradius, minimapscale;
 extern void bindminimap();
 
-extern glmatrix hudmatrix;
+extern matrix4 hudmatrix;
 extern void resethudmatrix();
 extern void pushhudmatrix();
 extern void flushhudmatrix(bool flushparams = true);

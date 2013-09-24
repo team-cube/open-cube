@@ -254,10 +254,10 @@ struct animmodel : model
             DELETEA(name);
         }
 
-        virtual void calcbb(vec &bbmin, vec &bbmax, const matrix3x4 &m) {}
+        virtual void calcbb(vec &bbmin, vec &bbmax, const matrix4x3 &m) {}
 
         virtual void genBIH(BIH::mesh &m) {}
-        void genBIH(skin &s, vector<BIH::mesh> &bih, const matrix3x4 &t)
+        void genBIH(skin &s, vector<BIH::mesh> &bih, const matrix4x3 &t)
         {
             BIH::mesh &m = bih.add();
             m.xform = t;
@@ -269,7 +269,7 @@ struct animmodel : model
             genBIH(m);
         }
 
-        virtual void genshadowmesh(vector<triangle> &tris, const matrix3x4 &m) {}
+        virtual void genshadowmesh(vector<triangle> &tris, const matrix4x3 &m) {}
 
         virtual void setshader(Shader *s)
         {
@@ -411,7 +411,7 @@ struct animmodel : model
         }
 
         virtual int findtag(const char *name) { return -1; }
-        virtual void concattagtransform(part *p, int i, const matrix3x4 &m, matrix3x4 &n) {}
+        virtual void concattagtransform(part *p, int i, const matrix4x3 &m, matrix4x3 &n) {}
 
         #define looprendermeshes(type, name, body) do { \
             loopv(meshes) \
@@ -421,17 +421,17 @@ struct animmodel : model
             } \
         } while(0)
 
-        void calcbb(vec &bbmin, vec &bbmax, const matrix3x4 &t)
+        void calcbb(vec &bbmin, vec &bbmax, const matrix4x3 &t)
         {
             looprendermeshes(mesh, m, m.calcbb(bbmin, bbmax, t));
         }
 
-        void genBIH(vector<skin> &skins, vector<BIH::mesh> &bih, const matrix3x4 &t)
+        void genBIH(vector<skin> &skins, vector<BIH::mesh> &bih, const matrix4x3 &t)
         {
             loopv(meshes) meshes[i]->genBIH(skins[i], bih, t);
         }
 
-        void genshadowmesh(vector<triangle> &tris, const matrix3x4 &t)
+        void genshadowmesh(vector<triangle> &tris, const matrix4x3 &t)
         {
             looprendermeshes(mesh, m, m.genshadowmesh(tris, t));
         }
@@ -545,7 +545,7 @@ struct animmodel : model
         int tag, anim, basetime;
         vec translate;
         vec *pos;
-        glmatrix matrix;
+        matrix4 matrix;
 
         linkedpart() : p(NULL), tag(-1), anim(-1), basetime(0), translate(0, 0, 0), pos(NULL) {}
     };
@@ -580,42 +580,42 @@ struct animmodel : model
             pitchscale = pitchoffset = pitchmin = pitchmax = 0;
         }
 
-        void calcbb(vec &bbmin, vec &bbmax, const matrix3x4 &m)
+        void calcbb(vec &bbmin, vec &bbmax, const matrix4x3 &m)
         {
-            matrix3x4 t = m;
+            matrix4x3 t = m;
             t.scale(model->scale);
             meshes->calcbb(bbmin, bbmax, t);
             loopv(links)
             {
-                matrix3x4 n;
+                matrix4x3 n;
                 meshes->concattagtransform(this, links[i].tag, m, n);
                 n.translate(links[i].translate, model->scale);
                 links[i].p->calcbb(bbmin, bbmax, n);
             }
         }
 
-        void genBIH(vector<BIH::mesh> &bih, const matrix3x4 &m)
+        void genBIH(vector<BIH::mesh> &bih, const matrix4x3 &m)
         {
-            matrix3x4 t = m;
+            matrix4x3 t = m;
             t.scale(model->scale);
             meshes->genBIH(skins, bih, t);
             loopv(links)
             {
-                matrix3x4 n;
+                matrix4x3 n;
                 meshes->concattagtransform(this, links[i].tag, m, n);
                 n.translate(links[i].translate, model->scale);
                 links[i].p->genBIH(bih, n);
             }
         }
 
-        void genshadowmesh(vector<triangle> &tris, const matrix3x4 &m)
+        void genshadowmesh(vector<triangle> &tris, const matrix4x3 &m)
         {
-            matrix3x4 t = m;
+            matrix4x3 t = m;
             t.scale(model->scale);
             meshes->genshadowmesh(tris, t);
             loopv(links)
             {
-                matrix3x4 n;
+                matrix4x3 n;
                 meshes->concattagtransform(this, links[i].tag, m, n);
                 n.translate(links[i].translate, model->scale);
                 links[i].p->genshadowmesh(tris, n);
@@ -933,14 +933,14 @@ struct animmodel : model
 
             if(!(anim&ANIM_NORENDER))
             {
-                glmatrix modelmatrix;
+                matrix4 modelmatrix;
                 modelmatrix.mul(shadowmapping ? shadowmatrix : aamaskmatrix, matrixstack[matrixpos]);
                 if(resize!=1) modelmatrix.scale(resize);
                 GLOBALPARAM(modelmatrix, modelmatrix);
 
                 if(!(anim&ANIM_NOSKIN))
                 {
-                    GLOBALPARAM(oworld, glmatrix3x3(matrixstack[matrixpos]));
+                    GLOBALPARAM(oworld, matrix3(matrixstack[matrixpos]));
 
                     vec ocampos;
                     matrixstack[matrixpos].transposedtransform(camera1->o, ocampos);
@@ -1299,7 +1299,7 @@ struct animmodel : model
         return *p;
     }
 
-    void initmatrix(matrix3x4 &m)
+    void initmatrix(matrix4x3 &m)
     {
         m.identity();
         if(offsetyaw) m.rotate_around_z(offsetyaw*RAD);
@@ -1311,7 +1311,7 @@ struct animmodel : model
     void genBIH(vector<BIH::mesh> &bih)
     {
         if(parts.empty()) return;
-        matrix3x4 m;
+        matrix4x3 m;
         initmatrix(m);
         parts[0]->genBIH(bih, m);
         for(int i = 1; i < parts.length(); i++)
@@ -1327,12 +1327,12 @@ struct animmodel : model
         }
     }
 
-    void genshadowmesh(vector<triangle> &tris, const matrix3x4 &orient)
+    void genshadowmesh(vector<triangle> &tris, const matrix4x3 &orient)
     {
         if(parts.empty()) return;
-        matrix3x4 m;
+        matrix4x3 m;
         initmatrix(m);
-        m.mul(orient, matrix3x4(m));
+        m.mul(orient, matrix4x3(m));
         parts[0]->genshadowmesh(tris, m);
         for(int i = 1; i < parts.length(); i++)
         {
@@ -1480,7 +1480,7 @@ struct animmodel : model
     {
         if(parts.empty()) return;
         vec bbmin(1e16f, 1e16f, 1e16f), bbmax(-1e16f, -1e16f, -1e16f);
-        matrix3x4 m;
+        matrix4x3 m;
         initmatrix(m);
         parts[0]->calcbb(bbmin, bbmax, m);
         for(int i = 1; i < parts.length(); i++)
@@ -1501,7 +1501,7 @@ struct animmodel : model
         center.add(radius);
     }
 
-    void calctransform(matrix3x4 &m)
+    void calctransform(matrix4x3 &m)
     {
         initmatrix(m);
         m.scale(scale);
@@ -1512,7 +1512,7 @@ struct animmodel : model
     static GLuint lastvbuf, lasttcbuf, lastnbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
     static int envmaptmu, matrixpos;
-    static glmatrix matrixstack[64];
+    static matrix4 matrixstack[64];
 
     void startrender()
     {
@@ -1580,7 +1580,7 @@ GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastnbuf = 
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
 int animmodel::envmaptmu = -1, animmodel::matrixpos = 0;
-glmatrix animmodel::matrixstack[64];
+matrix4 animmodel::matrixstack[64];
 
 template<class MDL> struct modelloader
 {

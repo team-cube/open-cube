@@ -58,7 +58,7 @@ struct font
 
 extern font *curfont;
 extern Shader *textshader;
-extern const matrix3x4 *textmatrix;
+extern const matrix4x3 *textmatrix;
 extern float textscale;
 
 extern font *findfont(const char *name);
@@ -133,8 +133,8 @@ extern int hdr;
 extern bool hdrfloat;
 extern float ldrscale, ldrscaleb;
 extern int drawtex;
-extern const glmatrix viewmatrix, invviewmatrix;
-extern glmatrix cammatrix, projmatrix, camprojmatrix, invcammatrix, invcamprojmatrix, invprojmatrix;
+extern const matrix4 viewmatrix, invviewmatrix;
+extern matrix4 cammatrix, projmatrix, camprojmatrix, invcammatrix, invcamprojmatrix, invprojmatrix;
 extern int fog;
 extern bvec fogcolor;
 extern vec curfogcolor;
@@ -202,7 +202,7 @@ namespace ovr
     extern void cleanup();
     extern void update();
     extern void warp();
-    extern void ortho(glmatrix &m, float dist = 0, float fov = 0);
+    extern void ortho(matrix4 &m, float dist = 0, float fov = 0);
 
     static inline float modifyroll(float r) { return ovr::enabled ? r + roll : r; }
 }
@@ -298,7 +298,7 @@ extern int shadowmapping;
 extern vec shadoworigin, shadowdir;
 extern float shadowradius, shadowbias;
 extern int shadowside, shadowspot;
-extern glmatrix shadowmatrix;
+extern matrix4 shadowmatrix;
 
 extern void resetlights();
 extern void collectlights();
@@ -340,7 +340,7 @@ static inline bool bbinsidespot(const vec &origin, const vec &dir, int spot, con
     return sphereinsidespot(dir, spot, center.sub(origin), radius.magnitude());
 }
 
-extern glmatrix worldmatrix, screenmatrix;
+extern matrix4 worldmatrix, screenmatrix;
 
 extern int gw, gh, gdepthformat, ghasstencil;
 extern GLuint gdepthtex, gcolortex, gnormaltex, gglowtex, gdepthrb, gstencilrb;
@@ -371,7 +371,7 @@ extern bool debuglights();
 extern void cleanuplights();
 
 // aa
-extern glmatrix nojittermatrix, aamaskmatrix;
+extern matrix4 nojittermatrix, aamaskmatrix;
 
 extern void setupaa(int w, int h);
 extern void jitteraa(bool init = true);

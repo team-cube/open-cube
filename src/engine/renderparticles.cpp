@@ -410,9 +410,7 @@ struct meterrenderer : listrenderer
     {
         int basetype = type&0xFF;
         float scale = FONTH*p->size/80.0f, right = 8, left = p->progress/100.0f*right;
-        matrix3x4 m(vec4(camright.x, -camup.x, -camdir.x, o.x),
-                    vec4(camright.y, -camup.y, -camdir.y, o.y),
-                    vec4(camright.z, -camup.z, -camdir.z, o.z));
+        matrix4x3 m(camright, vec(camup).neg(), vec(camdir).neg(), o);
         m.scale(scale);
         m.translate(-right/2.0f, 0, 0);
 
@@ -495,9 +493,7 @@ struct textrenderer : listrenderer
         float scale = p->size/80.0f, xoff = -text_width(p->text)/2, yoff = 0;
         if((type&0xFF)==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); }
 
-        matrix3x4 m(vec4(camright.x, -camup.x, -camdir.x, o.x),
-                    vec4(camright.y, -camup.y, -camdir.y, o.y),
-                    vec4(camright.z, -camup.z, -camdir.z, o.z));
+        matrix4x3 m(camright, vec(camup).neg(), vec(camdir).neg(), o);
         m.scale(scale);
         m.translate(xoff, yoff, 50);
 
@@ -533,9 +529,7 @@ static inline void genpos(const vec &o, const vec &d, float size, int grav, int 
 template<>
 inline void genpos<PT_TAPE>(const vec &o, const vec &d, float size, int ts, int grav, partvert *vs)
 {
-    vec dir1 = d, dir2 = d, c;
-    dir1.sub(o);
-    dir2.sub(camera1->o);
+    vec dir1 = vec(d).sub(o), dir2 = vec(d).sub(camera1->o), c;
     c.cross(dir2, dir1).normalize().mul(size);
     vs[0].pos = vec(d.x-c.x, d.y-c.y, d.z-c.z);
     vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
@@ -559,12 +553,12 @@ static inline void genrotpos(const vec &o, const vec &d, float size, int grav, i
 }
 
 #define ROTCOEFFS(n) { \
-    vec(-1,  1, 0).rotate_around_z(n*2*M_PI/32.0f), \
-    vec( 1,  1, 0).rotate_around_z(n*2*M_PI/32.0f), \
-    vec( 1, -1, 0).rotate_around_z(n*2*M_PI/32.0f), \
-    vec(-1, -1, 0).rotate_around_z(n*2*M_PI/32.0f) \
+    vec2(-1,  1).rotate_around_z(n*2*M_PI/32.0f), \
+    vec2( 1,  1).rotate_around_z(n*2*M_PI/32.0f), \
+    vec2( 1, -1).rotate_around_z(n*2*M_PI/32.0f), \
+    vec2(-1, -1).rotate_around_z(n*2*M_PI/32.0f) \
 }
-static const vec rotcoeffs[32][4] =
+static const vec2 rotcoeffs[32][4] =
 {
     ROTCOEFFS(0),  ROTCOEFFS(1),  ROTCOEFFS(2),  ROTCOEFFS(3),  ROTCOEFFS(4),  ROTCOEFFS(5),  ROTCOEFFS(6),  ROTCOEFFS(7),
     ROTCOEFFS(8),  ROTCOEFFS(9),  ROTCOEFFS(10), ROTCOEFFS(11), ROTCOEFFS(12), ROTCOEFFS(13), ROTCOEFFS(14), ROTCOEFFS(15),
@@ -575,11 +569,11 @@ static const vec rotcoeffs[32][4] =
 template<>
 inline void genrotpos<PT_PART>(const vec &o, const vec &d, float size, int grav, int ts, partvert *vs, int rot)
 {
-    const vec *coeffs = rotcoeffs[rot];
-    (vs[0].pos = o).add(vec(camright).mul(coeffs[0].x*size)).add(vec(camup).mul(coeffs[0].y*size));
-    (vs[1].pos = o).add(vec(camright).mul(coeffs[1].x*size)).add(vec(camup).mul(coeffs[1].y*size));
-    (vs[2].pos = o).add(vec(camright).mul(coeffs[2].x*size)).add(vec(camup).mul(coeffs[2].y*size));
-    (vs[3].pos = o).add(vec(camright).mul(coeffs[3].x*size)).add(vec(camup).mul(coeffs[3].y*size));
+    const vec2 *coeffs = rotcoeffs[rot];
+    vs[0].pos = vec(o).madd(camright, coeffs[0].x*size).madd(camup, coeffs[0].y*size);
+    vs[1].pos = vec(o).madd(camright, coeffs[1].x*size).madd(camup, coeffs[1].y*size);
+    vs[2].pos = vec(o).madd(camright, coeffs[2].x*size).madd(camup, coeffs[2].y*size);
+    vs[3].pos = vec(o).madd(camright, coeffs[3].x*size).madd(camup, coeffs[3].y*size);
 }
 
 template<int T>
@@ -587,9 +581,8 @@ static inline void seedpos(particleemitter &pe, const vec &o, const vec &d, int 
 {
     if(grav)
     {
-        vec end(o);
         float t = fade;
-        end.add(vec(d).mul(t/5000.0f));
+        vec end = vec(o).madd(d, t/5000.0f);
         end.z -= t*t/(2.0f * 5000.0f * grav);
         pe.extendbb(end, size);
 
@@ -1211,7 +1204,7 @@ void regularshape(int type, int radius, int color, int dir, int num, int fade, c
         }
         else if(dir < 24) //sphere
         {
-            to = vec(PI2*float(rnd(1000))/1000.0, PI*float(rnd(1000)-500)/1000.0).mul(radius);
+            to = vec(2*M_PI*float(rnd(1000))/1000.0, M_PI*float(rnd(1000)-500)/1000.0).mul(radius);
             to.add(p);
             from = p;
         }

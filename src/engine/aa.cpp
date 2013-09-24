@@ -14,7 +14,7 @@ struct tqaaview
 {
     int frame;
     GLuint prevtex, curtex, masktex, fbo[3];
-    glmatrix prevmvp;
+    matrix4 prevmvp;
 
     tqaaview() : frame(0), prevtex(0), curtex(0), masktex(0)
     {
@@ -68,7 +68,7 @@ struct tqaaview
         if(tmu!=GL_TEXTURE0) glActiveTexture_(tmu);
         if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msdepthtex);
         else glBindTexture(GL_TEXTURE_RECTANGLE, gdepthtex);
-        glmatrix reproject;
+        matrix4 reproject;
         reproject.mul(frame ? prevmvp : screenmatrix, worldmatrix);
         vec2 jitter = frame&1 ? vec2(0.5f, 0.5f) : vec2(-0.5f, -0.5f);
         if(multisampledaa()) { jitter.x *= 0.5f; jitter.y *= -0.5f; }
@@ -755,7 +755,7 @@ void setupaa(int w, int h)
     if(tqaa && !tqaaviews[0].fbo[0]) setuptqaa(w, h);
 }
 
-glmatrix nojittermatrix, aamaskmatrix;
+matrix4 nojittermatrix, aamaskmatrix;
 int aamask = -1;
 
 void jitteraa(bool init)
