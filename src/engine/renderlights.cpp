@@ -15,12 +15,12 @@ int aow = -1, aoh = -1;
 GLuint aofbo[4] = { 0, 0, 0, 0 }, aotex[4] = { 0, 0, 0, 0 }, aonoisetex = 0;
 matrix4 eyematrix, worldmatrix, linearworldmatrix, screenmatrix;
 
-extern int ati_pf_bug;
+extern int amd_pf_bug;
 
 int gethdrformat(int prec, int fallback = GL_RGB)
 {
     if(prec >= 3 && hasTF) return GL_RGB16F;
-    if(prec >= 2 && hasPF && !ati_pf_bug) return GL_R11F_G11F_B10F;
+    if(prec >= 2 && hasPF && !amd_pf_bug) return GL_R11F_G11F_B10F;
     if(prec >= 1) return GL_RGB10;
     return fallback;
 }

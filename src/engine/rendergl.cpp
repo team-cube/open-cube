@@ -3,7 +3,7 @@
 #include "engine.h"
 
 bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasDBB = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasDBT = false, hasDC = false, hasDBGO = false, hasEGPU4 = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
-bool mesa = false, intel = false, ati = false, nvidia = false;
+bool mesa = false, intel = false, amd = false, nvidia = false;
 
 int hasstencil = 0;
 
@@ -252,7 +252,7 @@ void glerror(const char *file, int line, GLenum error)
     printf("GL error: %s:%d: %s (%x)\n", file, line, desc, error);
 }
 
-VAR(ati_pf_bug, 0, 0, 1);
+VAR(amd_pf_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -324,7 +324,7 @@ void gl_checkextensions()
     else if(strstr(vendor, "NVIDIA"))
         nvidia = true;
     else if(strstr(vendor, "ATI") || strstr(vendor, "Advanced Micro Devices"))
-        ati = true;
+        amd = true;
     else if(strstr(vendor, "Intel"))
         intel = true;
 
@@ -866,11 +866,11 @@ void gl_checkextensions()
     }
 
     extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, lighttilebatch, batchsunlight, smgather;
-    if(ati)
+    if(amd)
     {
         msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
-        msaadepthstencil = gdepthstencil = 1; // some older ATI GPUs do not support reading from depth-stencil textures, so only use depth-stencil renderbuffer for now
-        if(checkseries(renderer, "Radeon HD", 4000, 5199)) ati_pf_bug = 1;
+        msaadepthstencil = gdepthstencil = 1; // some older AMD GPUs do not support reading from depth-stencil textures, so only use depth-stencil renderbuffer for now
+        if(checkseries(renderer, "Radeon HD", 4000, 5199)) amd_pf_bug = 1;
     }
     else if(nvidia)
     {
