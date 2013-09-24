@@ -994,7 +994,7 @@ struct skelmodel : animmodel
                 const ragdollskel::joint &j = ragdoll->joints[i];
                 const boneinfo &b = bones[j.bone];
                 const dualquat &q = bdata[b.interpindex];
-                d.calcanimjoint(i, q);
+                d.calcanimjoint(i, matrix4x3(q));
             }
             loopv(ragdoll->verts)
             {
@@ -1486,7 +1486,7 @@ struct skelmodel : animmodel
 
             if(skel->shouldcleanup()) skel->cleanup();
 
-            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
+            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll || d->ragdoll->millis == lastmillis ? NULL : d->ragdoll);
 
             intersect(hitdata, p, sc, o, ray);
 
@@ -1530,7 +1530,7 @@ struct skelmodel : animmodel
                 return;
             }
 
-            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll ? NULL : d->ragdoll);
+            skelcacheentry &sc = skel->checkskelcache(p, as, pitch, axis, forward, !d || !d->ragdoll || d->ragdoll->skel != skel->ragdoll || d->ragdoll->millis == lastmillis ? NULL : d->ragdoll);
             if(!(as->cur.anim&ANIM_NORENDER))
             {
                 int owner = &sc-&skel->skelcache[0];
