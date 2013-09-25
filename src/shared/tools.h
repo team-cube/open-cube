@@ -106,9 +106,10 @@ static inline T clamp(T a, U b, U c)
 #define DELETEP(p) if(p) { delete   p; p = 0; }
 #define DELETEA(p) if(p) { delete[] p; p = 0; }
 
+#define PI (3.14159265358979f)
 #define SQRT2 (1.4142135623731f)
 #define SQRT3 (1.73205080756888f)
-#define RAD (M_PI / 180.0f)
+#define RAD (PI / 180.0f)
 
 #ifdef WIN32
 #ifndef M_PI
