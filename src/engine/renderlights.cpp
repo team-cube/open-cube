@@ -2414,7 +2414,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         int tx1 = max(int(floor((bsx1*0.5f+0.5f)*vieww)), 0), ty1 = max(int(floor((bsy1*0.5f+0.5f)*viewh)), 0),
             tx2 = min(int(ceil((bsx2*0.5f+0.5f)*vieww)), vieww), ty2 = min(int(ceil((bsy2*0.5f+0.5f)*viewh)), viewh);
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        if(stencilmask) glStencilFunc(GL_EQUAL, stencilmask|0x08, stencilmask);
+        if(stencilmask) glStencilFunc(GL_EQUAL, stencilmask|0x08, 0x07);
         else glStencilFunc(GL_ALWAYS, 0x08, ~0);
         if(depthtestlights && depth) { glDisable(GL_DEPTH_TEST); depth = false; }
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -3773,6 +3773,11 @@ void rendertransparent()
         case 2:
             if(hasalphavas&2) renderalphageom(2);
             if(hasmats&2) rendersolidmaterials();
+            if(ghasstencil)
+            {
+                glStencilFunc(GL_EQUAL, layer+1, ~0);
+                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+            }
             renderdecals(DB_TRANSPARENT);
             break;
         case 3:
