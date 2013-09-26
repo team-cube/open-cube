@@ -220,7 +220,8 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             "#define shadow2DRect(sampler, coords) texture(sampler, coords)\n"
             "#define shadow2DRectOffset(sampler, coords, offset) textureOffset(sampler, coords, offset)\n";
     }
-    if(glslversion < 140 && !hasEGPU4)
+    if(glslversion < 130 && hasEGPU4) parts[numparts++] = "#define uint unsigned int\n";
+    else if(glslversion < 140 && !hasEGPU4)
     {
         parts[numparts++] =
             "#define texture2DRectOffset(sampler, coords, offset) texture2DRect(sampler, coords + vec2(offset))\n"
@@ -237,8 +238,14 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             const char *swizzle = "";
             switch(d.format)
             {
+                case GL_UNSIGNED_INT_VEC2:
+                case GL_INT_VEC2:
                 case GL_FLOAT_VEC2: swizzle = ".rg"; break;
+                case GL_UNSIGNED_INT_VEC3:
+                case GL_INT_VEC3:
                 case GL_FLOAT_VEC3: swizzle = ".rgb"; break;
+                case GL_UNSIGNED_INT:
+                case GL_INT:
                 case GL_FLOAT: swizzle = ".r"; break;
             }
             formatstring(defs[i], "#define %s gl_FragData[%d]%s\n", d.name, d.loc, swizzle);
@@ -385,6 +392,14 @@ void findfragdatalocs(Shader &s, const char *psstr)
             if(!strncmp(type, "vec3", ps-type)) format = GL_FLOAT_VEC3;
             else if(!strncmp(type, "vec2", ps-type)) format = GL_FLOAT_VEC2;
             else if(!strncmp(type, "float", ps-type)) format = GL_FLOAT;
+            else if(!strncmp(type, "ivec4", ps-type)) format = GL_INT_VEC4;
+            else if(!strncmp(type, "ivec3", ps-type)) format = GL_INT_VEC3;
+            else if(!strncmp(type, "ivec2", ps-type)) format = GL_INT_VEC2;
+            else if(!strncmp(type, "int", ps-type)) format = GL_INT;
+            else if(!strncmp(type, "uvec4", ps-type)) format = GL_UNSIGNED_INT_VEC4;
+            else if(!strncmp(type, "uvec3", ps-type)) format = GL_UNSIGNED_INT_VEC3;
+            else if(!strncmp(type, "uvec2", ps-type)) format = GL_UNSIGNED_INT_VEC2;
+            else if(!strncmp(type, "uint", ps-type)) format = GL_UNSIGNED_INT;
         }
 
         s.fragdatalocs.add(FragDataLoc(getshaderparamname(name), loc, format));
@@ -450,6 +465,10 @@ static void setglsluniformformat(Shader &s, const char *name, GLenum format, int
         case GL_INT_VEC2:
         case GL_INT_VEC3:
         case GL_INT_VEC4:
+        case GL_UNSIGNED_INT:
+        case GL_UNSIGNED_INT_VEC2:
+        case GL_UNSIGNED_INT_VEC3:
+        case GL_UNSIGNED_INT_VEC4:
         case GL_BOOL:
         case GL_BOOL_VEC2:
         case GL_BOOL_VEC3:
@@ -548,6 +567,10 @@ static inline void setslotparam(SlotShaderParamState &l, uint &mask, int i, cons
             case GL_INT_VEC2: glUniform2i_(l.loc, int(val[0]), int(val[1])); break;
             case GL_INT_VEC3: glUniform3i_(l.loc, int(val[0]), int(val[1]), int(val[2])); break;
             case GL_INT_VEC4: glUniform4i_(l.loc, int(val[0]), int(val[1]), int(val[2]), int(val[3])); break;
+            case GL_UNSIGNED_INT:      glUniform1ui_(l.loc, uint(val[0])); break;
+            case GL_UNSIGNED_INT_VEC2: glUniform2ui_(l.loc, uint(val[0]), uint(val[1])); break;
+            case GL_UNSIGNED_INT_VEC3: glUniform3ui_(l.loc, uint(val[0]), uint(val[1]), uint(val[2])); break;
+            case GL_UNSIGNED_INT_VEC4: glUniform4ui_(l.loc, uint(val[0]), uint(val[1]), uint(val[2]), uint(val[3])); break;
         }
     }
 }

@@ -11,6 +11,7 @@ struct GlobalShaderParamState
     {
         float fval[32];
         int ival[32];
+        uint uval[32];
         uchar buf[32*sizeof(float)];
     };
     int version;
@@ -55,6 +56,10 @@ struct GlobalShaderParamUse : ShaderParamBinding
             case GL_INT_VEC2:   glUniform2iv_(loc, size, param->ival); break;
             case GL_INT_VEC3:   glUniform3iv_(loc, size, param->ival); break;
             case GL_INT_VEC4:   glUniform4iv_(loc, size, param->ival); break;
+            case GL_UNSIGNED_INT:      glUniform1uiv_(loc, size, param->uval); break;
+            case GL_UNSIGNED_INT_VEC2: glUniform2uiv_(loc, size, param->uval); break;
+            case GL_UNSIGNED_INT_VEC3: glUniform3uiv_(loc, size, param->uval); break;
+            case GL_UNSIGNED_INT_VEC4: glUniform4uiv_(loc, size, param->uval); break;
             case GL_FLOAT_MAT2: glUniformMatrix2fv_(loc, 1, GL_FALSE, param->fval); break;
             case GL_FLOAT_MAT3: glUniformMatrix3fv_(loc, 1, GL_FALSE, param->fval); break;
             case GL_FLOAT_MAT4: glUniformMatrix4fv_(loc, 1, GL_FALSE, param->fval); break;
@@ -300,6 +305,15 @@ struct GlobalShaderParam
     void set(const ivec2 &v, int z = 0, int w = 0) { seti(v.x, v.y, z, w); }
     void set(const ivec4 &v) { seti(v.x, v.y, v.z, v.w); }
 
+    void setu(uint x = 0, uint y = 0, uint z = 0, uint w = 0)
+    {
+        GlobalShaderParamState *g = resolve();
+        g->uval[0] = x;
+        g->uval[1] = y;
+        g->uval[2] = z;
+        g->uval[3] = w;
+    }
+
     template<class T>
     T *reserve(int n = 1) { return (T *)resolve()->buf; }
 };
@@ -341,6 +355,10 @@ struct LocalShaderParam
             case GL_INT_VEC2:   glUniform2i_(b->loc, int(x), int(y)); break;
             case GL_INT_VEC3:   glUniform3i_(b->loc, int(x), int(y), int(z)); break;
             case GL_INT_VEC4:   glUniform4i_(b->loc, int(x), int(y), int(z), int(w)); break;
+            case GL_UNSIGNED_INT:      glUniform1ui_(b->loc, uint(x)); break;
+            case GL_UNSIGNED_INT_VEC2: glUniform2ui_(b->loc, uint(x), uint(y)); break;
+            case GL_UNSIGNED_INT_VEC3: glUniform3ui_(b->loc, uint(x), uint(y), uint(z)); break;
+            case GL_UNSIGNED_INT_VEC4: glUniform4ui_(b->loc, uint(x), uint(y), uint(z), uint(w)); break;
         }
     }
     void set(const vec &v, float w = 0) { setf(v.x, v.y, v.z, w); }
@@ -359,7 +377,8 @@ struct LocalShaderParam
     void set(const matrix3 &m) { setv(&m); }
     void set(const matrix4 &m) { setv(&m); }
 
-    void seti(int x = 0, int y = 0, int z = 0, int w = 0)
+    template<class T>
+    void sett(T x, T y, T z, T w)
     {
         ShaderParamBinding *b = resolve();
         if(b) switch(b->format)
@@ -376,8 +395,13 @@ struct LocalShaderParam
             case GL_INT_VEC3:   glUniform3i_(b->loc, x, y, z); break;
             case GL_BOOL_VEC4:
             case GL_INT_VEC4:   glUniform4i_(b->loc, x, y, z, w); break;
+            case GL_UNSIGNED_INT:      glUniform1ui_(b->loc, x); break;
+            case GL_UNSIGNED_INT_VEC2: glUniform2ui_(b->loc, x, y); break;
+            case GL_UNSIGNED_INT_VEC3: glUniform3ui_(b->loc, x, y, z); break;
+            case GL_UNSIGNED_INT_VEC4: glUniform4ui_(b->loc, x, y, z, w); break;
         }
     }
+    void seti(int x = 0, int y = 0, int z = 0, int w = 0) { sett<int>(x, y, z, w); }
     void set(const ivec &v, int w = 0) { seti(v.x, v.y, v.z, w); }
     void set(const ivec2 &v, int z = 0, int w = 0) { seti(v.x, v.y, z, w); }
     void set(const ivec4 &v) { seti(v.x, v.y, v.z, v.w); }
@@ -385,6 +409,10 @@ struct LocalShaderParam
     void setv(const ivec *v, int n = 1) { ShaderParamBinding *b = resolve(); if(b) glUniform3iv_(b->loc, n, v->v); }
     void setv(const ivec2 *v, int n = 1) { ShaderParamBinding *b = resolve(); if(b) glUniform2iv_(b->loc, n, v->v); }
     void setv(const ivec4 *v, int n = 1) { ShaderParamBinding *b = resolve(); if(b) glUniform4iv_(b->loc, n, v->v); }
+
+    void setu(uint x = 0, uint y = 0, uint z = 0, uint w = 0) { sett<uint>(x, y, z, w); }
+    void setv(const uint *u, int n = 1) { ShaderParamBinding *b = resolve(); if(b) glUniform1uiv_(b->loc, n, u); }
+ 
 };
 
 #define LOCALPARAM(name, vals) do { static LocalShaderParam param( #name ); param.set(vals); } while(0)

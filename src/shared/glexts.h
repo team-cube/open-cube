@@ -640,6 +640,9 @@ typedef void (APIENTRYP PFNGLUNIFORMBLOCKBINDINGPROC) (GLuint program, GLuint un
 #define GL_RGB_INTEGER                    0x8D98
 #define GL_RGBA_INTEGER                   0x8D99
 #define GL_BGR_INTEGER                    0x8D9A
+#define GL_UNSIGNED_INT_VEC2              0x8DC6
+#define GL_UNSIGNED_INT_VEC3              0x8DC7
+#define GL_UNSIGNED_INT_VEC4              0x8DC8
 #define GL_BGRA_INTEGER                   0x8D9B
 #define GL_COMPRESSED_RED                 0x8225
 #define GL_COMPRESSED_RG                  0x8226
@@ -657,6 +660,14 @@ typedef void (APIENTRYP PFNGLENABLEIPROC) (GLenum target, GLuint index);
 typedef void (APIENTRYP PFNGLDISABLEIPROC) (GLenum target, GLuint index);
 typedef void (APIENTRYP PFNGLBEGINCONDITIONALRENDERNVPROC) (GLuint id, GLenum mode);
 typedef void (APIENTRYP PFNGLENDCONDITIONALRENDERNVPROC) (void);
+typedef void (APIENTRYP PFNGLUNIFORM1UIPROC) (GLint location, GLuint v0);
+typedef void (APIENTRYP PFNGLUNIFORM2UIPROC) (GLint location, GLuint v0, GLuint v1);
+typedef void (APIENTRYP PFNGLUNIFORM3UIPROC) (GLint location, GLuint v0, GLuint v1, GLuint v2);
+typedef void (APIENTRYP PFNGLUNIFORM4UIPROC) (GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+typedef void (APIENTRYP PFNGLUNIFORM1UIVPROC) (GLint location, GLsizei count, const GLuint *value);
+typedef void (APIENTRYP PFNGLUNIFORM2UIVPROC) (GLint location, GLsizei count, const GLuint *value);
+typedef void (APIENTRYP PFNGLUNIFORM3UIVPROC) (GLint location, GLsizei count, const GLuint *value);
+typedef void (APIENTRYP PFNGLUNIFORM4UIVPROC) (GLint location, GLsizei count, const GLuint *value);
 typedef void (APIENTRYP PFNGLTEXPARAMETERIIVPROC) (GLenum target, GLenum pname, const GLint *params);
 typedef void (APIENTRYP PFNGLTEXPARAMETERIUIVPROC) (GLenum target, GLenum pname, const GLuint *params);
 typedef void (APIENTRYP PFNGLGETTEXPARAMETERIIVPROC) (GLenum target, GLenum pname, GLint *params);
@@ -672,6 +683,14 @@ typedef void (APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, G
 
 extern PFNGLGETSTRINGIPROC glGetStringi_;
 extern PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_;
+extern PFNGLUNIFORM1UIPROC glUniform1ui_;
+extern PFNGLUNIFORM2UIPROC glUniform2ui_;
+extern PFNGLUNIFORM3UIPROC glUniform3ui_;
+extern PFNGLUNIFORM4UIPROC glUniform4ui_;
+extern PFNGLUNIFORM1UIVPROC glUniform1uiv_;
+extern PFNGLUNIFORM2UIVPROC glUniform2uiv_;
+extern PFNGLUNIFORM3UIVPROC glUniform3uiv_;
+extern PFNGLUNIFORM4UIVPROC glUniform4uiv_;
 extern PFNGLCLEARBUFFERIVPROC glClearBufferiv_; 
 extern PFNGLCLEARBUFFERUIVPROC glClearBufferuiv_;
 extern PFNGLCLEARBUFFERFVPROC glClearBufferfv_;

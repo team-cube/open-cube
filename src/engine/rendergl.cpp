@@ -188,6 +188,14 @@ PFNGLDRAWBUFFERSPROC glDrawBuffers_ = NULL;
 // OpenGL 3.0
 PFNGLGETSTRINGIPROC           glGetStringi_           = NULL;
 PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_ = NULL;
+PFNGLUNIFORM1UIPROC           glUniform1ui_           = NULL;
+PFNGLUNIFORM2UIPROC           glUniform2ui_           = NULL;
+PFNGLUNIFORM3UIPROC           glUniform3ui_           = NULL;
+PFNGLUNIFORM4UIPROC           glUniform4ui_           = NULL;
+PFNGLUNIFORM1UIVPROC          glUniform1uiv_          = NULL;
+PFNGLUNIFORM2UIVPROC          glUniform2uiv_          = NULL;
+PFNGLUNIFORM3UIVPROC          glUniform3uiv_          = NULL;
+PFNGLUNIFORM4UIVPROC          glUniform4uiv_          = NULL;
 PFNGLCLEARBUFFERIVPROC        glClearBufferiv_        = NULL;
 PFNGLCLEARBUFFERUIVPROC       glClearBufferuiv_       = NULL;
 PFNGLCLEARBUFFERFVPROC        glClearBufferfv_        = NULL;
@@ -533,6 +541,14 @@ void gl_checkextensions()
         hasTF = hasTRG = hasRGTC = hasPF = true;
 
         glBindFragDataLocation_ = (PFNGLBINDFRAGDATALOCATIONPROC)getprocaddress("glBindFragDataLocation");
+        glUniform1ui_ =           (PFNGLUNIFORM1UIPROC)          getprocaddress("glUniform1ui");
+        glUniform2ui_ =           (PFNGLUNIFORM2UIPROC)          getprocaddress("glUniform2ui");
+        glUniform3ui_ =           (PFNGLUNIFORM3UIPROC)          getprocaddress("glUniform3ui");
+        glUniform4ui_ =           (PFNGLUNIFORM4UIPROC)          getprocaddress("glUniform4ui");
+        glUniform1uiv_ =          (PFNGLUNIFORM1UIVPROC)         getprocaddress("glUniform1uiv");
+        glUniform2uiv_ =          (PFNGLUNIFORM2UIVPROC)         getprocaddress("glUniform2uiv");
+        glUniform3uiv_ =          (PFNGLUNIFORM3UIVPROC)         getprocaddress("glUniform3uiv");
+        glUniform4uiv_ =          (PFNGLUNIFORM4UIVPROC)         getprocaddress("glUniform4uiv");
         glClearBufferiv_ =        (PFNGLCLEARBUFFERIVPROC)       getprocaddress("glClearBufferiv");
         glClearBufferuiv_ =       (PFNGLCLEARBUFFERUIVPROC)      getprocaddress("glClearBufferuiv");
         glClearBufferfv_ =        (PFNGLCLEARBUFFERFVPROC)       getprocaddress("glClearBufferfv");
@@ -588,6 +604,14 @@ void gl_checkextensions()
         if(hasext("GL_EXT_gpu_shader4"))
         {
             glBindFragDataLocation_ = (PFNGLBINDFRAGDATALOCATIONPROC)getprocaddress("glBindFragDataLocationEXT");
+            glUniform1ui_ =           (PFNGLUNIFORM1UIPROC)          getprocaddress("glUniform1uiEXT");
+            glUniform2ui_ =           (PFNGLUNIFORM2UIPROC)          getprocaddress("glUniform2uiEXT");
+            glUniform3ui_ =           (PFNGLUNIFORM3UIPROC)          getprocaddress("glUniform3uiEXT");
+            glUniform4ui_ =           (PFNGLUNIFORM4UIPROC)          getprocaddress("glUniform4uiEXT");
+            glUniform1uiv_ =          (PFNGLUNIFORM1UIVPROC)         getprocaddress("glUniform1uivEXT");
+            glUniform2uiv_ =          (PFNGLUNIFORM2UIVPROC)         getprocaddress("glUniform2uivEXT");
+            glUniform3uiv_ =          (PFNGLUNIFORM3UIVPROC)         getprocaddress("glUniform3uivEXT");
+            glUniform4uiv_ =          (PFNGLUNIFORM4UIVPROC)         getprocaddress("glUniform4uivEXT");
             hasEGPU4 = hasGPU4 = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_gpu_shader4 extension.");
         }
