@@ -771,6 +771,42 @@ static GLenum textype(GLenum &component, GLenum &format)
         case GL_COMPRESSED_ALPHA:
             if(!format) format = GL_ALPHA;
             break;
+
+        case GL_RGB8UI:
+        case GL_RGB16UI:
+        case GL_RGB32UI:
+        case GL_RGB8I:
+        case GL_RGB16I:
+        case GL_RGB32I:
+            if(!format) format = GL_RGB_INTEGER;
+            break;
+
+        case GL_RGBA8UI:
+        case GL_RGBA16UI:
+        case GL_RGBA32UI:
+        case GL_RGBA8I:
+        case GL_RGBA16I:
+        case GL_RGBA32I:
+            if(!format) format = GL_RGBA_INTEGER;
+            break;
+
+        case GL_R8UI:
+        case GL_R16UI:
+        case GL_R32UI:
+        case GL_R8I:
+        case GL_R16I:
+        case GL_R32I:
+            if(!format) format = GL_RED_INTEGER;
+            break;
+
+        case GL_RG8UI:
+        case GL_RG16UI:
+        case GL_RG32UI:
+        case GL_RG8I:
+        case GL_RG16I:
+        case GL_RG32I:
+            if(!format) format = GL_RG_INTEGER;
+            break;
     }
     if(!format) format = component;
     return type;

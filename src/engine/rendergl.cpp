@@ -2,7 +2,7 @@
 
 #include "engine.h"
 
-bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasDBB = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasDBT = false, hasDC = false, hasDBGO = false, hasEGPU4 = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
+bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasDBB = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasTI = false, hasDBT = false, hasDC = false, hasDBGO = false, hasEGPU4 = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
 bool mesa = false, intel = false, amd = false, nvidia = false;
 
 int hasstencil = 0;
@@ -188,6 +188,10 @@ PFNGLDRAWBUFFERSPROC glDrawBuffers_ = NULL;
 // OpenGL 3.0
 PFNGLGETSTRINGIPROC           glGetStringi_           = NULL;
 PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation_ = NULL;
+PFNGLCLEARBUFFERIVPROC        glClearBufferiv_        = NULL;
+PFNGLCLEARBUFFERUIVPROC       glClearBufferuiv_       = NULL;
+PFNGLCLEARBUFFERFVPROC        glClearBufferfv_        = NULL;
+PFNGLCLEARBUFFERFIPROC        glClearBufferfi_        = NULL;
 
 // GL_EXT_draw_buffers2
 PFNGLCOLORMASKIPROC glColorMaski_ = NULL;
@@ -197,6 +201,14 @@ PFNGLDISABLEIPROC   glDisablei_   = NULL;
 // GL_NV_conditional_render
 PFNGLBEGINCONDITIONALRENDERPROC glBeginConditionalRender_ = NULL;
 PFNGLENDCONDITIONALRENDERPROC   glEndConditionalRender_   = NULL;
+
+// GL_EXT_texture_integer
+PFNGLTEXPARAMETERIIVPROC     glTexParameterIiv_     = NULL;
+PFNGLTEXPARAMETERIUIVPROC    glTexParameterIuiv_    = NULL;
+PFNGLGETTEXPARAMETERIIVPROC  glGetTexParameterIiv_  = NULL;
+PFNGLGETTEXPARAMETERIUIVPROC glGetTexParameterIuiv_ = NULL;
+PFNGLCLEARCOLORIIEXTPROC     glClearColorIi_        = NULL;
+PFNGLCLEARCOLORIUIEXTPROC    glClearColorIui_       = NULL;
 
 // GL_ARB_uniform_buffer_object
 PFNGLGETUNIFORMINDICESPROC       glGetUniformIndices_       = NULL;
@@ -520,7 +532,11 @@ void gl_checkextensions()
     {
         hasTF = hasTRG = hasRGTC = hasPF = true;
 
-        glBindFragDataLocation_ =  (PFNGLBINDFRAGDATALOCATIONPROC)getprocaddress("glBindFragDataLocation");
+        glBindFragDataLocation_ = (PFNGLBINDFRAGDATALOCATIONPROC)getprocaddress("glBindFragDataLocation");
+        glClearBufferiv_ =        (PFNGLCLEARBUFFERIVPROC)       getprocaddress("glClearBufferiv");
+        glClearBufferuiv_ =       (PFNGLCLEARBUFFERUIVPROC)      getprocaddress("glClearBufferuiv");
+        glClearBufferfv_ =        (PFNGLCLEARBUFFERFVPROC)       getprocaddress("glClearBufferfv");
+        glClearBufferfi_ =        (PFNGLCLEARBUFFERFIPROC)       getprocaddress("glClearBufferfi");
         hasGPU4 = true;
 
         if(hasext("GL_EXT_gpu_shader4"))
@@ -540,6 +556,12 @@ void gl_checkextensions()
         glBeginConditionalRender_ = (PFNGLBEGINCONDITIONALRENDERPROC)getprocaddress("glBeginConditionalRender");
         glEndConditionalRender_ =   (PFNGLENDCONDITIONALRENDERPROC)  getprocaddress("glEndConditionalRender");
         hasCR = true;
+
+        glTexParameterIiv_ =     (PFNGLTEXPARAMETERIIVPROC)    getprocaddress("glTexParameterIiv");
+        glTexParameterIuiv_ =    (PFNGLTEXPARAMETERIUIVPROC)   getprocaddress("glTexParameterIuiv");
+        glGetTexParameterIiv_ =  (PFNGLGETTEXPARAMETERIIVPROC) getprocaddress("glGetTexParameterIiv");
+        glGetTexParameterIuiv_ = (PFNGLGETTEXPARAMETERIUIVPROC)getprocaddress("glGetTexParameterIuiv");
+        hasTI = true;
     }
     else
     {
@@ -589,6 +611,17 @@ void gl_checkextensions()
             glEndConditionalRender_ =   (PFNGLENDCONDITIONALRENDERPROC)  getprocaddress("glEndConditionalRenderNV");
             hasCR = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_NV_conditional_render extension.");
+        }
+        if(hasext("GL_EXT_texture_integer"))
+        {
+            glTexParameterIiv_ =     (PFNGLTEXPARAMETERIIVPROC)    getprocaddress("glTexParameterIivEXT");
+            glTexParameterIuiv_ =    (PFNGLTEXPARAMETERIUIVPROC)   getprocaddress("glTexParameterIuivEXT");
+            glGetTexParameterIiv_ =  (PFNGLGETTEXPARAMETERIIVPROC) getprocaddress("glGetTexParameterIivEXT");
+            glGetTexParameterIuiv_ = (PFNGLGETTEXPARAMETERIUIVPROC)getprocaddress("glGetTexParameterIuivEXT");
+            glClearColorIi_ =        (PFNGLCLEARCOLORIIEXTPROC)    getprocaddress("glClearColorIiEXT");
+            glClearColorIui_ =       (PFNGLCLEARCOLORIUIEXTPROC)   getprocaddress("glClearColorIuiEXT");
+            hasTI = true;
+            if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_texture_integer extension.");
         }
     }
 
