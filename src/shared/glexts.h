@@ -691,7 +691,7 @@ extern PFNGLUNIFORM1UIVPROC glUniform1uiv_;
 extern PFNGLUNIFORM2UIVPROC glUniform2uiv_;
 extern PFNGLUNIFORM3UIVPROC glUniform3uiv_;
 extern PFNGLUNIFORM4UIVPROC glUniform4uiv_;
-extern PFNGLCLEARBUFFERIVPROC glClearBufferiv_; 
+extern PFNGLCLEARBUFFERIVPROC glClearBufferiv_;
 extern PFNGLCLEARBUFFERUIVPROC glClearBufferuiv_;
 extern PFNGLCLEARBUFFERFVPROC glClearBufferfv_;
 extern PFNGLCLEARBUFFERFIPROC glClearBufferfi_;
