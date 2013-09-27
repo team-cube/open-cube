@@ -421,7 +421,7 @@ vec2 areaortho(int pattern, float left, float right, float offset)
 float areaunderdiag(const vec2 &p1, const vec2 &p2, const vec2 &p)
 {
     vec2 d(p2.y - p1.y, p1.x - p2.x);
-    float dp = d.dot(vec2(p1).avg(p2).sub(p));
+    float dp = d.dot(vec2(p1).sub(p));
     if(!d.x)
     {
         if(!d.y) return 1;
