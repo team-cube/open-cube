@@ -368,7 +368,7 @@ static inline vec2 areaortho(float p1x, float p1y, float p2x, float p2y, float l
 static inline void smootharea(float d, vec2 &a1, vec2 &a2)
 {
     vec2 b1(sqrtf(a1.x*2)*0.5f, sqrtf(a1.y*2)*0.5f), b2(sqrtf(a2.x*2)*0.5f, sqrtf(a2.y*2)*0.5f);
-    float p = min(d * (1/32.0f), 1.0f);
+    float p = clamp(d / 32.0f, 0.0f, 1.0f);
     a1.lerp(b1, a1, p);
     a2.lerp(b2, a2, p);
 }
