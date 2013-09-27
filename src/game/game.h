@@ -264,7 +264,7 @@ static const struct guninfo { int sound, attackdelay, damage, spread, projspeed,
 {
     { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",  "melee"},
     { S_RIFLE,   800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "rifle",  "rifle" },
-    { S_ROCKET,  800,   1,   0, 480, 10, 1024,  1,5000, 10,    0, 0, "rocket", "rocket"}
+    { S_ROCKET,  800,   1,   0, 480, 30, 1024,  1,5000, 10,    0, 0, "rocket", "rocket"}
 };
 
 #include "ai.h"
