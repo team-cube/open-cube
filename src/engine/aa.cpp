@@ -424,15 +424,10 @@ float areaunderdiag(const vec2 &p1, const vec2 &p2, const vec2 &p)
     float dp = d.dot(vec2(p1).avg(p2).sub(p));
     if(!d.x)
     {
-        if(!d.y) return 0 > dp;
-        if(d.y < dp) return 0;
-        return 1 - dp/d.y;
+        if(!d.y) return 1;
+        return clamp(d.y > 0 ? 1 - dp/d.y : dp/d.y, 0.0f, 1.0f);
     }
-    if(!d.y)
-    {
-        if(d.x < dp) return 0;
-        return 1 - dp/d.x;
-    }
+    if(!d.y) return clamp(d.x > 0 ? 1 - dp/d.x : dp/d.x, 0.0f, 1.0f);
     float l = dp/d.y, r = (dp-d.x)/d.y, b = dp/d.x, t = (dp-d.y)/d.x;
     if(0 <= dp)
     {
@@ -455,7 +450,7 @@ float areaunderdiag(const vec2 &p1, const vec2 &p2, const vec2 &p)
     }
     if(d.y <= dp)
     {
-        if(d.x <= dp) return l*b;
+        if(d.x <= dp) return 0.5f*l*b;
         if(d.y+d.x <= dp) return min(l, r) + 0.5f*fabs(r-l);
         return 1 - 0.5f*(1-l)*t;
     }
