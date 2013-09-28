@@ -1980,9 +1980,6 @@ void drawminimap()
 
     ldrscale = 1;
     ldrscaleb = ldrscale/255;
-    GLOBALPARAMF(ldrscale, ldrscale);
-    GLOBALPARAM(camera, camera1->o);
-    GLOBALPARAMF(millis, lastmillis/1000.0f);
 
     visiblecubes(false);
     collectlights();
@@ -2076,9 +2073,6 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
 
     ldrscale = 1;
     ldrscaleb = ldrscale/255;
-    GLOBALPARAMF(ldrscale, ldrscale);
-    GLOBALPARAM(camera, camera1->o);
-    GLOBALPARAMF(millis, lastmillis/1000.0f);
 
     visiblecubes();
     GLERROR;
@@ -2174,10 +2168,6 @@ namespace modelpreview
         ldrscale = 1;
         ldrscaleb = ldrscale/255;
 
-        GLOBALPARAMF(ldrscale, ldrscale);
-        GLOBALPARAM(camera, camera1->o);
-        GLOBALPARAMF(millis, lastmillis/1000.0f);
-
         projmatrix.perspective(fovy, aspect, nearplane, farplane);
         setcamprojmatrix();
 
@@ -2247,9 +2237,6 @@ void gl_drawview()
 
     ldrscale = hdr ? 0.5f : 1;
     ldrscaleb = ldrscale/255;
-    GLOBALPARAMF(ldrscale, ldrscale);
-    GLOBALPARAM(camera, camera1->o);
-    GLOBALPARAMF(millis, lastmillis/1000.0f);
 
     visiblecubes();
 

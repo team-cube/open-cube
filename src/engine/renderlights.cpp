@@ -976,7 +976,6 @@ void processhdr(GLuint outfbo, int aa)
     timer *hdrtimer = begintimer("hdr processing");
 
     GLOBALPARAMF(hdrparams, hdrbright, hdrsaturate, bloomthreshold, bloomscale);
-    GLOBALPARAMF(hdrgamma, hdrgamma, 1.0f/hdrgamma);
 
     GLuint b0fbo = bloomfbo[1], b0tex = bloomtex[1], b1fbo =  bloomfbo[0], b1tex = bloomtex[0], ptex = hdrtex;
     int b0w = max(vieww/4, bloomw), b0h = max(viewh/4, bloomh), b1w = max(vieww/2, bloomw), b1h = max(viewh/2, bloomh),
@@ -3895,6 +3894,11 @@ void preparegbuffer(bool depthclear)
     GLOBALPARAMF(gdepthscale, eyematrix.d.z, eyematrix.c.w, eyematrix.d.w);
     GLOBALPARAMF(gdepthpackparams, -1.0f/farplane, -255.0f/farplane, -(255.0f*255.0f)/farplane);
     GLOBALPARAMF(gdepthunpackparams, -farplane, -farplane/255.0f, -farplane/(255.0f*255.0f));
+
+    GLOBALPARAMF(ldrscale, ldrscale);
+    GLOBALPARAMF(hdrgamma, hdrgamma, 1.0f/hdrgamma);
+    GLOBALPARAM(camera, camera1->o);
+    GLOBALPARAMF(millis, lastmillis/1000.0f);
 
     GLERROR;
 }
