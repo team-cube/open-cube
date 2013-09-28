@@ -380,17 +380,17 @@ void cleanupsky()
 VARR(atmo, 0, 0, 1);
 FVARR(atmoplanetsize, 1e-3f, 1, 1e3f);
 FVARR(atmoheight, 1e-3f, 1, 1e3f);
-FVARR(atmobright, 0, 8, 16);
+FVARR(atmobright, 0, 3, 16);
 FVARR(atmosundisksize, 0, 1, 10);
 FVARR(atmosundiskbright, 0, 1, 16);
-FVARR(atmohaze, 0, 0.05f, 1);
+FVARR(atmohaze, 0, 0.1f, 1);
 bvec atmohazefadecolor(0xAE, 0xAC, 0xA9);
 HVARFR(atmohazefade, 0, 0xAEACA9, 0xFFFFFF,
 {
     if(!atmohazefade) atmohazefade = 0xAEACA9;
     atmohazefadecolor = bvec((atmohazefade>>16)&0xFF, (atmohazefade>>8)&0xFF, atmohazefade&0xFF);
 });
-FVARR(atmoclarity, 0, 1, 10);
+FVARR(atmoclarity, 0, 0.5f, 10);
 FVARR(atmodensity, 1e-3f, 1, 10);
 
 static void drawatmosphere(int farplane)
