@@ -86,19 +86,23 @@ static void showglslinfo(GLenum type, GLuint obj, const char *name, const char *
             if(type) glGetShaderInfoLog_(obj, length, &length, log);
             else glGetProgramInfoLog_(obj, length, &length, log);
             fprintf(l, "%s\n", log);
+            bool partlines = log[0] != '0'; 
+            int line = 0;
             loopi(numparts)
             {
                 const char *part = parts[i];
-                loopj(1000)
+                int startline = line;
+                while(*part)
                 {
-                    if(!*part) break;
                     const char *next = strchr(part, '\n');
-                    fprintf(l, "%d: ", j+1);
+                    if(++line > 1000) goto done;
+                    if(partlines) fprintf(l, "%d(%d): ", i, line - startline); else fprintf(l, "%d: ", line);
                     fwrite(part, 1, next ? next - part + 1 : strlen(part), l);
                     if(!next) { fputc('\n', l); break; }
                     part = next + 1;
                 }
             }
+        done:
             delete[] log;
         }
     }
