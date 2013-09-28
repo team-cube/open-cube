@@ -688,7 +688,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, bool fast, extentity
     }
     if(sunlight && shadowray(target, sunlightdir, 1e16f, RAY_SHADOW | RAY_POLY, t) > 1e15f)
     {
-        vec lightcol = vec(sunlightcolor.x, sunlightcolor.y, sunlightcolor.z).mul(sunlightscale/255);
+        vec lightcol = sunlightcolor.tocolor().mul(sunlightscale);
         color.add(lightcol);
         dir.add(vec(sunlightdir).mul(lightcol.x*lightcol.y*lightcol.z));
     }

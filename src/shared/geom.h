@@ -29,8 +29,10 @@ struct vec2
 
     vec2 &mul(float f)       { x *= f; y *= f; return *this; }
     vec2 &mul(const vec2 &o) { x *= o.x; y *= o.y; return *this; }
+    vec2 &square()           { mul(*this); return *this; }
     vec2 &div(float f)       { x /= f; y /= f; return *this; }
     vec2 &div(const vec2 &o) { x /= o.x; y /= o.y; return *this; }
+    vec2 &recip()            { x = 1/x; y = 1/y; return *this; }
     vec2 &add(float f)       { x += f; y += f; return *this; }
     vec2 &add(const vec2 &o) { x += o.x; y += o.y; return *this; }
     vec2 &sub(float f)       { x -= f; y -= f; return *this; }
@@ -111,8 +113,10 @@ struct vec
     float zdot(const vec &o) const { return z*o.z; }
     vec &mul(const vec &o)   { x *= o.x; y *= o.y; z *= o.z; return *this; }
     vec &mul(float f)        { x *= f; y *= f; z *= f; return *this; }
+    vec &square()            { mul(*this); return *this; }
     vec &div(const vec &o)   { x /= o.x; y /= o.y; z /= o.z; return *this; }
     vec &div(float f)        { x /= f; y /= f; z /= f; return *this; }
+    vec &recip()             { x = 1/x; y = 1/y; z = 1/z; return *this; }
     vec &add(const vec &o)   { x += o.x; y += o.y; z += o.z; return *this; }
     vec &add(float f)        { x += f; y += f; z += f; return *this; }
     vec &addz(float f)       { z += f; return *this; }
@@ -315,10 +319,12 @@ struct vec4
     vec4 &mul(float f)       { mul3(f); w *= f; return *this; }
     vec4 &mul(const vec4 &o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; return *this; }
     vec4 &mul(const vec &o)  { x *= o.x; y *= o.y; z *= o.z; return *this; }
+    vec4 &square()           { mul(*this); return *this; }
     vec4 &div3(float f)      { x /= f; y /= f; z /= f; return *this; }
     vec4 &div(float f)       { div3(f); w /= f; return *this; }
     vec4 &div(const vec4 &o) { x /= o.x; y /= o.y; z /= o.z; w /= o.w; return *this; }
     vec4 &div(const vec &o)  { x /= o.x; y /= o.y; z /= o.z; return *this; }
+    vec4 &recip()            { x = 1/x; y = 1/y; z = 1/z; w = 1/w; return *this; }
     vec4 &add(const vec4 &o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
     vec4 &add(const vec &o)  { x += o.x; y += o.y; z += o.z; return *this; }
     vec4 &add3(float f)      { x += f; y += f; z += f; return *this; }
@@ -646,7 +652,8 @@ struct matrix3
         swap(b.z, c.y);
     }
 
-    void transpose(const matrix3 &m)
+    template<class M>
+    void transpose(const M &m)
     {
         a = vec(m.a.x, m.b.x, m.c.x);
         b = vec(m.a.y, m.b.y, m.c.y);
