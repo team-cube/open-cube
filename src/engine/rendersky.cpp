@@ -94,7 +94,7 @@ void drawenvboxface(float s0, float t0, int x0, int y0, int z0,
     xtraverts += gle::end();
 }
 
-void drawenvbox(int w, float z1clip = 0.0f, float z2clip = 1.0f, int faces = 0x3F, Texture **sky = NULL)
+void drawenvbox(int w, Texture **sky = NULL, float z1clip = 0.0f, float z2clip = 1.0f, int faces = 0x3F)
 {
     if(z1clip >= z2clip) return;
 
@@ -394,12 +394,14 @@ FVARR(atmoclarity, 0, 0.5f, 10);
 FVARR(atmodensity, 1e-3f, 1, 10);
 FVARR(atmoalpha, 0, 1, 1);
 
-static void drawatmosphere(int farplane)
+static void drawatmosphere()
 {
     SETSHADER(atmosphere);
 
-    LOCALPARAM(skymatrix, projmatrix);
-    LOCALPARAM(sunmatrix, matrix3(invcammatrix));
+    matrix4 sunmatrix = invcammatrix;
+    sunmatrix.settranslation(0, 0, 0);
+    sunmatrix.mul(invprojmatrix);
+    LOCALPARAM(sunmatrix, sunmatrix);
 
     LOCALPARAM(sunlight, sunlightcolor.tocolor().mul(sunlightscale*atmobright*ldrscale));
     LOCALPARAM(sundir, sunlightdir);
@@ -430,15 +432,12 @@ static void drawatmosphere(int farplane)
 
     LOCALPARAMF(atmoalpha, atmoalpha);
 
-    int w = farplane/2;
     gle::defvertex();
-    gle::begin(GL_TRIANGLE_FAN);
-    gle::attribf(0, 0, -w);
-    gle::attribf(w, w, 0);
-    gle::attribf(w, -w, 0);
-    gle::attribf(-w, -w, 0);
-    gle::attribf(-w, w, 0);
-    gle::attribf(w, w, 0);
+    gle::begin(GL_TRIANGLE_STRIP);
+    gle::attribf(-1, 1, 1);
+    gle::attribf(1, 1, 1);
+    gle::attribf(-1, -1, 1);
+    gle::attribf(1, -1, 1);
     xtraverts += gle::end();
 }
 
@@ -456,9 +455,6 @@ bool limitsky()
 
 void drawskybox(int farplane)
 {
-    float skyclip = 0, topclip = 1;
-    if(skyclip) skyclip = 0.5f + 0.5f*(skyclip-camera1->o.z)/float(worldsize);
-
     if(limitsky())
     {
         glDisable(GL_DEPTH_TEST);
@@ -471,7 +467,7 @@ void drawskybox(int farplane)
 
     if(clampsky) glDepthRange(1, 1);
 
-    if(atmo && atmoalpha >= 1) drawatmosphere(farplane);
+    if(atmo && atmoalpha >= 1) drawatmosphere();
     else
     {
         if(ldrscale < 1 && (skyboxoverbrightmin != 1 || (skyboxoverbright > 1 && skyboxoverbrightthreshold < 1)))
@@ -489,14 +485,14 @@ void drawskybox(int farplane)
         skyprojmatrix.mul(projmatrix, skymatrix);
         LOCALPARAM(skymatrix, skyprojmatrix);
 
-        drawenvbox(farplane/2, skyclip, topclip, 0x3F, sky);
+        drawenvbox(farplane/2, sky);
 
         if(atmo && atmoalpha < 1)
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            drawatmosphere(farplane);
+            drawatmosphere();
 
             glDisable(GL_BLEND);
         }
@@ -522,7 +518,7 @@ void drawskybox(int farplane)
         skyprojmatrix.mul(projmatrix, skymatrix);
         LOCALPARAM(skymatrix, skyprojmatrix);
 
-        drawenvbox(farplane/2, skyclip ? skyclip : cloudclip, topclip, 0x3F, clouds);
+        drawenvbox(farplane/2, clouds, cloudclip);
 
         glDisable(GL_BLEND);
     }
