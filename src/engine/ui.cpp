@@ -3019,7 +3019,7 @@ namespace UI
     ICOMMAND(uiscroll, "ffe", (float *clipw, float *cliph, uint *children),
         BUILD(Scroller, o, o->setup(*clipw, *cliph), children));
 
-    ICOMMAND(uihscrolloffset, "",
+    ICOMMAND(uihscrolloffset, "", (),
     {
         if(buildparent && buildparent->istype<Scroller>())
         {
@@ -3028,7 +3028,7 @@ namespace UI
         }
     });
 
-    ICOMMAND(uivscrolloffset, "",
+    ICOMMAND(uivscrolloffset, "", (),
     {
         if(buildparent && buildparent->istype<Scroller>())
         {
