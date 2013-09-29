@@ -392,6 +392,7 @@ HVARFR(atmohazefade, 0, 0xAEACA9, 0xFFFFFF,
 });
 FVARR(atmoclarity, 0, 0.5f, 10);
 FVARR(atmodensity, 1e-3f, 1, 10);
+FVARR(atmoalpha, 0, 1, 1);
 
 static void drawatmosphere(int farplane)
 {
@@ -426,6 +427,8 @@ static void drawatmosphere(int farplane)
     LOCALPARAM(betar, betar);
     LOCALPARAM(betam, betam);
     LOCALPARAM(betarm, betarm);
+
+    LOCALPARAMF(atmoalpha, atmoalpha);
 
     int w = farplane/2;
     gle::defvertex();
@@ -468,7 +471,7 @@ void drawskybox(int farplane)
 
     if(clampsky) glDepthRange(1, 1);
 
-    if(atmo) drawatmosphere(farplane);
+    if(atmo && atmoalpha >= 1) drawatmosphere(farplane);
     else
     {
         if(ldrscale < 1 && (skyboxoverbrightmin != 1 || (skyboxoverbright > 1 && skyboxoverbrightthreshold < 1)))
@@ -487,6 +490,16 @@ void drawskybox(int farplane)
         LOCALPARAM(skymatrix, skyprojmatrix);
 
         drawenvbox(farplane/2, skyclip, topclip, 0x3F, sky);
+
+        if(atmo && atmoalpha < 1)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            drawatmosphere(farplane);
+
+            glDisable(GL_BLEND);
+        }
     }
 
     if(fogdomemax && !fogdomeclouds)
