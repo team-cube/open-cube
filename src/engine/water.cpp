@@ -356,22 +356,22 @@ void renderlava(const materialsurface &m, Texture *tex, float scale)
     HVARFR(name##colour, 0, 0x01212C, 0xFFFFFF, \
     { \
         if(!name##colour) name##colour = 0x01212C; \
-        name##color = bvec((name##colour>>16)&0xFF, (name##colour>>8)&0xFF, name##colour&0xFF); \
+        name##color = bvec::hexcolor(name##colour); \
     }); \
     HVARFR(name##deepcolour, 0, 0x010A10, 0xFFFFFF, \
     { \
         if(!name##deepcolour) name##deepcolour = 0x010A10; \
-        name##deepcolor = bvec((name##deepcolour>>16)&0xFF, (name##deepcolour>>8)&0xFF, name##deepcolour&0xFF); \
+        name##deepcolor = bvec::hexcolor(name##deepcolour); \
     }); \
     HVARFR(name##deepfade, 0, 0x60BFFF, 0xFFFFFF, \
     { \
         if(!name##deepfade) name##deepfade = 0x60BFFF; \
-        name##deepfadecolor = bvec((name##deepfade>>16)&0xFF, (name##deepfade>>8)&0xFF, name##deepfade&0xFF); \
+        name##deepfadecolor = bvec::hexcolor(name##deepfade); \
     }); \
     HVARFR(name##refractcolour, 0, 0xFFFFFF, 0xFFFFFF, \
     { \
         if(!name##refractcolour) name##refractcolour = 0xFFFFFF; \
-        name##refractcolor = bvec((name##refractcolour>>16)&0xFF, (name##refractcolour>>8)&0xFF, name##refractcolour&0xFF); \
+        name##refractcolor = bvec::hexcolor(name##refractcolour); \
     }); \
     VARR(name##fog, 0, 30, 10000); \
     VARR(name##deep, 0, 50, 10000); \
@@ -379,11 +379,11 @@ void renderlava(const materialsurface &m, Texture *tex, float scale)
     FVARR(name##refract, 0, 0.1f, 1e3f); \
     HVARFR(name##fallcolour, 0, 0, 0xFFFFFF, \
     { \
-        name##fallcolor = bvec((name##fallcolour>>16)&0xFF, (name##fallcolour>>8)&0xFF, name##fallcolour&0xFF); \
+        name##fallcolor = bvec::hexcolor(name##fallcolour); \
     }); \
     HVARFR(name##fallrefractcolour, 0, 0, 0xFFFFFF, \
     { \
-        name##fallrefractcolor = bvec((name##fallrefractcolour>>16)&0xFF, (name##fallrefractcolour>>8)&0xFF, name##fallrefractcolour&0xFF); \
+        name##fallrefractcolor = bvec::hexcolor(name##fallrefractcolour); \
     }); \
     VARR(name##fallspec, 0, 150, 200); \
     FVARR(name##fallrefract, 0, 0.1f, 1e3f);
@@ -417,7 +417,7 @@ GETMATIDXVAR(water, fallrefract, float)
     HVARFR(name##colour, 0, 0xFF4000, 0xFFFFFF, \
     { \
         if(!name##colour) name##colour = 0xFF4000; \
-        name##color = bvec((name##colour>>16)&0xFF, (name##colour>>8)&0xFF, name##colour&0xFF); \
+        name##color = bvec::hexcolor(name##colour); \
     }); \
     VARR(name##fog, 0, 50, 10000); \
     FVARR(name##glowmin, 0, 0.25f, 2); \

@@ -188,7 +188,7 @@ FVARR(fogdomeclip, 0, 1, 1);
 bvec fogdomecolor(0, 0, 0);
 HVARFR(fogdomecolour, 0, 0, 0xFFFFFF,
 {
-    fogdomecolor = bvec((fogdomecolour>>16)&0xFF, (fogdomecolour>>8)&0xFF, fogdomecolour&0xFF);
+    fogdomecolor = bvec::hexcolor(fogdomecolour);
 });
 VARR(fogdomeclouds, 0, 1, 1);
 

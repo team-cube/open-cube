@@ -251,7 +251,7 @@ struct vec
         return vec(((color>>16)&0xFF)*(1.0f/255.0f), ((color>>8)&0xFF)*(1.0f/255.0f), (color&0xFF)*(1.0f/255.0f));
     }
 
-    int tohexcolor() { return (int(::clamp(r, 0.0f, 1.0f)*255)<<16)|(int(::clamp(g, 0.0f, 1.0f)*255)<<8)|int(::clamp(b, 0.0f, 1.0f)*255); }
+    int tohexcolor() const { return (int(::clamp(r, 0.0f, 1.0f)*255)<<16)|(int(::clamp(g, 0.0f, 1.0f)*255)<<8)|int(::clamp(b, 0.0f, 1.0f)*255); }
 };
 
 inline vec2::vec2(const vec &v) : x(v.x), y(v.y) {}
@@ -1337,6 +1337,12 @@ struct bvec
 
     static bvec fromcolor(const vec &v) { return bvec(uchar(v.x*255.0f), uchar(v.y*255.0f), uchar(v.z*255.0f)); }
     vec tocolor() const { return vec(x*(1.0f/255.0f), y*(1.0f/255.0f), z*(1.0f/255.0f)); }
+
+    static bvec hexcolor(int color)
+    {
+        return bvec((color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
+    }
+    int tohexcolor() const { return (int(r)<<16)|(int(g)<<8)|int(b); }
 };
 
 struct usvec
