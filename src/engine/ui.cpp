@@ -3019,6 +3019,24 @@ namespace UI
     ICOMMAND(uiscroll, "ffe", (float *clipw, float *cliph, uint *children),
         BUILD(Scroller, o, o->setup(*clipw, *cliph), children));
 
+    ICOMMAND(uihscrolloffset, "",
+    {
+        if(buildparent && buildparent->istype<Scroller>())
+        {
+            Scroller *scroller = (Scroller *)buildparent;
+            floatret(scroller->offsetx);
+        }
+    });
+
+    ICOMMAND(uivscrolloffset, "",
+    {
+        if(buildparent && buildparent->istype<Scroller>())
+        {
+            Scroller *scroller = (Scroller *)buildparent;
+            floatret(scroller->offsety);
+        }
+    });
+
     ICOMMAND(uihscrollbar, "e", (uint *children),
         BUILD(HorizontalScrollBar, o, o->setup(), children));
 
