@@ -381,15 +381,19 @@ VARR(atmo, 0, 0, 1);
 FVARR(atmoplanetsize, 1e-3f, 1, 1e3f);
 FVARR(atmoheight, 1e-3f, 1, 1e3f);
 FVARR(atmobright, 0, 3, 16);
+HVARFR(atmosunlight, 0, 0, 0xFFFFFF,
+{
+    if(atmosunlight <= 255) atmosunlight |= (atmosunlight<<8) | (atmosunlight<<16);
+});
+FVARR(atmosunlightscale, 0, 1, 16);
 FVARR(atmosundisksize, 0, 1, 10);
 FVARR(atmosundiskbright, 0, 1, 16);
 FVARR(atmohaze, 0, 0.1f, 1);
-bvec atmohazefadecolor(0xAE, 0xAC, 0xA9);
 HVARFR(atmohazefade, 0, 0xAEACA9, 0xFFFFFF,
 {
     if(!atmohazefade) atmohazefade = 0xAEACA9;
-    atmohazefadecolor = bvec((atmohazefade>>16)&0xFF, (atmohazefade>>8)&0xFF, atmohazefade&0xFF);
 });
+FVARR(atmohazefadescale, 0, 1, 1);
 FVARR(atmoclarity, 0, 0.5f, 10);
 FVARR(atmodensity, 1e-3f, 1, 10);
 FVARR(atmoalpha, 0, 1, 1);
@@ -403,7 +407,7 @@ static void drawatmosphere()
     sunmatrix.mul(invprojmatrix);
     LOCALPARAM(sunmatrix, sunmatrix);
 
-    LOCALPARAM(sunlight, sunlightcolor.tocolor().mul(sunlightscale*atmobright*ldrscale));
+    LOCALPARAM(sunlight, (atmosunlight ? vec::hexcolor(atmosunlight).mul(atmosunlightscale) : sunlightcolor.tocolor().mul(sunlightscale)).mul(atmobright*ldrscale));
     LOCALPARAM(sundir, sunlightdir);
 
     vec sundiskparams;
@@ -422,7 +426,7 @@ static void drawatmosphere()
 
     vec lambda(680e-9f, 550e-9f, 450e-9f),
         betar = vec(lambda).square().square().recip().mul(1.86e-31f / atmodensity),
-        betam = vec(lambda).recip().mul(2*M_PI).square().mul(atmohazefadecolor.tocolor()).mul(1.36e-19f * max(atmohaze, 1e-3f)),
+        betam = vec(lambda).recip().mul(2*M_PI).square().mul(vec::hexcolor(atmohazefade).mul(atmohazefadescale)).mul(1.36e-19f * max(atmohaze, 1e-3f)),
         betarm = vec(betar).div(1+atmoclarity).add(betam);
     betar.div(betarm).mul(3/(16*M_PI));
     betam.div(betarm).mul((1-gm)*(1-gm)/(4*M_PI));
