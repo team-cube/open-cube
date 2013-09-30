@@ -394,8 +394,8 @@ HVARFR(atmohazefade, 0, 0xAEACA9, 0xFFFFFF,
     if(!atmohazefade) atmohazefade = 0xAEACA9;
 });
 FVARR(atmohazefadescale, 0, 1, 1);
-FVARR(atmoclarity, 0, 0.5f, 10);
-FVARR(atmodensity, 1e-3f, 1, 10);
+FVARR(atmoclarity, 0, 5, 10);
+FVARR(atmodensity, 1e-3f, 0.5f, 10);
 FVARR(atmoalpha, 0, 1, 1);
 
 static void drawatmosphere()
