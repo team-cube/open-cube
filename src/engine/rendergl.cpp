@@ -1259,7 +1259,7 @@ VARP(invmouse, 0, 0, 1);
 FVARP(mouseaccel, 0, 0, 1000);
 
 VAR(thirdperson, 0, 0, 2);
-FVAR(thirdpersondistance, 0, 20, 50);
+FVAR(thirdpersondistance, 0, 30, 50);
 FVAR(thirdpersonup, -25, 0, 25);
 FVAR(thirdpersonside, -25, 0, 25);
 physent *camera1 = NULL;
