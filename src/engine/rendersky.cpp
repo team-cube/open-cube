@@ -457,7 +457,7 @@ bool limitsky()
     return explicitsky && (useskytexture || editmode);
 }
 
-void drawskybox(int farplane)
+void drawskybox(int farplane, bool clear)
 {
     if(limitsky())
     {
@@ -471,8 +471,14 @@ void drawskybox(int farplane)
 
     if(clampsky) glDepthRange(1, 1);
 
-    if(atmo && atmoalpha >= 1) drawatmosphere();
-    else
+    if(clear || (!skybox[0] && (!atmo || atmoalpha < 1)))
+    {
+        vec skyboxcolor = vec::hexcolor(skyboxcolour).mul(ldrscale);
+        glClearColor(skyboxcolor.x, skyboxcolor.y, skyboxcolor.z, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    if(skybox[0])
     {
         if(ldrscale < 1 && (skyboxoverbrightmin != 1 || (skyboxoverbright > 1 && skyboxoverbrightthreshold < 1)))
         {
@@ -490,16 +496,19 @@ void drawskybox(int farplane)
         LOCALPARAM(skymatrix, skyprojmatrix);
 
         drawenvbox(farplane/2, sky);
+    }
 
-        if(atmo && atmoalpha < 1)
+    if(atmo && (!skybox[0] || atmoalpha < 1))
+    {
+        if(atmoalpha < 1)
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            drawatmosphere();
-
-            glDisable(GL_BLEND);
         }
+
+        drawatmosphere();
+
+        if(atmoalpha < 1) glDisable(GL_BLEND);
     }
 
     if(fogdomemax && !fogdomeclouds)

@@ -705,7 +705,7 @@ extern void cleanupdecals();
 // rendersky
 extern int skytexture, skyshadow, explicitsky;
 
-extern void drawskybox(int farplane);
+extern void drawskybox(int farplane, bool clear);
 extern bool limitsky();
 extern bool renderexplicitsky(bool outline = false);
 extern void cleanupsky();
