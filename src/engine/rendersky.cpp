@@ -443,6 +443,7 @@ static void drawatmosphere()
     gle::attribf(-1, -1, 1);
     gle::attribf(1, -1, 1);
     xtraverts += gle::end();
+    gle::disable();
 }
 
 VAR(showsky, 0, 1, 1);
