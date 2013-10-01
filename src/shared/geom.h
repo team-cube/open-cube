@@ -44,6 +44,7 @@ struct vec2
     vec2 &max(float f)       { x = ::max(x, f); y = ::max(y, f); return *this; }
     vec2 &abs() { x = fabs(x); y = fabs(y); return *this; }
     vec2 &clamp(float l, float h) { x = ::clamp(x, l, h); y = ::clamp(y, l, h); return *this; }
+    vec2 &reflect(const vec2 &n) { float k = 2*dot(n); x -= k*n.x; y -= k*n.y; return *this; }
     vec2 &lerp(const vec2 &b, float t) { x += (b.x-x)*t; y += (b.y-y)*t; return *this; }
     vec2 &lerp(const vec2 &a, const vec2 &b, float t) { x = a.x + (b.x-a.x)*t; y = a.y + (b.y-a.y)*t; return *this; }
     vec2 &avg(const vec2 &b) { add(b); mul(0.5f); return *this; }
