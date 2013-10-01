@@ -777,9 +777,9 @@ void rendereditmaterials()
 
     glDisable(GL_CULL_FACE);
 
-    foggednotextureshader->set();
-
     zerofogcolor();
+
+    foggednotextureshader->set();
 
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
     glEnable(GL_BLEND);
