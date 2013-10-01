@@ -849,14 +849,17 @@ static void genfogshader(vector<char> &vsbuf, vector<char> &psbuf, const char *v
             const char *foginterp = "\nvarying float lineardepth;\n";
             psbuf.put(foginterp, strlen(foginterp));
         }
-        const char *fogparams = "\nuniform vec3 fogcolor, fogparams;\n";
+        const char *fogparams = 
+            "\nuniform vec3 fogcolor, fogparams;\n"
+            "uniform vec4 radialfogparams;\n"
+            "#define fogcoord lineardepth*length(vec3(gl_FragCoord.xy*radialfogparams.xy + radialfogparams.zw, 1.0))\n";
         psbuf.put(fogparams, strlen(fogparams));
         psbuf.put(psmain, psend - psmain);
         const char *psdef = "\n#define FOG_COLOR ";
         const char *psfog =
             pspragma && !strncmp(pspragma+pragmalen, "rgba", 4) ?
-                "\nfragcolor = mix((FOG_COLOR), fragcolor, clamp((fogparams.y - lineardepth)*fogparams.z, 0.0, 1.0));\n" :
-                "\nfragcolor.rgb = mix((FOG_COLOR).rgb, fragcolor.rgb, clamp((fogparams.y - lineardepth)*fogparams.z, 0.0, 1.0));\n";
+                "\nfragcolor = mix((FOG_COLOR), fragcolor, clamp(fogparams.y - fogcoord*fogparams.z, 0.0, 1.0));\n" :
+                "\nfragcolor.rgb = mix((FOG_COLOR).rgb, fragcolor.rgb, clamp(fogparams.y - fogcoord*fogparams.z, 0.0, 1.0));\n";
         int clen = 0;
         if(pspragma)
         {

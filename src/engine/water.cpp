@@ -47,9 +47,9 @@ void setupcaustics(int tmu, float surface = -1e16f)
     {
         float bz = surface + camera1->o.z + (vertwater ? WATER_AMPLITUDE : 0);
         matrix4 m(vec4(s.x, t.x,  0, 0),
-                    vec4(s.y, t.y,  0, 0),
-                    vec4(s.z, t.z, -1, 0),
-                    vec4(  0,   0, bz, 1));
+                  vec4(s.y, t.y,  0, 0),
+                  vec4(s.z, t.z, -1, 0),
+                  vec4(  0,   0, bz, 1));
         m.mul(worldmatrix);
         GLOBALPARAM(causticsmatrix, m);
         blendscale *= 0.5f;
@@ -116,14 +116,10 @@ void renderwaterfog(int mat, float surface)
         GLOBALPARAMF(waterdeepcolor, 0, 0, 0);
         GLOBALPARAMF(waterdeepfade, 0, 0, 0);
     }
+    
+    GLOBALPARAMF(waterheight, bz);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    matrix4 m(vec4(cammatrix.a.z, 0,  0, 0),
-                vec4(cammatrix.b.z, 1,  0, 0),
-                vec4(cammatrix.c.z, 0, -1, 0),
-                vec4(cammatrix.d.z, 0, bz, 1));
-    m.mul(worldmatrix);
-    GLOBALPARAM(waterfogmatrix, m);
 
     SETSHADER(waterfog);
     gle::defvertex(2);

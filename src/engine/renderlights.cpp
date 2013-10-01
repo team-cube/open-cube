@@ -2360,8 +2360,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     }
     glActiveTexture_(GL_TEXTURE0);
 
-    GLOBALPARAM(worldmatrix, worldmatrix);
-    GLOBALPARAM(fogdir, cammatrix.rowz());
     GLOBALPARAMF(shadowatlasscale, 1.0f/shadowatlaspacker.w, 1.0f/shadowatlaspacker.h);
     if(ao)
     {
@@ -3874,6 +3872,8 @@ void preparegbuffer(bool depthclear)
     {
         linearworldmatrix.mul(invcamprojmatrix, invscreenmatrix);
         worldmatrix = linearworldmatrix;
+    
+        GLOBALPARAMF(radialfogparams, 0, 0, 0, 0);
     }
     else
     {
@@ -3883,6 +3883,8 @@ void preparegbuffer(bool depthclear)
         linearworldmatrix.mul(invcammatrix, depthmatrix);
         if(gdepthformat) worldmatrix = linearworldmatrix;
         else worldmatrix.mul(invcamprojmatrix, invscreenmatrix);
+
+        GLOBALPARAMF(radialfogparams, xscale/zscale, yscale/zscale, xoffset/zscale, yoffset/zscale); 
     }
 
     screenmatrix.identity();
@@ -3894,6 +3896,7 @@ void preparegbuffer(bool depthclear)
     GLOBALPARAMF(gdepthscale, eyematrix.d.z, eyematrix.c.w, eyematrix.d.w);
     GLOBALPARAMF(gdepthpackparams, -1.0f/farplane, -255.0f/farplane, -(255.0f*255.0f)/farplane);
     GLOBALPARAMF(gdepthunpackparams, -farplane, -farplane/255.0f, -farplane/(255.0f*255.0f));
+    GLOBALPARAM(worldmatrix, worldmatrix);
 
     GLOBALPARAMF(ldrscale, ldrscale);
     GLOBALPARAMF(hdrgamma, hdrgamma, 1.0f/hdrgamma);
@@ -3976,8 +3979,6 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
     if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msdepthtex);
     else glBindTexture(GL_TEXTURE_RECTANGLE, gdepthtex);
     glActiveTexture_(GL_TEXTURE0);
-
-    GLOBALPARAM(worldmatrix, worldmatrix);
 
     float lightscale = 2.0f*ldrscale;
     GLOBALPARAMF(lightscale, 0.1f*lightscale, 0.1f*lightscale, 0.1f*lightscale, lightscale);
