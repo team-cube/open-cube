@@ -858,8 +858,8 @@ static void genfogshader(vector<char> &vsbuf, vector<char> &psbuf, const char *v
         const char *psdef = "\n#define FOG_COLOR ";
         const char *psfog =
             pspragma && !strncmp(pspragma+pragmalen, "rgba", 4) ?
-                "\nfragcolor = mix((FOG_COLOR), fragcolor, clamp(fogparams.y - fogcoord*fogparams.z, 0.0, 1.0));\n" :
-                "\nfragcolor.rgb = mix((FOG_COLOR).rgb, fragcolor.rgb, clamp(fogparams.y - fogcoord*fogparams.z, 0.0, 1.0));\n";
+                "\nfragcolor = mix((FOG_COLOR), fragcolor, clamp(fogparams.y + fogcoord*fogparams.z, 0.0, 1.0));\n" :
+                "\nfragcolor.rgb = mix((FOG_COLOR).rgb, fragcolor.rgb, clamp(fogparams.y + fogcoord*fogparams.z, 0.0, 1.0));\n";
         int clen = 0;
         if(pspragma)
         {
