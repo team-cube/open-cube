@@ -2347,7 +2347,7 @@ namespace UI
         {
             SliderButton *button = (SliderButton *)find(SliderButton::typestr(), false);
             if(!button) return;
-            float offset = h > button->h ? clamp((cx - button->h/2)/(h - button->h), 0.0f, 1.0f) : 0.0f;
+            float offset = h > button->h ? clamp((cy - button->h/2)/(h - button->h), 0.0f, 1.0f) : 0.0f;
             int step = int((val - vmin) / vstep),
                 bstep = int(offset * (vmax - vmin) / vstep);
             if(step != bstep) changeval(bstep * vstep + vmin);
