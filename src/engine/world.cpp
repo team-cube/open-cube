@@ -1216,7 +1216,7 @@ bool emptymap(int scale, bool force, const char *mname, bool usecfg)    // main 
     }
 
     initlights();
-    allchanged(true);
+    allchanged(usecfg);
 
     startmap(mname);
 
