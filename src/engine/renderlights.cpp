@@ -858,6 +858,9 @@ float ldrscale = 1.0f, ldrscaleb = 1.0f/255;
 
 void copyhdr(int sw, int sh, GLuint fbo, int dw, int dh, bool flipx, bool flipy, bool swapxy)
 {
+    if(!dw) dw = sw;
+    if(!dh) dh = sh;
+
     if(msaasamples) resolvemsaacolor(sw, sh);
     GLERROR;
 
@@ -866,32 +869,6 @@ void copyhdr(int sw, int sh, GLuint fbo, int dw, int dh, bool flipx, bool flipy,
     SETSHADER(hdrnop);
     glBindTexture(GL_TEXTURE_RECTANGLE, hdrtex);
     screenquadreorient(sw, sh, flipx, flipy, swapxy);
-    GLERROR;
-
-    hdrclear = 3;
-}
-
-void copyhdr(int w, int h, GLenum target, GLuint tex)
-{
-    if(!hasCBF && hdrfloat)
-    {
-        GLuint fbo = 0;
-        glGenFramebuffers_(1, &fbo);
-        glBindFramebuffer_(GL_FRAMEBUFFER, fbo);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, tex, 0);
-        copyhdr(w, h, fbo, w, h);
-        glDeleteFramebuffers_(1, &fbo);
-        return;
-    }
-
-    if(msaasamples) resolvemsaacolor(w, h);
-    GLERROR;
-
-    glBindFramebuffer_(GL_FRAMEBUFFER, hdrfbo);
-    if(hasCBF && hdrfloat) glClampColor_(GL_CLAMP_READ_COLOR, GL_TRUE);
-    glBindTexture(target, tex);
-    glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, w, h);
-    if(hasCBF && hdrfloat) glClampColor_(GL_CLAMP_READ_COLOR, GL_FIXED_ONLY);
     GLERROR;
 
     hdrclear = 3;

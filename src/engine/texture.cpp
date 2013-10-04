@@ -2418,7 +2418,7 @@ void clearenvmaps()
     envmaps.shrink(0);
 }
 
-static GLuint emfbo[2] = { 0, 0 }, emtex[2] = { 0, 0 };
+static GLuint emfbo[3] = { 0, 0, 0 }, emtex[2] = { 0, 0 };
 static int emtexsize = -1;
 
 GLuint genenvmap(const vec &o, int envmapsize, int blur, bool onlysky)
@@ -2429,7 +2429,7 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur, bool onlysky)
     int texsize = min(rendersize, 1<<envmapsize);
     if(!aaenvmap) rendersize = texsize;
     if(!emtex[0]) glGenTextures(2, emtex);
-    if(!emfbo[0]) glGenFramebuffers_(2, emfbo);
+    if(!emfbo[0]) glGenFramebuffers_(3, emfbo);
     if(emtexsize != texsize)
     {
         emtexsize = texsize;
@@ -2483,11 +2483,21 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur, bool onlysky)
                 swap(emtex[0], emtex[1]);
             }
         }
-        glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
         for(int level = 0, lsize = texsize;; level++)
         {
-            glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[0]);
-            glCopyTexSubImage2D(side.target, level, 0, 0, 0, 0, lsize, lsize);
+            if(hasFBB)
+            {
+                glBindFramebuffer_(GL_READ_FRAMEBUFFER, emfbo[0]);
+                glBindFramebuffer_(GL_DRAW_FRAMEBUFFER, emfbo[2]);
+                glFramebufferTexture2D_(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, side.target, tex, level);
+                glBlitFramebuffer_(0, 0, lsize, lsize, 0, 0, lsize, lsize, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            }
+            else
+            {
+                glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[0]);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+                glCopyTexSubImage2D(side.target, level, 0, 0, 0, 0, lsize, lsize);
+            }
             if(lsize <= 1) break;
             int dsize = lsize/2;
             if(hasFBB)
@@ -2550,7 +2560,7 @@ void genenvmaps()
             lastprogress = millis;
         }
     }
-    if(emfbo[0]) { glDeleteFramebuffers_(2, emfbo); memset(emfbo, 0, sizeof(emfbo)); }
+    if(emfbo[0]) { glDeleteFramebuffers_(3, emfbo); memset(emfbo, 0, sizeof(emfbo)); }
     if(emtex[0]) { glDeleteTextures(2, emtex); memset(emtex, 0, sizeof(emtex)); }
     emtexsize = -1;
 }
