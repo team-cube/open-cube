@@ -218,7 +218,7 @@ struct databuf
 
     const T &get()
     {
-        static T overreadval = 0;
+        static const T overreadval = 0;
         if(len<maxlen) return buf[len++];
         flags |= OVERREAD;
         return overreadval;
@@ -231,6 +231,13 @@ struct databuf
         return databuf(&buf[len-sz], sz);
     }
 
+    T *pad(int numvals)
+    {
+        T *vals = &buf[len];
+        len += min(numvals, maxlen-len);
+        return vals;
+    }
+
     void put(const T &val)
     {
         if(len<maxlen) buf[len++] = val;
@@ -239,18 +246,25 @@ struct databuf
 
     void put(const T *vals, int numvals)
     {
-        if(maxlen-len<numvals) flags |= OVERWROTE;
-        memcpy(&buf[len], (const void *)vals, min(maxlen-len, numvals)*sizeof(T));
-        len += min(maxlen-len, numvals);
+        if(maxlen - len < numvals)
+        {
+            numvals = maxlen - len;
+            flags |= OVERWROTE;
+        }
+        memcpy(&buf[len], (const void *)vals, numvals*sizeof(T));
+        len += numvals;
     }
 
     int get(T *vals, int numvals)
     {
-        int read = min(maxlen-len, numvals);
-        if(read<numvals) flags |= OVERREAD;
-        memcpy(vals, (void *)&buf[len], read*sizeof(T));
-        len += read;
-        return read;
+        if(maxlen - len < numvals)
+        {
+            numvals = maxlen - len;
+            flags |= OVERREAD;
+        }
+        memcpy(vals, (void *)&buf[len], numvals*sizeof(T));
+        len += numvals;
+        return numvals;
     }
 
     void offset(int n)
