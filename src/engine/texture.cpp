@@ -940,6 +940,7 @@ static Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clam
     t->h = t->ys = s.h;
 
     int filter = !canreduce || reducefilter ? (mipit ? 2 : 1) : 0;
+    bool swizzle = !(clamp&0x10000);
     glGenTextures(1, &t->id);
     if(s.compressed)
     {
@@ -960,13 +961,13 @@ static Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clam
             if(t->w > 1) t->w /= 2;
             if(t->h > 1) t->h /= 2;
         }
-        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D, true);
+        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D, swizzle);
     }
     else
     {
         resizetexture(t->w, t->h, mipit, canreduce, GL_TEXTURE_2D, compress, t->w, t->h);
         GLenum component = compressedformat(format, t->w, t->h, compress);
-        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format, true);
+        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format, swizzle);
     }
     return t;
 }
@@ -1397,6 +1398,10 @@ static bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex = NULL, 
         else if(!strncmp(cmd, "mirror", len))
         {
             if(wrap) *wrap |= 0x300;
+        }
+        else if(!strncmp(cmd, "noswizzle", len))
+        {
+            if(wrap) *wrap |= 0x10000;
         }
         else if(!strncmp(cmd, "thumbnail", len))
         {
