@@ -3306,7 +3306,7 @@ void radiancehints::renderslices()
         maskslice:
             if(i) continue;
             rendernogi(ivec::floor(vec(x1, y1, z - 0.5f*step)), ivec::ceil(vec(x2, y2, z + 0.5f*step)), int(step));
-            if(gle::data.empty()) continue;
+            if(gle::attribbuf.empty()) continue;
             SETSHADER(radiancehintsdisable);
             if(rhborder)
             {

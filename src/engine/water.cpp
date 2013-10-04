@@ -312,7 +312,7 @@ uint renderwaterlod(int x, int y, int z, uint size, int mat)
 
 #define renderwaterquad(vertwn, z) \
     { \
-        if(gle::data.empty()) { def##vertwn(); gle::begin(GL_QUADS); } \
+        if(gle::attribbuf.empty()) { def##vertwn(); gle::begin(GL_QUADS); } \
         vertwn(x, y, z); \
         vertwn(x+rsize, y, z); \
         vertwn(x+rsize, y+csize, z); \
@@ -474,7 +474,7 @@ static float wfwave, wfscroll, wfxscale, wfyscale;
 
 static void renderwaterfall(const materialsurface &m, float offset, const vec *normal = NULL)
 {
-    if(gle::data.empty())
+    if(gle::attribbuf.empty())
     {
         gle::defvertex();
         if(normal) gle::defnormal();
