@@ -120,7 +120,7 @@ void renderwaterfog(int mat, float surface)
         GLOBALPARAMF(waterdeepcolor, 0, 0, 0);
         GLOBALPARAMF(waterdeepfade, -1e4f, -1e4f, -1e4f, -1e4f);
     }
-    
+
     GLOBALPARAMF(waterheight, bz);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -659,9 +659,9 @@ void renderwater()
         float refract = getwaterrefract(k);
         GLOBALPARAMF(watercolor, color.x*colorscale, color.y*colorscale, color.z*colorscale);
         GLOBALPARAMF(waterdeepcolor, deepcolor.x*colorscale, deepcolor.y*colorscale, deepcolor.z*colorscale);
-        float fogdensity = fog ? calcfogdensity(fog) : -1e4f; 
+        float fogdensity = fog ? calcfogdensity(fog) : -1e4f;
         GLOBALPARAMF(waterfog, fogdensity);
-        vec deepfade = deepfadecolor.tocolor().mul(deep); 
+        vec deepfade = deepfadecolor.tocolor().mul(deep);
         GLOBALPARAMF(waterdeepfade,
             deepfade.x ? calcfogdensity(deepfade.x) : -1e4f,
             deepfade.y ? calcfogdensity(deepfade.y) : -1e4f,

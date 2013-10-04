@@ -849,7 +849,7 @@ static void genfogshader(vector<char> &vsbuf, vector<char> &psbuf, const char *v
             const char *foginterp = "\nvarying float lineardepth;\n";
             psbuf.put(foginterp, strlen(foginterp));
         }
-        const char *fogparams = 
+        const char *fogparams =
             "\nuniform vec3 fogcolor;\n"
             "uniform vec2 fogdensity;\n"
             "uniform vec4 radialfogscale;\n"

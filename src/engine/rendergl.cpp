@@ -1697,9 +1697,9 @@ void screenquadreorient(float sw, float sh, bool flipx, bool flipy, bool swapxy)
     if(swapxy) swap(sx2, sy2);
     if(flipx) swap(sx1, sx2);
     if(flipy) swap(sy1, sy2);
-    gle::defvertex(2); 
-    gle::deftexcoord0(); 
-    gle::begin(GL_TRIANGLE_STRIP); 
+    gle::defvertex(2);
+    gle::deftexcoord0();
+    gle::begin(GL_TRIANGLE_STRIP);
     if(swapxy)
     {
         gle::attribf( 1, -1); gle::attribf(sy1, sx2);
@@ -1716,7 +1716,7 @@ void screenquadreorient(float sw, float sh, bool flipx, bool flipy, bool swapxy)
     }
     gle::end();
     gle::disable();
-}   
+}
 
 #define SCREENQUAD2(x1, y1, x2, y2, sx1, sy1, sx2, sy2, tx1, ty1, tx2, ty2) { \
     gle::defvertex(2); \

@@ -883,7 +883,7 @@ void copyhdr(int w, int h, GLenum target, GLuint tex)
         glDeleteFramebuffers_(1, &fbo);
         return;
     }
- 
+
     if(msaasamples) resolvemsaacolor(w, h);
     GLERROR;
 
@@ -896,7 +896,7 @@ void copyhdr(int w, int h, GLenum target, GLuint tex)
 
     hdrclear = 3;
 }
-    
+
 void loadhdrshaders(int aa)
 {
     switch(aa)
@@ -3880,7 +3880,7 @@ void preparegbuffer(bool depthclear)
     {
         linearworldmatrix.mul(invcamprojmatrix, invscreenmatrix);
         worldmatrix = linearworldmatrix;
-    
+
         GLOBALPARAMF(radialfogscale, 0, 0, 0, 0);
     }
     else
@@ -3892,7 +3892,7 @@ void preparegbuffer(bool depthclear)
         if(gdepthformat) worldmatrix = linearworldmatrix;
         else worldmatrix.mul(invcamprojmatrix, invscreenmatrix);
 
-        GLOBALPARAMF(radialfogscale, xscale/zscale, yscale/zscale, xoffset/zscale, yoffset/zscale); 
+        GLOBALPARAMF(radialfogscale, xscale/zscale, yscale/zscale, xoffset/zscale, yoffset/zscale);
     }
 
     screenmatrix.identity();

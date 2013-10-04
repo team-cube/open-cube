@@ -14,7 +14,7 @@ namespace gle
     };
 
     extern const char * const attribnames[MAXATTRIBS];
-    extern ucharbuf attribbuf; 
+    extern ucharbuf attribbuf;
 
     extern void begin(GLenum mode);
     extern void begin(GLenum mode, int numverts);
@@ -91,8 +91,8 @@ namespace gle
     template<class T>
     static inline void attrib(T x, T y)
     {
-        if(attribbuf.check(2*sizeof(T))) 
-        { 
+        if(attribbuf.check(2*sizeof(T)))
+        {
             T *buf = (T *)attribbuf.pad(2*sizeof(T));
             buf[0] = x;
             buf[1] = y;

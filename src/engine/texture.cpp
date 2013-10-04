@@ -2431,7 +2431,7 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur, bool onlysky)
     if(!emtex[0]) glGenTextures(2, emtex);
     if(!emfbo[0]) glGenFramebuffers_(2, emfbo);
     if(emtexsize != texsize)
-    { 
+    {
         emtexsize = texsize;
         loopi(2)
         {
@@ -2474,35 +2474,39 @@ GLuint genenvmap(const vec &o, int envmapsize, int blur, bool onlysky)
             setupblurkernel(blur, blurweights, bluroffsets);
             loopj(2)
             {
-                glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[(j+1)%2]);
+                glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[1]);
                 glViewport(0, 0, texsize, texsize);
-                setblurshader(j%2, 1, blur, blurweights, bluroffsets, GL_TEXTURE_RECTANGLE);
-                glBindTexture(GL_TEXTURE_RECTANGLE, emtex[j%2]);
+                setblurshader(j, 1, blur, blurweights, bluroffsets, GL_TEXTURE_RECTANGLE);
+                glBindTexture(GL_TEXTURE_RECTANGLE, emtex[0]);
                 screenquad(texsize, texsize);
+                swap(emfbo[0], emfbo[1]);
+                swap(emtex[0], emtex[1]);
             }
         }
         glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
         for(int level = 0, lsize = texsize;; level++)
         {
-            glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[level%2]);
+            glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[0]);
             glCopyTexSubImage2D(side.target, level, 0, 0, 0, 0, lsize, lsize);
             if(lsize <= 1) break;
             int dsize = lsize/2;
             if(hasFBB)
             {
-                glBindFramebuffer_(GL_READ_FRAMEBUFFER, emfbo[level%2]);
-                glBindFramebuffer_(GL_DRAW_FRAMEBUFFER, emfbo[(level+1)%2]);
+                glBindFramebuffer_(GL_READ_FRAMEBUFFER, emfbo[0]);
+                glBindFramebuffer_(GL_DRAW_FRAMEBUFFER, emfbo[1]);
                 glBlitFramebuffer_(0, 0, lsize, lsize, 0, 0, dsize, dsize, GL_COLOR_BUFFER_BIT, GL_LINEAR);
             }
             else
             {
-                glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[(level+1)%2]);
-                glBindTexture(GL_TEXTURE_RECTANGLE, emtex[level%2]);
+                glBindFramebuffer_(GL_FRAMEBUFFER, emfbo[1]);
+                glBindTexture(GL_TEXTURE_RECTANGLE, emtex[0]);
                 glViewport(0, 0, dsize, dsize);
                 SETSHADER(scalelinear);
                 screenquad(lsize, lsize);
             }
             lsize = dsize;
+            swap(emfbo[0], emfbo[1]);
+            swap(emtex[0], emtex[1]);
         }
     }
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
@@ -2591,7 +2595,7 @@ GLuint lookupenvmap(Slot &slot)
 
 GLuint lookupenvmap(ushort emid)
 {
-    if(emid==EMID_SKY || emid==EMID_CUSTOM || drawtex) return lookupskyenvmap(); 
+    if(emid==EMID_SKY || emid==EMID_CUSTOM || drawtex) return lookupskyenvmap();
     if(emid==EMID_NONE || !envmaps.inrange(emid-EMID_RESERVED)) return 0;
     GLuint tex = envmaps[emid-EMID_RESERVED].tex;
     return tex ? tex : lookupskyenvmap();
