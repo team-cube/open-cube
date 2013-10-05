@@ -1838,11 +1838,11 @@ void resetfogcolor()
     setfogcolor(curfogcolor);
 }
 
-FVAR(fogdensitydist, 0, 0.25f, 0.999f);
+FVAR(fogintensity, 0, 0.15f, 1);
 
 float calcfogdensity(float dist)
 {
-    return log(fogdensitydist)/(M_LN2*dist*(1-fogdensitydist));
+    return log(fogintensity)/(M_LN2*dist);
 }
 
 FVAR(fogcullintensity, 0, 1e-3f, 1);
