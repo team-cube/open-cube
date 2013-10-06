@@ -121,7 +121,7 @@ void setbilateralshader(int radius, int pass, float depth)
 {
     bilateralshader[pass]->set();
     float sigma = blursigma*2*radius;
-    LOCALPARAMF(bilateralparams, 1.0f/(2*sigma*sigma), 1.0f/(depth*depth));
+    LOCALPARAMF(bilateralparams, 1.0f/(M_LN2*2*sigma*sigma), 1.0f/(M_LN2*depth*depth));
 }
 
 static Shader *ambientobscuranceshader = NULL;
