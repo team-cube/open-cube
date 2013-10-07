@@ -1118,12 +1118,12 @@ void processhdr(GLuint outfbo, int aa)
         if(blit) SETSHADER(msaatonemapsample);
         else switch(aa)
         {
-            case AA_LUMA: SETVARIANT(msaatonemapluma, 0, 0); break;
+            case AA_LUMA: SETSHADER(msaatonemapluma); break;
             case AA_VELOCITY:
-                SETVARIANT(msaatonemapvelocity, 0, 0);
+                SETSHADER(msaatonemapvelocity);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
-            default: SETVARIANT(msaatonemap, 0, 0); break;
+            default: SETSHADER(msaatonemap); break;
         }
         screenquad(vieww, viewh, b0w, b0h);
 
