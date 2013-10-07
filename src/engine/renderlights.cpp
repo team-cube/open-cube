@@ -630,7 +630,7 @@ void setupmsbuffer(int w, int h)
     bindmsdepth();
 
     hdrformat = 0;
-    for(int prec = hdr ? hdrprec : 0; prec >= 0; prec--)
+    for(int prec = hdrprec; prec >= 0; prec--)
     {
         GLenum format = gethdrformat(prec);
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mshdrtex);
@@ -713,7 +713,7 @@ void setupgbuffer()
     gw = sw;
     gh = sh;
 
-    hdrformat = gethdrformat(hdr ? hdrprec : 0);
+    hdrformat = gethdrformat(hdrprec);
     ghasstencil = (gdepthstencil > 1 || (gdepthstencil && gdepthformat)) && hasDS ? 2 : (gstencil ? 1 : 0);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
@@ -844,7 +844,6 @@ VARFP(bloomprec, 0, 2, 3, cleanupbloom());
 FVAR(hdraccumscale, 0, 0.98f, 1);
 VAR(hdraccummillis, 1, 33, 1000);
 VAR(hdrreduce, 0, 2, 2);
-VARFP(hdr, 0, 1, 1, cleanupgbuffer());
 VARFP(hdrprec, 0, 2, 3, cleanupgbuffer());
 FVARFP(hdrgamma, 1e-3f, 2, 1e3f, initwarning("HDR setup", INIT_LOAD, CHANGE_SHADERS));
 FVARR(hdrbright, 1e-4f, 1.0f, 1e4f);
@@ -889,15 +888,12 @@ void loadhdrshaders(int aa)
             if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapvelocity");
             break;
         case AA_SPLIT:
-            useshaderbyname("msaasplit");
             useshaderbyname("msaatonemapsplit");
             break;
         case AA_SPLIT_LUMA:
-            useshaderbyname("msaasplitluma");
             useshaderbyname("msaatonemapsplitluma");
             break;
         case AA_SPLIT_VELOCITY:
-            useshaderbyname("msaasplitvelocity");
             useshaderbyname("msaatonemapsplitvelocity");
             break;
         default:
@@ -905,59 +901,8 @@ void loadhdrshaders(int aa)
     }
 }
 
-void processldr(GLuint outfbo, int aa)
-{
-    timer *ldrtimer = begintimer("ldr processing");
-
-    if(aa >= AA_SPLIT)
-    {
-        glBindFramebuffer_(GL_FRAMEBUFFER, outfbo);
-        glViewport(0, 0, vieww, viewh);
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mshdrtex);
-        switch(aa)
-        {
-            case AA_SPLIT_LUMA: SETSHADER(msaasplitluma); break;
-            case AA_SPLIT_VELOCITY:
-                SETSHADER(msaasplitvelocity);
-                setaavelocityparams(GL_TEXTURE3);
-                break;
-            default: SETSHADER(msaasplit); break;
-        }
-        screenquad(vieww, viewh);
-
-        endtimer(ldrtimer);
-        return;
-    }
-
-    if(msaasamples)
-    {
-        glBindFramebuffer_(GL_READ_FRAMEBUFFER, mshdrfbo);
-        glBindFramebuffer_(GL_DRAW_FRAMEBUFFER, outfbo && !aa ? outfbo : hdrfbo);
-        glBlitFramebuffer_(0, 0, vieww, viewh, 0, 0, vieww, viewh, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        if(outfbo && !aa) return;
-    }
-
-    glBindFramebuffer_(GL_FRAMEBUFFER, outfbo);
-    glViewport(0, 0, vieww, viewh);
-    switch(aa)
-    {
-        case AA_LUMA: SETSHADER(hdrnopluma); break;
-        case AA_VELOCITY:
-            SETSHADER(hdrnopvelocity);
-            setaavelocityparams(GL_TEXTURE3);
-            break;
-        default: SETSHADER(hdrnop); break;
-    }
-    glBindTexture(GL_TEXTURE_RECTANGLE, hdrtex);
-    screenquad(vieww, viewh);
-
-    endtimer(ldrtimer);
-}
-
 void processhdr(GLuint outfbo, int aa)
 {
-    if(!hdr) { processldr(outfbo, aa); return; }
-
     timer *hdrtimer = begintimer("hdr processing");
 
     GLOBALPARAMF(hdrparams, hdrbright, hdrsaturate, bloomthreshold, bloomscale);
@@ -4037,7 +3982,7 @@ void setuplights()
 {
     GLERROR;
     setupgbuffer();
-    if(hdr && (bloomw < 0 || bloomh < 0)) setupbloom(gw, gh);
+    if(bloomw < 0 || bloomh < 0) setupbloom(gw, gh);
     if(ao && (aow < 0 || aoh < 0)) setupao(gw, gh);
     if(!shadowatlasfbo) setupshadowatlas();
     if(sunlight && csmshadowmap && gi && giscale && gidist && !rhfbo) setupradiancehints();

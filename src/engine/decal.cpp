@@ -433,7 +433,7 @@ struct decalrenderer
 
             decalinfo &d = newdecal();
             d.owner = i;
-            d.color = hdr && !(flags&DF_INVMOD) ? bvec(color).shr(1) : color;
+            d.color = !(flags&DF_INVMOD) ? bvec(color).shr(1) : color;
             d.millis = lastmillis;
             d.startvert = dstart;
             d.endvert = buf.endvert;

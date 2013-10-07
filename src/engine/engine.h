@@ -129,7 +129,6 @@ extern int fov;
 extern float curfov, fovy, aspect, forceaspect;
 extern float nearplane;
 extern int farplane;
-extern int hdr;
 extern bool hdrfloat;
 extern float ldrscale, ldrscaleb;
 extern int drawtex;
