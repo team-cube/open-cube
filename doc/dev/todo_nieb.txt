@@ -1,6 +1,22 @@
 ===============================================================
 Player Model
-   ...
+   
+ X Lowpoly
+ X Highpoly
+ X UV Map
+ X Texture
+ - Vertex Weights
+ - Animation
+      Idle
+      Run
+      Crouch
+      Jump
+      Jump-Crouch
+      Swim?
+      Edit
+ - Finalize
+      team skins, etc.
+      ...
 
 
 ===============================================================
