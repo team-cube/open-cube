@@ -11,7 +11,7 @@ struct skelhitdata;
 struct skelmodel : animmodel
 {
     struct vert { vec pos, norm; float u, v; int blend, interpindex; };
-    struct vvert { vec pos; float u, v; };
+    struct vvert { vec pos; half u, v; };
     struct vvertn : vvert { vec norm; };
     struct vvertw : vvertn { uchar weights[4]; uchar bones[4]; };
     struct vvertbump : vvertn { vec tangent; float bitangent; };
@@ -244,21 +244,6 @@ struct skelmodel : animmodel
             }
         }
 
-        static inline bool comparevert(vvert &w, int j, vert &v)
-        {
-            return v.u==w.u && v.v==w.v && v.pos==w.pos;
-        }
-
-        static inline bool comparevert(vvertn &w, int j, vert &v)
-        {
-            return v.u==w.u && v.v==w.v && v.pos==w.pos && v.norm==w.norm;
-        }
-
-        inline bool comparevert(vvertbump &w, int j, vert &v)
-        {
-            return v.u==w.u && v.v==w.v && v.pos==w.pos && v.norm==w.norm && (!bumpverts || (bumpverts[j].tangent==w.tangent && bumpverts[j].bitangent==w.bitangent));
-        }
-
         static inline void assignvert(vvert &vv, int j, vert &v, blendcombo &c)
         {
             vv.pos = v.pos;
@@ -350,12 +335,14 @@ struct skelmodel : animmodel
                 {
                     int index = t.vert[j];
                     vert &v = verts[index];
+                    T vv;
+                    assignvert(vv, index, v, ((skelmeshgroup *)group)->blendcombos[v.blend]);
                     int htidx = hthash(v.pos)&(htlen-1);
                     loopk(htlen)
                     {
                         int &vidx = htdata[(htidx+k)&(htlen-1)];
-                        if(vidx < 0) { vidx = idxs.add(ushort(vverts.length())); assignvert(vverts.add(), index, v, ((skelmeshgroup *)group)->blendcombos[v.blend]); break; }
-                        else if(comparevert(vverts[vidx], index, v)) { minvert = min(minvert, idxs.add(ushort(vidx))); break; }
+                        if(vidx < 0) { vidx = idxs.add(ushort(vverts.length())); vverts.add(vv); }
+                        else if(!memcmp(&vverts[vidx], &vv, sizeof(vv))) { minvert = min(minvert, idxs.add(ushort(vidx))); break; }
                     }
                 }
             }
@@ -387,8 +374,8 @@ struct skelmodel : animmodel
             vdata = (uchar *)&((vvert *)&vdata[voffset*stride])->u;
             loopi(numverts)
             {
-                ((float *)vdata)[0] = verts[i].u;
-                ((float *)vdata)[1] = verts[i].v;
+                ((half *)vdata)[0] = verts[i].u;
+                ((half *)vdata)[1] = verts[i].v;
                 vdata += stride;
             }
         }

@@ -1681,6 +1681,35 @@ struct matrix2
     explicit matrix2(const matrix3 &m) : a(m.a), b(m.b) {}
 };
 
+struct half
+{
+    ushort val;
+
+    half() {}
+    half(float f)
+    {
+        union { int i; float f; } conv;
+        conv.f = f;
+        ushort signbit = (conv.i>>(31-15)) & (1<<15), mantissa = (conv.i>>(23-10)) & 0x3FF;
+        int exponent = ((conv.i>>23)&0xFF) - 127 + 15;
+        if(exponent <= 0)
+        {
+            mantissa |= 0x400;
+            mantissa >>= min(1-exponent, 10+1);
+            exponent = 0;
+        }
+        else if(exponent >= 0x1F)
+        {
+            mantissa = 0;
+            exponent = 0x1F;
+        }
+        val = signbit | (ushort(exponent)<<10) | mantissa;
+    }
+
+    bool operator==(const half &h) const { return val == h.val; }
+    bool operator!=(const half &h) const { return val != h.val; }
+};
+
 extern bool raysphereintersect(const vec &center, float radius, const vec &o, const vec &ray, float &dist);
 extern bool rayboxintersect(const vec &b, const vec &s, const vec &o, const vec &ray, float &dist, int &orient);
 extern bool linecylinderintersect(const vec &from, const vec &to, const vec &start, const vec &end, float radius, float &dist);

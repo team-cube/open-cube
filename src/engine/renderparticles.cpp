@@ -146,9 +146,9 @@ struct particle
 struct partvert
 {
     vec pos;
-    float u, v;
     bvec color;
     uchar alpha;
+    float u, v;
 };
 
 #define COLLIDERADIUS 8.0f

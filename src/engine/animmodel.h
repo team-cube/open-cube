@@ -472,7 +472,7 @@ struct animmodel : model
             }
             if(lasttcbuf!=lastvbuf)
             {
-                gle::texcoord0pointer(stride, v);
+                gle::texcoord0pointer(stride, v, GL_HALF_FLOAT, 2);
                 lasttcbuf = lastvbuf;
             }
         }

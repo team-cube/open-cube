@@ -116,7 +116,7 @@ namespace sphere
     struct vert
     {
         vec pos;
-        float s, t;
+        half s, t;
     } *verts = NULL;
     GLushort *indices = NULL;
     int numverts = 0, numindices = 0;
@@ -186,7 +186,7 @@ namespace sphere
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
 
         gle::vertexpointer(sizeof(vert), &verts->pos);
-        gle::texcoord0pointer(sizeof(vert), &verts->s);
+        gle::texcoord0pointer(sizeof(vert), &verts->s, GL_HALF_FLOAT, 2);
         gle::enablevertex();
         gle::enabletexcoord0();
     }

@@ -2,7 +2,7 @@
 
 #include "engine.h"
 
-bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasDBB = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasTI = false, hasDBT = false, hasDC = false, hasDBGO = false, hasEGPU4 = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
+bool hasVAO = false, hasTR = false, hasTSW = false, hasFBO = false, hasAFBO = false, hasDS = false, hasTF = false, hasCBF = false, hasS3TC = false, hasFXT1 = false, hasLATC = false, hasRGTC = false, hasAF = false, hasFBB = false, hasFBMS = false, hasTMS = false, hasMSS = false, hasFBMSBS = false, hasNVFBMSC = false, hasNVTMS = false, hasUBO = false, hasMBR = false, hasDB2 = false, hasDBB = false, hasTG = false, hasT4 = false, hasTQ = false, hasPF = false, hasTRG = false, hasTI = false, hasHFV = false, hasHFP = false, hasDBT = false, hasDC = false, hasDBGO = false, hasEGPU4 = false, hasGPU4 = false, hasGPU5 = false, hasEAL = false, hasCR = false, hasOQ2 = false;
 bool mesa = false, intel = false, amd = false, nvidia = false;
 
 int hasstencil = 0;
@@ -538,7 +538,7 @@ void gl_checkextensions()
 
     if(glversion >= 300)
     {
-        hasTF = hasTRG = hasRGTC = hasPF = true;
+        hasTF = hasTRG = hasRGTC = hasPF = hasHFV = hasHFP = true;
 
         glBindFragDataLocation_ = (PFNGLBINDFRAGDATALOCATIONPROC)getprocaddress("glBindFragDataLocation");
         glUniform1ui_ =           (PFNGLUNIFORM1UIPROC)          getprocaddress("glUniform1ui");
@@ -647,7 +647,27 @@ void gl_checkextensions()
             hasTI = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_texture_integer extension.");
         }
+        if(hasext("GL_NV_half_float"))
+        {
+            hasHFV = hasHFP = true;
+            if(dbgexts) conoutf(CON_INIT, "Using GL_NV_half_float");
+        }
+        else
+        {
+            if(hasext("GL_ARB_half_float_vertex"))
+            {
+                hasHFV = true;
+                if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_half_float_vertex extension.");
+            }
+            if(hasext("GL_ARB_half_float_pixel"))
+            {
+                hasHFP = true;
+                if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_half_float_pixel extension.");
+            }
+        }
     }
+
+    if(!hasHFV) fatal("Half-precision floating-point support is required!");
 
     if(glversion >= 300 || hasext("GL_ARB_framebuffer_object"))
     {

@@ -1,9 +1,9 @@
 struct vertmodel : animmodel
 {
     struct vert { vec pos, norm; };
-    struct vvertff { vec pos; float u, v; };
-    struct vvert : vvertff { vec norm; };
-    struct vvertbump : vvert { vec tangent; float bitangent; };
+    struct vvert { vec pos; half u, v; };
+    struct vvertn : vvert { vec norm; };
+    struct vvertbump : vvertn { vec tangent; float bitangent; };
     struct tcvert { float u, v; };
     struct bumpvert { vec tangent; float bitangent; };
     struct tri { ushort vert[3]; };
@@ -95,29 +95,14 @@ struct vertmodel : animmodel
             }
         }
 
-        static inline bool comparevert(vvertff &w, int j, tcvert &tc, vert &v)
-        {
-            return tc.u==w.u && tc.v==w.v && v.pos==w.pos;
-        }
-
-        static inline bool comparevert(vvert &w, int j, tcvert &tc, vert &v)
-        {
-            return tc.u==w.u && tc.v==w.v && v.pos==w.pos && v.norm==w.norm;
-        }
-
-        inline bool comparevert(vvertbump &w, int j, tcvert &tc, vert &v)
-        {
-            return tc.u==w.u && tc.v==w.v && v.pos==w.pos && v.norm==w.norm && (!bumpverts || (bumpverts[j].tangent==w.tangent && bumpverts[j].bitangent==w.bitangent));
-        }
-
-        static inline void assignvert(vvertff &vv, int j, tcvert &tc, vert &v)
+        static inline void assignvert(vvert &vv, int j, tcvert &tc, vert &v)
         {
             vv.pos = v.pos;
             vv.u = tc.u;
             vv.v = tc.v;
         }
 
-        static inline void assignvert(vvert &vv, int j, tcvert &tc, vert &v)
+        static inline void assignvert(vvertn &vv, int j, tcvert &tc, vert &v)
         {
             vv.pos = v.pos;
             vv.norm = v.norm;
@@ -150,14 +135,16 @@ struct vertmodel : animmodel
                 loopj(3)
                 {
                     int index = t.vert[j];
-                    tcvert &tc = tcverts[index];
                     vert &v = verts[index];
+                    tcvert &tc = tcverts[index];
+                    T vv;
+                    assignvert(vv, index, tc, v);
                     int htidx = hthash(v.pos)&(htlen-1);
                     loopk(htlen)
                     {
                         int &vidx = htdata[(htidx+k)&(htlen-1)];
-                        if(vidx < 0) { vidx = idxs.add(ushort(vverts.length())); assignvert(vverts.add(), index, tc, v); break; }
-                        else if(comparevert(vverts[vidx], index, tc, v)) { minvert = min(minvert, idxs.add(ushort(vidx))); break; }
+                        if(vidx < 0) { vidx = idxs.add(ushort(vverts.length())); vverts.add(vv); break; }
+                        else if(!memcmp(&vverts[vidx], &vv, sizeof(vv))) { minvert = min(minvert, idxs.add(ushort(vidx))); break; }
                     }
                 }
             }
@@ -184,10 +171,11 @@ struct vertmodel : animmodel
 
         void filltc(uchar *vdata, size_t stride)
         {
-            vdata = (uchar *)&((vvertff *)&vdata[voffset*stride])->u;
+            vdata = (uchar *)&((vvert *)&vdata[voffset*stride])->u;
             loopi(numverts)
             {
-                *(tcvert *)vdata = tcverts[i];
+                ((half *)vdata)[0] = tcverts[i].u;
+                ((half *)vdata)[1] = tcverts[i].v;
                 vdata += stride;
             }
         }
@@ -219,11 +207,11 @@ struct vertmodel : animmodel
             }
             else if(norms)
             {
-                if(as.interp<1) iploop(vvert, { ipvertp(pos); ipvertp(norm); })
-                else iploop(vvert, { ipvert(pos); ipvert(norm); })
+                if(as.interp<1) iploop(vvertn, { ipvertp(pos); ipvertp(norm); })
+                else iploop(vvertn, { ipvert(pos); ipvert(norm); })
             }
-            else if(as.interp<1) iploop(vvertff, ipvertp(pos))
-            else iploop(vvertff, ipvert(pos))
+            else if(as.interp<1) iploop(vvert, ipvertp(pos))
+            else iploop(vvert, ipvert(pos))
             #undef iploop
             #undef ipvert
             #undef ipbvert
@@ -351,7 +339,7 @@ struct vertmodel : animmodel
 
             vnorms = norms;
             vtangents = tangents;
-            vertsize = tangents ? sizeof(vvertbump) : (norms ? sizeof(vvert) : sizeof(vvertff));
+            vertsize = tangents ? sizeof(vvertbump) : (norms ? sizeof(vvertn) : sizeof(vvert));
             vlen = 0;
             if(numframes>1)
             {
@@ -377,8 +365,8 @@ struct vertmodel : animmodel
                 int *htdata = new int[htlen];
                 memset(htdata, -1, htlen*sizeof(int));
                 if(tangents) GENVBO(vvertbump);
-                else if(norms) GENVBO(vvert);
-                else GENVBO(vvertff);
+                else if(norms) GENVBO(vvertn);
+                else GENVBO(vvert);
                 delete[] htdata;
                 #undef GENVBO
                 glBindBuffer_(GL_ARRAY_BUFFER, 0);
@@ -392,7 +380,7 @@ struct vertmodel : animmodel
 
         void bindvbo(const animstate *as, part *p, vbocacheentry &vc)
         {
-            vvert *vverts = 0;
+            vvertn *vverts = 0;
             bindpos(ebuf, vc.vbuf, &vverts->pos, vertsize);
             if(as->cur.anim&ANIM_NOSKIN)
             {
