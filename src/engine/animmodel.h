@@ -87,7 +87,6 @@ struct animmodel : model
 
         bool envmapped() const { return envmapmax>0 && envmapmodels; }
         bool bumpmapped() const { return normalmap && bumpmodels; }
-        bool normals() const { return true; }
         bool tangents() const { return bumpmapped(); }
         bool alphatested() const { return alphatest > 0 && tex->type&Texture::ALPHA; }
 
@@ -661,12 +660,6 @@ struct animmodel : model
                 s.tex = tex;
                 s.masks = masks;
             }
-        }
-
-        bool hasnormals() const
-        {
-            loopv(skins) if(skins[i].normals()) return true;
-            return false;
         }
 
         bool hastangents() const
