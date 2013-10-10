@@ -105,8 +105,7 @@ struct md2 : vertmodel, vertloader<md2>
                         idx = &tchash[tckey];
                         *idx = tcverts.length();
                         tcvert &tc = tcverts.add();
-                        tc.u = u.f;
-                        tc.v = v.f;
+                        tc.tc = vec2(u.f, v.f);
                         vindexes.add((ushort)vindex);
                     }
                     idxs.add(*idx);
@@ -189,11 +188,13 @@ struct md2 : vertmodel, vertloader<md2>
                                        v.vertex[2]*frame.scale[2]+frame.translate[2]);
                     const float *norm = md2normaltable[v.normalindex];
                     curvert->norm = vec(norm[0], -norm[1], norm[2]);
-                    curvert++;
+                    ++curvert;
                 }
                 frame_offset += header.framesize;
             }
             delete[] tmpverts;
+
+            m.calctangents();
 
             delete file;
 
