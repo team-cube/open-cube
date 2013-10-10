@@ -12,7 +12,7 @@ struct skelmodel : animmodel
 {
     struct vert { vec pos, norm; vec2 tc; quat tangent; int blend, interpindex; };
     struct vvert { vec pos; hvec2 tc; squat tangent; };
-    struct vvertg { hvec pos; ushort reserved; hvec2 tc; squat tangent; };
+    struct vvertg { hvec4 pos; hvec2 tc; squat tangent; };
     struct vvertgw : vvertg { uchar weights[4]; uchar bones[4]; };
     struct tri { ushort vert[3]; };
 
@@ -240,16 +240,14 @@ struct skelmodel : animmodel
 
         static inline void assignvert(vvertg &vv, int j, vert &v, blendcombo &c)
         {
-            vv.pos = v.pos;
-            vv.reserved = 0;
+            vv.pos = hvec4(v.pos, 1);
             vv.tc = v.tc;
             vv.tangent = v.tangent;
         }
 
         static inline void assignvert(vvertgw &vv, int j, vert &v, blendcombo &c)
         {
-            vv.pos = v.pos;
-            vv.reserved = 0;
+            vv.pos = hvec4(v.pos, 1);
             vv.tc = v.tc;
             vv.tangent = v.tangent;
             c.serialize(vv);

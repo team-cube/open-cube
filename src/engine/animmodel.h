@@ -488,24 +488,25 @@ struct animmodel : model
         virtual void render(const animstate *as, float pitch, const vec &axis, const vec &forward, dynent *d, part *p) {}
         virtual void intersect(const animstate *as, float pitch, const vec &axis, const vec &forward, dynent *d, part *p, const vec &o, const vec &ray) {}
 
-        void bindpos(GLuint ebuf, GLuint vbuf, void *v, int stride, int type)
+        void bindpos(GLuint ebuf, GLuint vbuf, void *v, int stride, int type, int size)
         {
             if(lastebuf!=ebuf)
             {
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
                 lastebuf = ebuf;
             }
-            if(lastvbuf!=vbuf || vbuftype != type)
+            if(lastvbuf!=vbuf || vbuftype != type || vbufsize != size)
             {
                 glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
                 if(!lastvbuf) gle::enablevertex();
-                gle::vertexpointer(stride, v, type);
+                gle::vertexpointer(stride, v, type, size);
                 lastvbuf = vbuf;
                 vbuftype = type;
+				vbufsize = size;
             }
         }
-        void bindpos(GLuint ebuf, GLuint vbuf, vec *v, int stride) { bindpos(ebuf, vbuf, v, stride, GL_FLOAT); }
-        void bindpos(GLuint ebuf, GLuint vbuf, hvec *v, int stride) { bindpos(ebuf, vbuf, v, stride, GL_HALF_FLOAT); }
+        void bindpos(GLuint ebuf, GLuint vbuf, vec *v, int stride) { bindpos(ebuf, vbuf, v, stride, GL_FLOAT, 3); }
+        void bindpos(GLuint ebuf, GLuint vbuf, hvec4 *v, int stride) { bindpos(ebuf, vbuf, v, stride, GL_HALF_FLOAT, 4); }
 
         void bindtc(void *v, int stride)
         {
@@ -1528,7 +1529,7 @@ struct animmodel : model
     static bool enabletc, enablecullface, enabletangents, enablebones, enabledepthoffset;
     static float sizescale, transparent;
     static GLuint lastvbuf, lasttcbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
-    static int vbuftype;
+    static int vbuftype, vbufsize;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
     static int envmaptmu, matrixpos;
     static matrix4 matrixstack[64];
@@ -1588,7 +1589,7 @@ bool animmodel::enabletc = false, animmodel::enabletangents = false, animmodel::
 float animmodel::sizescale = 1, animmodel::transparent = 1;
 GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastxbuf = 0, animmodel::lastbbuf = 0, animmodel::lastebuf = 0,
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
-int animmodel::vbuftype = -1;
+int animmodel::vbuftype = -1, animmodel::vbufsize = -1;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
 int animmodel::envmaptmu = -1, animmodel::matrixpos = 0;
 matrix4 animmodel::matrixstack[64];

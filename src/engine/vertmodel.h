@@ -2,7 +2,7 @@ struct vertmodel : animmodel
 {
     struct vert { vec pos, norm; vec4 tangent; };
     struct vvert { vec pos; hvec2 tc; squat tangent; };
-    struct vvertg { hvec pos; ushort reserved; hvec2 tc; squat tangent; };
+    struct vvertg { hvec4 pos; hvec2 tc; squat tangent; };
     struct tcvert { vec2 tc; };
     struct tri { ushort vert[3]; };
 
@@ -85,8 +85,7 @@ struct vertmodel : animmodel
 
         static inline void assignvert(vvertg &vv, int j, tcvert &tc, vert &v)
         {
-            vv.pos = v.pos;
-            vv.reserved = 0;
+            vv.pos = hvec4(v.pos, 1);
             vv.tc = tc.tc;
             vv.tangent = v.tangent;
         }
