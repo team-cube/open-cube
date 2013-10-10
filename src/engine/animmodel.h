@@ -352,6 +352,17 @@ struct animmodel : model
             loopi(numframes) buildnorms(&verts[i*numverts], numverts, tris, numtris, areaweight);
         }
 
+        static inline void fixqtangent(quat &q, float bt)
+        {
+            static const float bias = -1.5f/65535, biasscale = sqrtf(1 + bias*bias);
+            if(bt < 0)
+            {
+                if(q.w >= 0) q.neg();
+                if(q.w > bias) { q.mul3(biasscale); q.w = bias; }
+            }
+            else if(q.w < 0) q.neg();
+        }
+
         template<class V> static inline void calctangent(V &v, const vec &n, const vec &t, float bt)
         {
             matrix3 m;
@@ -359,7 +370,7 @@ struct animmodel : model
             m.a = t;
             m.b.cross(m.c, m.a);
             quat q(m);
-            if((bt < 0) != (q.w < 0)) q.neg();
+            fixqtangent(q, bt);
             v.tangent = q;
         }
 
@@ -410,7 +421,7 @@ struct animmodel : model
                 (m.a = t).project(m.c).normalize();
                 m.b.cross(m.c, m.a);
                 quat q(m);
-                if((m.b.dot(bt) < 0) != (q.w < 0)) q.neg();
+                fixqtangent(q, m.b.dot(bt));
                 v.tangent = q;
             }
             delete[] tangent;
