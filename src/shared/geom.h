@@ -1730,7 +1730,7 @@ struct hvec2
 struct hvec
 {
     half x, y, z;
-    
+
     hvec() {}
     template<class T> hvec(T x, T y, T z) : x(x), y(y), z(z) {}
     hvec(const vec &v) : x(v.x), y(v.y), z(v.z) {}
@@ -1774,7 +1774,7 @@ struct squat
         convert(q);
     }
 };
- 
+
 extern bool raysphereintersect(const vec &center, float radius, const vec &o, const vec &ray, float &dist);
 extern bool rayboxintersect(const vec &b, const vec &s, const vec &o, const vec &ray, float &dist, int &orient);
 extern bool linecylinderintersect(const vec &from, const vec &to, const vec &start, const vec &end, float radius, float &dist);

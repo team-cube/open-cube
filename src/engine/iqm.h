@@ -243,7 +243,7 @@ struct iqm : skelmodel, skelloader<iqm>
                     delete m;
                     continue;
                 }
-                if(vnorm && !vtan) m->calctangents(); 
+                if(vnorm && !vtan) m->calctangents();
             }
 
             sortblendcombos();

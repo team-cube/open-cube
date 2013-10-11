@@ -281,7 +281,7 @@ struct animmodel : model
 
             smoothdata() : norm(0, 0, 0), next(-1) {}
         };
-    
+
         template<class V, class T> void smoothnorms(V *verts, int numverts, T *tris, int numtris, float limit, bool areaweight)
         {
             if(!numverts) return;
@@ -495,14 +495,12 @@ struct animmodel : model
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
                 lastebuf = ebuf;
             }
-            if(lastvbuf!=vbuf || vbuftype != type || vbufsize != size)
+            if(lastvbuf!=vbuf)
             {
                 glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
                 if(!lastvbuf) gle::enablevertex();
                 gle::vertexpointer(stride, v, type, size);
                 lastvbuf = vbuf;
-                vbuftype = type;
-				vbufsize = size;
             }
         }
         void bindpos(GLuint ebuf, GLuint vbuf, vec *v, int stride) { bindpos(ebuf, vbuf, v, stride, GL_FLOAT, 3); }
@@ -535,7 +533,7 @@ struct animmodel : model
                 lastxbuf = lastvbuf;
             }
         }
- 
+
         void bindbones(void *wv, void *bv, int stride)
         {
             if(!enablebones)
@@ -1529,7 +1527,6 @@ struct animmodel : model
     static bool enabletc, enablecullface, enabletangents, enablebones, enabledepthoffset;
     static float sizescale, transparent;
     static GLuint lastvbuf, lasttcbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
-    static int vbuftype, vbufsize;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
     static int envmaptmu, matrixpos;
     static matrix4 matrixstack[64];
@@ -1589,7 +1586,6 @@ bool animmodel::enabletc = false, animmodel::enabletangents = false, animmodel::
 float animmodel::sizescale = 1, animmodel::transparent = 1;
 GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastxbuf = 0, animmodel::lastbbuf = 0, animmodel::lastebuf = 0,
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
-int animmodel::vbuftype = -1, animmodel::vbufsize = -1;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
 int animmodel::envmaptmu = -1, animmodel::matrixpos = 0;
 matrix4 animmodel::matrixstack[64];

@@ -1220,7 +1220,7 @@ struct skelmodel : animmodel
         template<class T>
         void bindbones(T *vverts) { if(enablebones) disablebones(); }
         void bindbones(vvertgw *vverts) { meshgroup::bindbones(vverts->weights, vverts->bones, vertsize); }
-        
+
         template<class T>
         void bindvbo(const animstate *as, part *p, vbocacheentry &vc)
         {
