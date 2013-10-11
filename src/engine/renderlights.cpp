@@ -2394,7 +2394,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     if(!lighttilebatch)
     {
         gle::disable();
-        if(!lightspherevbuf) initlightsphere(10, 5);
+        if(!lightspherevbuf) initlightsphere(8, 4);
         glBindBuffer_(GL_ARRAY_BUFFER, lightspherevbuf);
         glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, lightsphereebuf);
         gle::vertexpointer(sizeof(vec), lightsphereverts);
