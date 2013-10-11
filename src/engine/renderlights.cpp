@@ -2227,7 +2227,7 @@ VAR(depthtestlights, 0, 2, 2);
 VAR(depthclamplights, 0, 0, 1);
 VAR(depthfaillights, 0, 1, 1);
 VAR(lighttilebatch, 0, 8, 8);
-VAR(batchsunlight, 0, 1, 1);
+VAR(batchsunlight, 0, 2, 2);
 FVAR(lightradiustweak, 1, 1.11f, 2);
 
 VAR(lighttilestrip, 0, 1, 1);
@@ -2330,7 +2330,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             GLOBALPARAMF(giscale, 2*giscale);
             GLOBALPARAMF(skylightcolor, 2*giaoscale*skylightcolor.x*lightscale*skylightscale, 2*giaoscale*skylightcolor.y*lightscale*skylightscale, 2*giaoscale*skylightcolor.z*lightscale*skylightscale);
         }
-        if(!batchsunlight) sunpass = true;
+        if(batchsunlight <= (gi && giscale && gidist ? 1 : 0)) sunpass = true;
     }
 
     gle::defvertex(3);
