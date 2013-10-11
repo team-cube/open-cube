@@ -949,6 +949,7 @@ void gl_checkextensions()
         msaadepthstencil = gdepthstencil = 1; // some older AMD GPUs do not support reading from depth-stencil textures, so only use depth-stencil renderbuffer for now
         if(checkseries(renderer, "Radeon HD", 4000, 5199)) amd_pf_bug = 1;
         batchsunlight = 1; // massive cpu stalls if GI 3D textures are accessed in deferred light tile shaders as of catalyst 13.9
+        lighttilebatch = 0;
     }
     else if(nvidia)
     {
