@@ -319,11 +319,6 @@ namespace UI
             });
         }
 
-        void draw()
-        {
-            draw(x, y);
-        }
-
         void resetstate()
         {
             state &= STATE_HOLD_MASK;
@@ -550,7 +545,7 @@ namespace UI
             window = NULL;
         }
 
-        void draw()
+        void draw(float sx, float sy)
         {
             if(state&STATE_HIDDEN) return;
             window = this;
@@ -562,11 +557,16 @@ namespace UI
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             gle::colorf(1, 1, 1);
 
-            Object::draw(x, y);
+            Object::draw(sx, sy);
 
             glDisable(GL_BLEND);
 
             window = NULL;
+        }
+
+        void draw()
+        {
+            draw(x, y);
         }
 
         void adjustchildren()
@@ -727,6 +727,8 @@ namespace UI
         }
 
         bool allowinput() const { loopwindows(w, { if(w->allowinput && !(w->state&STATE_HIDDEN)) return true; }); return false; }
+
+        void draw(float sx, float sy) {}
 
         void draw()
         {
