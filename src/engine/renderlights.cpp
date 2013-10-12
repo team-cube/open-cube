@@ -2044,6 +2044,9 @@ void cleardeferredlightshaders()
     deferredmsaasampleshader = NULL;
 }
 
+VARF(lighttilebatch, 0, 8, 8, cleardeferredlightshaders());
+VARF(batchsunlight, 0, 2, 2, cleardeferredlightshaders());
+
 Shader *loaddeferredlightshader(const char *type = NULL)
 {
     string common, shadow, sun;
@@ -2054,6 +2057,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
         copystring(common, type);
         commonlen = strlen(common);
     }
+    if(lighttilebatch) common[commonlen++] = '0' + lighttilebatch;
     if(usegatherforsm()) common[commonlen++] = smfilter > 2 ? 'G' : 'g';
     else if(smfilter) common[commonlen++] = smfilter > 2 ? 'E' : (smfilter > 1 ? 'F' : 'f');
     common[commonlen] = '\0';
@@ -2061,7 +2065,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
     shadow[shadowlen++] = 'p';
     shadow[shadowlen] = '\0';
 
-    int usecsm = 0, userh = 0;
+    int usecsm = 0, userh = 0, batchsun = 0;
     if(common[0] != 'm' && ao) sun[sunlen++] = 'a';
     if(sunlight && csmshadowmap)
     {
@@ -2078,11 +2082,16 @@ Shader *loaddeferredlightshader(const char *type = NULL)
                 sun[sunlen++] = '0' + rhsplits;
             }
         }
+        if(lighttilebatch && batchsunlight > (userh ? 1 : 0))
+        {
+            batchsun = 1;
+            sun[sunlen++] = 'b';
+        }
     }
     sun[sunlen] = '\0';
 
     defformatstring(name, "deferredlight%s%s%s", common, shadow, sun);
-    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d", common, shadow, sun, usecsm, userh);
+    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch, batchsun);
 }
 
 void loaddeferredlightshaders()
@@ -2225,8 +2234,6 @@ void cleanuplightsphere()
 
 VAR(depthtestlights, 0, 2, 2);
 VAR(depthfaillights, 0, 1, 1);
-VAR(lighttilebatch, 0, 8, 8);
-VAR(batchsunlight, 0, 2, 2);
 FVAR(lightradiustweak, 1, 1.11f, 2);
 
 VAR(lighttilestrip, 0, 1, 1);
