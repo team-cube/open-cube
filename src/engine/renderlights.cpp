@@ -2065,7 +2065,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
     shadow[shadowlen++] = 'p';
     shadow[shadowlen] = '\0';
 
-    int usecsm = 0, userh = 0, batchsun = 0;
+    int usecsm = 0, userh = 0, usebase = 0;
     if(common[0] != 'm' && ao) sun[sunlen++] = 'a';
     if(sunlight && csmshadowmap)
     {
@@ -2082,16 +2082,16 @@ Shader *loaddeferredlightshader(const char *type = NULL)
                 sun[sunlen++] = '0' + rhsplits;
             }
         }
-        if(lighttilebatch && batchsunlight > (userh ? 1 : 0))
-        {
-            batchsun = 1;
-            sun[sunlen++] = 'b';
-        }
+    }
+    if(lighttilebatch && (!usecsm || batchsunlight > (userh ? 1 : 0)))
+    {
+        usebase = 1;
+        sun[sunlen++] = 'b';
     }
     sun[sunlen] = '\0';
 
     defformatstring(name, "deferredlight%s%s%s", common, shadow, sun);
-    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch, batchsun);
+    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch, usebase);
 }
 
 void loaddeferredlightshaders()
