@@ -2224,7 +2224,6 @@ void cleanuplightsphere()
 }
 
 VAR(depthtestlights, 0, 2, 2);
-VAR(depthclamplights, 0, 0, 1);
 VAR(depthfaillights, 0, 1, 1);
 VAR(lighttilebatch, 0, 8, 8);
 VAR(batchsunlight, 0, 2, 2);
@@ -2400,8 +2399,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         gle::vertexpointer(sizeof(vec), lightsphereverts);
         gle::enablevertex();
 
-        if(hasDC && depthclamplights) glEnable(GL_DEPTH_CLAMP);
-
         bool outside = true;
         loopv(lightorder)
         {
@@ -2502,8 +2499,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             glDepthFunc(GL_LESS);
             glCullFace(GL_BACK);
         }
-
-        if(hasDC && depthclamplights) glDisable(GL_DEPTH_CLAMP);
 
         gle::disablevertex();
         glBindBuffer_(GL_ARRAY_BUFFER, 0);
