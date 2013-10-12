@@ -957,6 +957,26 @@ template<class H, class E, class K, class T> struct hashbase
         return false;
     }
 
+    void recycle()
+    {
+        if(!numelems) return;
+        loopi(size)
+        {
+            chain *c = chains[i];
+            if(!c) continue;
+            for(;;)
+            {
+                htrecycle(c->elem);
+                if(!c->next) break;
+                c = c->next;
+            }
+            c->next = unused;
+            unused = chains[i];
+            chains[i] = NULL;
+        }
+        numelems = 0;
+    }
+
     void deletechunks()
     {
         for(chainchunk *nextchunk; chunks; chunks = nextchunk)
@@ -980,6 +1000,8 @@ template<class H, class E, class K, class T> struct hashbase
     static inline T &enumdata(void *i) { return H::getdata(((chain *)i)->elem); }
 };
 
+template<class T> static inline void htrecycle(const T &) {}
+ 
 template<class T> struct hashset : hashbase<hashset<T>, T, T, T>
 {
     typedef hashbase<hashset<T>, T, T, T> basetype;
@@ -1008,6 +1030,13 @@ template<class K, class T> struct hashtableentry
     K key;
     T data;
 };
+
+template<class K, class T>
+static inline void htrecycle(hashtableentry<K, T> &entry)
+{
+    htrecycle(entry.key);
+    htrecycle(entry.data);
+}
 
 template<class K, class T> struct hashtable : hashbase<hashtable<K, T>, hashtableentry<K, T>, K, T>
 {
