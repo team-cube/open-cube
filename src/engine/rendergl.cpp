@@ -524,7 +524,7 @@ void gl_checkextensions()
         glGenVertexArrays_ =    (PFNGLGENVERTEXARRAYSPROC)   getprocaddress("glGenVertexArrays");
         glIsVertexArray_ =      (PFNGLISVERTEXARRAYPROC)     getprocaddress("glIsVertexArray");
         hasVAO = true;
-        if(glversion < 300 || dbgexts) conoutf(CON_INIT, "Using GL_ARB_vertex_array_object extension.");
+        if(glversion < 300 && dbgexts) conoutf(CON_INIT, "Using GL_ARB_vertex_array_object extension.");
     }
     else if(hasext("GL_APPLE_vertex_array_object"))
     {
