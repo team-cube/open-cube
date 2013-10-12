@@ -957,7 +957,6 @@ void gl_checkextensions()
     else if(intel)
     {
         glineardepth = 1; // causes massive slowdown in windows driver (and sometimes in linux driver) if not using linear depth
-        lighttilebatch = 4;
         if(mesa) batchsunlight = 0; // causes massive slowdown in linux driver
         smgather = 1; // native shadow filter is slow
     }
