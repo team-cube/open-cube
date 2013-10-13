@@ -1616,7 +1616,7 @@ static inline bool htcmp(const lighttileslice &x, const lighttileslice &y)
     return x.tile->band == y.tile->band && 
            x.priority == y.priority &&
            x.numlights == y.numlights &&
-           !memcmp(&x.tile->lights[x.offset], &y.tile->lights[y.offset], x.numlights*sizeof(int));
+           (!x.numlights || !memcmp(&x.tile->lights[x.offset], &y.tile->lights[y.offset], x.numlights*sizeof(int)));
 }
 
 vector<lightinfo> lights;
