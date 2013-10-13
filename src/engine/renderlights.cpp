@@ -1547,7 +1547,7 @@ int shadowmapping = 0;
 
 struct lightstrip
 {
-    int x, y, w;
+    short x, y, w;
 
     bool inside(int tx1, int ty1, int tx2, int ty2, const uint *tilemask) const
     {
@@ -1565,7 +1565,7 @@ struct lightstrip
 struct lighttile
 {
     int band;
-    vector<int> lights;
+    vector<ushort> lights;
 
     void reset()
     {
@@ -1576,7 +1576,7 @@ struct lighttile
 struct lighttileslice
 {
     lighttile *tile;
-    int priority, offset, numlights;
+    ushort priority, offset, numlights;
 
     lighttileslice() {}
     lighttileslice(lighttile *tile, int priority, int offset, int numlights) : tile(tile), priority(priority), offset(offset), numlights(numlights) {}
@@ -2648,7 +2648,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         loopvj(batch.strips)
         {
             lightstrip &s = batch.strips[j];
-            if(s.y >= bty1 && s.y < bty2) for(int x = max(s.x, btx1), end = min(s.x + s.w, btx2); x < end;)
+            if(s.y >= bty1 && s.y < bty2) for(int x = max(int(s.x), btx1), end = min(int(s.x + s.w), btx2); x < end;)
             {
                 int start;
                 if(tilemask)
