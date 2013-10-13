@@ -2979,7 +2979,8 @@ void packlights()
                     lightinfo &l = lights[tile.lights[offset+j]];
                     if((l.shadowmap >= 0) != shadowmap || (l.spot > 0) != spotlight) { n = j; break; }
                 }
-                lighttileslice slice(&tile, offset || sunpass ? 1 : 0, offset, n);
+                int priority = (offset || sunpass ? 4 : 0) + (shadowmap ? 0 : 2) + (spotlight ? 1 : 0);
+                lighttileslice slice(&tile, priority, offset, n);
                 lightbatch &batch = lightbatcher[slice];
                 if(batch.strips.empty() || !lighttilestrip || !batch.strips.last().extend(x, y))
                 {
