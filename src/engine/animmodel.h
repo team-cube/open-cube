@@ -94,7 +94,7 @@ struct animmodel : model
 
             if(!skinned) return;
 
-            GLOBALPARAMF(transparent, transparent);
+            GLOBALPARAM(colorscale, colorscale);
 
             if(fullbright) GLOBALPARAMF(fullbright, 0.0f, fullbright);
             else GLOBALPARAMF(fullbright, 1.0f, as->cur.anim&ANIM_FULLBRIGHT ? 0.5f*fullbrightmodels/100.0f : 0.0f);
@@ -1226,7 +1226,7 @@ struct animmodel : model
         }
     }
 
-    void render(int anim, int basetime, int basetime2, const vec &o, float yaw, float pitch, float roll, dynent *d, modelattach *a, float size, float trans)
+    void render(int anim, int basetime, int basetime2, const vec &o, float yaw, float pitch, float roll, dynent *d, modelattach *a, float size, const vec4 &color)
     {
         vec axis(1, 0, 0), forward(0, 1, 0);
 
@@ -1267,7 +1267,7 @@ struct animmodel : model
 
         if(!(anim&ANIM_NOSKIN))
         {
-            transparent = trans;
+            colorscale = color;
 
             if(envmapped()) envmaptmu = 2;
             else if(a) for(int i = 0; a[i].tag; i++) if(a[i].m && a[i].m->envmapped())
@@ -1521,7 +1521,8 @@ struct animmodel : model
     }
 
     static bool enabletc, enablecullface, enabletangents, enablebones, enabledepthoffset;
-    static float sizescale, transparent;
+    static float sizescale;
+    static vec4 colorscale;
     static GLuint lastvbuf, lasttcbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
     static int envmaptmu, matrixpos;
@@ -1534,7 +1535,6 @@ struct animmodel : model
         lastvbuf = lasttcbuf = lastxbuf = lastbbuf = lastebuf = lastenvmaptex = closestenvmaptex = 0;
         lasttex = lastdecal = lastmasks = lastnormalmap = NULL;
         envmaptmu = -1;
-        sizescale = transparent = 1;
     }
 
     static void disablebones()
@@ -1579,7 +1579,8 @@ int animmodel::intersectresult = -1, animmodel::intersectmode = 0;
 float animmodel::intersectdist = 0, animmodel::intersectscale = 1;
 bool animmodel::enabletc = false, animmodel::enabletangents = false, animmodel::enablebones = false,
      animmodel::enablecullface = true, animmodel::enabledepthoffset = false;
-float animmodel::sizescale = 1, animmodel::transparent = 1;
+float animmodel::sizescale = 1;
+vec4 animmodel::colorscale(1, 1, 1, 1);
 GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastxbuf = 0, animmodel::lastbbuf = 0, animmodel::lastebuf = 0,
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
