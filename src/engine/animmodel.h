@@ -1,7 +1,3 @@
-VARP(lightmodels, 0, 1, 1);
-VARP(envmapmodels, 0, 1, 1);
-VARP(glowmodels, 0, 1, 1);
-VARP(bumpmodels, 0, 1, 1);
 VARP(fullbrightmodels, 0, 0, 200);
 VAR(testtags, 0, 0, 1);
 VARF(dbgcolmesh, 0, 0, 1,
@@ -85,14 +81,16 @@ struct animmodel : model
 
         skin() : owner(0), tex(notexture), decal(NULL), masks(notexture), envmap(NULL), normalmap(NULL), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), glowdelta(0), glowpulse(0), fullbright(0), envmapmin(0), envmapmax(0), scrollu(0), scrollv(0), alphatest(0.9f), cullface(true) {}
 
-        bool envmapped() const { return envmapmax>0 && envmapmodels; }
-        bool bumpmapped() const { return normalmap && bumpmodels; }
+        bool masked() const { return masks != notexture; }
+        bool envmapped() const { return envmapmax>0; }
+        bool bumpmapped() const { return normalmap != NULL; }
         bool alphatested() const { return alphatest > 0 && tex->type&Texture::ALPHA; }
+        bool decaled() const { return decal != NULL; }
 
-        void setshaderparams(mesh &m, const animstate *as, bool masked, bool alphatested = false, bool skinned = true)
+        void setshaderparams(mesh &m, const animstate *as, bool skinned = true)
         {
             GLOBALPARAMF(texscroll, scrollu*lastmillis/1000.0f, scrollv*lastmillis/1000.0f);
-            if(alphatested) GLOBALPARAMF(alphatest, alphatest);
+            if(alphatested()) GLOBALPARAMF(alphatest, alphatest);
 
             if(!skinned) return;
 
@@ -108,11 +106,11 @@ struct animmodel : model
                 curpulse -= floor(curpulse);
                 curglow += glowdelta*2*fabs(curpulse - 0.5f);
             }
-            GLOBALPARAMF(maskscale, spec*lightmodels, curglow*glowmodels);
-            if(envmaptmu>=0 && envmapmax>0) GLOBALPARAMF(envmapscale, envmapmin-envmapmax, envmapmax);
+            GLOBALPARAMF(maskscale, spec, curglow);
+            if(envmapped()) GLOBALPARAMF(envmapscale, envmapmin-envmapmax, envmapmax);
         }
 
-        Shader *loadshader(bool shouldenvmap, bool masked, bool alphatested)
+        Shader *loadshader()
         {
             #define DOMODELSHADER(name, body) \
                 do { \
@@ -122,26 +120,30 @@ struct animmodel : model
                 } while(0)
             #define LOADMODELSHADER(name, alphaname) \
                 do { \
-                    if(alphatested) DOMODELSHADER(alphaname, return alphaname##shader); \
+                    if(alphatested()) DOMODELSHADER(alphaname, return alphaname##shader); \
                     else DOMODELSHADER(name, return name##shader); \
-                } while(0)
-            #define LOADDECALMODELSHADER(name, alphaname, decalname, decalalphaname) \
-                do { \
-                    if(decal) LOADMODELSHADER(decalname, decalalphaname); \
-                    else LOADMODELSHADER(name, alphaname); \
                 } while(0)
             #define SETMODELSHADER(m, name) DOMODELSHADER(name, (m).setshader(name##shader))
             if(shadowmapping == SM_REFLECT) LOADMODELSHADER(rsmmodel, rsmalphamodel);
             else if(shader) return shader;
-            else if(bumpmapped())
-            {
-                if(shouldenvmap) LOADDECALMODELSHADER(bumpenvmapmodel, bumpenvmapalphamodel, decalbumpenvmapmodel, decalbumpenvmapalphamodel);
-                else if(masked && (lightmodels || glowmodels)) LOADDECALMODELSHADER(bumpmasksmodel, bumpmasksalphamodel, decalbumpmasksmodel, decalbumpmasksalphamodel);
-                else LOADDECALMODELSHADER(bumpmodel, bumpalphamodel, decalbumpmodel, decalbumpalphamodel);
-            }
-            else if(shouldenvmap) LOADDECALMODELSHADER(envmapmodel, envmapalphamodel, decalenvmapmodel, decalenvmapalphamodel);
-            else if(masked && (lightmodels || glowmodels)) LOADDECALMODELSHADER(masksmodel, masksalphamodel, decalmasksmodel, decalmasksalphamodel);
-            else LOADDECALMODELSHADER(stdmodel, alphamodel, decalmodel, decalalphamodel);
+
+            string opts;
+            int optslen = 0;
+            if(alphatested()) opts[optslen++] = 'a';
+            if(decaled()) opts[optslen++] = decal->type&Texture::ALPHA ? 'D' : 'd';
+            if(bumpmapped()) opts[optslen++] = 'n';
+            if(envmapped()) { opts[optslen++] = 'm'; opts[optslen++] = 'e'; }
+            else if(masked()) opts[optslen++] = 'm';
+            opts[optslen++] = '\0';
+
+            defformatstring(name, "model%s", opts);
+            shader = generateshader(name, "modelshader \"%s\"", opts);
+            return shader;
+        }
+
+        void cleanup()
+        {
+            if(shader && shader->standard) shader = NULL;
         }
 
         void preloadBIH()
@@ -151,13 +153,12 @@ struct animmodel : model
 
         void preloadshader()
         {
-            bool shouldenvmap = envmapped(), shouldalphatest = alphatested();
-            loadshader(shouldenvmap, masks!=notexture && (lightmodels || glowmodels || shouldenvmap), shouldalphatest);
+            loadshader();
         }
 
-        void setshader(mesh &m, const animstate *as, bool masked, bool alphatested = false)
+        void setshader(mesh &m, const animstate *as)
         {
-            m.setshader(loadshader(envmaptmu>=0 && envmapmax>0, masked, alphatested));
+            m.setshader(loadshader());
         }
 
         void bind(mesh &b, const animstate *as)
@@ -165,18 +166,16 @@ struct animmodel : model
             if(!cullface && enablecullface) { glDisable(GL_CULL_FACE); enablecullface = false; }
             else if(cullface && !enablecullface) { glEnable(GL_CULL_FACE); enablecullface = true; }
 
-            Texture *s = tex;
-
             if(as->cur.anim&ANIM_NOSKIN)
             {
-                if(alphatest > 0 && s->type&Texture::ALPHA && owner->model->alphashadow)
+                if(alphatested() && owner->model->alphashadow)
                 {
-                    if(s!=lasttex)
+                    if(tex!=lasttex)
                     {
-                        glBindTexture(GL_TEXTURE_2D, s->id);
-                        lasttex = s;
+                        glBindTexture(GL_TEXTURE_2D, tex->id);
+                        lasttex = tex;
                     }
-                    setshaderparams(b, as, false, true, false);
+                    setshaderparams(b, as, false);
                     /*if(as->cur.anim&ANIM_SHADOW)*/
                     SETMODELSHADER(b, alphashadowmodel);
                 }
@@ -187,36 +186,32 @@ struct animmodel : model
                 }
                 return;
             }
-            Texture *m = masks,
-                    *n = bumpmapped() ? normalmap : NULL;
-            if(!lightmodels && !glowmodels && (!envmapmodels || envmaptmu<0 || envmapmax<=0))
-                m = notexture;
             int activetmu = 0;
-            if(s!=lasttex)
+            if(tex!=lasttex)
             {
-                glBindTexture(GL_TEXTURE_2D, s->id);
-                lasttex = s;
+                glBindTexture(GL_TEXTURE_2D, tex->id);
+                lasttex = tex;
             }
-            if(n && n!=lastnormalmap)
+            if(normalmap && normalmap!=lastnormalmap)
             {
                 glActiveTexture_(GL_TEXTURE3);
                 activetmu = 3;
-                glBindTexture(GL_TEXTURE_2D, n->id);
-                lastnormalmap = n;
+                glBindTexture(GL_TEXTURE_2D, normalmap->id);
+                lastnormalmap = normalmap;
             }
             if(decal && decal!=lastdecal)
             {
                 glActiveTexture_(GL_TEXTURE4);
                 activetmu = 4;
                 glBindTexture(GL_TEXTURE_2D, decal->id);
-                lastdecal = n;
+                lastdecal = decal;
             }
-            if(m!=lastmasks && m!=notexture)
+            if(masks!=lastmasks && masks!=notexture)
             {
                 glActiveTexture_(GL_TEXTURE1);
                 activetmu = 1;
-                glBindTexture(GL_TEXTURE_2D, m->id);
-                lastmasks = m;
+                glBindTexture(GL_TEXTURE_2D, masks->id);
+                lastmasks = masks;
             }
             if(envmaptmu>=0 && envmapmax>0)
             {
@@ -230,8 +225,8 @@ struct animmodel : model
                 }
             }
             if(activetmu != 0) glActiveTexture_(GL_TEXTURE0);
-            setshaderparams(b, as, m!=notexture, s->type&Texture::ALPHA && alphatest > 0);
-            setshader(b, as, m!=notexture, s->type&Texture::ALPHA && alphatest > 0);
+            setshaderparams(b, as);
+            setshader(b, as);
         }
     };
 
@@ -602,6 +597,7 @@ struct animmodel : model
         virtual void cleanup()
         {
             if(meshes) meshes->cleanup();
+            loopv(skins) skins[i].cleanup();
         }
 
         void disablepitch()
