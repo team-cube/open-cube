@@ -225,7 +225,7 @@ void startmusic(char *name, char *cmd)
 
 COMMANDN(music, startmusic, "ss");
 
-static hashnameset<soundsample> samples;
+static hashnameset<soundsample> gamesamples, mapsamples;
 static vector<soundslot> gameslots, mapslots;
 static vector<soundconfig> gamesounds, mapsounds;
 
@@ -243,7 +243,7 @@ static int findsound(const char *name, int vol, vector<soundconfig> &sounds, vec
     return -1;
 }
 
-static int addslot(const char *name, int vol, vector<soundslot> &slots)
+static int addslot(const char *name, int vol, vector<soundslot> &slots, hashnameset<soundsample> &samples)
 {
     soundsample *s = samples.access(name);
     if(!s)
@@ -268,25 +268,25 @@ static int addslot(const char *name, int vol, vector<soundslot> &slots)
     return oldlen;
 }
 
-static int addsound(const char *name, int vol, int maxuses, vector<soundconfig> &sounds, vector<soundslot> &slots)
+static int addsound(const char *name, int vol, int maxuses, vector<soundconfig> &sounds, vector<soundslot> &slots, hashnameset<soundsample> &samples)
 {
     soundconfig &s = sounds.add();
-    s.slots = addslot(name, vol, slots);
+    s.slots = addslot(name, vol, slots, samples);
     s.numslots = 1;
     s.maxuses = maxuses;
     return sounds.length()-1;
 }
 
-void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds, gameslots)); }
+void registersound(char *name, int *vol) { intret(addsound(name, *vol, 0, gamesounds, gameslots, gamesamples)); }
 COMMAND(registersound, "si");
 
-void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses < 0 ? 0 : max(1, *maxuses), mapsounds, mapslots)); }
+void mapsound(char *name, int *vol, int *maxuses) { intret(addsound(name, *vol, *maxuses < 0 ? 0 : max(1, *maxuses), mapsounds, mapslots, mapsamples)); }
 COMMAND(mapsound, "sii");
 
 void altsound(char *name, int *vol)
 {
     if(gamesounds.empty()) return;
-    addslot(name, *vol, gameslots);
+    addslot(name, *vol, gameslots, gamesamples);
     gamesounds.last().numslots++;
 }
 COMMAND(altsound, "si");
@@ -294,7 +294,7 @@ COMMAND(altsound, "si");
 void altmapsound(char *name, int *vol)
 {
     if(mapsounds.empty()) return;
-    addslot(name, *vol, mapslots);
+    addslot(name, *vol, mapslots, mapsamples);
     mapsounds.last().numslots++;
 }
 COMMAND(altmapsound, "si");
@@ -310,14 +310,16 @@ void clear_sound()
     closemumble();
     if(nosound) return;
     stopmusic();
-    enumerate(samples, soundsample, s, s.cleanup());
+    enumerate(gamesamples, soundsample, s, s.cleanup());
+    enumerate(mapsamples, soundsample, s, s.cleanup());
     Mix_CloseAudio();
     resetchannels();
     gameslots.setsize(0);
     gamesounds.setsize(0);
+    gamesamples.clear();
     mapslots.setsize(0);
     mapsounds.setsize(0);
-    samples.clear();
+    mapsamples.clear();
 }
 
 void stopmapsounds()
@@ -462,7 +464,7 @@ static Mix_Chunk *loadwav(const char *name)
     return c;
 }
 
-static bool loadsoundslot(soundslot &slot, bool msg = false)
+static bool loadsoundslot(soundslot &slot, const char *type, bool msg = false)
 {
     if(slot.sample->chunk) return true;
     if(!slot.sample->name[0]) return false;
@@ -471,32 +473,32 @@ static bool loadsoundslot(soundslot &slot, bool msg = false)
     string filename;
     loopi(sizeof(exts)/sizeof(exts[0]))
     {
-        formatstring(filename, "media/sound/%s%s", slot.sample->name, exts[i]);
+        formatstring(filename, "media/sound/%s%s%s", type, slot.sample->name, exts[i]);
         if(msg && !i) renderprogress(0, filename);
         path(filename);
         slot.sample->chunk = loadwav(filename);
         if(slot.sample->chunk) return true;
     }
 
-    conoutf(CON_ERROR, "failed to load sample: media/sound/%s", slot.sample->name);
+    conoutf(CON_ERROR, "failed to load sample: media/sound/%s%s", type, slot.sample->name);
     return false;
 }
 
-static inline void preloadsound(vector<soundconfig> &sounds, vector<soundslot> &slots, int n)
+static inline void preloadsound(vector<soundconfig> &sounds, vector<soundslot> &slots, const char *type, int n)
 {
     if(!sounds.inrange(n)) return;
     soundconfig &config = sounds[n];
-    loopk(config.numslots) loadsoundslot(slots[config.slots+k], true);
+    loopk(config.numslots) loadsoundslot(slots[config.slots+k], type, true);
 }
 
 void preloadsound(int n)
 {
-    preloadsound(gamesounds, gameslots, n);
+    preloadsound(gamesounds, gameslots, "game/", n);
 }
 
 void preloadmapsound(int n)
 {
-    preloadsound(mapsounds, mapslots, n);
+    preloadsound(mapsounds, mapslots, "mapsound/", n);
 }
 
 void preloadmapsounds()
@@ -505,7 +507,7 @@ void preloadmapsounds()
     loopv(ents)
     {
         extentity &e = *ents[i];
-        if(e.type==ET_SOUND) preloadsound(mapsounds, mapslots, e.attr1);
+        if(e.type==ET_SOUND) preloadsound(mapsounds, mapslots, "mapsound/", e.attr1);
     }
 }
 
@@ -515,6 +517,7 @@ int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int f
 
     vector<soundslot> &slots = ent || flags&SND_MAP ? mapslots : gameslots;
     vector<soundconfig> &sounds = ent || flags&SND_MAP ? mapsounds : gamesounds;
+    const char *type = ent || flags&SND_MAP ? "mapsound/" : "game/";
     if(!sounds.inrange(n)) { conoutf(CON_WARN, "unregistered sound: %d", n); return -1; }
     soundconfig &config = sounds[n];
 
@@ -561,9 +564,9 @@ int playsound(int n, const vec *loc, extentity *ent, int flags, int loops, int f
     if(fade < 0) return -1;
 
     soundslot &slot = slots[config.chooseslot()];
-    if(!slot.sample->chunk && !loadsoundslot(slot)) return -1;
+    if(!slot.sample->chunk && !loadsoundslot(slot, type)) return -1;
 
-    if(dbgsound) conoutf("sound: %s", slot.sample->name);
+    if(dbgsound) conoutf("sound: %s%s", type, slot.sample->name);
 
     chanid = -1;
     loopv(channels) if(!channels[i].inuse) { chanid = i; break; }
@@ -610,7 +613,7 @@ int playsoundname(const char *s, const vec *loc, int vol, int flags, int loops, 
 {
     if(!vol) vol = 100;
     int id = findsound(s, vol, gamesounds, gameslots);
-    if(id < 0) id = addsound(s, vol, 0, gamesounds, gameslots);
+    if(id < 0) id = addsound(s, vol, 0, gamesounds, gameslots, gamesamples);
     return playsound(id, loc, NULL, flags, loops, fade, chanid, radius, expire);
 }
 
@@ -621,7 +624,8 @@ void resetsound()
     clearchanges(CHANGE_SOUND);
     if(!nosound)
     {
-        enumerate(samples, soundsample, s, s.cleanup());
+        enumerate(gamesamples, soundsample, s, s.cleanup());
+        enumerate(mapsamples, soundsample, s, s.cleanup());
         if(music)
         {
             Mix_HaltMusic();
@@ -638,8 +642,9 @@ void resetsound()
         DELETEA(musicdonecmd);
         music = NULL;
         gamesounds.setsize(0);
+        gamesamples.clear();
         mapsounds.setsize(0);
-        samples.clear();
+        mapsamples.clear();
         return;
     }
     if(music && loadmusic(musicfile))
