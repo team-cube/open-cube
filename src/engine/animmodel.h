@@ -120,13 +120,13 @@ struct animmodel : model
                     if(!name##shader) name##shader = useshaderbyname(#name); \
                     body; \
                 } while(0)
-            #define LOADMODELSHADER(name, alphaname) \
-                do { \
-                    if(alphatested()) DOMODELSHADER(alphaname, return alphaname##shader); \
-                    else DOMODELSHADER(name, return name##shader); \
-                } while(0)
+            #define LOADMODELSHADER(name) DOMODELSHADER(name, return name##shader)
             #define SETMODELSHADER(m, name) DOMODELSHADER(name, (m).setshader(name##shader))
-            if(shadowmapping == SM_REFLECT) LOADMODELSHADER(rsmmodel, rsmalphamodel);
+            if(shadowmapping == SM_REFLECT)
+            {
+                if(alphatested()) LOADMODELSHADER(rsmalphamodel); 
+                else LOADMODELSHADER(rsmmodel);
+            }
             else if(shader) return shader;
 
             string opts;
