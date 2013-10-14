@@ -36,6 +36,7 @@ struct model
     virtual void setalphatest(float alpha) {}
     virtual void setfullbright(float fullbright) {}
     virtual void setcullface(bool cullface) {}
+    virtual void setcolor(const vec &color) {}
 
     virtual void genshadowmesh(vector<triangle> &tris, const matrix4x3 &orient) {}
     virtual void preloadBIH() { if(!bih) setBIH(); }

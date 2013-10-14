@@ -78,8 +78,9 @@ struct animmodel : model
         Shader *shader;
         float spec, ambient, glow, glowdelta, glowpulse, fullbright, envmapmin, envmapmax, scrollu, scrollv, alphatest;
         bool cullface;
+        vec color;
 
-        skin() : owner(0), tex(notexture), decal(NULL), masks(notexture), envmap(NULL), normalmap(NULL), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), glowdelta(0), glowpulse(0), fullbright(0), envmapmin(0), envmapmax(0), scrollu(0), scrollv(0), alphatest(0.9f), cullface(true) {}
+        skin() : owner(0), tex(notexture), decal(NULL), masks(notexture), envmap(NULL), normalmap(NULL), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), glowdelta(0), glowpulse(0), fullbright(0), envmapmin(0), envmapmax(0), scrollu(0), scrollv(0), alphatest(0.9f), cullface(true), color(1, 1, 1) {}
 
         bool masked() const { return masks != notexture; }
         bool envmapped() const { return envmapmax>0; }
@@ -94,7 +95,8 @@ struct animmodel : model
 
             if(!skinned) return;
 
-            GLOBALPARAM(colorscale, colorscale);
+            if(color.r < 0) GLOBALPARAM(colorscale, colorscale);
+            else GLOBALPARAMF(colorscale, color.r, color.g, color.b, colorscale.a);
 
             if(fullbright) GLOBALPARAMF(fullbright, 0.0f, fullbright);
             else GLOBALPARAMF(fullbright, 1.0f, as->cur.anim&ANIM_FULLBRIGHT ? 0.5f*fullbrightmodels/100.0f : 0.0f);
@@ -148,7 +150,7 @@ struct animmodel : model
 
         void preloadBIH()
         {
-            if(tex && tex->type&Texture::ALPHA && !tex->alphamask) loadalphamask(tex);
+            if(alphatested() && !tex->alphamask) loadalphamask(tex);
         }
 
         void preloadshader()
@@ -257,7 +259,7 @@ struct animmodel : model
             m.tex = s.tex;
             if(canrender) m.flags |= BIH::MESH_RENDER;
             if(cancollide) m.flags |= BIH::MESH_COLLIDE;
-            if(s.tex && (s.tex->type&(Texture::ALPHA|Texture::COMPRESSED)) == Texture::ALPHA) m.flags |= BIH::MESH_ALPHA;
+            if(s.alphatested() && !(s.tex->type&Texture::COMPRESSED)) m.flags |= BIH::MESH_ALPHA;
             if(noclip) m.flags |= BIH::MESH_NOCLIP;
             genBIH(m);
         }
@@ -1489,6 +1491,12 @@ struct animmodel : model
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].cullface = cullface;
     }
 
+    void setcolor(const vec &color)
+    {
+        if(parts.empty()) loaddefaultparts();
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].color = color;
+    }
+
     void calcbb(vec &center, vec &radius)
     {
         if(parts.empty()) return;
@@ -1669,6 +1677,11 @@ template<class MDL, class MESH> struct modelcommands
         loopskins(meshname, s, s.cullface = *cullface!=0);
     }
 
+    static void setcolor(char *meshname, float *r, float *g, float *b)
+    {
+        loopskins(meshname, s, s.color = vec(*r, *g, *b));
+    }
+
     static void setenvmap(char *meshname, char *envmap)
     {
         Texture *tex = cubemapload(envmap);
@@ -1741,6 +1754,7 @@ template<class MDL, class MESH> struct modelcommands
             modelcommand(setglow, "glow", "sfff");
             modelcommand(setalphatest, "alphatest", "sf");
             modelcommand(setcullface, "cullface", "si");
+            modelcommand(setcolor, "color", "sfff");
             modelcommand(setenvmap, "envmap", "ss");
             modelcommand(setbumpmap, "bumpmap", "ss");
             modelcommand(setdecal, "decal", "ss");
