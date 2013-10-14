@@ -424,11 +424,11 @@ struct LocalShaderParam
 #define GLOBALPARAMI(name, ...) do { static GlobalShaderParam param( #name ); param.seti(__VA_ARGS__); } while(0)
 #define GLOBALPARAMV(name, vals, num) do { static GlobalShaderParam param( #name ); param.setv(vals, num); } while(0)
 
-#define SETSHADER(name) \
+#define SETSHADER(name, ...) \
     do { \
         static Shader *name##shader = NULL; \
         if(!name##shader) name##shader = lookupshaderbyname(#name); \
-        name##shader->set(); \
+        name##shader->set(__VA_ARGS__); \
     } while(0)
 #define SETVARIANT(name, ...) \
     do { \
@@ -731,7 +731,7 @@ struct cubemapside
 
 extern const cubemapside cubemapsides[6];
 extern Texture *notexture;
-extern Shader *nullshader, *hudshader, *hudtextshader, *hudnotextureshader, *nocolorshader, *foggedshader, *foggednotextureshader, *ldrshader, *ldrnotextureshader, *stdworldshader, *rsmworldshader;
+extern Shader *nullshader, *hudshader, *hudtextshader, *hudnotextureshader, *nocolorshader, *foggedshader, *foggednotextureshader, *ldrshader, *ldrnotextureshader, *stdworldshader;
 extern int maxvsuniforms, maxfsuniforms;
 
 extern Shader *lookupshaderbyname(const char *name);

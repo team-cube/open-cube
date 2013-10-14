@@ -1429,6 +1429,7 @@ static inline void changeshader(renderstate &cur, int pass, geombatch &b)
     Slot &slot = *vslot.slot;
     if(pass == RENDERPASS_RSM)
     {
+        extern Shader *rsmworldshader;
         if(b.es.layer&LAYER_BOTTOM) rsmworldshader->setvariant(0, 0, slot, vslot);
         else rsmworldshader->set(slot, vslot);
     }

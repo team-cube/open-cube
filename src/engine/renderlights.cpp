@@ -1186,6 +1186,7 @@ GLuint rsmdepthtex = 0, rsmcolortex = 0, rsmnormaltex = 0, rsmfbo = 0;
 extern int rhgrid, rhsplits, rhborder, rhprec, rhtaps, rhcache, rsmprec, rsmdepthprec, rsmsize;
 
 static Shader *radiancehintsshader = NULL;
+Shader *rsmworldshader = NULL;
 
 Shader *loadradiancehintsshader()
 {
@@ -1199,11 +1200,14 @@ void loadrhshaders()
     if(rhcache) useshaderbyname("radiancehintscached");
     useshaderbyname("radiancehintsdisable");
     radiancehintsshader = loadradiancehintsshader();
+    rsmworldshader = useshaderbyname("rsmworld");
+    useshaderbyname("rsmsky");
 }
 
 void clearrhshaders()
 {
     radiancehintsshader = NULL;
+    rsmworldshader = NULL;
 }
 
 void setupradiancehints()
@@ -2065,6 +2069,11 @@ void radiancehints::bindparams()
     }
     float step = 2*splits[0].bounds/rhgrid;
     GLOBALPARAMF(rhnudge, rhnudge*step);
+}
+
+bool useradiancehints()
+{
+    return sunlight && csmshadowmap && gi && giscale && gidist;
 }
 
 static Shader *deferredlightshader = NULL, *deferredminimapshader = NULL, *deferredmsaapixelshader = NULL, *deferredmsaasampleshader = NULL;

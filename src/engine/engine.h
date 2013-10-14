@@ -317,6 +317,7 @@ extern void rendershadowmapworld();
 extern void batchshadowmapmodels(bool skipmesh = false);
 extern void rendershadowatlas();
 extern void renderrsmgeom(bool dyntex = false);
+extern bool useradiancehints();
 extern void renderradiancehints();
 extern void clearradiancehintscache();
 extern void cleanuplights();

@@ -156,6 +156,8 @@ struct animmodel : model
         void preloadshader()
         {
             loadshader();
+            useshaderbyname(alphatested() && owner->model->alphashadow ? "alphashadowmodel" : "shadowmodel");
+            if(useradiancehints()) useshaderbyname(alphatested() ? "rsmalphamodel" : "rsmmodel");
         }
 
         void setshader(mesh &m, const animstate *as)
