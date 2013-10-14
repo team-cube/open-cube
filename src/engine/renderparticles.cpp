@@ -118,6 +118,7 @@ enum
     PT_NOTEX     = 1<<20,
     PT_SHADER    = 1<<21,
     PT_SWIZZLE   = 1<<22,
+    PT_NOLAYER   = 1<<23,
     PT_FLIP      = PT_HFLIP | PT_VFLIP | PT_ROT
 };
 
@@ -391,7 +392,7 @@ listparticle *listrenderer::parempty = NULL;
 struct meterrenderer : listrenderer
 {
     meterrenderer(int type)
-        : listrenderer(type|PT_NOTEX|PT_LERP)
+        : listrenderer(type|PT_NOTEX|PT_LERP|PT_NOLAYER)
     {}
 
     void startrender()
@@ -470,7 +471,7 @@ static meterrenderer meters(PT_METER), metervs(PT_METERVS);
 struct textrenderer : listrenderer
 {
     textrenderer(int type = 0)
-        : listrenderer(type|PT_TEXT|PT_LERP|PT_SHADER)
+        : listrenderer(type|PT_TEXT|PT_LERP|PT_SHADER|PT_NOLAYER)
     {}
 
     void startrender()
@@ -927,7 +928,7 @@ void renderparticles(bool mainpass)
     loopi(sizeof(parts)/sizeof(parts[0]))
     {
         partrenderer *p = parts[i];
-        if(!p->haswork()) continue;
+        if((!mainpass && p->flags&PT_NOLAYER) || !p->haswork()) continue;
 
         if(!rendered)
         {
