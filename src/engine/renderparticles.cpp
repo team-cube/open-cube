@@ -928,7 +928,7 @@ void renderparticles(bool mainpass)
     loopi(sizeof(parts)/sizeof(parts[0]))
     {
         partrenderer *p = parts[i];
-        if((!mainpass && p->flags&PT_NOLAYER) || !p->haswork()) continue;
+        if((!mainpass && p->type&PT_NOLAYER) || !p->haswork()) continue;
 
         if(!rendered)
         {
