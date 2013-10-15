@@ -2458,8 +2458,8 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
             bool shadowmap = l.shadowmap >= 0, spotlight = l.spot > 0;
 
-            lightposv[0] = vec4(l.o.x, l.o.y, l.o.z, 1.0f/l.radius);
-            lightcolorv[0] = vec(l.color.x*lightscale, l.color.y*lightscale, l.color.z*lightscale);
+            lightposv[0] = vec4(l.o, 1).div(l.radius);
+            lightcolorv[0] = vec(l.color).mul(lightscale);
             if(spotlight)
             {
                 float maxatten = sincos360[l.spot].x;
@@ -2571,8 +2571,8 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         loopj(n)
         {
             lightinfo &l = lights[tile.lights[offset+j]];
-            lightposv[j] = vec4(l.o.x, l.o.y, l.o.z, 1.0f/l.radius);
-            lightcolorv[j] = vec(l.color.x*lightscale, l.color.y*lightscale, l.color.z*lightscale);
+            lightposv[j] = vec4(l.o, 1).div(l.radius);
+            lightcolorv[j] = vec(l.color).mul(lightscale);
             if(spotlight)
             {
                 float maxatten = sincos360[l.spot].x;
