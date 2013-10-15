@@ -688,13 +688,15 @@ static inline mapmodelinfo *getmminfo(int n) { return mapmodels.inrange(n) ? &ma
 // renderparticles
 extern int particlelayers;
 
+enum { PL_ALL = 0, PL_UNDER, PL_OVER, PL_NOLAYER };
+
 extern void initparticles();
 extern void clearparticles();
 extern void clearparticleemitters();
 extern void seedparticles();
 extern void updateparticles();
 extern void debugparticles();
-extern void renderparticles(int layer = -1);
+extern void renderparticles(int layer = PL_ALL);
 extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();
 

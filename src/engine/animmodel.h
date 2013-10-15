@@ -124,7 +124,7 @@ struct animmodel : model
             #define SETMODELSHADER(m, name) DOMODELSHADER(name, (m).setshader(name##shader))
             if(shadowmapping == SM_REFLECT)
             {
-                if(alphatested()) LOADMODELSHADER(rsmalphamodel); 
+                if(alphatested()) LOADMODELSHADER(rsmalphamodel);
                 else LOADMODELSHADER(rsmmodel);
             }
             else if(shader) return shader;

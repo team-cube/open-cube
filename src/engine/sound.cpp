@@ -383,7 +383,7 @@ void clear_sound()
     closemumble();
     if(nosound) return;
     stopmusic();
-    
+
     gamesounds.cleanup();
     mapsounds.cleanup();
     Mix_CloseAudio();

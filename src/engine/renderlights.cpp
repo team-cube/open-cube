@@ -1557,7 +1557,7 @@ struct lightstrip
         if(y != ey || x+1 != ex) return false;
         ++w;
         return true;
-    } 
+    }
 };
 
 struct lighttile
@@ -1611,7 +1611,7 @@ static inline uint hthash(const lighttileslice &l)
 
 static inline bool htcmp(const lighttileslice &x, const lighttileslice &y)
 {
-    return x.tile->band == y.tile->band && 
+    return x.tile->band == y.tile->band &&
            x.priority == y.priority &&
            x.numlights == y.numlights &&
            (!x.numlights || !memcmp(&x.tile->lights[x.offset], &y.tile->lights[y.offset], x.numlights*sizeof(int)));
@@ -3634,7 +3634,7 @@ void rendertransparent()
         return;
     }
 
-    if(!editmode && particlelayers && ghasstencil) renderparticles(0);
+    if(!editmode && particlelayers && ghasstencil) renderparticles(PL_UNDER);
 
     timer *transtimer = begintimer("transparent");
 
@@ -3827,10 +3827,11 @@ void rendertransparent()
         glStencilFunc(GL_NOTEQUAL, 0, 0x07);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         glEnable(GL_STENCIL_TEST);
-        renderparticles(1);
+        renderparticles(PL_OVER);
         glDisable(GL_STENCIL_TEST);
         if(scissor) glDisable(GL_SCISSOR_TEST);
-        renderparticles(2);
+
+        renderparticles(PL_NOLAYER);
     }
     else renderparticles();
 }

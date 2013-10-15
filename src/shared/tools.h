@@ -1001,7 +1001,7 @@ template<class H, class E, class K, class T> struct hashbase
 };
 
 template<class T> static inline void htrecycle(const T &) {}
- 
+
 template<class T> struct hashset : hashbase<hashset<T>, T, T, T>
 {
     typedef hashbase<hashset<T>, T, T, T> basetype;
