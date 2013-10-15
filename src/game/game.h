@@ -7,15 +7,16 @@
 
 enum
 {
-    ANIM_DEAD = ANIM_GAMESPECIFIC, ANIM_DYING, ANIM_IDLE,
-    ANIM_FORWARD, ANIM_BACKWARD, ANIM_LEFT, ANIM_RIGHT,
-    ANIM_CROUCH, ANIM_CROUCH_FORWARD, ANIM_CROUCH_BACKWARD, ANIM_CROUCH_LEFT, ANIM_CROUCH_RIGHT,
-
+    ANIM_DEAD = ANIM_GAMESPECIFIC, ANIM_DYING,
+    ANIM_IDLE, ANIM_RUN_N, ANIM_RUN_NE, ANIM_RUN_E, ANIM_RUN_SE, ANIM_RUN_S, ANIM_RUN_SW, ANIM_RUN_W, ANIM_RUN_NW,
+    ANIM_JUMP, ANIM_JUMP_N, ANIM_JUMP_NE, ANIM_JUMP_E, ANIM_JUMP_SE, ANIM_JUMP_S, ANIM_JUMP_SW, ANIM_JUMP_W, ANIM_JUMP_NW,
+    ANIM_SINK, ANIM_SWIM,
+    ANIM_CROUCH, ANIM_CROUCH_N, ANIM_CROUCH_NE, ANIM_CROUCH_E, ANIM_CROUCH_SE, ANIM_CROUCH_S, ANIM_CROUCH_SW, ANIM_CROUCH_W, ANIM_CROUCH_NW,
+    ANIM_CROUCH_JUMP, ANIM_CROUCH_JUMP_N, ANIM_CROUCH_JUMP_NE, ANIM_CROUCH_JUMP_E, ANIM_CROUCH_JUMP_SE, ANIM_CROUCH_JUMP_S, ANIM_CROUCH_JUMP_SW, ANIM_CROUCH_JUMP_W, ANIM_CROUCH_JUMP_NW,
+    ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
     ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3,
     ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3,
     ANIM_PAIN,
-    ANIM_JUMP, ANIM_SINK, ANIM_SWIM,
-    ANIM_CROUCH_JUMP, ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
     ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE,
     ANIM_GUN_IDLE, ANIM_GUN_SHOOT,
     ANIM_VWEP_IDLE, ANIM_VWEP_SHOOT,
@@ -25,14 +26,16 @@ enum
 static const char * const animnames[] =
 {
     "mapmodel",
-    "dead", "dying", "idle",
-    "forward", "backward", "left", "right",
-    "crouch", "crouch forward", "crouch backward", "crouch left", "crouch right",
+    "dead", "dying",
+    "idle", "run N", "run NE", "run E", "run SE", "run S", "run SW", "run W", "run NW",
+    "jump", "jump N", "jump NE", "jump E", "jump SE", "jump S", "jump SW", "jump W", "jump NW",
+    "sink", "swim",
+    "crouch", "crouch N", "crouch NE", "crouch E", "crouch SE", "crouch S", "crouch SW", "crouch W", "crouch NW",
+    "crouch jump", "crouch jump N", "crouch jump NE", "crouch jump E", "crouch jump SE", "crouch jump S", "crouch jump SW", "crouch jump W", "crouch jump NW",
+    "crouch sink", "crouch swim",
     "hold 1", "hold 2", "hold 3",
     "attack 1", "attack 2", "attack 3",
     "pain",
-    "jump", "sink", "swim",
-    "crouch jump", "crouch sink", "crouch swim",
     "edit", "lag", "taunt", "win", "lose",
     "gun idle", "gun shoot",
     "vwep idle", "vwep shoot"
