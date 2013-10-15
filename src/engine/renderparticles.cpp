@@ -914,21 +914,21 @@ void debugparticles()
     pophudmatrix();
 }
 
-void renderparticles(bool mainpass)
+void renderparticles(int layer)
 {
-    canstep = mainpass;
+    canstep = layer != 0;
 
     //want to debug BEFORE the lastpass render (that would delete particles)
-    if(dbgparts && mainpass) loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->debuginfo();
+    if(dbgparts && (layer < 0 || layer == 1)) loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->debuginfo();
 
     bool rendered = false;
-    uint lastflags = PT_LERP|PT_SHADER, flagmask = PT_LERP|PT_MOD|PT_BRIGHT|PT_NOTEX|PT_SOFT|PT_SHADER;
+    uint lastflags = PT_LERP|PT_SHADER, flagmask = PT_LERP|PT_MOD|PT_BRIGHT|PT_NOTEX|PT_SOFT|PT_SHADER, excludemask = layer < 0 ? ~0 : (layer <= 1 ? PT_NOLAYER : 0);
     int lastswizzle = -1;
 
     loopi(sizeof(parts)/sizeof(parts[0]))
     {
         partrenderer *p = parts[i];
-        if((!mainpass && p->type&PT_NOLAYER) || !p->haswork()) continue;
+        if((p->type&PT_NOLAYER) == excludemask || !p->haswork()) continue;
 
         if(!rendered)
         {

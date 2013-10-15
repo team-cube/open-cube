@@ -694,7 +694,7 @@ extern void clearparticleemitters();
 extern void seedparticles();
 extern void updateparticles();
 extern void debugparticles();
-extern void renderparticles(bool mainpass = true);
+extern void renderparticles(int layer = -1);
 extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();
 

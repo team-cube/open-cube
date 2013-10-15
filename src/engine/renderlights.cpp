@@ -3630,11 +3630,11 @@ void rendertransparent()
     bool hasmodels = transmdlsx1 < transmdlsx2 && transmdlsy1 < transmdlsy2;
     if(!hasalphavas && !hasmats && !hasmodels)
     {
-        if(!editmode) renderparticles(true);
+        if(!editmode) renderparticles();
         return;
     }
 
-    if(!editmode && particlelayers && ghasstencil) renderparticles(false);
+    if(!editmode && particlelayers && ghasstencil) renderparticles(0);
 
     timer *transtimer = begintimer("transparent");
 
@@ -3827,11 +3827,12 @@ void rendertransparent()
         glStencilFunc(GL_NOTEQUAL, 0, 0x07);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         glEnable(GL_STENCIL_TEST);
-        renderparticles(true);
+        renderparticles(1);
         glDisable(GL_STENCIL_TEST);
         if(scissor) glDisable(GL_SCISSOR_TEST);
+        renderparticles(2);
     }
-    else renderparticles(true);
+    else renderparticles();
 }
 
 VAR(gdepthclear, 0, 1, 1);
