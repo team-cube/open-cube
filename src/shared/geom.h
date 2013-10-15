@@ -1782,13 +1782,15 @@ extern bool rayboxintersect(const vec &b, const vec &s, const vec &o, const vec 
 extern bool linecylinderintersect(const vec &from, const vec &to, const vec &start, const vec &end, float radius, float &dist);
 
 extern const vec2 sincos360[];
-
 static inline int mod360(int angle)
 {
     if(angle < 0) angle = 360 + (angle <= -360 ? angle%360 : angle);
     else if(angle >= 360) angle %= 360;
     return angle;
 }
-
 static inline const vec2 &sincosmod360(int angle) { return sincos360[mod360(angle)]; }
+static inline float cos360(int angle) { return sincos360[angle].x; }
+static inline float sin360(int angle) { return sincos360[angle].y; }
+static inline float tan360(int angle) { const vec2 &sc = sincos360[angle]; return sc.y/sc.x; }
+static inline float cotan360(int angle) { const vec2 &sc = sincos360[angle]; return sc.x/sc.y; }
 

@@ -1608,8 +1608,7 @@ bool calcbbscissor(const ivec &bbmin, const ivec &bbmax, float &sx1, float &sy1,
 
 bool calcspotscissor(const vec &origin, float radius, const vec &dir, int spot, const vec &spotx, const vec &spoty, float &sx1, float &sy1, float &sx2, float &sy2, float &sz1, float &sz2)
 {
-    const vec2 &sc = sincos360[spot];
-    float spotscale = radius*sc.y/sc.x;
+    float spotscale = radius * tan360(spot);
     vec up = vec(spotx).mul(spotscale), right = vec(spoty).mul(spotscale), center = vec(dir).mul(radius).add(origin);
 #define ADDXYZSCISSOR(p) do { \
         if(p.z >= -p.w) \

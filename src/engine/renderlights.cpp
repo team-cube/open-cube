@@ -2454,7 +2454,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
             lightposv[0] = vec4(l.o, 1).div(l.radius);
             lightcolorv[0] = vec(l.color).mul(lightscale);
-            if(spotlight) spotparamsv[0] = vec4(l.dir, 1/(1 - sincos360[l.spot].x));
+            if(spotlight) spotparamsv[0] = vec4(l.dir, 1/(1 - cos360(l.spot)));
             if(shadowmap)
             {
                 shadowmapinfo &sm = shadowmaps[l.shadowmap];
@@ -2463,10 +2463,8 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                 int border = smfilter > 2 ? smborder2 : smborder;
                 if(spotlight)
                 {
-                    const vec2 &sc = sincos360[l.spot];
-                    float spotscale = sc.x/sc.y;
                     shadowparamsv[0] = vec4(
-                        0.5f * sm.size * spotscale,
+                        0.5f * sm.size * cotan360(l.spot),
                         (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias),
                         1 / (1 + l.dir.z),
                         0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
@@ -2557,7 +2555,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             lightinfo &l = lights[tile.lights[offset+j]];
             lightposv[j] = vec4(l.o, 1).div(l.radius);
             lightcolorv[j] = vec(l.color).mul(lightscale);
-            if(spotlight) spotparamsv[j] = vec4(l.dir, 1/(1 - sincos360[l.spot].x));
+            if(spotlight) spotparamsv[j] = vec4(l.dir, 1/(1 - cos360(l.spot)));
             if(shadowmap)
             {
                 shadowmapinfo &sm = shadowmaps[l.shadowmap];
@@ -2566,10 +2564,8 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                 int border = smfilter > 2 ? smborder2 : smborder;
                 if(spotlight)
                 {
-                    const vec2 &sc = sincos360[l.spot];
-                    float spotscale = sc.x/sc.y;
                     shadowparamsv[j] = vec4(
-                        0.5f * sm.size * spotscale,
+                        0.5f * sm.size * cotan360(l.spot),
                         (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias),
                         1 / (1 + l.dir.z),
                         0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
@@ -2808,8 +2804,7 @@ void collectlights()
         vec bbmin, bbmax;
         if(l.spot > 0)
         {
-            const vec2 &sc = sincos360[l.spot];
-            float spotscale = l.radius*sc.y/sc.x;
+            float spotscale = l.radius * tan360(l.spot);
             vec up = vec(l.spotx).mul(spotscale).abs(), right = vec(l.spoty).mul(spotscale).abs(), center = vec(l.dir).mul(l.radius).add(l.o);
             bbmin = bbmax = center;
             bbmin.sub(up).sub(right);
@@ -2880,7 +2875,7 @@ void packlights()
 
         float prec = smprec, lod;
         int w, h;
-        if(l.spot) { w = 1; h = 1; const vec2 &sc = sincos360[l.spot]; prec = sc.y/sc.x; lod = smspotprec; }
+        if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
         else { w = 3; h = 2; lod = smcubeprec; }
         lod *= clamp(l.radius * prec / sqrtf(max(1.0f, l.dist/l.radius)), float(smminsize), float(smmaxsize));
         int size = clamp(int(ceil((lod * shadowatlaspacker.w) / SHADOWATLAS_SIZE)), 1, shadowatlaspacker.w / w);
@@ -2913,7 +2908,7 @@ void packlights()
             if(l.query && l.query->owner == &l && checkquery(l.query)) { lightsoccluded++; continue; }
             float prec = smprec, lod;
             int w, h;
-            if(l.spot) { w = 1; h = 1; const vec2 &sc = sincos360[l.spot]; prec = sc.y/sc.x; lod = smspotprec; }
+            if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
             else { w = 3; h = 2; lod = smcubeprec; }
             lod *= clamp(l.radius * prec / sqrtf(max(1.0f, l.dist/l.radius)), float(smminsize), float(smmaxsize));
             int size = clamp(int(ceil((lod * shadowatlaspacker.w) / SHADOWATLAS_SIZE)), 1, shadowatlaspacker.w / w);
@@ -3534,10 +3529,8 @@ void rendershadowmaps()
             glScissor(sm.x, sm.y, sm.size, sm.size);
             glClear(GL_DEPTH_BUFFER_BIT);
 
-            const vec2 &sc = sincos360[l.spot];
-            float spotscale = sc.x/sc.y;
-            matrix4 spotmatrix(vec(l.spotx).mul(spotscale), vec(l.spoty).mul(spotscale), vec(l.dir).neg());
-            spotmatrix.scale(1.0f/l.radius);
+            float invradius = 1.0f / l.radius, spotscale = invradius * cotan360(l.spot);
+            matrix4 spotmatrix(vec(l.spotx).mul(spotscale), vec(l.spoty).mul(spotscale), vec(l.dir).mul(-invradius));
             spotmatrix.translate(vec(l.o).neg());
             shadowmatrix.mul(smprojmatrix, spotmatrix);
             GLOBALPARAM(shadowmatrix, shadowmatrix);
