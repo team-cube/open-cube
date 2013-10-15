@@ -672,7 +672,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, bool fast, extentity
         if(e.attached && e.attached->type==ET_SPOTLIGHT)
         {
             vec spot = vec(e.attached->o).sub(e.o).normalize();
-            float maxatten = sincos360[clamp(int(e.attached->attr1), 1, 89)].x, spotatten = (ray.dot(spot) - maxatten) / (1 - maxatten);
+            float spotatten = 1 - (1 - ray.dot(spot)) / (1 - sincos360[clamp(int(e.attached->attr1), 1, 89)].x);
             if(spotatten <= 0) continue;
             intensity *= spotatten;
         }

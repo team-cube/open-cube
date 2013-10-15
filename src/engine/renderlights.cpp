@@ -1351,7 +1351,6 @@ struct lightinfo
     vec o, color;
     float radius;
     vec dir, spotx, spoty;
-    quat spotproject;
     int spot;
     float dist;
     occludequery *query;
@@ -1360,9 +1359,10 @@ struct lightinfo
     {
         dir = spotdir;
         spot = spotangle;
-        spotproject = quat(dir.y, -dir.x, 0, 1 + dir.z).normalize();
-        spotx = spotproject.invertedrotate(vec(1, 0, 0));
-        spoty = spotproject.invertedrotate(vec(0, 1, 0));
+        quat orient(dir.y, -dir.x, 0, 1 + dir.z);
+        orient.normalize();
+        spotx = orient.invertedrotate(vec(1, 0, 0));
+        spoty = orient.invertedrotate(vec(0, 1, 0));
     }
 
     bool noshadow() const { return flags&L_NOSHADOW || radius <= smminradius; }
@@ -2428,9 +2428,9 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     if(depthtestlights && !depth) { glEnable(GL_DEPTH_TEST); depth = true; }
     if(hasDBT && depthtestlights > 1) glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
 
-    static LocalShaderParam lightpos("lightpos"), lightcolor("lightcolor"), spotparams("spotparams"), spotproject("spotproject"), shadowparams("shadowparams"), shadowoffset("shadowoffset");
+    static LocalShaderParam lightpos("lightpos"), lightcolor("lightcolor"), spotparams("spotparams"), shadowparams("shadowparams"), shadowoffset("shadowoffset");
     static vec4 lightposv[8], spotparamsv[8], shadowparamsv[8];
-    static vec lightcolorv[8], spotprojectv[8];
+    static vec lightcolorv[8];
     static vec2 shadowoffsetv[8];
 
     if(!lighttilebatch)
@@ -2454,11 +2454,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
             lightposv[0] = vec4(l.o, 1).div(l.radius);
             lightcolorv[0] = vec(l.color).mul(lightscale);
-            if(spotlight)
-            {
-                float maxatten = sincos360[l.spot].x;
-                spotparamsv[0] = vec4(l.dir, maxatten).div(1 - maxatten);
-            }
+            if(spotlight) spotparamsv[0] = vec4(l.dir, 1/(1 - sincos360[l.spot].x));
             if(shadowmap)
             {
                 shadowmapinfo &sm = shadowmaps[l.shadowmap];
@@ -2467,13 +2463,12 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                 int border = smfilter > 2 ? smborder2 : smborder;
                 if(spotlight)
                 {
-                    spotprojectv[0] = vec(-l.spotproject.y, l.spotproject.x, l.spotproject.w).mul(SQRT2); 
                     const vec2 &sc = sincos360[l.spot];
-                    float maxatten = sc.x, spotscale = sc.x/sc.y;
+                    float spotscale = sc.x/sc.y;
                     shadowparamsv[0] = vec4(
-                        0.5f * sm.size * spotscale / (1 - maxatten),
-                        (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias) / (1 - maxatten),
-                        sm.size,
+                        0.5f * sm.size * spotscale,
+                        (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias),
+                        1 / (1 + l.dir.z),
                         0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
                 }
                 else
@@ -2498,7 +2493,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             if(spotlight) spotparams.setv(spotparamsv, 1);
             if(shadowmap)
             {
-                if(spotlight) spotproject.setv(spotprojectv, 1);
                 shadowparams.setv(shadowparamsv, 1);
                 shadowoffset.setv(shadowoffsetv, 1);
             }
@@ -2563,11 +2557,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             lightinfo &l = lights[tile.lights[offset+j]];
             lightposv[j] = vec4(l.o, 1).div(l.radius);
             lightcolorv[j] = vec(l.color).mul(lightscale);
-            if(spotlight)
-            {
-                float maxatten = sincos360[l.spot].x;
-                spotparamsv[j] = vec4(l.dir, maxatten).div(1 - maxatten);
-            }
+            if(spotlight) spotparamsv[j] = vec4(l.dir, 1/(1 - sincos360[l.spot].x));
             if(shadowmap)
             {
                 shadowmapinfo &sm = shadowmaps[l.shadowmap];
@@ -2576,13 +2566,12 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
                 int border = smfilter > 2 ? smborder2 : smborder;
                 if(spotlight)
                 {
-                    spotprojectv[j] = vec(-l.spotproject.y, l.spotproject.x, l.spotproject.w).mul(SQRT2);
                     const vec2 &sc = sincos360[l.spot];
-                    float maxatten = sc.x, spotscale = sc.x/sc.y;
+                    float spotscale = sc.x/sc.y;
                     shadowparamsv[j] = vec4(
-                        0.5f * sm.size * spotscale / (1 - maxatten),
-                        (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias) / (1 - maxatten),
-                        sm.size,
+                        0.5f * sm.size * spotscale,
+                        (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias),
+                        1 / (1 + l.dir.z),
                         0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
                 }
                 else
@@ -2629,7 +2618,6 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
             if(spotlight) spotparams.setv(spotparamsv, n);
             if(shadowmap)
             {
-                if(spotlight) spotproject.setv(spotprojectv, n);
                 shadowparams.setv(shadowparamsv, n);
                 shadowoffset.setv(shadowoffsetv, n);
             }
