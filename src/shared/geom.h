@@ -414,6 +414,8 @@ struct quat : vec4
     quat &mul(const quat &o) { return mul(quat(*this), o); }
 
     quat &invert() { neg3(); return *this; }
+    
+    quat &normalize() { vec4::normalize(); return *this; }
 
     void calcangleaxis(float &angle, vec &axis)
     {
