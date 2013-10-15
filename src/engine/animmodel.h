@@ -90,16 +90,16 @@ struct animmodel : model
 
         void setshaderparams(mesh &m, const animstate *as, bool skinned = true)
         {
-            GLOBALPARAMF(texscroll, scrollu*lastmillis/1000.0f, scrollv*lastmillis/1000.0f);
-            if(alphatested()) GLOBALPARAMF(alphatest, alphatest);
+            LOCALPARAMF(texscroll, scrollu*lastmillis/1000.0f, scrollv*lastmillis/1000.0f);
+            if(alphatested()) LOCALPARAMF(alphatest, alphatest);
 
             if(!skinned) return;
 
-            if(color.r < 0) GLOBALPARAM(colorscale, colorscale);
-            else GLOBALPARAMF(colorscale, color.r, color.g, color.b, colorscale.a);
+            if(color.r < 0) LOCALPARAM(colorscale, colorscale);
+            else LOCALPARAMF(colorscale, color.r, color.g, color.b, colorscale.a);
 
-            if(fullbright) GLOBALPARAMF(fullbright, 0.0f, fullbright);
-            else GLOBALPARAMF(fullbright, 1.0f, as->cur.anim&ANIM_FULLBRIGHT ? 0.5f*fullbrightmodels/100.0f : 0.0f);
+            if(fullbright) LOCALPARAMF(fullbright, 0.0f, fullbright);
+            else LOCALPARAMF(fullbright, 1.0f, as->cur.anim&ANIM_FULLBRIGHT ? 0.5f*fullbrightmodels/100.0f : 0.0f);
 
             float curglow = glow;
             if(glowpulse > 0)
@@ -108,8 +108,8 @@ struct animmodel : model
                 curpulse -= floor(curpulse);
                 curglow += glowdelta*2*fabs(curpulse - 0.5f);
             }
-            GLOBALPARAMF(maskscale, spec, curglow);
-            if(envmapped()) GLOBALPARAMF(envmapscale, envmapmin-envmapmax, envmapmax);
+            LOCALPARAMF(maskscale, spec, curglow);
+            if(envmapped()) LOCALPARAMF(envmapscale, envmapmin-envmapmax, envmapmax);
         }
 
         Shader *loadshader()
@@ -179,13 +179,11 @@ struct animmodel : model
                         glBindTexture(GL_TEXTURE_2D, tex->id);
                         lasttex = tex;
                     }
-                    setshaderparams(b, as, false);
-                    /*if(as->cur.anim&ANIM_SHADOW)*/
                     SETMODELSHADER(b, alphashadowmodel);
+                    setshaderparams(b, as, false);
                 }
                 else
                 {
-                    /*if(as->cur.anim&ANIM_SHADOW)*/
                     SETMODELSHADER(b, shadowmodel);
                 }
                 return;
@@ -229,8 +227,8 @@ struct animmodel : model
                 }
             }
             if(activetmu != 0) glActiveTexture_(GL_TEXTURE0);
-            setshaderparams(b, as);
             setshader(b, as);
+            setshaderparams(b, as);
         }
     };
 
@@ -957,12 +955,12 @@ struct animmodel : model
 
                 if(!(anim&ANIM_NOSKIN))
                 {
-                    GLOBALPARAM(oworld, matrix3(matrixstack[matrixpos]));
+                    GLOBALPARAM(modelworld, matrix3(matrixstack[matrixpos]));
 
-                    vec ocampos;
-                    matrixstack[matrixpos].transposedtransform(camera1->o, ocampos);
-                    ocampos.div(resize);
-                    GLOBALPARAM(ocamera, ocampos);
+                    vec modelcamera;
+                    matrixstack[matrixpos].transposedtransform(camera1->o, modelcamera);
+                    modelcamera.div(resize);
+                    GLOBALPARAM(modelcamera, modelcamera);
                 }
             }
 
