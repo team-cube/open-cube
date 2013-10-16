@@ -1682,7 +1682,6 @@ void rendergeom()
         collectlights();
         if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
         if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
-        glFlush();
 
         if(!multipassing) { multipassing = true; glDepthFunc(GL_LEQUAL); }
         cur.texgenorient = -1;
@@ -1692,7 +1691,7 @@ void rendergeom()
             blends += va->blends;
             renderva(cur, va, RENDERPASS_GBUFFER);
         }
-        if(geombatches.length()) renderbatches(cur, RENDERPASS_GBUFFER);
+        if(geombatches.length()) { renderbatches(cur, RENDERPASS_GBUFFER); glFlush(); }
         for(vtxarray *va = visibleva; va; va = va->next) if(va->texs && va->occluded >= OCCLUDE_GEOM)
         {
             if((va->parent && va->parent->occluded >= OCCLUDE_BB) || (va->query && checkquery(va->query)))
@@ -1759,7 +1758,6 @@ void rendergeom()
         collectlights();
         if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
         if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
-        glFlush();
     }
 }
 

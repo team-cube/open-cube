@@ -2837,7 +2837,11 @@ void collectlights()
             }
         }
     }
-    if(queried) gle::disable();
+    if(queried)
+    {
+        gle::disable();
+        glFlush();
+    }
 }
 
 static inline void addlighttiles(const lightinfo &l, int idx)
