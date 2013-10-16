@@ -1168,7 +1168,7 @@ inline char *newconcatstring(const char *s, const char *t)
     return r;
 }
 
-const int islittleendian = 1;
+static inline bool islittleendian() { union { int i; uchar b[sizeof(int)]; } conv; conv.i = 1; return conv.b[0] != 0; }
 #ifdef SDL_BYTEORDER
 #define endianswap16 SDL_Swap16
 #define endianswap32 SDL_Swap32
@@ -1198,10 +1198,10 @@ template<class T> inline void endiansame(T *buf, int len) {}
 #define bigswap endiansame
 #endif
 #else
-template<class T> inline T lilswap(T n) { return *(const uchar *)&islittleendian ? n : endianswap(n); }
-template<class T> inline void lilswap(T *buf, int len) { if(!*(const uchar *)&islittleendian) endianswap(buf, len); }
-template<class T> inline T bigswap(T n) { return *(const uchar *)&islittleendian ? endianswap(n) : n; }
-template<class T> inline void bigswap(T *buf, int len) { if(*(const uchar *)&islittleendian) endianswap(buf, len); }
+template<class T> inline T lilswap(T n) { return islittleendian() ? n : endianswap(n); }
+template<class T> inline void lilswap(T *buf, int len) { if(!islittleendian()) endianswap(buf, len); }
+template<class T> inline T bigswap(T n) { return islittleendian() ? endianswap(n) : n; }
+template<class T> inline void bigswap(T *buf, int len) { if(islittleendian()) endianswap(buf, len); }
 #endif
 
 /* workaround for some C platforms that have these two functions as macros - not used anywhere */
