@@ -3171,6 +3171,17 @@ ICOMMAND(loop, "rie", (ident *id, int *n, uint *body),
     }
     poparg(*id);
 });
+ICOMMAND(loop+, "riie", (ident *id, int *offset, int *n, uint *body),
+{
+    if(*n <= 0 || id->type!=ID_ALIAS) return;
+    identstack stack;
+    loopi(*n)
+    {
+        setiter(*id, *offset + i, stack);
+        execute(body);
+    }
+    poparg(*id);
+});
 ICOMMAND(loopwhile, "riee", (ident *id, int *n, uint *cond, uint *body),
 {
     if(*n <= 0 || id->type!=ID_ALIAS) return;
