@@ -3160,49 +3160,46 @@ static inline void setiter(ident &id, int i, identstack &stack)
         id.flags &= ~IDF_UNKNOWN;
     }
 }
-ICOMMAND(loop, "rie", (ident *id, int *n, uint *body),
+
+static inline void doloop(ident &id, int offset, int n, uint *body)
 {
-    if(*n <= 0 || id->type!=ID_ALIAS) return;
+    if(n <= 0 || id.type != ID_ALIAS) return;
     identstack stack;
-    loopi(*n)
+    loopi(n)
     {
-        setiter(*id, i, stack);
+        setiter(id, offset + i, stack);
         execute(body);
     }
-    poparg(*id);
-});
-ICOMMAND(loop+, "riie", (ident *id, int *offset, int *n, uint *body),
+    poparg(id);
+}
+ICOMMAND(loop, "rie", (ident *id, int *n, uint *body), doloop(*id, 0, *n, body));
+ICOMMAND(loop+, "riie", (ident *id, int *offset, int *n, uint *body), doloop(*id, *offset, *n, body));
+
+static inline void loopwhile(ident &id, int offset, int n, uint *cond, uint *body)
 {
-    if(*n <= 0 || id->type!=ID_ALIAS) return;
+    if(n <= 0 || id.type!=ID_ALIAS) return;
     identstack stack;
-    loopi(*n)
+    loopi(n)
     {
-        setiter(*id, *offset + i, stack);
-        execute(body);
-    }
-    poparg(*id);
-});
-ICOMMAND(loopwhile, "riee", (ident *id, int *n, uint *cond, uint *body),
-{
-    if(*n <= 0 || id->type!=ID_ALIAS) return;
-    identstack stack;
-    loopi(*n)
-    {
-        setiter(*id, i, stack);
+        setiter(id, i, stack);
         if(!executebool(cond)) break;
         execute(body);
     }
-    poparg(*id);
-});
+    poparg(id);
+}
+ICOMMAND(loopwhile, "riee", (ident *id, int *n, uint *cond, uint *body), loopwhile(*id, 0, *n, cond, body));
+ICOMMAND(loopwhile+, "riiee", (ident *id, int *offset, int *n, uint *cond, uint *body), loopwhile(*id, *offset, *n, cond, body));
+
 ICOMMAND(while, "ee", (uint *cond, uint *body), while(executebool(cond)) execute(body));
 
-char *loopconc(ident *id, int n, uint *body, bool space)
+static inline void loopconc(ident &id, int offset, int n, uint *body, bool space)
 {
+    if(n <= 0 || id.type != ID_ALIAS) return;
     identstack stack;
     vector<char> s;
     loopi(n)
     {
-        setiter(*id, i, stack);
+        setiter(id, offset + i, stack);
         tagval v;
         executeret(body, v);
         const char *vstr = v.getstr();
@@ -3211,20 +3208,14 @@ char *loopconc(ident *id, int n, uint *body, bool space)
         s.put(vstr, len);
         freearg(v);
     }
-    if(n > 0) poparg(*id);
+    if(n > 0) poparg(id);
     s.add('\0');
-    return newstring(s.getbuf(), s.length()-1);
+    commandret->setstr(newstring(s.getbuf(), s.length()-1));
 }
-
-ICOMMAND(loopconcat, "rie", (ident *id, int *n, uint *body),
-{
-    if(*n > 0 && id->type==ID_ALIAS) commandret->setstr(loopconc(id, *n, body, true));
-});
-
-ICOMMAND(loopconcatword, "rie", (ident *id, int *n, uint *body),
-{
-    if(*n > 0 && id->type==ID_ALIAS) commandret->setstr(loopconc(id, *n, body, false));
-});
+ICOMMAND(loopconcat, "rie", (ident *id, int *n, uint *body), loopconc(*id, 0, *n, body, true));
+ICOMMAND(loopconcat+, "riie", (ident *id, int *offset, int *n, uint *body), loopconc(*id, *offset, *n, body, true));
+ICOMMAND(loopconcatword, "rie", (ident *id, int *n, uint *body), loopconc(*id, 0, *n, body, false));
+ICOMMAND(loopconcatword+, "riie", (ident *id, int *offset, int *n, uint *body), loopconc(*id, *offset, *n, body, false));
 
 void concat(tagval *v, int n)
 {
