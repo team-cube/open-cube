@@ -345,7 +345,7 @@ struct iqm : skelmodel, skelloader<iqm>
             return false;
         }
 
-        bool loadmesh(const char *filename)
+        bool load(const char *filename, float smooth)
         {
             name = newstring(filename);
 
@@ -368,13 +368,7 @@ struct iqm : skelmodel, skelloader<iqm>
         }
     };
 
-    meshgroup *loadmeshes(const char *name, va_list args)
-    {
-        iqmmeshgroup *group = new iqmmeshgroup;
-        group->shareskeleton(va_arg(args, char *));
-        if(!group->loadmesh(name)) { delete group; return NULL; }
-        return group;
-    }
+    skelmeshgroup *newmeshes() { return new iqmmeshgroup; }
 
     bool loaddefaultparts()
     {
@@ -384,7 +378,7 @@ struct iqm : skelmodel, skelloader<iqm>
         do --fname; while(fname >= name && *fname!='/' && *fname!='\\');
         fname++;
         defformatstring(meshname, "media/model/%s/%s.iqm", name, fname);
-        mdl.meshes = sharemeshes(path(meshname), NULL);
+        mdl.meshes = sharemeshes(path(meshname));
         if(!mdl.meshes) return false;
         mdl.initanimparts();
         mdl.initskins();

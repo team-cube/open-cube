@@ -389,13 +389,7 @@ struct md5 : skelmodel, skelloader<md5>
         }
     };
 
-    meshgroup *loadmeshes(const char *name, va_list args)
-    {
-        md5meshgroup *group = new md5meshgroup;
-        group->shareskeleton(va_arg(args, char *));
-        if(!group->load(name, va_arg(args, double))) { delete group; return NULL; }
-        return group;
-    }
+    skelmeshgroup *newmeshes() { return new md5meshgroup; }
 
     bool loaddefaultparts()
     {
@@ -405,7 +399,7 @@ struct md5 : skelmodel, skelloader<md5>
         do --fname; while(fname >= name && *fname!='/' && *fname!='\\');
         fname++;
         defformatstring(meshname, "media/model/%s/%s.md5mesh", name, fname);
-        mdl.meshes = sharemeshes(path(meshname), NULL, 2.0);
+        mdl.meshes = sharemeshes(path(meshname));
         if(!mdl.meshes) return false;
         mdl.initanimparts();
         mdl.initskins();

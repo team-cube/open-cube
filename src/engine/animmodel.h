@@ -548,22 +548,7 @@ struct animmodel : model
         }
     };
 
-    virtual meshgroup *loadmeshes(const char *name, va_list args) { return NULL; }
-
-    meshgroup *sharemeshes(const char *name, ...)
-    {
-        static hashnameset<meshgroup *> meshgroups;
-        if(!meshgroups.access(name))
-        {
-            va_list args;
-            va_start(args, name);
-            meshgroup *group = loadmeshes(name, args);
-            va_end(args);
-            if(!group) return NULL;
-            meshgroups.add(group);
-        }
-        return meshgroups[name];
-    }
+    static hashnameset<meshgroup *> meshgroups;
 
     struct linkedpart
     {
@@ -1583,6 +1568,7 @@ struct animmodel : model
     }
 };
 
+hashnameset<animmodel::meshgroup *> animmodel::meshgroups;
 int animmodel::intersectresult = -1, animmodel::intersectmode = 0;
 float animmodel::intersectdist = 0, animmodel::intersectscale = 1;
 bool animmodel::enabletc = false, animmodel::enabletangents = false, animmodel::enablebones = false,

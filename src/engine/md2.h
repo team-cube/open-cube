@@ -124,7 +124,7 @@ struct md2 : vertmodel, vertloader<md2>
             }
         }
 
-        bool load(const char *filename)
+        bool load(const char *filename, float smooth)
         {
             stream *file = openfile(filename, "rb");
             if(!file) return false;
@@ -202,12 +202,7 @@ struct md2 : vertmodel, vertloader<md2>
         }
     };
 
-    meshgroup *loadmeshes(const char *name, va_list args)
-    {
-        md2meshgroup *group = new md2meshgroup;
-        if(!group->load(name)) { delete group; return NULL; }
-        return group;
-    }
+    vertmeshgroup *newmeshes() { return new md2meshgroup; }
 
     bool load()
     {

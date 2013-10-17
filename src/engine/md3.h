@@ -53,7 +53,7 @@ struct md3 : vertmodel, vertloader<md3>
 
     struct md3meshgroup : vertmeshgroup
     {
-        bool load(const char *path)
+        bool load(const char *path, float smooth)
         {
             stream *f = openfile(path, "rb");
             if(!f) return false;
@@ -153,12 +153,7 @@ struct md3 : vertmodel, vertloader<md3>
         }
     };
 
-    meshgroup *loadmeshes(const char *name, va_list args)
-    {
-        md3meshgroup *group = new md3meshgroup;
-        if(!group->load(name)) { delete group; return NULL; }
-        return group;
-    }
+    vertmeshgroup *newmeshes() { return new md3meshgroup; }
 
     bool loaddefaultparts()
     {

@@ -397,23 +397,15 @@ struct smd : skelmodel, skelloader<smd>
             return sa;
         }
 
-        bool load(const char *meshfile)
+        bool load(const char *meshfile, float smooth)
         {
             name = newstring(meshfile);
 
-            if(!loadmesh(meshfile)) return false;
-
-            return true;
+            return loadmesh(meshfile);
         }
     };
 
-    meshgroup *loadmeshes(const char *name, va_list args)
-    {
-        smdmeshgroup *group = new smdmeshgroup;
-        group->shareskeleton(va_arg(args, char *));
-        if(!group->load(name)) { delete group; return NULL; }
-        return group;
-    }
+    skelmeshgroup *newmeshes() { return new smdmeshgroup; }
 
     bool loaddefaultparts()
     {
@@ -423,7 +415,7 @@ struct smd : skelmodel, skelloader<smd>
         do --fname; while(fname >= name && *fname!='/' && *fname!='\\');
         fname++;
         defformatstring(meshname, "media/model/%s/%s.smd", name, fname);
-        mdl.meshes = sharemeshes(path(meshname), NULL);
+        mdl.meshes = sharemeshes(path(meshname));
         if(!mdl.meshes) return false;
         mdl.initanimparts();
         mdl.initskins();
