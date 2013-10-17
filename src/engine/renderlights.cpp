@@ -3323,6 +3323,7 @@ void renderradiancehints()
 {
     if(!sunlight || !csmshadowmap || !gi || !giscale || !gidist) return;
 
+    timer *rhcputimer = begintimer("radiance hints", false);
     timer *rhtimer = begintimer("radiance hints");
 
     rh.setup();
@@ -3371,6 +3372,7 @@ void renderradiancehints()
     shadowmapping = 0;
 
     endtimer(rhtimer);
+    endtimer(rhcputimer);
 }
 
 void rendercsmshadowmaps()
