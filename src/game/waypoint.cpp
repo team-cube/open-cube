@@ -662,9 +662,7 @@ namespace ai
         if(!mname || !*mname) mname = getclientmap();
         if(!*mname) return false;
 
-        string pakname, mapname, cfgname;
-        getmapfilenames(mname, NULL, pakname, mapname, cfgname);
-        nformatstring(wptname, MAXSTRLEN, "media/%s.wpt", mapname);
+        nformatstring(wptname, MAXSTRLEN, "media/map/%s.wpt", mname);
         path(wptname);
         return true;
     }
