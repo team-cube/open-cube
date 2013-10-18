@@ -3129,11 +3129,16 @@ void radiancehints::renderslices()
         GLOBALPARAMF(rhbounds, split.bounds);
         GLOBALPARAMF(rhspread, cellradius);
 
-        vec cmin, cmax, bmin(1e16f, 1e16f, 1e16f), bmax(-1e16f, -1e16f, -1e16f), dmin(1e16f, 1e16f, 1e16f), dmax(-1e16f, -1e16f, -1e16f);
+        vec cmin, cmax, pcmin(-1e16f, -1e16f, -1e16f), pcmax(1e16f, 1e16f, 1e16f), bmin(1e16f, 1e16f, 1e16f), bmax(-1e16f, -1e16f, -1e16f), dmin(1e16f, 1e16f, 1e16f), dmax(-1e16f, -1e16f, -1e16f);
         loopk(3)
         {
             cmin[k] = floor((worldmin[k] - nudge - (split.center[k] - split.bounds))/step)*step + split.center[k] - split.bounds;
             cmax[k] = ceil((worldmax[k] + nudge - (split.center[k] - split.bounds))/step)*step + split.center[k] - split.bounds;
+        }
+        if(split.cached.z >= -1e15f) loopk(3)
+        {
+            pcmin[k] = floor((worldmin[k] - nudge - (split.cached[k] - split.bounds))/step)*step + split.cached[k] - split.bounds;
+            pcmax[k] = ceil((worldmax[k] + nudge - (split.cached[k] - split.bounds))/step)*step + split.cached[k] - split.bounds;
         }
         if(prevdynmin.z < prevdynmax.z) loopk(3)
         {
@@ -3210,7 +3215,15 @@ void radiancehints::renderslices()
             else
             {
             noborder:
-                if(rhborder) glClear(GL_COLOR_BUFFER_BIT);
+                if(rhborder)
+                {
+                    if(!rhcache && rhclipgrid)
+                    {
+                        if((z < cmin.z || z > cmax.z) && (z < pcmin.z || z > pcmax.z)) continue;
+                        if((x1 > cmax.x || x2 < cmin.x || y1 > cmax.y || y2 < cmin.y) && (x1 > pcmax.x || x2 < pcmin.x || y1 > pcmax.y || y2 < pcmin.y)) continue;
+                    }
+                    glClear(GL_COLOR_BUFFER_BIT);
+                }
             }
 
             if(j < rhborder || j >= rhgrid + rhborder) continue;
@@ -3219,7 +3232,11 @@ void radiancehints::renderslices()
             {
                 if(z < cmin.z || z > cmax.z)
                 {
-                    if(!rhborder) glClear(GL_COLOR_BUFFER_BIT);
+                    if(!rhborder)
+                    {
+                        if(!rhcache && (z < pcmin.z || z > pcmax.z)) continue;
+                        glClear(GL_COLOR_BUFFER_BIT);
+                    }
                     continue;
                 }
                 if(x1 < cmin.x || x2 > cmax.x || y1 < cmin.y || y2 > cmax.y)
@@ -3229,7 +3246,16 @@ void radiancehints::renderslices()
                     tx2 = min(x2, cmax.x);
                     ty1 = max(y1, cmin.y);
                     ty2 = min(y2, cmax.y);
-                    if(tx1 > tx2 || ty1 > ty2) continue;
+                    if(tx1 > tx2 || ty1 > ty2)
+                    {
+                        if(!rhborder)
+                        {
+                            if(!rhcache && (x1 > pcmax.x || x2 < pcmin.x || y1 > pcmax.y || y2 < pcmin.y)) continue;
+                            glClear(GL_COLOR_BUFFER_BIT);
+                        }
+                        continue;
+                    }
+                    else if(!rhborder) glClear(GL_COLOR_BUFFER_BIT);
                     vx1 += 2*rhgrid/float(rhgrid+2*rhborder)*(tx1 - x1)/(x2 - x1);
                     vx2 += 2*rhgrid/float(rhgrid+2*rhborder)*(tx2 - x2)/(x2 - x1);
                     vy1 += 2*rhgrid/float(rhgrid+2*rhborder)*(ty1 - y1)/(y2 - y1);
