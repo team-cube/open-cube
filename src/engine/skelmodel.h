@@ -1475,7 +1475,7 @@ struct skelmodel : animmodel
     };
 
     virtual skelmeshgroup *newmeshes() = 0;
- 
+
     meshgroup *loadmeshes(const char *name, const char *skelname = NULL, float smooth = 2)
     {
         skelmeshgroup *group = newmeshes();

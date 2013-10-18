@@ -1227,12 +1227,12 @@ void setupradiancehints()
             glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
             GLfloat border[4] = { 0.5f, 0.5f, 0.5f, 0 };
             glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, border);
-        }  
+        }
     }
-    
+
     if(!rhfbo) glGenFramebuffers_(1, &rhfbo);
     glBindFramebuffer_(GL_FRAMEBUFFER, rhfbo);
-        
+
     if(rhrect) loopi(4)
     {
         if(!rhtex[4+i]) glGenTextures(1, &rhtex[4+i]);
@@ -1246,7 +1246,7 @@ void setupradiancehints()
 
     if(glCheckFramebufferStatus_(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         fatal("failed allocating radiance hints buffer!");
-    
+
     if(!rsmdepthtex) glGenTextures(1, &rsmdepthtex);
     if(!rsmcolortex) glGenTextures(1, &rsmcolortex);
     if(!rsmnormaltex) glGenTextures(1, &rsmnormaltex);
@@ -3145,28 +3145,33 @@ void radiancehints::renderslices()
     }
     if(rhcache) loopi(4)
     {
-        glActiveTexture_(GL_TEXTURE7 + i);    
+        glActiveTexture_(GL_TEXTURE7 + i);
         glBindTexture(GL_TEXTURE_3D, rhtex[rhrect ? i : 4+i]);
     }
     glActiveTexture_(GL_TEXTURE0);
 
     glClearColor(0.5f, 0.5f, 0.5f, 0);
     if(rhrect) glEnable(GL_SCISSOR_TEST);
-    
+
     gle::defvertex(2);
     gle::deftexcoord0(3);
 
     memset(rhclearmasks[0], 0xFF, sizeof(rhclearmasks[0]));
-    
+
     float nudge = rhnudge*2*splits[0].bounds/rhgrid;
     loopirev(rhsplits)
     {
         splitinfo &split = splits[i];
-        if(rhrect && split.cached == split.center && !rhforce)
+        if((rhrect || !rhcache || hasCI) && split.cached == split.center && !rhforce)
         {
             bool bordercached = true;
             if(rhborder) for(int k = i+1; k < rhsplits; k++) if(splits[k].cached != splits[k].center) { bordercached = false; break; }
-            if(bordercached) continue;
+            if(bordercached)
+            {
+                if(rhrect || !rhcache) continue;
+                loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
+                continue;
+            }
         }
 
         float cellradius = split.bounds/rhgrid, step = 2*cellradius;
@@ -3261,8 +3266,8 @@ void radiancehints::renderslices()
 
                 SETSHADER(radiancehintsborder);
                 rhquad(bvx1, bvy1, bvx2, bvy2, btx1, bty1, btx2, bty2, bz);
-                
-                rhclearmasks[0][i][j/32] &= rhclearmasks[0][i+1][j/32] | ~(1 << (j%32));
+
+                rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
             }
             else
             {
@@ -3295,7 +3300,7 @@ void radiancehints::renderslices()
             }
 
             rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
-            
+
             if(rhcache && z > split.cached.z - split.bounds && z < split.cached.z + split.bounds)
             {
                 float px1 = max(tx1, split.cached.x - split.bounds), px2 = min(tx2, split.cached.x + split.bounds),
