@@ -942,13 +942,13 @@ void gl_checkextensions()
         if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_debug_output extension.");
     }
 
-    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhcache, rhborder;
+    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect;
     if(amd)
     {
         msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
         msaadepthstencil = gdepthstencil = 1; // some older AMD GPUs do not support reading from depth-stencil textures, so only use depth-stencil renderbuffer for now
         if(checkseries(renderer, "Radeon HD", 4000, 5199)) amd_pf_bug = 1;
-        rhcache = rhborder = 0; // bad cpu stalls on Catalyst 13.x when trying to bind 3D textures
+        rhrect = 1; // bad cpu stalls on Catalyst 13.x when trying to use 3D textures previously bound to FBOs
     }
     else if(nvidia)
     {
