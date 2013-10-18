@@ -276,6 +276,7 @@ void glerror(const char *file, int line, GLenum error)
 }
 
 VAR(amd_pf_bug, 0, 0, 1);
+VAR(mesa_texrectoffset_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -977,6 +978,7 @@ void gl_checkextensions()
         if(mesa) batchsunlight = 0; // causes massive slowdown in linux driver
         smgather = 1; // native shadow filter is slow
     }
+    if(mesa) mesa_texrectoffset_bug = 1;
 }
 
 ICOMMAND(glext, "s", (char *ext), intret(hasext(ext) ? 1 : 0));
