@@ -1310,7 +1310,6 @@ VARF(rhgrid, 3, 27, RH_MAXGRID, cleanupradiancehints());
 FVARF(rsmspread, 0, 0.15f, 1, clearradiancehintscache());
 VAR(rhclipgrid, 0, 1, 1);
 VARF(rhcache, 0, 1, 1, cleanupradiancehints());
-VAR(rhsplitcache, 0, 1, 1);
 VARF(rhforce, 0, 0, 1, cleanupradiancehints());
 VAR(rsmcull, 0, 1, 1);
 VARFP(rhtaps, 0, 20, 32, cleanupradiancehints());
@@ -3163,7 +3162,7 @@ void radiancehints::renderslices()
     loopirev(rhsplits)
     {
         splitinfo &split = splits[i];
-        if(rhrect && split.cached == split.center && rhsplitcache)
+        if(rhrect && split.cached == split.center && !rhforce)
         {
             bool bordercached = true;
             if(rhborder) for(int k = i+1; k < rhsplits; k++) if(splits[k].cached != splits[k].center) { bordercached = false; break; }
