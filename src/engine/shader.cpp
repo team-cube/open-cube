@@ -225,7 +225,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
             extern int mesa_texrectoffset_bug;
             parts[numparts++] = mesa_texrectoffset_bug ?
                 "#define texture2DRectOffset(sampler, coords, offset) texture(sampler, coords + vec2(offset))\n"
-                "#define shadow2DRectOffset(sampler, coords, offset) shadow(sampler, coords + vec2(offse)t)\n" :
+                "#define shadow2DRectOffset(sampler, coords, offset) texture(sampler, coords + vec2(offset))\n" :
                 "#define texture2DRectOffset(sampler, coords, offset) textureOffset(sampler, coords, offset)\n"
                 "#define shadow2DRectOffset(sampler, coords, offset) textureOffset(sampler, coords, offset)\n";
         }
