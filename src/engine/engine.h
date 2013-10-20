@@ -350,7 +350,7 @@ extern GLuint gdepthtex, gcolortex, gnormaltex, gglowtex, gdepthrb, gstencilrb;
 extern int msaasamples;
 extern GLuint msdepthtex, mscolortex, msnormaltex, msglowtex, msdepthrb, msstencilrb;
 extern vec2 msaapositions[16];
-enum { AA_UNUSED = 0, AA_RESERVED, AA_LUMA, AA_VELOCITY, AA_SPLIT, AA_SPLIT_LUMA, AA_SPLIT_VELOCITY };
+enum { AA_UNUSED = 0, AA_RESERVED, AA_LUMA, AA_VELOCITY, AA_VELOCITY_MASKED, AA_SPLIT, AA_SPLIT_LUMA, AA_SPLIT_VELOCITY, AA_SPLIT_VELOCITY_MASKED };
 
 extern void cleanupgbuffer();
 extern void initgbuffer();
@@ -375,7 +375,7 @@ extern bool debuglights();
 extern void cleanuplights();
 
 // aa
-extern matrix4 nojittermatrix, aamaskmatrix;
+extern matrix4 nojittermatrix;
 
 extern void setupaa(int w, int h);
 extern void jitteraa(bool init = true);

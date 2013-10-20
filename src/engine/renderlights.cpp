@@ -887,6 +887,11 @@ void loadhdrshaders(int aa)
             useshaderbyname("hdrnopvelocity");
             if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapvelocity");
             break;
+        case AA_VELOCITY_MASKED:
+            useshaderbyname("hdrtonemapvelocitymasked");
+            useshaderbyname("hdrnopvelocitymasked");
+            if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapvelocitymasked");
+            break;
         case AA_SPLIT:
             useshaderbyname("msaatonemapsplit");
             break;
@@ -895,6 +900,9 @@ void loadhdrshaders(int aa)
             break;
         case AA_SPLIT_VELOCITY:
             useshaderbyname("msaatonemapsplitvelocity");
+            break;
+        case AA_SPLIT_VELOCITY_MASKED:
+            useshaderbyname("msaatonemapsplitvelocitymasked");
             break;
         default:
             break;
@@ -1081,6 +1089,10 @@ void processhdr(GLuint outfbo, int aa)
                 SETSHADER(msaatonemapsplitvelocity);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
+            case AA_SPLIT_VELOCITY_MASKED:
+                SETSHADER(msaatonemapsplitvelocitymasked);
+                setaavelocityparams(GL_TEXTURE3);
+                break;
             default: SETSHADER(msaatonemapsplit); break;
         }
         screenquad(vieww, viewh, b0w, b0h);
@@ -1098,6 +1110,10 @@ void processhdr(GLuint outfbo, int aa)
             case AA_LUMA: SETSHADER(hdrtonemapluma); break;
             case AA_VELOCITY:
                 SETSHADER(hdrtonemapvelocity);
+                setaavelocityparams(GL_TEXTURE3);
+                break;
+            case AA_VELOCITY_MASKED:
+                SETSHADER(hdrtonemapvelocitymasked);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
             default: SETSHADER(hdrtonemap); break;
@@ -1123,6 +1139,10 @@ void processhdr(GLuint outfbo, int aa)
                 SETSHADER(msaatonemapvelocity);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
+            case AA_VELOCITY_MASKED:
+                SETSHADER(msaatonemapvelocitymasked);
+                setaavelocityparams(GL_TEXTURE3);
+                break;
             default: SETSHADER(msaatonemap); break;
         }
         screenquad(vieww, viewh, b0w, b0h);
@@ -1143,6 +1163,10 @@ void processhdr(GLuint outfbo, int aa)
                     case AA_LUMA: SETSHADER(hdrnopluma); break;
                     case AA_VELOCITY:
                         SETSHADER(hdrnopvelocity);
+                        setaavelocityparams(GL_TEXTURE3);
+                        break;
+                    case AA_VELOCITY_MASKED:
+                        SETSHADER(hdrnopvelocitymasked);
                         setaavelocityparams(GL_TEXTURE3);
                         break;
                     default: SETSHADER(hdrnop); break;
