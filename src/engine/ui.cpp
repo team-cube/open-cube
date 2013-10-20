@@ -1772,7 +1772,7 @@ namespace UI
         {
             Text::setup(scale_, color_, wrap_);
 
-            if(val != val_) { val = val_; intformat(str, val, sizeof(str)); }
+            if(val != val_) { val = val_; floatformat(str, val, sizeof(str)); }
         }
 
         static const char *typestr() { return "#TextFloat"; }
