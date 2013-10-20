@@ -6,6 +6,24 @@
 #include <unistd.h>
 #endif
 
+void *operator new(size_t size)
+{
+    void *p = malloc(size);
+    if(!p) abort();
+    return p;
+}
+
+void *operator new[](size_t size)
+{
+    void *p = malloc(size);
+    if(!p) abort();
+    return p;
+}
+
+void operator delete(void *p) { if(p) free(p); }
+
+void operator delete[](void *p) { if(p) free(p); }
+
 ////////////////////////// strings ////////////////////////////////////////
 
 static string tmpstr[4];
