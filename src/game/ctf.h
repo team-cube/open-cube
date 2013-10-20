@@ -617,7 +617,7 @@ struct ctfclientmode : clientmode
         playsound(S_FLAGRESET);
     }
 
-    void scoreflag(gameent *d, int relay, int relayversion, int goal, int goalversion, int goalspawn, int team, int score, int dflags)
+    void scoreflag(gameent *d, int relay, int relayversion, int goal, int goalversion, int team, int score, int dflags)
     {
         setscore(team, score);
         if(flags.inrange(goal))
@@ -940,9 +940,9 @@ case N_DROPFLAG:
 
 case N_SCOREFLAG:
 {
-    int ocn = getint(p), relayflag = getint(p), relayversion = getint(p), goalflag = getint(p), goalversion = getint(p), goalspawn = getint(p), team = getint(p), score = getint(p), oflags = getint(p);
+    int ocn = getint(p), relayflag = getint(p), relayversion = getint(p), goalflag = getint(p), goalversion = getint(p), team = getint(p), score = getint(p), oflags = getint(p);
     gameent *o = ocn==player1->clientnum ? player1 : newclient(ocn);
-    if(o && m_ctf) ctfmode.scoreflag(o, relayflag, relayversion, goalflag, goalversion, goalspawn, team, score, oflags);
+    if(o && m_ctf) ctfmode.scoreflag(o, relayflag, relayversion, goalflag, goalversion, team, score, oflags);
     break;
 }
 
