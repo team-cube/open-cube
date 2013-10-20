@@ -2,10 +2,6 @@
 
 #include "cube.h"
 
-#ifndef WIN32
-#include <unistd.h>
-#endif
-
 void *operator new(size_t size)
 {
     void *p = malloc(size);
