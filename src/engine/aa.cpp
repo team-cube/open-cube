@@ -4,7 +4,6 @@ extern void cleanuptqaa();
 
 VARFP(tqaa, 0, 0, 1, cleanupaa());
 FVAR(tqaareproject, 0, 300, 1e3f);
-FVAR(tqaareprojectscale, 0, 4, 1e3f);
 VARF(tqaamovemask, 0, 1, 1, cleanuptqaa());
 VARP(tqaaquincunx, 0, 1, 1);
 FVAR(tqaacolorweightscale, 0, 0.25f, 1e3f);
@@ -62,7 +61,7 @@ struct tqaaview
         if(frame) reproject.jitter(jitter.x, jitter.y);
         LOCALPARAM(reprojectmatrix, reproject);
         float maxvel = sqrtf(vieww*vieww + viewh*viewh)/tqaareproject;
-        LOCALPARAMF(maxvelocity, maxvel, 1/maxvel, tqaareprojectscale);
+        LOCALPARAMF(maxvelocity, maxvel, 1/maxvel);
         if(tqaamovemask)
         {
             glActiveTexture_(++tmu);
