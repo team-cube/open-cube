@@ -335,7 +335,8 @@ struct LocalShaderParam
             if(loc == -1) loc = getlocalparam(name);
             if(!s->localparamremap.inrange(loc)) return NULL;
         }
-        return &s->localparams[s->localparamremap[loc]];
+        uchar remap = s->localparamremap[loc];
+        return s->localparams.inrange(remap) ? &s->localparams[remap] : NULL;
     }
 
     void setf(float x = 0, float y = 0, float z = 0, float w = 0)
