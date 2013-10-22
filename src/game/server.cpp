@@ -1648,9 +1648,9 @@ namespace server
     {
         if(clients.empty() || (!hasnonlocalclients() && !demorecord)) return false;
         enet_uint32 curtime = enet_time_get()-lastsend;
-        if(curtime<33 && !force) return false;
+        if(curtime<40 && !force) return false;
         bool flush = buildworldstate();
-        lastsend += curtime - (curtime%33);
+        lastsend += curtime - (curtime%40);
         return flush;
     }
 

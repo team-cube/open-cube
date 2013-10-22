@@ -1005,7 +1005,7 @@ namespace game
     void c2sinfo(bool force) // send update to the server
     {
         static int lastupdate = -1000;
-        if(totalmillis - lastupdate < 33 && !force) return; // don't update faster than 30fps
+        if(totalmillis - lastupdate < 40 && !force) return; // don't update faster than 30fps
         lastupdate = totalmillis;
         sendpositions();
         sendmessages();
