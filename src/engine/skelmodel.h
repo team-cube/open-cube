@@ -1565,6 +1565,12 @@ struct skelmodel : animmodel
 
             ((skelmeshgroup *)meshes)->skel->optimize();
         }
+
+        void loaded()
+        {
+            endanimparts();
+            part::loaded();
+        }
     };
 
     skelmodel(const char *name) : animmodel(name)

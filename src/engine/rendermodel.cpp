@@ -89,14 +89,6 @@ void mdlspec(float *percent)
 }
 COMMAND(mdlspec, "f");
 
-void mdlambient(float *percent)
-{
-    checkmdl;
-    float ambient = *percent > 0 ? *percent/100.0f : 0.0f;
-    loadingmodel->setambient(ambient);
-}
-COMMAND(mdlambient, "f");
-
 void mdlalphatest(float *cutoff)
 {
     checkmdl;

@@ -434,12 +434,7 @@ struct md5 : skelmodel, skelloader<md5>
             }
             loading = NULL;
         }
-        loopv(parts)
-        {
-            skelpart *p = (skelpart *)parts[i];
-            p->endanimparts();
-            p->meshes->shared++;
-        }
+        loaded();
         return true;
     }
 };

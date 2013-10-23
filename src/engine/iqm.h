@@ -410,12 +410,7 @@ struct iqm : skelmodel, skelloader<iqm>
             }
             loading = NULL;
         }
-        loopv(parts)
-        {
-            skelpart *p = (skelpart *)parts[i];
-            p->endanimparts();
-            p->meshes->shared++;
-        }
+        loaded();
         return true;
     }
 };
