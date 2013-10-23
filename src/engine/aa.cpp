@@ -4,7 +4,7 @@ extern void cleanuptqaa();
 
 VARFP(tqaa, 0, 0, 1, cleanupaa());
 FVAR(tqaareproject, 0, 300, 1e3f);
-VARF(tqaamovemask, 0, 1, 1, cleanuptqaa());
+VARF(tqaamovemask, 0, 1, 1, cleanupaa());
 VARP(tqaaquincunx, 0, 1, 1);
 FVAR(tqaacolorweightscale, 0, 0.25f, 1e3f);
 FVAR(tqaacolorweightbias, 0, 0.01f, 1);
