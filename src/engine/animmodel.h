@@ -77,21 +77,36 @@ struct animmodel : model
         vec color;
 
         shaderparams() : spec(1.0f), glow(3.0f), glowdelta(0), glowpulse(0), fullbright(0), envmapmin(0), envmapmax(0), scrollu(0), scrollv(0), alphatest(0.9f), color(1, 1, 1) {}
-
-        bool setowner(Shader *s) const
-        {
-            if(s->owner == this) return false;
-            if(!s->owner)
-            {
-                s->next = usedshaders;
-                usedshaders = s;
-            }
-            s->owner = this;
-            return true;
-        }
     };
 
-    static hashset<shaderparams> sharedparams;
+    struct shaderparamskey
+    {
+        static hashtable<shaderparams, shaderparamskey> keys;
+        static int firstversion, lastversion;
+
+        int version;
+
+        shaderparamskey() : version(-1) {}
+
+        bool checkversion()
+        {
+            if(version >= firstversion) return true;
+            version = lastversion;
+            if(++lastversion <= 0)
+            {
+                enumerate(keys, shaderparamskey, key, key.version = -1);
+                firstversion = 0;
+                lastversion = 1;
+                version = 0;
+            }
+            return false; 
+        }
+
+        static inline void invalidate()
+        {
+            firstversion = lastversion;
+        }
+    };
 
     struct skin : shaderparams
     {
@@ -99,9 +114,9 @@ struct animmodel : model
         Texture *tex, *decal, *masks, *envmap, *normalmap;
         Shader *shader;
         bool cullface;
-        const shaderparams *paramkey;
+        shaderparamskey *key;
 
-        skin() : owner(0), tex(notexture), decal(NULL), masks(notexture), envmap(NULL), normalmap(NULL), shader(NULL), cullface(true), paramkey(NULL) {}
+        skin() : owner(0), tex(notexture), decal(NULL), masks(notexture), envmap(NULL), normalmap(NULL), shader(NULL), cullface(true), key(NULL) {}
 
         bool masked() const { return masks != notexture; }
         bool envmapped() const { return envmapmax>0; }
@@ -109,14 +124,15 @@ struct animmodel : model
         bool alphatested() const { return alphatest > 0 && tex->type&Texture::ALPHA; }
         bool decaled() const { return decal != NULL; }
 
-        void shareparams()
+        void setkey()
         {
-            paramkey = &sharedparams.add(*this);
+            key = &shaderparamskey::keys[*this];
         }
 
         void setshaderparams(mesh &m, const animstate *as, bool skinned = true)
         {
-            if(!paramkey->setowner(Shader::lastshader)) return;
+            if(key->checkversion() && Shader::lastshader->owner == key) return;
+            Shader::lastshader->owner = key;
 
             LOCALPARAMF(texscroll, scrollu*lastmillis/1000.0f, scrollv*lastmillis/1000.0f);
             if(alphatested()) LOCALPARAMF(alphatest, alphatest);
@@ -1038,7 +1054,7 @@ struct animmodel : model
         virtual void loaded()
         {
             meshes->shared++;
-            loopv(skins) skins[i].shareparams();
+            loopv(skins) skins[i].setkey();
         }
     };
 
@@ -1291,7 +1307,7 @@ struct animmodel : model
             if(colorscale != color)
             {
                 colorscale = color;
-                if(usedshaders) disownshaders();
+                shaderparamskey::invalidate();
             }
 
             if(envmapped()) closestenvmaptex = lookupenvmap(closestenvmap(o));
@@ -1554,7 +1570,6 @@ struct animmodel : model
     static vec4 colorscale;
     static GLuint lastvbuf, lasttcbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
-    static Shader *usedshaders;
     static int matrixpos;
     static matrix4 matrixstack[64];
 
@@ -1564,6 +1579,7 @@ struct animmodel : model
         enablecullface = true;
         lastvbuf = lasttcbuf = lastxbuf = lastbbuf = lastebuf = lastenvmaptex = closestenvmaptex = 0;
         lasttex = lastdecal = lastmasks = lastnormalmap = NULL;
+        shaderparamskey::invalidate();
     }
 
     static void disablebones()
@@ -1596,18 +1612,11 @@ struct animmodel : model
         lastvbuf = lasttcbuf = lastxbuf = lastbbuf = lastebuf = 0;
     }
 
-    static void disownshaders()
-    {
-        for(Shader *s = usedshaders; s; s = s->next) s->owner = NULL;
-        usedshaders = NULL;
-    }
-
     void endrender()
     {
         if(lastvbuf || lastebuf) disablevbo();
         if(!enablecullface) glEnable(GL_CULL_FACE);
         if(enabledepthoffset) disablepolygonoffset(GL_POLYGON_OFFSET_FILL);
-        if(usedshaders) disownshaders();
     }
 };
 
@@ -1621,7 +1630,6 @@ vec4 animmodel::colorscale(1, 1, 1, 1);
 GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastxbuf = 0, animmodel::lastbbuf = 0, animmodel::lastebuf = 0,
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
-Shader *animmodel::usedshaders = NULL;
 int animmodel::matrixpos = 0;
 matrix4 animmodel::matrixstack[64];
 
@@ -1635,7 +1643,8 @@ static inline bool htcmp(const animmodel::shaderparams &x, const animmodel::shad
     return !memcmp(&x, &y, sizeof(animmodel::shaderparams));
 }
 
-hashset<animmodel::shaderparams> animmodel::sharedparams;
+hashtable<animmodel::shaderparams, animmodel::shaderparamskey> animmodel::shaderparamskey::keys;
+int animmodel::shaderparamskey::firstversion = 0, animmodel::shaderparamskey::lastversion = 1;
 
 template<class MDL> struct modelloader
 {
