@@ -1288,7 +1288,11 @@ struct animmodel : model
 
         if(!(anim&ANIM_NOSKIN))
         {
-            colorscale = color;
+            if(colorscale != color)
+            {
+                colorscale = color;
+                if(usedshaders) disownshaders();
+            }
 
             if(envmapped()) envmaptmu = 2;
             else if(a) for(int i = 0; a[i].tag; i++) if(a[i].m && a[i].m->envmapped())
@@ -1594,7 +1598,7 @@ struct animmodel : model
         lastvbuf = lasttcbuf = lastxbuf = lastbbuf = lastebuf = 0;
     }
 
-    static void unlinkshaders()
+    static void disownshaders()
     {
         for(Shader *s = usedshaders; s; s = s->next) s->owner = NULL;
         usedshaders = NULL;
@@ -1605,7 +1609,7 @@ struct animmodel : model
         if(lastvbuf || lastebuf) disablevbo();
         if(!enablecullface) glEnable(GL_CULL_FACE);
         if(enabledepthoffset) disablepolygonoffset(GL_POLYGON_OFFSET_FILL);
-        if(usedshaders) unlinkshaders();
+        if(usedshaders) disownshaders();
     }
 };
 
