@@ -716,44 +716,58 @@ struct matrix3
         setyaw(cosf(angle), sinf(angle));
     }
 
-    bool calcangleaxis(float &angle, vec &axis, float threshold = 1e-9f)
-    {
-        angle = acosf(clamp(0.5f*(a.x + b.y + c.z - 1), -1.0f, 1.0f));
+    float trace() const { return a.x + b.y + c.z; }
 
-        if(angle <= 0) axis = vec(0, 0, 1);
-        else if(angle < M_PI)
+    bool calcangleaxis(float tr, float &angle, vec &axis, float threshold = 1e-16f) const
+    {
+        if(tr <= -1)
         {
-            axis = vec(b.z - c.y, c.x - a.z, a.y - b.x);
-            float r = axis.magnitude();
-            if(r <= threshold) return false;
-            axis.mul(1/r);
+            if(a.x >= b.y && a.x >= c.z)
+            {
+                float r = 1 + a.x - b.y - c.z;
+                if(r <= threshold) return false;
+                r = sqrtf(r);
+                axis.x = 0.5f*r;
+                axis.y = b.x/r;
+                axis.z = c.x/r;
+            }
+            else if(b.y >= c.z)
+            {
+                float r = 1 + b.y - a.x - c.z;
+                if(r <= threshold) return false;
+                r = sqrtf(r);
+                axis.y = 0.5f*r;
+                axis.x = b.x/r;
+                axis.z = c.y/r;
+            }
+            else
+            {
+                float r = 1 + b.y - a.x - c.z;
+                if(r <= threshold) return false;
+                r = sqrtf(r);
+                axis.z = 0.5f*r;
+                axis.x = c.x/r;
+                axis.y = c.y/r;
+            }
+            angle = M_PI;
         }
-        else if(a.x >= b.y && a.x >= c.z)
+        else if(tr >= 3)
         {
-            float r = sqrtf(max(1 + a.x - b.y - c.z, 0.0f));
-            if(r <= threshold) return false;
-            axis.x = 0.5f*r;
-            axis.y = b.x/r;
-            axis.z = c.x/r;
-        }
-        else if(b.y >= c.z)
-        {
-            float r = sqrtf(max(1 + b.y - a.x - c.z, 0.0f));
-            if(r <= threshold) return false;
-            axis.y = 0.5f*r;
-            axis.x = b.x/r;
-            axis.z = c.y/r;
+            axis = vec(0, 0, 1);
+            angle = 0;
         }
         else
         {
-            float r = sqrtf(max(1 + b.y - a.x - c.z, 0.0f));
+            axis = vec(b.z - c.y, c.x - a.z, a.y - b.x);
+            float r = axis.squaredlen();
             if(r <= threshold) return false;
-            axis.z = 0.5f*r;
-            axis.x = c.x/r;
-            axis.y = c.y/r;
+            axis.mul(1/sqrtf(r));
+            angle = acosf(0.5f*(tr - 1));
         }
         return true;
     }
+
+    bool calcangleaxis(float &angle, vec &axis, float threshold = 1e-16f) const { return calcangleaxis(trace(), angle, axis, threshold); }
 
     vec transform(const vec &o) const
     {

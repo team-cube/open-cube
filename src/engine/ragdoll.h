@@ -26,7 +26,7 @@ struct ragdollskel
     struct rotlimit
     {
         int tri[2];
-        float maxangle;
+        float maxangle, maxtrace;
         matrix3 middle;
     };
 
@@ -317,12 +317,10 @@ void ragdolldata::constrainrot()
         rot.multranspose(tris[r.tri[1]]);
 
         vec axis;
-        float angle;
-        if(!rot.calcangleaxis(angle, axis)) continue;
-        angle = r.maxangle - fabs(angle);
-        if(angle >= 0) continue;
-        angle += 1e-3f;
+        float angle, tr = rot.trace();
+        if(tr >= r.maxtrace || !rot.calcangleaxis(tr, angle, axis)) continue;
 
+        angle = r.maxangle - angle + 1e-3f;
         applyrotlimit(skel->tris[r.tri[0]], skel->tris[r.tri[1]], angle, axis);
     }
 }
@@ -354,16 +352,16 @@ void ragdolldata::applyrotfriction(float ts)
 
         vec axis;
         float angle;
-        if(rot.calcangleaxis(angle, axis))
-        {
-            angle *= -(fabs(angle) >= stopangle ? rotfric : 1.0f);
-            applyrotlimit(skel->tris[r.tri[0]], skel->tris[r.tri[1]], angle, axis);
-        }
+        if(!rot.calcangleaxis(angle, axis)) continue;
+
+        angle *= -(fabs(angle) >= stopangle ? rotfric : 1.0f);
+        applyrotlimit(skel->tris[r.tri[0]], skel->tris[r.tri[1]], angle, axis);
     }
     loopv(skel->verts)
     {
         vert &v = verts[i];
-        if(v.weight) v.pos = v.newpos.div(v.weight);
+        if(!v.weight) continue;
+        v.pos = v.newpos.div(v.weight);
         v.newpos = vec(0, 0, 0);
         v.weight = 0;
     }
@@ -402,16 +400,14 @@ void ragdolldata::updatepos()
     loopv(skel->verts)
     {
         vert &v = verts[i];
-        if(v.weight)
+        if(!v.weight) continue;
+        v.newpos.div(v.weight);
+        if(!collidevert(v.newpos, vec(v.newpos).sub(v.pos), skel->verts[i].radius)) v.pos = v.newpos;
+        else
         {
-            v.newpos.div(v.weight);
-            if(!collidevert(v.newpos, vec(v.newpos).sub(v.pos), skel->verts[i].radius)) v.pos = v.newpos;
-            else
-            {
-                vec dir = vec(v.newpos).sub(v.oldpos);
-                if(dir.dot(collidewall) < 0) v.oldpos = vec(v.pos).sub(dir.reflect(collidewall));
-                v.collided = true;
-            }
+            vec dir = vec(v.newpos).sub(v.oldpos);
+            if(dir.dot(collidewall) < 0) v.oldpos = vec(v.pos).sub(dir.reflect(collidewall));
+            v.collided = true;
         }
         v.newpos = vec(0, 0, 0);
         v.weight = 0;
