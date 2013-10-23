@@ -67,7 +67,7 @@ struct tqaaview
             glActiveTexture_(++tmu);
             if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msnormaltex);
             else glBindTexture(GL_TEXTURE_RECTANGLE, gnormaltex);
-        } 
+        }
         if(tmu!=GL_TEXTURE0) glActiveTexture_(GL_TEXTURE0);
     }
 
