@@ -222,34 +222,34 @@ struct animmodel : model
                 glBindTexture(GL_TEXTURE_2D, tex->id);
                 lasttex = tex;
             }
-            if(normalmap && normalmap!=lastnormalmap)
+            if(bumpmapped() && normalmap!=lastnormalmap)
             {
                 glActiveTexture_(GL_TEXTURE3);
                 activetmu = 3;
                 glBindTexture(GL_TEXTURE_2D, normalmap->id);
                 lastnormalmap = normalmap;
             }
-            if(decal && decal!=lastdecal)
+            if(decaled() && decal!=lastdecal)
             {
                 glActiveTexture_(GL_TEXTURE4);
                 activetmu = 4;
                 glBindTexture(GL_TEXTURE_2D, decal->id);
                 lastdecal = decal;
             }
-            if(masks!=lastmasks && masks!=notexture)
+            if(masked() && masks!=lastmasks)
             {
                 glActiveTexture_(GL_TEXTURE1);
                 activetmu = 1;
                 glBindTexture(GL_TEXTURE_2D, masks->id);
                 lastmasks = masks;
             }
-            if(envmaptmu>=0 && envmapmax>0)
+            if(envmapped())
             {
                 GLuint emtex = envmap ? envmap->id : closestenvmaptex;
                 if(lastenvmaptex!=emtex)
                 {
-                    glActiveTexture_(GL_TEXTURE0+envmaptmu);
-                    activetmu = envmaptmu;
+                    glActiveTexture_(GL_TEXTURE2);
+                    activetmu = 2;
                     glBindTexture(GL_TEXTURE_CUBE_MAP, emtex);
                     lastenvmaptex = emtex;
                 }
@@ -1294,13 +1294,12 @@ struct animmodel : model
                 if(usedshaders) disownshaders();
             }
 
-            if(envmapped()) envmaptmu = 2;
+            if(envmapped()) closestenvmaptex = lookupenvmap(closestenvmap(o));
             else if(a) for(int i = 0; a[i].tag; i++) if(a[i].m && a[i].m->envmapped())
             {
-                envmaptmu = 2;
+                closestenvmaptex = lookupenvmap(closestenvmap(o));
                 break;
             }
-            if(envmaptmu>=0) closestenvmaptex = lookupenvmap(closestenvmap(o));
         }
 
         if(depthoffset && !enabledepthoffset)
@@ -1556,7 +1555,7 @@ struct animmodel : model
     static GLuint lastvbuf, lasttcbuf, lastxbuf, lastbbuf, lastebuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastdecal, *lastmasks, *lastnormalmap;
     static Shader *usedshaders;
-    static int envmaptmu, matrixpos;
+    static int matrixpos;
     static matrix4 matrixstack[64];
 
     void startrender()
@@ -1565,7 +1564,6 @@ struct animmodel : model
         enablecullface = true;
         lastvbuf = lasttcbuf = lastxbuf = lastbbuf = lastebuf = lastenvmaptex = closestenvmaptex = 0;
         lasttex = lastdecal = lastmasks = lastnormalmap = NULL;
-        envmaptmu = -1;
     }
 
     static void disablebones()
@@ -1624,7 +1622,7 @@ GLuint animmodel::lastvbuf = 0, animmodel::lasttcbuf = 0, animmodel::lastxbuf = 
        animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
 Texture *animmodel::lasttex = NULL, *animmodel::lastdecal = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
 Shader *animmodel::usedshaders = NULL;
-int animmodel::envmaptmu = -1, animmodel::matrixpos = 0;
+int animmodel::matrixpos = 0;
 matrix4 animmodel::matrixstack[64];
 
 static inline uint hthash(const animmodel::shaderparams &k)

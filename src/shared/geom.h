@@ -287,6 +287,9 @@ struct vec4
     float &operator[](int i)       { return v[i]; }
     float  operator[](int i) const { return v[i]; }
 
+    bool operator==(const vec4 &o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
+    bool operator!=(const vec4 &o) const { return x != o.x || y != o.y || z != o.z || w != o.w; }
+
     float dot3(const vec4 &o) const { return x*o.x + y*o.y + z*o.z; }
     float dot3(const vec &o) const { return x*o.x + y*o.y + z*o.z; }
     float dot(const vec4 &o) const { return dot3(o) + w*o.w; }
