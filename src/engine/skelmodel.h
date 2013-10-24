@@ -861,6 +861,7 @@ struct skelmodel : animmodel
             loopi(numbones) if(bones[i].interpindex>=0)
             {
                 INTERPBONE(i);
+                d.normalize();
                 const boneinfo &b = bones[i];
                 if(b.interpparent<0) sc.bdata[b.interpindex] = d;
                 else sc.bdata[b.interpindex].mul(sc.bdata[b.interpparent], d);
