@@ -2777,8 +2777,6 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
-VAR(rhinoq, 0, 1, 1);
-
 void collectlights()
 {
     // point lights processed here
@@ -3424,6 +3422,8 @@ void radiancehints::renderslices()
     if(rhrect) glDisable(GL_SCISSOR_TEST);
 }
 
+VAR(rhinoq, 0, 1, 1);
+
 void renderradiancehints()
 {
     if(!sunlight || !csmshadowmap || !gi || !giscale || !gidist) return;
@@ -3456,6 +3456,12 @@ void renderradiancehints()
 
     if(rhforce || rh.prevdynmin.z < rh.prevdynmax.z || rh.dynmin.z < rh.dynmax.z || !rh.allcached())
     {
+        if(rhinoq && oqfrags && !drawtex)
+        {
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glDepthMask(GL_TRUE);
+        }
+
         glBindFramebuffer_(GL_FRAMEBUFFER, rsmfbo);
 
         shadowmatrix.mul(rsm.proj, rsm.model);

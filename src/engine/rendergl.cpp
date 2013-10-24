@@ -2187,6 +2187,9 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
         rendergbuffer();
         GLERROR;
 
+        renderradiancehints();
+        GLERROR;
+
         rendershadowatlas();
         GLERROR;
 
