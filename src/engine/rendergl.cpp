@@ -987,7 +987,7 @@ void gl_checkextensions()
         glineardepth = 1; // causes massive slowdown in windows driver (and sometimes in linux driver) if not using linear depth
         if(mesa) batchsunlight = 0; // causes massive slowdown in linux driver
         smgather = 1; // native shadow filter is slow
-        if(mesa) mesa_texrectoffset_bug = 1; // mesa (< 10.0) i965 driver has buggy textureOffset with texture rectangles
+        if(mesa && glversion < 320) mesa_texrectoffset_bug = 1; // mesa (< 10.0) i965 driver has buggy textureOffset with texture rectangles
     }
 }
 
