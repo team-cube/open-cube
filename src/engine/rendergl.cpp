@@ -2365,8 +2365,11 @@ void gl_drawview()
 
     glFlush();
 
-    renderradiancehints();
-    GLERROR;
+    if(!rhinoq || !oqfrags)
+    {
+        renderradiancehints();
+        GLERROR;
+    }
 
     rendershadowatlas();
     GLERROR;

@@ -302,6 +302,8 @@ extern float shadowradius, shadowbias;
 extern int shadowside, shadowspot;
 extern matrix4 shadowmatrix;
 
+extern int rhinoq;
+
 extern void resetlights();
 extern void collectlights();
 extern void loaddeferredlightshaders();

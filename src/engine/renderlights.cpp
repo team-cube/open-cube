@@ -2777,6 +2777,8 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
+VAR(rhinoq, 0, 1, 1);
+
 void collectlights()
 {
     // point lights processed here
@@ -2894,6 +2896,8 @@ void collectlights()
         gle::disable();
         glFlush();
     }
+
+    if(rhinoq && oqfrags && !drawtex) renderradiancehints();
 }
 
 static inline void addlighttiles(const lightinfo &l, int idx)
@@ -3466,6 +3470,14 @@ void renderradiancehints()
         rendershadowmodelbatches(rhdynmm!=0);
 
         rh.renderslices();
+
+        if(rhinoq && oqfrags && !drawtex)
+        {
+            glBindFramebuffer_(GL_FRAMEBUFFER, msaasamples ? msfbo : gfbo);
+            glViewport(0, 0, vieww, viewh);
+
+            glFlush();
+        }
     }
 
     clearbatchedmapmodels();
