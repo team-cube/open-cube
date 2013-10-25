@@ -1,32 +1,19 @@
 ===============================================================
-Player Model
-   
- X Lowpoly
- X Highpoly
- X UV Map
- X Texture
- - Vertex Weights
- - Animation
-      Idle
-      Run
-      Crouch
-      Jump
-      Jump-Crouch
-      Swim?
-      Edit
- - Finalize
-      team skins, etc.
-      ...
-
-
-===============================================================
-HUD Gun Models
+Weapon Models
    Rifle
       ...
    Rocket
       ...
    Knife/Blade?
       for left-hand melee attack (or use gunbutt animation)
+
+
+===============================================================
+Player Model
+   -Fix tag_weapon parenting
+   -Re-pose upper body to hold weapons
+   -Melee animation?
+   -Fix seam in helmet texture
 
 
 ===============================================================
