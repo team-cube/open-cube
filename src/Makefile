@@ -229,6 +229,7 @@ depend:
 engine/engine.h.gch: shared/cube.h.gch
 game/game.h.gch: shared/cube.h.gch
 
+ifeq (,$(findstring MINGW,$(PLATFORM)))
 CC= $(CXX) -x c
 ENET_CFLAGS:= -Ienet/include -O3 -fomit-frame-pointer $(shell enet/check_cflags.sh $(CC))
 ENET_OBJS= \
@@ -244,6 +245,7 @@ $(ENET_OBJS): CFLAGS += $(ENET_CFLAGS)
 enet/libenet.a: $(ENET_OBJS)
 	$(AR) rcs $@ $(ENET_OBJS)
 libenet: enet/libenet.a
+endif
 			
 # DO NOT DELETE
 
