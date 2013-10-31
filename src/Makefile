@@ -52,7 +52,7 @@ endif
 CLIENT_LIBS= -mwindows $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lSDL2 -lSDL2_image -lSDL2_mixer -lzlib1 -lopengl32 -lenet -lws2_32 -lwinmm
 else	
 CLIENT_INCLUDES= $(INCLUDES) -I/usr/X11R6/include `sdl2-config --cflags`
-CLIENT_LIBS= -Lenet/.libs -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -lGL
+CLIENT_LIBS= -Lenet -lenet -L/usr/X11R6/lib -lX11 `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -lGL
 endif
 ifeq ($(PLATFORM),Linux)
 CLIENT_LIBS+= -lrt
@@ -132,7 +132,7 @@ SERVER_LIBS= -mwindows $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lzlib1 -lenet -lws2_
 MASTER_LIBS= $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lzlib1 -lenet -lws2_32 -lwinmm
 else
 SERVER_INCLUDES= -DSTANDALONE $(INCLUDES)
-SERVER_LIBS= -Lenet/.libs -lenet -lz
+SERVER_LIBS= -Lenet -lenet -lz
 MASTER_LIBS= $(SERVER_LIBS)
 endif
 SERVER_OBJS= \
@@ -160,15 +160,6 @@ endif
 default: all
 
 all: client server
-
-enet/Makefile:
-	cd enet; ./configure --enable-shared=no --enable-static=yes
-	
-libenet: enet/Makefile
-	$(MAKE)	-C enet/ all
-
-clean-enet: enet/Makefile
-	$(MAKE) -C enet/ clean
 
 clean:
 	-$(RM) $(CLIENT_PCH) $(CLIENT_OBJS) $(SERVER_OBJS) $(MASTER_OBJS) tess_client tess_server tess_master
@@ -238,6 +229,22 @@ depend:
 engine/engine.h.gch: shared/cube.h.gch
 game/game.h.gch: shared/cube.h.gch
 
+CC= $(CXX) -x c
+ENET_CFLAGS= -Ienet/include -O3 -fomit-frame-pointer $(shell enet/check_cflags.sh $(CC))
+ENET_OBJS= \
+	enet/callbacks.o \
+	enet/host.o \
+	enet/list.o \
+	enet/packet.o \
+	enet/peer.o \
+	enet/protocol.o \
+	enet/unix.o \
+	enet/win32.o
+$(ENET_OBJS): CFLAGS += $(ENET_CFLAGS)
+enet/libenet.a: $(ENET_OBJS)
+	$(AR) rcs $@ $(ENET_OBJS)
+libenet: enet/libenet.a
+			
 # DO NOT DELETE
 
 shared/crypto.o: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
