@@ -119,7 +119,7 @@ namespace aiman
         ci->state.state = CS_DEAD;
         ci->team = team;
         ci->playermodel = rnd(128);
-        ci->playercolor = rnd(0x1000000);
+        ci->playercolor = rnd(0x8000);
         ci->aireinit = 2;
         ci->connected = true;
         dorefresh = true;

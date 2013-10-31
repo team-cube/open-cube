@@ -136,7 +136,7 @@ namespace game
             case 2: return getplayercolor(2, playercolorrojo);
             default: return getplayercolor(0, playercolor);
         }
-        else return getplayercolor(team, (d->playercolor>>(8*team))&0xFF);
+        else return getplayercolor(team, (d->playercolor>>(5*team))&0x1F);
     }
 
     void changedplayermodel()
@@ -169,7 +169,7 @@ namespace game
 
     void changedplayercolor()
     {
-        if(player1->clientnum < 0) player1->playercolor = playercolor | (playercolorazul<<8) | (playercolorrojo<<16);
+        if(player1->clientnum < 0) player1->playercolor = playercolor | (playercolorazul<<5) | (playercolorrojo<<10);
     }
 
     void syncplayer()
@@ -180,7 +180,7 @@ namespace game
             addmsg(N_SWITCHMODEL, "ri", player1->playermodel);
         }
 
-        int col = playercolor | (playercolorazul<<8) | (playercolorrojo<<16);
+        int col = playercolor | (playercolorazul<<5) | (playercolorrojo<<10);
         if(player1->playercolor != col)
         {
             player1->playercolor = col;
