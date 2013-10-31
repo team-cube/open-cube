@@ -207,7 +207,7 @@ namespace server
     {
         int clientnum, ownernum, connectmillis, sessionid, overflow;
         string name, mapvote;
-        int team, playermodel;
+        int team, playermodel, playercolor;
         int modevote;
         int privilege;
         bool connected, local, timesync;
@@ -329,6 +329,7 @@ namespace server
             name[0] = 0;
             team = 0;
             playermodel = -1;
+            playercolor = 0;
             privilege = PRIV_NONE;
             connected = local = false;
             connectauth = 0;
@@ -1698,6 +1699,7 @@ namespace server
             putint(p, ci->state.aitype);
             putint(p, ci->state.skill);
             putint(p, ci->playermodel);
+            putint(p, ci->playercolor);
             putint(p, ci->team);
             sendstring(ci->name, p);
         }
@@ -1708,6 +1710,7 @@ namespace server
             sendstring(ci->name, p);
             putint(p, ci->team);
             putint(p, ci->playermodel);
+            putint(p, ci->playercolor);
         }
     }
 
@@ -2732,6 +2735,7 @@ namespace server
                     if(!text[0]) copystring(text, "unnamed");
                     copystring(ci->name, text, MAXNAMELEN+1);
                     ci->playermodel = getint(p);
+                    ci->playercolor = getint(p);
 
                     string password, authdesc, authname;
                     getstring(password, p, sizeof(password));
@@ -3069,6 +3073,13 @@ namespace server
             case N_SWITCHMODEL:
             {
                 ci->playermodel = getint(p);
+                QUEUE_MSG;
+                break;
+            }
+
+            case N_SWITCHCOLOR:
+            {
+                ci->playercolor = getint(p);
                 QUEUE_MSG;
                 break;
             }

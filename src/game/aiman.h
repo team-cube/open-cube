@@ -119,6 +119,7 @@ namespace aiman
         ci->state.state = CS_DEAD;
         ci->team = team;
         ci->playermodel = rnd(128);
+        ci->playercolor = rnd(0x1000000);
         ci->aireinit = 2;
         ci->connected = true;
         dorefresh = true;
@@ -153,7 +154,7 @@ namespace aiman
         if(ci->ownernum < 0) deleteai(ci);
         else if(ci->aireinit >= 1)
         {
-            sendf(-1, 1, "ri7s", N_INITAI, ci->clientnum, ci->ownernum, ci->state.aitype, ci->state.skill, ci->playermodel, ci->team, ci->name);
+            sendf(-1, 1, "ri8s", N_INITAI, ci->clientnum, ci->ownernum, ci->state.aitype, ci->state.skill, ci->playermodel, ci->playercolor, ci->team, ci->name);
             if(ci->aireinit == 2)
             {
                 ci->reassign();

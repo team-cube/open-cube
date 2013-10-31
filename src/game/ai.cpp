@@ -137,7 +137,7 @@ namespace ai
         if(d->ai) DELETEP(d->ai);
     }
 
-    void init(gameent *d, int at, int ocn, int sk, int bn, int pm, const char *name, int team)
+    void init(gameent *d, int at, int ocn, int sk, int bn, int pm, int col, const char *name, int team)
     {
         loadwaypoints();
 
@@ -167,6 +167,7 @@ namespace ai
         d->ownernum = ocn;
         d->skill = sk;
         d->playermodel = chooserandomplayermodel(pm);
+        d->playercolor = col;
 
         if(resetthisguy) removeweapons(d);
         if(d->ownernum >= 0 && player1->clientnum == d->ownernum)

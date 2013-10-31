@@ -188,7 +188,7 @@ enum
     N_PAUSEGAME, N_GAMESPEED,
     N_ADDBOT, N_DELBOT, N_INITAI, N_FROMAI, N_BOTLIMIT, N_BOTBALANCE,
     N_MAPCRC, N_CHECKMAPS,
-    N_SWITCHNAME, N_SWITCHMODEL, N_SWITCHTEAM,
+    N_SWITCHNAME, N_SWITCHMODEL, N_SWITCHCOLOR, N_SWITCHTEAM,
     N_SERVCMD,
     N_DEMOPACKET,
     NUMMSG
@@ -216,7 +216,7 @@ static const int msgsizes[] =               // size inclusive message token, 0 f
     N_PAUSEGAME, 0, N_GAMESPEED, 0,
     N_ADDBOT, 2, N_DELBOT, 1, N_INITAI, 0, N_FROMAI, 2, N_BOTLIMIT, 2, N_BOTBALANCE, 2,
     N_MAPCRC, 0, N_CHECKMAPS, 1,
-    N_SWITCHNAME, 0, N_SWITCHMODEL, 2, N_SWITCHTEAM, 0,
+    N_SWITCHNAME, 0, N_SWITCHMODEL, 2, N_SWITCHCOLOR, 2, N_SWITCHTEAM, 2,
     N_SERVCMD, 0,
     N_DEMOPACKET, 0,
     -1
@@ -358,13 +358,13 @@ struct gameent : dynent, gamestate
     int smoothmillis;
 
     string name, info;
-    int team, playermodel;
+    int team, playermodel, playercolor;
     ai::aiinfo *ai;
     int ownernum, lastnode;
 
     vec muzzle;
 
-    gameent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
+    gameent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), respawned(-1), suicided(-1), lastpain(0), frags(0), flags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), smoothmillis(-1), team(0), playermodel(-1), playercolor(0), ai(NULL), ownernum(-1), muzzle(-1, -1, -1)
     {
         name[0] = info[0] = 0;
         respawn();
@@ -524,6 +524,7 @@ namespace game
     extern void switchname(const char *name);
     extern void switchteam(const char *name);
     extern void switchplayermodel(int playermodel);
+    extern void switchplayercolor(int playercolor);
     extern void sendmapinfo();
     extern void stopdemo();
     extern void changemap(const char *name, int mode);
@@ -572,14 +573,13 @@ namespace game
         bool ragdoll;
     };
 
-    extern int playermodel, teamskins, testteam;
-
     extern void saveragdoll(gameent *d);
     extern void clearragdolls();
     extern void moveragdolls();
-    extern void changedplayermodel();
     extern const playermodelinfo &getplayermodelinfo(gameent *d);
+    extern int getplayercolor(gameent *d, int team);
     extern int chooserandomplayermodel(int seed);
+    extern void syncplayer();
     extern void swayhudgun(int curtime);
     extern vec hudgunorigin(int gun, const vec &from, const vec &to, gameent *d);
 }

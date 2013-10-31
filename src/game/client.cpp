@@ -159,12 +159,6 @@ namespace game
     ICOMMAND(getteam, "", (), intret(m_teammode && validteam(player1->team) ? player1->team : 0));
     ICOMMAND(getteamname, "i", (int *num), result(teamname(*num)));
 
-    void switchplayermodel(int playermodel)
-    {
-        player1->playermodel = playermodel;
-        addmsg(N_SWITCHMODEL, "ri", player1->playermodel);
-    }
-
     struct authkey
     {
         char *name, *key, *desc;
@@ -301,6 +295,13 @@ namespace game
         return m_teammode && validteam(d->team) ? mdl.icon[d->team] : mdl.icon[0];
     }
     ICOMMAND(getclienticon, "i", (int *cn), result(getclienticon(*cn)));
+
+    int getclientcolor(int cn)
+    {
+        gameent *d = getclient(cn);
+        return d && d->state!=CS_SPECTATOR ? getplayercolor(d, m_teammode && validteam(d->team) ? d->team : 0) : 0xFFFFFF;
+    }
+    ICOMMAND(getclientcolor, "i", (int *cn), intret(getclientcolor(*cn)));
 
     ICOMMAND(getclientfrags, "i", (int *cn),
     {
@@ -1018,6 +1019,7 @@ namespace game
         putint(p, N_CONNECT);
         sendstring(player1->name, p);
         putint(p, player1->playermodel);
+        putint(p, player1->playercolor);
         string hash = "";
         if(connectpass[0])
         {
@@ -1339,6 +1341,7 @@ namespace game
                     getstring(text, p);
                     getstring(text, p);
                     getint(p);
+                    getint(p);
                     break;
                 }
                 getstring(text, p);
@@ -1358,6 +1361,7 @@ namespace game
                 d->team = getint(p);
                 if(!validteam(d->team)) d->team = 0;
                 d->playermodel = getint(p);
+                d->playercolor = getint(p);
                 break;
             }
 
@@ -1383,6 +1387,13 @@ namespace game
                     d->playermodel = model;
                     if(d->ragdoll) cleanragdoll(d);
                 }
+                break;
+            }
+
+            case N_SWITCHCOLOR:
+            {
+                int color = getint(p);
+                if(d) d->playercolor = color;
                 break;
             }
 
@@ -1820,13 +1831,13 @@ namespace game
 
             case N_INITAI:
             {
-                int bn = getint(p), on = getint(p), at = getint(p), sk = clamp(getint(p), 1, 101), pm = getint(p), team = getint(p);
+                int bn = getint(p), on = getint(p), at = getint(p), sk = clamp(getint(p), 1, 101), pm = getint(p), col = getint(p), team = getint(p);
                 string name;
                 getstring(text, p);
                 filtertext(name, text, false, MAXNAMELEN);
                 gameent *b = newclient(bn);
                 if(!b) break;
-                ai::init(b, at, on, sk, bn, pm, name, team);
+                ai::init(b, at, on, sk, bn, pm, col, name, team);
                 break;
             }
 

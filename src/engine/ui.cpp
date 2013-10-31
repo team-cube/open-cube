@@ -2716,12 +2716,13 @@ namespace UI
 
     struct PlayerPreview : Filler
     {
-        int model, team, weapon;
+        int model, color, team, weapon;
 
-        void setup(int model_, int team_, int weapon_, float minw_, float minh_)
+        void setup(int model_, int color_, int team_, int weapon_, float minw_, float minh_)
         {
             Filler::setup(minw_, minh_);
             model = model_;
+            color = color_;
             team = team_;
             weapon = weapon_;
         }
@@ -2744,7 +2745,7 @@ namespace UI
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
-            game::renderplayerpreview(model, team, weapon);
+            game::renderplayerpreview(model, color, team, weapon);
             if(clipstack.length()) clipstack.last().scissor();
             modelpreview::end();
             hudshader->set();
@@ -3227,8 +3228,8 @@ namespace UI
     ICOMMAND(uimodelpreview, "ssffe", (char *model, char *animspec, float *minw, float *minh, uint *children),
         BUILD(ModelPreview, o, o->setup(model, animspec, *minw, *minh), children));
 
-    ICOMMAND(uiplayerpreview, "iiiffe", (int *model, int *team, int *weapon, float *minw, float *minh, uint *children),
-        BUILD(PlayerPreview, o, o->setup(*model, *team, *weapon, *minw, *minh), children));
+    ICOMMAND(uiplayerpreview, "iiiiffe", (int *model, int *color, int *team, int *weapon, float *minw, float *minh, uint *children),
+        BUILD(PlayerPreview, o, o->setup(*model, *color, *team, *weapon, *minw, *minh), children));
 
     ICOMMAND(uislotview, "iffe", (int *index, float *minw, float *minh, uint *children),
         BUILD(SlotViewer, o, o->setup(*index, *minw, *minh), children));
