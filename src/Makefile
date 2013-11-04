@@ -220,6 +220,10 @@ ifneq (,$(STRIP))
 endif
 endif
 
+enet/libenet.a:
+	$(MAKE) -C enet
+libenet: enet/libenet.a
+
 depend:
 	makedepend -Y -Ishared -Iengine -Igame $(subst .o,.cpp,$(CLIENT_OBJS))
 	makedepend -a -o.h.gch -Y -Ishared -Iengine -Igame $(subst .h.gch,.h,$(CLIENT_PCH))
@@ -229,24 +233,6 @@ depend:
 engine/engine.h.gch: shared/cube.h.gch
 game/game.h.gch: shared/cube.h.gch
 
-ifeq (,$(findstring MINGW,$(PLATFORM)))
-CC= $(CXX) -x c
-ENET_CFLAGS:= -Ienet/include -O3 -fomit-frame-pointer $(shell enet/check_cflags.sh $(CC))
-ENET_OBJS= \
-	enet/callbacks.o \
-	enet/host.o \
-	enet/list.o \
-	enet/packet.o \
-	enet/peer.o \
-	enet/protocol.o \
-	enet/unix.o \
-	enet/win32.o
-$(ENET_OBJS): CFLAGS += $(ENET_CFLAGS)
-enet/libenet.a: $(ENET_OBJS)
-	$(AR) rcs $@ $(ENET_OBJS)
-libenet: enet/libenet.a
-endif
-			
 # DO NOT DELETE
 
 shared/crypto.o: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
