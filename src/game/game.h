@@ -82,7 +82,7 @@ struct gameentity : extentity
 {
 };
 
-enum { GUN_MELEE = 0, GUN_RIFLE, GUN_ROCKET, NUMGUNS };
+enum { GUN_MELEE = 0, GUN_RAIL, GUN_PULSE, NUMGUNS };
 
 #define validgun(n) ((n) >= 0 && (n) < NUMGUNS)
 
@@ -95,8 +95,8 @@ enum
     M_DEMO       = 1<<4,
     M_LOCAL      = 1<<5,
     M_LOBBY      = 1<<6,
-    M_INSTA      = 1<<7,
-    M_ROCKET     = 1<<8
+    M_RAIL       = 1<<7,
+    M_PULSE      = 1<<8
 };
 
 static struct gamemodeinfo
@@ -108,12 +108,12 @@ static struct gamemodeinfo
 {
     { "demo", M_DEMO | M_LOCAL, NULL},
     { "coop edit", M_EDIT, "Cooperative Editing: Edit maps with multiple players simultaneously." },
-    { "instagib", M_LOBBY | M_INSTA, "Instagib: Frag everyone with rifles to score points." },
-    { "rocketgib", M_LOBBY | M_ROCKET, "Rocketgib: Frag everyone with rockets to score points." },
-    { "insta team", M_TEAM | M_INSTA, "Team Instagib: Frag \fs\f3the enemy team\fr to with rifles to score points for \fs\f1your team\fr." },
-    { "rocket team", M_TEAM | M_ROCKET, "Team Rocketgib: Frag \fs\f3the enemy team\fr to with rockets to score points for \fs\f1your team\fr." },
-    { "insta ctf", M_CTF | M_TEAM | M_INSTA, "Instagib Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
-    { "rocket ctf", M_CTF | M_TEAM | M_ROCKET, "Rocketgib Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "railgun deatchmatch", M_LOBBY | M_RAIL, "Railgun Deathmatch: Frag everyone with railguns to score points." },
+    { "pulse rifle deatchmatch", M_LOBBY | M_PULSE, "Pulse Rifle Deatchmatch: Frag everyone with pulse rifles to score points." },
+    { "railgun team deatchmatch", M_TEAM | M_RAIL, "Railgun Team Deathmatch: Frag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
+    { "pulse rifle team deathmatch", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch: Frag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
+    { "railgun ctf", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "pulse rifle ctf", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
 };
 
 #define STARTGAMEMODE (-1)
@@ -128,8 +128,8 @@ static struct gamemodeinfo
 #define m_teammode     (m_check(gamemode, M_TEAM))
 #define m_overtime     (m_check(gamemode, M_OVERTIME))
 #define isteam(a,b)    (m_teammode && a==b)
-#define m_insta        (m_check(gamemode, M_INSTA))
-#define m_rocket       (m_check(gamemode, M_ROCKET))
+#define m_rail         (m_check(gamemode, M_RAIL))
+#define m_pulse        (m_check(gamemode, M_PULSE))
 
 #define m_demo         (m_check(gamemode, M_DEMO))
 #define m_edit         (m_check(gamemode, M_EDIT))
@@ -150,7 +150,7 @@ enum
     S_JUMP = 0, S_LAND,
     S_SPLASHIN, S_SPLASHOUT, S_BURN,
     S_ITEMSPAWN, S_TELEPORT, S_JUMPPAD,
-    S_MELEE, S_ROCKET, S_ROCKETEXPLODE, S_RIFLE,
+    S_MELEE, S_PULSE, S_PULSEEXPLODE, S_RAIL,
     S_WEAPLOAD, S_NOAMMO, S_HIT,
     S_PAIN1, S_PAIN2, S_DIE1, S_DIE2,
 
@@ -266,8 +266,8 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; const char *name, *file; } guns[NUMGUNS] =
 {
     { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",  "melee"},
-    { S_RIFLE,   800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "rifle",  "rifle" },
-    { S_ROCKET,  800,   1,   0, 480, 30, 1024,  1,5000, 10,    0, 0, "rocket", "rocket"}
+    { S_RAIL,    800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "railgun",  "railgun" },
+    { S_PULSE,   800,   1,   0, 480, 30, 1024,  1,5000, 10,    0, 0, "pulse rifle", "pulserifle"}
 };
 
 #include "ai.h"
@@ -302,15 +302,15 @@ struct gamestate
 
     void spawnstate(int gamemode)
     {
-        if(m_insta)
+        if(m_rail)
         {
-            gunselect = GUN_RIFLE;
-            ammo[GUN_RIFLE] = 1;
+            gunselect = GUN_RAIL;
+            ammo[GUN_RAIL] = 1;
         }
-        else if(m_rocket)
+        else if(m_pulse)
         {
-            gunselect = GUN_ROCKET;
-            ammo[GUN_ROCKET] = 1;
+            gunselect = GUN_PULSE;
+            ammo[GUN_PULSE] = 1;
         }
         else if(m_edit)
         {

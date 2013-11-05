@@ -229,7 +229,7 @@ namespace game
             delay = 1000;
         }
         modelattach a[5];
-        static const char * const vweps[] = {"worldgun/melee", "worldgun/rifle", "worldgun/rocket"};
+        static const char * const vweps[] = {"worldgun/melee", "worldgun/railgun", "worldgun/pulserifle"};
         int ai = 0;
         if(vweps[d->gunselect])
         {

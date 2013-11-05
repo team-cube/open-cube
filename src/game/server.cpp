@@ -120,7 +120,7 @@ namespace server
         int state, editstate;
         int lastdeath, deadflush, lastspawn, lifesequence;
         int lastshot;
-        projectilestate<8> rockets;
+        projectilestate<8> projs;
         int frags, flags, deaths, teamkills, shotdamage, damage;
         int lasttimeplayed, timeplayed;
         float effectiveness;
@@ -141,7 +141,7 @@ namespace server
         {
             if(state!=CS_SPECTATOR) state = editstate = CS_DEAD;
             maxhealth = 1;
-            rockets.reset();
+            projs.reset();
 
             timeplayed = 0;
             effectiveness = 0;
@@ -164,7 +164,7 @@ namespace server
         void reassign()
         {
             respawn();
-            rockets.reset();
+            projs.reset();
         }
     };
 
@@ -2139,8 +2139,8 @@ namespace server
         servstate &gs = ci->state;
         switch(gun)
         {
-            case GUN_ROCKET:
-                if(!gs.rockets.remove(id)) return;
+            case GUN_PULSE:
+                if(!gs.projs.remove(id)) return;
                 break;
 
             default:
@@ -2182,7 +2182,7 @@ namespace server
         gs.shotdamage += guns[gun].damage*guns[gun].rays;
         switch(gun)
         {
-            case GUN_ROCKET: gs.rockets.add(id); break;
+            case GUN_PULSE: gs.projs.add(id); break;
             default:
             {
                 int totalrays = 0, maxrays = guns[gun].rays;
@@ -2893,7 +2893,7 @@ namespace server
                     ci->state.editstate = ci->state.state;
                     ci->state.state = CS_EDITING;
                     ci->events.setsize(0);
-                    ci->state.rockets.reset();
+                    ci->state.projs.reset();
                 }
                 else ci->state.state = ci->state.editstate;
                 QUEUE_MSG;

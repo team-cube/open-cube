@@ -47,7 +47,11 @@ namespace game
     int getweapon(const char *name)
     {
         if(isdigit(name[0])) return parseint(name);
-        else loopi(sizeof(guns)/sizeof(guns[0])) if(!strcasecmp(guns[i].name, name)) return i;
+        else
+        {
+            int len = strlen(name);
+            loopi(sizeof(guns)/sizeof(guns[0])) if(!strncasecmp(guns[i].name, name, len)) return i;
+        }
         return -1;
     }
 
@@ -88,9 +92,9 @@ namespace game
     {
         if(d->state!=CS_ALIVE) return;
         int s = d->gunselect;
-        if(s!=GUN_ROCKET && d->ammo[GUN_ROCKET])     s = GUN_ROCKET;
-        else if(s!=GUN_RIFLE && d->ammo[GUN_RIFLE])  s = GUN_RIFLE;
-        else                                         s = GUN_MELEE;
+        if(s!=GUN_PULSE && d->ammo[GUN_PULSE])     s = GUN_PULSE;
+        else if(s!=GUN_RAIL && d->ammo[GUN_RAIL])  s = GUN_RAIL;
+        else                                       s = GUN_MELEE;
         gunselect(s, d);
     }
 
@@ -361,7 +365,7 @@ namespace game
     void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int damage, int gun)
     {
         particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
-        playsound(S_ROCKETEXPLODE, &v);
+        playsound(S_PULSEEXPLODE, &v);
         particle_fireball(v, 1.15f*guns[gun].exprad, PART_EXPLOSION, int(guns[gun].exprad*20), 0xFF8080, 4.0f);
         int numdebris = rnd(maxdebris-MINDEBRIS)+MINDEBRIS;
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
@@ -393,7 +397,7 @@ namespace game
         if(local) return;
         switch(gun)
         {
-            case GUN_ROCKET:
+            case GUN_PULSE:
                 loopv(projs)
                 {
                     projectile &p = projs[i];
@@ -401,7 +405,7 @@ namespace game
                     {
                         vec pos(p.o);
                         pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                        explode(p.local, p.owner, pos, p.dir, NULL, 0, GUN_ROCKET);
+                        explode(p.local, p.owner, pos, p.dir, NULL, 0, GUN_PULSE);
                         adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), guns[gun].exprad*0.75f);
                         projs.remove(i);
                         break;
@@ -488,13 +492,13 @@ namespace game
             case GUN_MELEE:
                 break;
 
-            case GUN_ROCKET:
+            case GUN_PULSE:
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 250, PART_MUZZLE_FLASH2, 0xFFFFFF, 3.0f, d);
                 newprojectile(from, to, guns[gun].projspeed, local, id, d, gun);
                 break;
 
-            case GUN_RIFLE:
+            case GUN_RAIL:
                 particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
                 particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
                 if(muzzleflash && d->muzzle.x >= 0)
@@ -597,7 +601,7 @@ namespace game
             shorten(from, to, dist);
             hitpush(guns[d->gunselect].damage, o, d, from, to, d->gunselect, 1);
         }
-        else if(d->gunselect!=GUN_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), d->gunselect==GUN_RIFLE ? 3.0f : 2.0f);
+        else if(d->gunselect!=GUN_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), d->gunselect==GUN_RAIL ? 3.0f : 2.0f);
     }
 
     void shoot(gameent *d, const vec &targ)
@@ -665,20 +669,18 @@ namespace game
         loopv(projs)
         {
             projectile &p = projs[i];
-            if(p.gun!=GUN_ROCKET) continue;
+            if(p.gun!=GUN_PULSE) continue;
             vec pos(p.o);
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
             adddynlight(pos, 20, vec(1, 0.75f, 0.5f));
         }
     }
 
-    static const char * const projnames[1] = { "projectiles/rocket" };
     static const char * const gibnames[3] = { "gibs/gib01", "gibs/gib02", "gibs/gib03" };
     static const char * const debrisnames[4] = { "debris/debris01", "debris/debris02", "debris/debris03", "debris/debris04" };
 
     void preloadbouncers()
     {
-        loopi(sizeof(projnames)/sizeof(projnames[0])) preloadmodel(projnames[i]);
         loopi(sizeof(gibnames)/sizeof(gibnames[0])) preloadmodel(gibnames[i]);
         loopi(sizeof(debrisnames)/sizeof(debrisnames[0])) preloadmodel(debrisnames[i]);
     }
@@ -716,23 +718,6 @@ namespace game
 
     void renderprojectiles()
     {
-#if 0
-        float yaw, pitch;
-        loopv(projs)
-        {
-            projectile &p = projs[i];
-            if(p.gun!=GUN_ROCKET) continue;
-            float dist = min(p.o.dist(p.to)/32.0f, 1.0f);
-            vec pos = vec(p.o).add(vec(p.offset).mul(dist*p.offsetmillis/float(OFFSETMILLIS))),
-                v = dist < 1e-6f ? p.dir : vec(p.to).sub(pos).normalize();
-            // the amount of distance in front of the smoke trail needs to change if the model does
-            vectoyawpitch(v, yaw, pitch);
-            yaw += 90;
-            v.mul(3);
-            v.add(pos);
-            rendermodel("projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, v, yaw, pitch, 0, MDL_CULL_VFC|MDL_CULL_OCCLUDED);
-        }
-#endif
     }
 
     void removeweapons(gameent *d)
