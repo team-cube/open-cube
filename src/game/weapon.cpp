@@ -623,22 +623,15 @@ namespace game
         }
         d->ammo[gun] -= attacks[atk].use;
 
-        vec from = d->o;
-        vec to = targ;
-
-        vec unitv;
-        float dist = to.dist(from, unitv);
-        unitv.div(dist);
-        vec kickback(unitv);
-        kickback.mul(attacks[atk].kickamount*-2.5f);
+        vec from = d->o, to = targ, dir = vec(to).sub(from).normalize();
+        float dist = to.dist(from);
+        vec kickback = vec(dir).mul(attacks[atk].kickamount*-2.5f);
         d->vel.add(kickback);
-        float shorten = 0;
-        if(attacks[atk].range && dist > attacks[atk].range)
-            shorten = attacks[atk].range;
-        float barrier = raycube(d->o, unitv, dist, RAY_CLIPMAT|RAY_ALPHAPOLY);
+        float shorten = attacks[atk].range && dist > attacks[atk].range ? attacks[atk].range : 0,
+              barrier = raycube(d->o, dir, dist, RAY_CLIPMAT|RAY_ALPHAPOLY);
         if(barrier > 0 && barrier < dist && (!shorten || barrier < shorten))
             shorten = barrier;
-        if(shorten) to = vec(unitv).mul(shorten).add(from);
+        if(shorten) to = vec(dir).mul(shorten).add(from);
 
         if(attacks[atk].rays > 1) createrays(atk, from, to);
         else if(attacks[atk].spread) offsetray(from, to, attacks[atk].spread, attacks[atk].range, to);
