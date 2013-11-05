@@ -229,7 +229,7 @@ namespace game
             delay = 1000;
         }
         modelattach a[5];
-        static const char * const vweps[] = {"worldgun/melee", "worldgun/railgun", "worldgun/pulserifle"};
+        static const char * const vweps[] = { NULL, "worldgun/railgun", "worldgun/pulserifle" };
         int ai = 0;
         if(vweps[d->gunselect])
         {
@@ -244,7 +244,7 @@ namespace game
         if(mainpass)
         {
             d->muzzle = vec(-1, -1, -1);
-            a[ai++] = modelattach("tag_muzzle", &d->muzzle);
+            if(vweps[d->gunselect]) a[ai++] = modelattach("tag_muzzle", &d->muzzle);
         }
         const char *mdlname = mdl.model[validteam(team) ? team : 0];
         int anim = hold ? hold : ANIM_IDLE|ANIM_LOOP;
@@ -407,6 +407,9 @@ namespace game
 
     void drawhudmodel(gameent *d, int anim, float speed = 0, int base = 0)
     {
+        const char *file = guns[d->gunselect].file;
+        if(!file) return;
+
         vec sway;
         vecfromyawpitch(d->yaw, 0, 0, 1, sway);
         float steps = swaydist/swaystep*M_PI;
@@ -416,7 +419,7 @@ namespace game
         if(!hudgunsway) sway = d->o;
 
         const playermodelinfo &mdl = getplayermodelinfo(d);
-        defformatstring(gunname, "%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], guns[d->gunselect].file);
+        defformatstring(gunname, "%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], file);
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);

@@ -265,8 +265,8 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 
 static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; const char *name, *file; } guns[NUMGUNS] =
 {
-    { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",  "melee"},
-    { S_RAIL,    800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "railgun",  "railgun" },
+    { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",       NULL },
+    { S_RAIL,    800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "railgun",     "railgun" },
     { S_PULSE,   800,   1,   0, 480, 30, 1024,  1,5000, 10,    0, 0, "pulse rifle", "pulserifle"}
 };
 
