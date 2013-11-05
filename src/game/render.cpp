@@ -216,38 +216,41 @@ namespace game
 
     void renderplayer(gameent *d, const playermodelinfo &mdl, int color, int team, float fade, bool mainpass = true)
     {
-        int lastaction = d->lastaction, hold = d->gunselect != GUN_MELEE ? (ANIM_HOLD1+d->gunselect)|ANIM_LOOP : 0, attack = ANIM_ATTACK1+d->gunselect, delay = guns[d->gunselect].attackdelay+50;
+        int lastaction = d->lastaction, anim = ANIM_IDLE|ANIM_LOOP, attack = 0, delay = 0;
+        if(d->lastattack >= 0)
+        {
+            attack = attacks[d->lastattack].anim;
+            delay = attacks[d->lastattack].attackdelay+50;
+        }
         if(intermission && d->state!=CS_DEAD)
         {
-            hold = attack = ANIM_LOSE|ANIM_LOOP;
-            if(validteam(team) ? bestteams.htfind(team)>=0 : bestplayers.find(d)>=0) hold = attack = ANIM_WIN|ANIM_LOOP;
+            anim = attack = ANIM_LOSE|ANIM_LOOP;
+            if(validteam(team) ? bestteams.htfind(team)>=0 : bestplayers.find(d)>=0) anim = attack = ANIM_WIN|ANIM_LOOP;
         }
         else if(d->state==CS_ALIVE && d->lasttaunt && lastmillis-d->lasttaunt<1000 && lastmillis-d->lastaction>delay)
         {
             lastaction = d->lasttaunt;
-            hold = attack = ANIM_TAUNT;
+            anim = attack = ANIM_TAUNT;
             delay = 1000;
         }
         modelattach a[5];
-        static const char * const vweps[] = { NULL, "worldgun/railgun", "worldgun/pulserifle" };
         int ai = 0;
-        if(vweps[d->gunselect])
+        if(guns[d->gunselect].vwep)
         {
             int vanim = ANIM_VWEP_IDLE|ANIM_LOOP, vtime = 0;
-            if(lastaction && d->lastattackgun==d->gunselect && lastmillis < lastaction + delay)
+            if(lastaction && d->lastattack >= 0 && attacks[d->lastattack].gun==d->gunselect && lastmillis < lastaction + delay)
             {
-                vanim = ANIM_VWEP_SHOOT;
+                vanim = attacks[d->lastattack].vwepanim;
                 vtime = lastaction;
             }
-            a[ai++] = modelattach("tag_weapon", vweps[d->gunselect], vanim, vtime);
+            a[ai++] = modelattach("tag_weapon", guns[d->gunselect].vwep, vanim, vtime);
         }
         if(mainpass)
         {
             d->muzzle = vec(-1, -1, -1);
-            if(vweps[d->gunselect]) a[ai++] = modelattach("tag_muzzle", &d->muzzle);
+            if(guns[d->gunselect].vwep) a[ai++] = modelattach("tag_muzzle", &d->muzzle);
         }
         const char *mdlname = mdl.model[validteam(team) ? team : 0];
-        int anim = hold ? hold : ANIM_IDLE|ANIM_LOOP;
         float yaw = testanims && d==player1 ? 0 : d->yaw,
               pitch = testpitch && d==player1 ? testpitch : d->pitch;
         vec o = d->feetpos();
@@ -269,9 +272,9 @@ namespace game
                 anim = ANIM_PAIN;
                 basetime = d->lastpain;
             }
-            else if(d->lastpain < lastaction && (attack < 0 || lastmillis-lastaction < delay))
+            else if(d->lastpain < lastaction && lastmillis-lastaction < delay)
             {
-                anim = attack < 0 ? -attack : attack;
+                anim = attack;
                 basetime = lastaction;
             }
 
@@ -405,7 +408,7 @@ namespace game
         hudent() { type = ENT_CAMERA; }
     } guninterp;
 
-    void drawhudmodel(gameent *d, int anim, float speed = 0, int base = 0)
+    void drawhudmodel(gameent *d, int anim, int basetime)
     {
         const char *file = guns[d->gunselect].file;
         if(!file) return;
@@ -423,7 +426,7 @@ namespace game
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);
-        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, NULL, a, base, (int)ceil(speed));
+        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, NULL, a, basetime);
         if(d->muzzle.x >= 0) d->muzzle = calcavatarpos(d->muzzle, 12);
     }
 
@@ -436,15 +439,13 @@ namespace game
             return;
         }
 
-        int rtime = guns[d->gunselect].attackdelay;
-        if(d->lastaction && d->lastattackgun==d->gunselect && lastmillis-d->lastaction<rtime)
+        int anim = ANIM_GUN_IDLE|ANIM_LOOP, basetime = 0;
+        if(d->lastaction && d->lastattack >= 0 && attacks[d->lastattack].gun==d->gunselect && lastmillis-d->lastaction<attacks[d->lastattack].attackdelay)
         {
-            drawhudmodel(d, ANIM_GUN_SHOOT|ANIM_SETSPEED, rtime/17.0f, d->lastaction);
+            anim = attacks[d->lastattack].hudanim;
+            basetime = d->lastaction;
         }
-        else
-        {
-            drawhudmodel(d, ANIM_GUN_IDLE|ANIM_LOOP);
-        }
+        drawhudmodel(d, anim, basetime);
     }
 
     void renderavatar()
@@ -459,9 +460,9 @@ namespace game
         {
             previewent = new gameent;
             previewent->o = vec(0, 0.9f*(previewent->eyeheight + previewent->aboveeye), previewent->eyeheight - (previewent->eyeheight + previewent->aboveeye)/2);
-            loopi(NUMGUNS-1) previewent->ammo[i+1] = 1;
+            loopi(NUMGUNS) previewent->ammo[i] = 1;
         }
-        previewent->gunselect = validgun(weap) ? weap : GUN_MELEE;
+        previewent->gunselect = validgun(weap) ? weap : GUN_RAIL;
         previewent->yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;

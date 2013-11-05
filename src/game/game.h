@@ -14,12 +14,11 @@ enum
     ANIM_CROUCH, ANIM_CROUCH_N, ANIM_CROUCH_NE, ANIM_CROUCH_E, ANIM_CROUCH_SE, ANIM_CROUCH_S, ANIM_CROUCH_SW, ANIM_CROUCH_W, ANIM_CROUCH_NW,
     ANIM_CROUCH_JUMP, ANIM_CROUCH_JUMP_N, ANIM_CROUCH_JUMP_NE, ANIM_CROUCH_JUMP_E, ANIM_CROUCH_JUMP_SE, ANIM_CROUCH_JUMP_S, ANIM_CROUCH_JUMP_SW, ANIM_CROUCH_JUMP_W, ANIM_CROUCH_JUMP_NW,
     ANIM_CROUCH_SINK, ANIM_CROUCH_SWIM,
-    ANIM_HOLD1, ANIM_HOLD2, ANIM_HOLD3,
-    ANIM_ATTACK1, ANIM_ATTACK2, ANIM_ATTACK3,
+    ANIM_SHOOT, ANIM_MELEE,
     ANIM_PAIN,
     ANIM_EDIT, ANIM_LAG, ANIM_TAUNT, ANIM_WIN, ANIM_LOSE,
-    ANIM_GUN_IDLE, ANIM_GUN_SHOOT,
-    ANIM_VWEP_IDLE, ANIM_VWEP_SHOOT,
+    ANIM_GUN_IDLE, ANIM_GUN_SHOOT, ANIM_GUN_MELEE,
+    ANIM_VWEP_IDLE, ANIM_VWEP_SHOOT, ANIM_VWEP_MELEE,
     NUMANIMS
 };
 
@@ -33,12 +32,11 @@ static const char * const animnames[] =
     "crouch", "crouch N", "crouch NE", "crouch E", "crouch SE", "crouch S", "crouch SW", "crouch W", "crouch NW",
     "crouch jump", "crouch jump N", "crouch jump NE", "crouch jump E", "crouch jump SE", "crouch jump S", "crouch jump SW", "crouch jump W", "crouch jump NW",
     "crouch sink", "crouch swim",
-    "hold 1", "hold 2", "hold 3",
-    "attack 1", "attack 2", "attack 3",
+    "shoot", "melee",
     "pain",
     "edit", "lag", "taunt", "win", "lose",
-    "gun idle", "gun shoot",
-    "vwep idle", "vwep shoot"
+    "gun idle", "gun shoot", "gun melee",
+    "vwep idle", "vwep shoot", "vwep melee"
 };
 
 // console message types
@@ -82,9 +80,13 @@ struct gameentity : extentity
 {
 };
 
-enum { GUN_MELEE = 0, GUN_RAIL, GUN_PULSE, NUMGUNS };
+enum { GUN_RAIL = 0, GUN_PULSE, NUMGUNS };
+enum { ACT_IDLE = 0, ACT_SHOOT, ACT_MELEE, NUMACTS };
+enum { ATK_RAIL_SHOOT = 0, ATK_RAIL_MELEE, ATK_PULSE_SHOOT, ATK_PULSE_MELEE, NUMATKS };
 
 #define validgun(n) ((n) >= 0 && (n) < NUMGUNS)
+#define validact(n) ((n) >= 0 && (n) < NUMACTS)
+#define validatk(n) ((n) >= 0 && (n) < NUMATKS)
 
 enum
 {
@@ -258,16 +260,23 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 
 #define validitem(n) false
 
-#define MAXRAYS 4
+#define MAXRAYS 1
 #define EXP_SELFDAMDIV 2
 #define EXP_SELFPUSH 2.5f
 #define EXP_DISTSCALE 0.5f
 
-static const struct guninfo { int sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; const char *name, *file; } guns[NUMGUNS] =
+static const struct attackinfo { int gun, action, anim, vwepanim, hudanim, sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; } attacks[NUMATKS] =
 {
-    { S_MELEE,   250,   1,   0,   0,  0,   14,  1,   0,  0,    0, 0, "melee",       NULL },
-    { S_RAIL,    800,   1,   0,   0, 30, 2048,  1,5000,  0,    0, 0, "railgun",     "railgun" },
-    { S_PULSE,   800,   1,   0, 480, 30, 1024,  1,5000, 10,    0, 0, "pulse rifle", "pulserifle"}
+    { GUN_RAIL,  ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_RAIL,  800, 1, 0,   0, 30, 2048, 1, 5000,  0, 0, 0 },
+    { GUN_RAIL,  ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE, 250, 1, 0,   0,  0,   14, 1,    0,  0, 0, 0 },
+    { GUN_PULSE, ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_PULSE, 800, 1, 0, 480, 30, 1024, 1, 5000, 10, 0, 0 },
+    { GUN_PULSE, ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE, 250, 1, 0,   0,  0,   14, 1,    0,  0, 0, 0 }
+};
+
+static const struct guninfo { const char *name, *file, *vwep; int attacks[NUMACTS]; } guns[NUMGUNS] =
+{
+    { "railgun", "railgun", "worldgun/railgun", { -1, ATK_RAIL_SHOOT, ATK_RAIL_MELEE }, },
+    { "pulse rifle", "pulserifle", "worldgun/pulserifle", { -1, ATK_PULSE_SHOOT, ATK_PULSE_MELEE } }
 };
 
 #include "ai.h"
@@ -294,10 +303,9 @@ struct gamestate
     void respawn()
     {
         health = maxhealth;
-        gunselect = GUN_MELEE;
+        gunselect = GUN_RAIL;
         gunwait = 0;
         loopi(NUMGUNS) ammo[i] = 0;
-        ammo[GUN_MELEE] = 1;
     }
 
     void spawnstate(int gamemode)
@@ -314,7 +322,8 @@ struct gamestate
         }
         else if(m_edit)
         {
-            loopi(NUMGUNS-1) ammo[1+i] = 1;
+            gunselect = GUN_RAIL;
+            loopi(NUMGUNS) ammo[i] = 1;
         }
     }
 
@@ -348,8 +357,8 @@ struct gameent : dynent, gamestate
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int respawned, suicided;
     int lastpain;
-    int lastaction, lastattackgun;
-    bool attacking;
+    int lastaction, lastattack;
+    int attacking;
     int lasttaunt;
     int lastpickup, lastpickupmillis, flagpickup;
     int frags, flags, deaths, totaldamage, totalshots;
@@ -375,10 +384,10 @@ struct gameent : dynent, gamestate
         if(ai) delete ai;
     }
 
-    void hitpush(int damage, const vec &dir, gameent *actor, int gun)
+    void hitpush(int damage, const vec &dir, gameent *actor, int atk)
     {
         vec push(dir);
-        push.mul((actor==this && guns[gun].exprad ? EXP_SELFPUSH : 1.0f)*guns[gun].hitpush*damage/weight);
+        push.mul((actor==this && attacks[atk].exprad ? EXP_SELFPUSH : 1.0f)*attacks[atk].hitpush*damage/weight);
         vel.add(push);
     }
 
@@ -388,8 +397,8 @@ struct gameent : dynent, gamestate
         gamestate::respawn();
         respawned = suicided = -1;
         lastaction = 0;
-        lastattackgun = gunselect;
-        attacking = false;
+        lastattack = -1;
+        attacking = ACT_IDLE;
         lasttaunt = 0;
         lastpickup = -1;
         lastpickupmillis = 0;
@@ -534,9 +543,9 @@ namespace game
     // weapon
     extern int getweapon(const char *name);
     extern void shoot(gameent *d, const vec &targ);
-    extern void shoteffects(int gun, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction);
-    extern void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int dam, int gun);
-    extern void explodeeffects(int gun, gameent *d, bool local, int id = 0);
+    extern void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction);
+    extern void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int dam, int atk);
+    extern void explodeeffects(int atk, gameent *d, bool local, int id = 0);
     extern void damageeffect(int damage, gameent *d, bool thirdperson = true);
     extern void gibeffect(int damage, const vec &vel, gameent *d);
     extern float intersectdist;

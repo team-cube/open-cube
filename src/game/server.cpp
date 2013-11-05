@@ -58,7 +58,7 @@ namespace server
 
     struct shotevent : timedevent
     {
-        int id, gun;
+        int id, atk;
         vec from, to;
         vector<hitinfo> hits;
 
@@ -67,7 +67,7 @@ namespace server
 
     struct explodeevent : timedevent
     {
-        int id, gun;
+        int id, atk;
         vector<hitinfo> hits;
 
         bool keepable() const { return true; }
@@ -1662,7 +1662,7 @@ namespace server
         putint(p, gs.health);
         putint(p, gs.maxhealth);
         putint(p, gs.gunselect);
-        loopi(NUMGUNS-1) putint(p, gs.ammo[i+1]);
+        loopi(NUMGUNS) putint(p, gs.ammo[i]);
     }
 
     void spawnstate(clientinfo *ci)
@@ -1678,7 +1678,7 @@ namespace server
         spawnstate(ci);
         sendf(ci->ownernum, 1, "rii5v", N_SPAWNSTATE, ci->clientnum, gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.gunselect, NUMGUNS-1, &gs.ammo[1]);
+            gs.gunselect, NUMGUNS, gs.ammo);
         gs.lastspawn = gamemillis;
     }
 
@@ -1865,7 +1865,7 @@ namespace server
             gs.state, gs.frags, gs.flags,
             gs.lifesequence,
             gs.health, gs.maxhealth,
-            gs.gunselect, NUMGUNS-1, &gs.ammo[1], -1);
+            gs.gunselect, NUMGUNS, gs.ammo, -1);
     }
 
     void sendinitclient(clientinfo *ci)
@@ -2069,7 +2069,7 @@ namespace server
 
     void startintermission() { gamelimit = min(gamelimit, gamemillis); checkintermission(); }
 
-    void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
+    void dodamage(clientinfo *target, clientinfo *actor, int damage, int atk, const vec &hitpush = vec(0, 0, 0))
     {
         servstate &ts = target->state;
         ts.dodamage(damage);
@@ -2079,7 +2079,7 @@ namespace server
         else if(!hitpush.iszero())
         {
             ivec v = vec(hitpush).rescale(DNF);
-            sendf(ts.health<=0 ? -1 : target->ownernum, 1, "ri7", N_HITPUSH, target->clientnum, gun, damage, v.x, v.y, v.z);
+            sendf(ts.health<=0 ? -1 : target->ownernum, 1, "ri7", N_HITPUSH, target->clientnum, atk, damage, v.x, v.y, v.z);
             target->setpushed();
         }
         if(ts.health<=0)
@@ -2137,29 +2137,29 @@ namespace server
     void explodeevent::process(clientinfo *ci)
     {
         servstate &gs = ci->state;
-        switch(gun)
+        switch(atk)
         {
-            case GUN_PULSE:
+            case ATK_PULSE_SHOOT:
                 if(!gs.projs.remove(id)) return;
                 break;
 
             default:
                 return;
         }
-        sendf(-1, 1, "ri4x", N_EXPLODEFX, ci->clientnum, gun, id, ci->ownernum);
+        sendf(-1, 1, "ri4x", N_EXPLODEFX, ci->clientnum, atk, id, ci->ownernum);
         loopv(hits)
         {
             hitinfo &h = hits[i];
             clientinfo *target = getinfo(h.target);
-            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>guns[gun].exprad) continue;
+            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>attacks[atk].exprad) continue;
 
             bool dup = false;
             loopj(i) if(hits[j].target==h.target) { dup = true; break; }
             if(dup) continue;
 
-            float damage = guns[gun].damage*(1-h.dist/EXP_DISTSCALE/guns[gun].exprad);
+            float damage = attacks[atk].damage*(1-h.dist/EXP_DISTSCALE/attacks[atk].exprad);
             if(target==ci) damage /= EXP_SELFDAMDIV;
-            if(damage > 0) dodamage(target, ci, max(int(damage), 1), gun, h.dir);
+            if(damage > 0) dodamage(target, ci, max(int(damage), 1), atk, h.dir);
         }
     }
 
@@ -2169,33 +2169,35 @@ namespace server
         int wait = millis - gs.lastshot;
         if(!gs.isalive(gamemillis) ||
            wait<gs.gunwait ||
-           !validgun(gun) ||
-           gs.ammo[gun]<=0 || (guns[gun].range && from.dist(to) > guns[gun].range + 1))
+           !validatk(atk))
             return;
-        gs.ammo[gun] -= guns[gun].use;
+        int gun = attacks[atk].gun;
+        if(gs.ammo[gun]<=0 || (attacks[atk].range && from.dist(to) > attacks[atk].range + 1))
+            return;
+        gs.ammo[gun] -= attacks[atk].use;
         gs.lastshot = millis;
-        gs.gunwait = guns[gun].attackdelay;
-        sendf(-1, 1, "rii9x", N_SHOTFX, ci->clientnum, gun, id,
+        gs.gunwait = attacks[atk].attackdelay;
+        sendf(-1, 1, "rii9x", N_SHOTFX, ci->clientnum, atk, id,
                 int(from.x*DMF), int(from.y*DMF), int(from.z*DMF),
                 int(to.x*DMF), int(to.y*DMF), int(to.z*DMF),
                 ci->ownernum);
-        gs.shotdamage += guns[gun].damage*guns[gun].rays;
-        switch(gun)
+        gs.shotdamage += attacks[atk].damage*attacks[atk].rays;
+        switch(atk)
         {
-            case GUN_PULSE: gs.projs.add(id); break;
+            case ATK_PULSE_SHOOT: gs.projs.add(id); break;
             default:
             {
-                int totalrays = 0, maxrays = guns[gun].rays;
+                int totalrays = 0, maxrays = attacks[atk].rays;
                 loopv(hits)
                 {
                     hitinfo &h = hits[i];
                     clientinfo *target = getinfo(h.target);
-                    if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1 || h.dist > guns[gun].range + 1) continue;
+                    if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1 || h.dist > attacks[atk].range + 1) continue;
 
                     totalrays += h.rays;
                     if(totalrays>maxrays) continue;
-                    int damage = h.rays*guns[gun].damage;
-                    dodamage(target, ci, damage, gun, h.dir);
+                    int damage = h.rays*attacks[atk].damage;
+                    dodamage(target, ci, damage, atk, h.dir);
                 }
                 break;
             }
@@ -2944,8 +2946,7 @@ namespace server
             case N_GUNSELECT:
             {
                 int gunselect = getint(p);
-                if(!cq || cq->state.state!=CS_ALIVE) break;
-                cq->state.gunselect = validgun(gunselect) ? gunselect : GUN_MELEE;
+                if(!cq || cq->state.state!=CS_ALIVE || !validgun(gunselect)) break;
                 QUEUE_AI;
                 QUEUE_MSG;
                 break;
@@ -2954,10 +2955,10 @@ namespace server
             case N_SPAWN:
             {
                 int ls = getint(p), gunselect = getint(p);
-                if(!cq || (cq->state.state!=CS_ALIVE && cq->state.state!=CS_DEAD) || ls!=cq->state.lifesequence || cq->state.lastspawn<0) break;
+                if(!cq || (cq->state.state!=CS_ALIVE && cq->state.state!=CS_DEAD) || ls!=cq->state.lifesequence || cq->state.lastspawn<0 || !validgun(gunselect)) break;
                 cq->state.lastspawn = -1;
                 cq->state.state = CS_ALIVE;
-                cq->state.gunselect = validgun(gunselect) ? gunselect : GUN_MELEE;
+                cq->state.gunselect = gunselect;
                 cq->exceeded = 0;
                 if(smode) smode->spawned(cq);
                 QUEUE_AI;
@@ -2979,7 +2980,7 @@ namespace server
                 shotevent *shot = new shotevent;
                 shot->id = getint(p);
                 shot->millis = cq ? cq->geteventmillis(gamemillis, shot->id) : 0;
-                shot->gun = getint(p);
+                shot->atk = getint(p);
                 loopk(3) shot->from[k] = getint(p)/DMF;
                 loopk(3) shot->to[k] = getint(p)/DMF;
                 int hits = getint(p);
@@ -3007,7 +3008,7 @@ namespace server
                 explodeevent *exp = new explodeevent;
                 int cmillis = getint(p);
                 exp->millis = cq ? cq->geteventmillis(gamemillis, cmillis) : 0;
-                exp->gun = getint(p);
+                exp->atk = getint(p);
                 exp->id = getint(p);
                 int hits = getint(p);
                 loopk(hits)

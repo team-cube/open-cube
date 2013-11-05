@@ -1187,13 +1187,13 @@ namespace game
         if(resume && d==player1)
         {
             getint(p);
-            loopi(NUMGUNS-1) getint(p);
+            loopi(NUMGUNS) getint(p);
         }
         else
         {
             int gun = getint(p);
             d->gunselect = clamp(gun, 0, NUMGUNS-1);
-            loopi(NUMGUNS-1) d->ammo[i+1] = getint(p);
+            loopi(NUMGUNS) d->ammo[i] = getint(p);
         }
     }
 
@@ -1241,7 +1241,7 @@ namespace game
                 if(!demopacket)
                 {
                     gamepaused = val;
-                    player1->attacking = false;
+                    player1->attacking = ACT_IDLE;
                 }
                 if(a) conoutf("%s %s the game", colorname(a), val ? "paused" : "resumed");
                 else conoutf("game is %s", val ? "paused" : "resumed");
@@ -1445,28 +1445,29 @@ namespace game
 
             case N_SHOTFX:
             {
-                int scn = getint(p), gun = getint(p), id = getint(p);
+                int scn = getint(p), atk = getint(p), id = getint(p);
                 vec from, to;
                 loopk(3) from[k] = getint(p)/DMF;
                 loopk(3) to[k] = getint(p)/DMF;
                 gameent *s = getclient(scn);
-                if(!s) break;
-                s->gunselect = validgun(gun) ? gun : GUN_MELEE;
-                s->ammo[s->gunselect] -= guns[s->gunselect].use;
-                s->gunwait = guns[s->gunselect].attackdelay;
+                if(!s || !validatk(atk)) break;
+                int gun = attacks[atk].gun;
+                s->gunselect = gun;
+                s->ammo[gun] -= attacks[atk].use;
+                s->gunwait = attacks[atk].attackdelay;
                 int prevaction = s->lastaction;
                 s->lastaction = lastmillis;
-                s->lastattackgun = s->gunselect;
-                shoteffects(s->gunselect, from, to, s, false, id, prevaction);
+                s->lastattack = atk;
+                shoteffects(atk, from, to, s, false, id, prevaction);
                 break;
             }
 
             case N_EXPLODEFX:
             {
-                int ecn = getint(p), gun = getint(p), id = getint(p);
+                int ecn = getint(p), atk = getint(p), id = getint(p);
                 gameent *e = getclient(ecn);
-                if(!e) break;
-                explodeeffects(gun, e, false, id);
+                if(!e || !validatk(atk)) break;
+                explodeeffects(atk, e, false, id);
                 break;
             }
             case N_DAMAGE:
@@ -1486,11 +1487,12 @@ namespace game
 
             case N_HITPUSH:
             {
-                int tcn = getint(p), gun = getint(p), damage = getint(p);
+                int tcn = getint(p), atk = getint(p), damage = getint(p);
                 gameent *target = getclient(tcn);
                 vec dir;
                 loopk(3) dir[k] = getint(p)/DNF;
-                if(target) target->hitpush(damage * (target->health<=0 ? deadpush : 1), dir, NULL, gun);
+                if(!target || !validatk(atk)) break;
+                target->hitpush(damage * (target->health<=0 ? deadpush : 1), dir, NULL, atk);
                 break;
             }
 
@@ -1521,7 +1523,8 @@ namespace game
             {
                 if(!d) return;
                 int gun = getint(p);
-                d->gunselect = validgun(gun) ? gun : GUN_MELEE;
+                if(!validgun(gun)) return;
+                d->gunselect = gun;
                 playsound(S_WEAPLOAD, &d->o);
                 break;
             }

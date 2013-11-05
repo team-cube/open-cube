@@ -262,7 +262,7 @@ namespace game
     {
         if(player1->state==CS_DEAD)
         {
-            player1->attacking = false;
+            player1->attacking = ACT_IDLE;
             int wait = cmode ? cmode->respawnwait(player1) : 0;
             if(wait>0)
             {
@@ -277,12 +277,15 @@ namespace game
 
     // inputs
 
-    void doattack(bool on)
+    void doaction(int act)
     {
         if(intermission) return;
-        if((player1->attacking = on)) respawn();
+        if((player1->attacking = act)) respawn();
     }
 
+    ICOMMAND(shoot, "D", (int *down), doaction(*down ? ACT_SHOOT : ACT_IDLE));
+    ICOMMAND(melee, "D", (int *down), doaction(*down ? ACT_MELEE : ACT_IDLE));
+ 
     bool canjump()
     {
         if(!intermission) respawn();
@@ -341,7 +344,7 @@ namespace game
             if(deathscore) showscores(true);
             disablezoom();
             if(!restore) loopi(NUMGUNS) savedammo[i] = player1->ammo[i];
-            d->attacking = false;
+            d->attacking = ACT_IDLE;
             if(!restore) d->deaths++;
             //d->pitch = 0;
             d->roll = 0;
@@ -410,7 +413,7 @@ namespace game
         else
         {
             intermission = true;
-            player1->attacking = false;
+            player1->attacking = ACT_IDLE;
             if(cmode) cmode->gameover();
             conoutf(CON_GAMEINFO, "\f2intermission:");
             conoutf(CON_GAMEINFO, "\f2game has ended!");
