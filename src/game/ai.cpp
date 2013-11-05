@@ -556,7 +556,7 @@ namespace ai
         d->ai->reset(true);
         d->ai->lastrun = lastmillis;
         if(forcegun >= 0 && forcegun < NUMGUNS) d->ai->weappref = forcegun;
-        else d->ai->weappref = rnd(NUMGUNS-1)+1;
+        else d->ai->weappref = rnd(NUMGUNS);
         vec dp = d->headpos();
         findorientation(dp, d->yaw, d->pitch, d->ai->target);
     }
