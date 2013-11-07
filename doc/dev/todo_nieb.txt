@@ -1,8 +1,8 @@
 ===============================================================
 Weapon Models
-   Rifle
+   RailGun
       ...
-   Rocket
+   PulseRifle
       ...
    Knife/Blade?
       for left-hand melee attack (or use gunbutt animation)
@@ -14,6 +14,7 @@ Player Model
    -Re-pose upper body to hold weapons
    -Melee animation?
    -Fix seam in helmet texture
+   -fix ray miss in AOmap
 
 
 ===============================================================
