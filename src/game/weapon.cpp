@@ -493,8 +493,9 @@ namespace game
                 break;
 
             case ATK_RAIL_SHOOT:
-                particle_splash(PART_SPARK, 200, 250, to, 0xB49B4B, 0.24f);
-                particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
+                particle_splash(PART_SPARK, 200, 500, to, 0xB49B4B, 0.24f);
+                //particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
+				particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_STREAK, 0xFFC864, 0.28f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
                 if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 3.0f);
@@ -598,7 +599,7 @@ namespace game
             shorten(from, to, dist);
             hitpush(attacks[atk].damage, o, d, from, to, atk, 1);
         }
-        else if(attacks[atk].action!=ACT_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 3.0f);
+        else if(attacks[atk].action!=ACT_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
     }
 
     void shoot(gameent *d, const vec &targ)

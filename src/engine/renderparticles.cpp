@@ -848,7 +848,7 @@ static partrenderer *parts[] =
     new quadrenderer("media/particle/ball1.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball1
     new quadrenderer("media/particle/ball2.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball2
     new quadrenderer("media/particle/ball3.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball3
-    new taperenderer("media/particle/flare.png", PT_TAPE|PT_BRIGHT),                           // streak
+    new taperenderer("media/particle/rail_trail.png", PT_TAPE|PT_BRIGHT),                           // streak
     &lightnings,                                                                               // lightning
     &fireballs,                                                                                // explosion fireball
     &bluefireballs,                                                                            // bluish explosion fireball
