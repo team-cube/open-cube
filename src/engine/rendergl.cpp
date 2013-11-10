@@ -1259,8 +1259,8 @@ VARP(zoomoutvel, 0, 100, 5000);
 VARP(zoomfov, 10, 35, 60);
 VARP(fov, 10, 100, 150);
 VAR(avatarzoomfov, 10, 25, 60);
-VAR(avatarfov, 10, 65, 150);
-FVAR(avatardepth, 0, 0.5f, 1);
+VAR(avatarfov, 10, 55, 150);
+FVAR(avatardepth, 0, 0.8f, 1);
 FVARNP(aspect, forceaspect, 0, 0, 1e3f);
 
 static int zoommillis = 0;
