@@ -179,7 +179,6 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
     if(glslversion < 400)
     {
         if(hasTG) parts[numparts++] = "#extension GL_ARB_texture_gather : enable\n";
-        else if(hasT4) parts[numparts++] = "#extension GL_AMD_texture_texture4 : enable\n";
         if(hasGPU5) parts[numparts++] = "#extension GL_ARB_gpu_shader5 : enable\n";
     }
     if(glslversion >= 130)
