@@ -965,13 +965,12 @@ void entcopy()
 
 void entpaste()
 {
-    if(noentedit()) return;
-    if(entcopybuf.length()==0) return;
+    if(noentedit() || entcopybuf.empty()) return;
     entcancel();
     float m = float(sel.grid)/float(entcopygrid);
     loopv(entcopybuf)
     {
-        entity &c = entcopybuf[i];
+        const entity &c = entcopybuf[i];
         vec o = vec(c.o).mul(m).add(vec(sel.o));
         int idx;
         extentity *e = newentity(true, o, ET_EMPTY, c.attr1, c.attr2, c.attr3, c.attr4, c.attr5, idx);
@@ -984,11 +983,33 @@ void entpaste()
     groupeditundo(e.type = entcopybuf[j++].type;);
 }
 
+void entreplace()
+{
+    if(noentedit() || entcopybuf.empty()) return;
+    const entity &c = entcopybuf[0];
+    if(entgroup.length() || enthover >= 0) 
+    {
+        groupedit({
+            e.type = c.type;
+            e.attr1 = c.attr1;
+            e.attr2 = c.attr2;
+            e.attr3 = c.attr3;
+            e.attr4 = c.attr4;
+            e.attr5 = c.attr5;
+        });
+    }
+    else
+    {
+        newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4, c.attr5);
+    }
+}
+ 
 COMMAND(newent, "siiiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");
 COMMAND(entcopy, "");
 COMMAND(entpaste, "");
+COMMAND(entreplace, "");
 
 void entset(char *what, int *a1, int *a2, int *a3, int *a4, int *a5)
 {
