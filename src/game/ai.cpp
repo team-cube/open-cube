@@ -93,9 +93,8 @@ namespace ai
         return !d->ai->becareful && d->ammo[attacks[atk].gun] > 0 && lastmillis - d->lastaction >= d->gunwait;
     }
 
-    bool hastarget(gameent *d, int act, aistate &b, gameent *e, float yaw, float pitch, float dist)
+    bool hastarget(gameent *d, int atk, aistate &b, gameent *e, float yaw, float pitch, float dist)
     { // add margins of error
-        int atk = guns[d->gunselect].attacks[act];
         if(attackrange(d, atk, dist) || (d->skill <= 100 && !rnd(d->skill)))
         {
             float skew = clamp(float(lastmillis-d->ai->enemymillis)/float((d->skill*attacks[atk].attackdelay/200.f)), 0.f, attacks[atk].projspeed ? 0.25f : 1e16f),
