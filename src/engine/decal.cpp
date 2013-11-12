@@ -674,7 +674,7 @@ decalrenderer decals[] =
 {
     decalrenderer("<grey>media/particle/pulse_decal.png", DF_ROTATE, 200),
     decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<grey>media/particle/rail_decal.png", DF_OVERBRIGHT)
+    decalrenderer("<grey>media/particle/rail_decal.png", DF_ROTATE|DF_OVERBRIGHT)
 };
 
 void initdecals()
