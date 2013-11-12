@@ -99,7 +99,7 @@ extern void compacteditvslots();
 extern void compactmruvslots();
 extern void compactvslots(cube *c, int n = 8);
 extern void compactvslot(int &index);
-extern int compactvslots();
+extern int compactvslots(bool cull = false);
 extern void reloadtextures();
 extern void cleanuptextures();
 
