@@ -937,7 +937,7 @@ void gl_checkextensions()
             if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_draw_buffers_blend extension.");
         }
     }
-    if(hasTG) usetexgather = hasGPU5 && !intel ? 2 : 1;
+    if(hasTG) usetexgather = hasGPU5 && !intel && !nvidia ? 2 : 1;
 
     if(hasext("GL_ARB_debug_output"))
     {
