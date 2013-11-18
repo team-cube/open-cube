@@ -359,6 +359,7 @@ struct decalrenderer
 
     void render(int db)
     {
+        float colorscale = 1, alphascale = 1;
         if(flags&DF_OVERBRIGHT)
         {
             glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
@@ -368,17 +369,15 @@ struct decalrenderer
         {
             glBlendFunc(GL_ONE, GL_ONE);
             SETSWIZZLE(glowdecal, tex);
+            if(!(flags&DF_SATURATE)) alphascale = 2;
         }
         else
         {
             if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
             else if(db) glBlendFuncSeparate_(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
             SETSWIZZLE(decal, tex);
         }
-
-        float colorscale = flags&DF_SATURATE ? 2 : 1, alphascale = (flags&(DF_GLOW|DF_SATURATE)) == DF_GLOW ? 2 : 1;
         LOCALPARAMF(colorscale, colorscale, colorscale, colorscale, alphascale);
 
         glBindTexture(GL_TEXTURE_2D, tex->id);
@@ -444,7 +443,7 @@ struct decalrenderer
 
             decalinfo &d = newdecal();
             d.owner = i;
-            d.color = !(flags&DF_INVMOD) ? bvec(color).shr(1) : color;
+            d.color = flags&(DF_INVMOD|DF_SATURATE) ? color : bvec(color).shr(1);
             d.millis = lastmillis;
             d.startvert = dstart;
             d.endvert = buf.endvert;
