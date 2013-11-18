@@ -389,7 +389,7 @@ namespace game
         vec dir = vec(p.dir).neg();
         float rad = attacks[p.atk].exprad*0.75f;
         adddecal(DECAL_PULSE_SCORCH, pos, dir, rad);
-        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, 0xFFFFFF);
+        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, 0x50CFE5);
     }
 
     void projsplash(projectile &p, const vec &v, dynent *safe)
@@ -470,12 +470,12 @@ namespace game
                 else
                 {
                     vec pos = vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)).add(v);
-                    particle_splash(PART_PULSE_FRONT, 1, 1, pos, 0xFFFFFF, 2.4f, 150, 20);
+                    particle_splash(PART_PULSE_FRONT, 1, 1, pos, 0x50CFE5, 2.4f, 150, 20);
                     float len = min(48.0f, vec(p.offset).add(p.from).dist(pos));
                     vec dir = vec(dv).normalize(),
                         tail = vec(dir).mul(-len).add(pos),
                         head = vec(dir).mul(2.4f).add(pos);
-                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0xFFFFFF, 1.8f);
+                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0x50CFE5, 1.8f);
                 }
             }
             if(exploded)
@@ -497,7 +497,7 @@ namespace game
         vec dir = vec(from).sub(to).normalize();
         float size = 3.0f;
         adddecal(DECAL_RAIL_HOLE, to, dir, size);
-        adddecal(DECAL_RAIL_GLOW, to, dir, size, 0xFFFFFF);
+        adddecal(DECAL_RAIL_GLOW, to, dir, size, 0x50CFE5);
     }
         
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
@@ -683,7 +683,7 @@ namespace game
             if(p.atk!=ATK_PULSE_SHOOT) continue;
             vec pos(p.o);
             pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-            adddynlight(pos, 20, vec(1, 0.75f, 0.5f));
+            adddynlight(pos, 20, vec(0.5f, 0.75f, 1.0f));
         }
     }
 
