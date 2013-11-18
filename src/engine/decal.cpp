@@ -22,7 +22,7 @@ enum
     DF_ROTATE     = 1<<1,
     DF_INVMOD     = 1<<2,
     DF_OVERBRIGHT = 1<<3,
-    DF_ADD        = 1<<4,
+    DF_GLOW       = 1<<4,
     DF_SATURATE   = 1<<5
 };
 
@@ -241,7 +241,7 @@ struct decalrenderer
         else
         {
             color = d.color;
-            if(flags&(DF_ADD|DF_INVMOD)) color.scale(alpha, 255);
+            if(flags&(DF_GLOW|DF_INVMOD)) color.scale(alpha, 255);
         }
 
         verts[d.owner].fadedecal(d, color, alpha);
@@ -364,17 +364,22 @@ struct decalrenderer
             glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
             SETSWIZZLE(overbrightdecal, tex);
         }
+        else if(flags&DF_GLOW)
+        {
+            glBlendFunc(GL_ONE, GL_ONE);
+            SETSWIZZLE(glowdecal, tex);
+        }
         else
         {
             if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-            else if(flags&DF_ADD) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
             else if(db) glBlendFuncSeparate_(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             SETSWIZZLE(decal, tex);
-            float colorscale = flags&DF_SATURATE ? 2 : 1, alphascale = flags&(DF_INVMOD|DF_ADD) ? 0 : 1;
-            LOCALPARAMF(colorscale, colorscale, colorscale, colorscale, alphascale);
         }
+
+        float colorscale = flags&DF_SATURATE ? 2 : 1, alphascale = (flags&(DF_GLOW|DF_SATURATE)) == DF_GLOW ? 2 : 1;
+        LOCALPARAMF(colorscale, colorscale, colorscale, colorscale, alphascale);
 
         glBindTexture(GL_TEXTURE_2D, tex->id);
 
@@ -680,9 +685,9 @@ decalrenderer decals[] =
 {
     decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
     decalrenderer("<grey>media/particle/rail_hole.png", DF_ROTATE|DF_OVERBRIGHT),
-    decalrenderer("<grey>media/particle/rail_glow.png", DF_ROTATE|DF_ADD|DF_SATURATE, 150, 500, 1000),
+    decalrenderer("<grey>media/particle/rail_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000),
     decalrenderer("<grey>media/particle/pulse_scorch.png", DF_ROTATE, 500),
-    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_ADD|DF_SATURATE, 150, 500, 1000)
+    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000)
 };
 
 void initdecals()
