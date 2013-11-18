@@ -475,7 +475,7 @@ namespace game
                     vec dir = vec(dv).normalize(),
                         tail = vec(dir).mul(-len).add(pos),
                         head = vec(dir).mul(2.4f).add(pos);
-                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0xFFFFFF, 1.5f);
+                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0xFFFFFF, 1.8f);
                 }
             }
             if(exploded)
