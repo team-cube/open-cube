@@ -233,17 +233,8 @@ struct decalrenderer
 
     void fadedecal(const decalinfo &d, uchar alpha)
     {
-        bvec color;
-        if(flags&DF_OVERBRIGHT)
-        {
-            color = bvec(128, 128, 128);
-        }
-        else
-        {
-            color = d.color;
-            if(flags&(DF_GLOW|DF_INVMOD)) color.scale(alpha, 255);
-        }
-
+        bvec color = d.color;
+        if(flags&(DF_OVERBRIGHT|DF_GLOW|DF_INVMOD)) color.scale(alpha, 255);
         verts[d.owner].fadedecal(d, color, alpha);
     }
 
@@ -369,13 +360,20 @@ struct decalrenderer
         {
             glBlendFunc(GL_ONE, GL_ONE);
             SETSWIZZLE(glowdecal, tex);
-            if(!(flags&DF_SATURATE)) alphascale = 2;
+            colorscale = ldrscale;
+            if(flags&DF_SATURATE) colorscale *= 2;
+            alphascale = 1/ldrscale;
         }
         else
         {
             if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-            else if(db) glBlendFuncSeparate_(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            else
+            {
+                if(db) glBlendFuncSeparate_(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                colorscale = ldrscale;
+                if(flags&DF_SATURATE) colorscale *= 2;
+            }
             SETSWIZZLE(decal, tex);
         }
         LOCALPARAMF(colorscale, colorscale, colorscale, colorscale, alphascale);
@@ -443,7 +441,7 @@ struct decalrenderer
 
             decalinfo &d = newdecal();
             d.owner = i;
-            d.color = flags&(DF_INVMOD|DF_SATURATE) ? color : bvec(color).shr(1);
+            d.color = color;
             d.millis = lastmillis;
             d.startvert = dstart;
             d.endvert = buf.endvert;
@@ -683,10 +681,10 @@ struct decalrenderer
 decalrenderer decals[] =
 {
     decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<grey>media/particle/rail_hole.png", DF_ROTATE|DF_OVERBRIGHT),
-    decalrenderer("<grey>media/particle/rail_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000),
     decalrenderer("<grey>media/particle/pulse_scorch.png", DF_ROTATE, 500),
-    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000)
+    decalrenderer("<grey>media/particle/rail_hole.png", DF_ROTATE|DF_OVERBRIGHT),
+    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000),
+    decalrenderer("<grey>media/particle/rail_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 150, 500, 1000)
 };
 
 void initdecals()

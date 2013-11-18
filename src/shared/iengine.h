@@ -332,10 +332,10 @@ extern void removetrackedparticles(physent *owner = NULL);
 enum
 {
     DECAL_BLOOD = 0,
-    DECAL_RAIL_HOLE,
-    DECAL_RAIL_GLOW,
     DECAL_PULSE_SCORCH,
-    DECAL_PULSE_GLOW
+    DECAL_RAIL_HOLE,
+    DECAL_PULSE_GLOW,
+    DECAL_RAIL_GLOW
 };
 
 extern void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
