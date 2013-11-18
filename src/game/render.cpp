@@ -121,7 +121,7 @@ namespace game
         {
             case 1: GETPLAYERCOLOR(azul)
             case 2: GETPLAYERCOLOR(rojo)
-            default: GETPLAYERCOLOR()
+            default: GETPLAYERCOLOR( )
         }
     }
 
