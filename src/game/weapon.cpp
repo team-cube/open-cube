@@ -389,7 +389,7 @@ namespace game
         vec dir = vec(p.dir).neg();
         float rad = attacks[p.atk].exprad*0.75f;
         adddecal(DECAL_PULSE_SCORCH, pos, dir, rad);
-        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, bvec(0xFF, 0xFF, 0xFF));
+        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, 0xFFFFFF);
     }
 
     void projsplash(projectile &p, const vec &v, dynent *safe)
@@ -497,7 +497,7 @@ namespace game
         vec dir = vec(from).sub(to).normalize();
         float size = 3.0f;
         adddecal(DECAL_RAIL_HOLE, to, dir, size);
-        adddecal(DECAL_RAIL_GLOW, to, dir, size, bvec(0xFF, 0xFF, 0xFF));
+        adddecal(DECAL_RAIL_GLOW, to, dir, size, 0xFFFFFF);
     }
         
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot

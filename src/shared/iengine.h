@@ -340,6 +340,11 @@ enum
 
 extern void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
 
+static inline void adddecal(int type, const vec &center, const vec &surface, float radius, int color, int info = 0)
+{
+    adddecal(type, center, surface, radius, bvec::hexcolor(color), info);
+}
+
 // worldio
 extern bool load_world(const char *mname, const char *cname = NULL);
 extern bool save_world(const char *mname, bool nolms = false);

@@ -333,7 +333,7 @@ struct listrenderer : partrenderer
         p->gravity = gravity;
         p->fade = fade;
         p->millis = lastmillis + emitoffset;
-        p->color = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
+        p->color = bvec::hexcolor(color);
         p->size = size;
         p->owner = NULL;
         p->flags = 0;
@@ -676,7 +676,7 @@ struct varenderer : partrenderer
         p->gravity = gravity;
         p->fade = fade;
         p->millis = lastmillis + emitoffset;
-        p->color = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
+        p->color = bvec::hexcolor(color);
         p->size = size;
         p->owner = NULL;
         p->flags = 0x80 | (rndmask ? rnd(0x80) & rndmask : 0);
@@ -1293,13 +1293,8 @@ static void makeparticles(entity &e)
             else
             {
                 int mat = MAT_WATER + clamp(-e.attr3, 0, 3);
-                const bvec &wfcol = getwaterfallcolor(mat);
-                color = (int(wfcol[0])<<16) | (int(wfcol[1])<<8) | int(wfcol[2]);
-                if(!color)
-                {
-                    const bvec &wcol = getwatercolor(mat);
-                    color = (int(wcol[0])<<16) | (int(wcol[1])<<8) | int(wcol[2]);
-                }
+                color = getwaterfallcolor(mat).tohexcolor();
+                if(!color) color = getwatercolor(mat).tohexcolor();
             }
             regularsplash(PART_WATER, color, 150, 4, 200, offsetvec(e.o, e.attr2, rnd(10)), 0.6f, 2);
             break;
