@@ -116,12 +116,12 @@ namespace game
     int getplayercolor(int team, int color)
     {
         #define GETPLAYERCOLOR(name) \
-            return playercolors##name[color%(sizeof(playercolors##name)/sizeof(playercolors##name[0]))];
+            return playercolors[color%(sizeof(playercolors)/sizeof(playercolors[0]))];
         switch(team)
         {
-            case 1: GETPLAYERCOLOR(azul)
-            case 2: GETPLAYERCOLOR(rojo)
-            default: GETPLAYERCOLOR( )
+            case 1: GETPLAYERCOLOR(playercolorsazul)
+            case 2: GETPLAYERCOLOR(playercolorsrojo)
+            default: GETPLAYERCOLOR(playercolors)
         }
     }
 
