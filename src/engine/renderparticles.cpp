@@ -848,7 +848,7 @@ static partrenderer *parts[] =
     new quadrenderer("media/particle/ball1.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball1
     new quadrenderer("media/particle/ball2.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball2
     new quadrenderer("media/particle/ball3.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball3
-    new taperenderer("media/particle/rail_trail.png", PT_TAPE|PT_BRIGHT),                           // streak
+    new taperenderer("media/particle/flare.png", PT_TAPE|PT_BRIGHT),                           // streak
     &lightnings,                                                                               // lightning
     &fireballs,                                                                                // explosion fireball
     &bluefireballs,                                                                            // bluish explosion fireball
@@ -858,6 +858,9 @@ static partrenderer *parts[] =
     new quadrenderer("media/particle/muzzleflash1.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
     new quadrenderer("media/particle/muzzleflash2.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
     new quadrenderer("media/particle/muzzleflash3.jpg", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // muzzle flash
+    new taperenderer("media/particle/rail_trail.png", PT_TAPE|PT_FEW|PT_BRIGHT),               // rail trail
+    new taperenderer("media/particle/pulse_side.png", PT_TAPE|PT_FEW|PT_BRIGHT),               // pulse side
+    new quadrenderer("media/particle/pulse_front.png", PT_PART|PT_FLIP|PT_FEW|PT_BRIGHT),      // pulse front
     new quadrenderer("media/interface/hud/items.png", PT_PART|PT_FEW|PT_ICON),                 // hud icon
     new quadrenderer("<colorify:1/1/1>media/interface/hud/items.png", PT_PART|PT_FEW|PT_ICON), // grey hud icon
     &texts,                                                                                    // text

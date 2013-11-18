@@ -227,7 +227,7 @@ namespace game
 
     struct projectile
     {
-        vec dir, o, to, offset;
+        vec dir, o, from, to, offset;
         float speed;
         gameent *owner;
         int atk;
@@ -244,6 +244,7 @@ namespace game
         projectile &p = projs.add();
         p.dir = vec(to).sub(from).normalize();
         p.o = from;
+        p.from = from;
         p.to = to;
         p.offset = hudgunorigin(attacks[atk].gun, from, to, owner);
         p.offset.sub(from);
@@ -383,10 +384,18 @@ namespace game
         }
     }
 
+    void pulsedecal(const projectile &p, const vec &pos)
+    {
+        vec dir = vec(p.dir).neg();
+        float rad = attacks[p.atk].exprad*0.75f;
+        adddecal(DECAL_PULSE_SCORCH, pos, dir, rad);
+        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, bvec(0xFF, 0xFF, 0xFF));
+    }
+
     void projsplash(projectile &p, const vec &v, dynent *safe)
     {
         explode(p.local, p.owner, v, p.dir, safe, attacks[p.atk].damage, p.atk);
-        adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), attacks[p.atk].exprad*0.75f);
+        pulsedecal(p, v);
     }
 
     void explodeeffects(int atk, gameent *d, bool local, int id)
@@ -400,10 +409,9 @@ namespace game
                     projectile &p = projs[i];
                     if(p.atk == atk && p.owner == d && p.id == id && !p.local)
                     {
-                        vec pos(p.o);
-                        pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
+                        vec pos = vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)).add(p.o);
                         explode(p.local, p.owner, pos, p.dir, NULL, 0, atk);
-                        adddecal(DECAL_SCORCH, pos, vec(p.dir).neg(), attacks[atk].exprad*0.75f);
+                        pulsedecal(p, pos);
                         projs.remove(i);
                         break;
                     }
@@ -461,10 +469,13 @@ namespace game
                 }
                 else
                 {
-                    vec pos(v);
-                    pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                    particle_splash(PART_FIREBALL3, 1, 1, pos, 0xFFFFFF, 2.4f, 150, 20);
-                    regular_particle_splash(PART_SMOKE, 2, 300, pos, 0x404040, 2.4f, 50, -20);
+                    vec pos = vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)).add(v);
+                    particle_splash(PART_PULSE_FRONT, 1, 1, pos, 0xFFFFFF, 2.4f, 150, 20);
+                    float len = min(48.0f, vec(p.offset).add(p.from).dist(pos));
+                    vec dir = vec(dv).normalize(),
+                        tail = vec(dir).mul(-len).add(pos),
+                        head = vec(dir).mul(2.4f).add(pos);
+                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0xFFFFFF, 1.5f);
                 }
             }
             if(exploded)
@@ -481,6 +492,14 @@ namespace game
     VARP(muzzleflash, 0, 1, 1);
     VARP(muzzlelight, 0, 1, 1);
 
+    void raildecal(const vec &from, const vec &to)
+    {
+        vec dir = vec(from).sub(to).normalize();
+        float size = 3.0f;
+        adddecal(DECAL_RAIL_HOLE, to, dir, size);
+        adddecal(DECAL_RAIL_GLOW, to, dir, size, bvec(0xFF, 0xFF, 0xFF));
+    }
+        
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
     {
         int gun = attacks[atk].gun, sound = attacks[atk].sound;
@@ -495,10 +514,10 @@ namespace game
             case ATK_RAIL_SHOOT:
                 particle_splash(PART_SPARK, 200, 500, to, 0xB49B4B, 0.24f);
                 //particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
-				particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_STREAK, 0xFFC864, 0.28f);
+				particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_RAIL_TRAIL, 0xFFC864, 0.28f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
-                if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 3.0f);
+                if(!local) raildecal(from, to);
                 if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 25, vec(1.0f, 0.75f, 0.5f), 75, 75, DL_FLASH, 0, vec(0, 0, 0), d);
                 break;
 
@@ -579,7 +598,7 @@ namespace game
             loopi(maxrays)
             {
                 if((hits[i] = intersectclosest(from, rays[i], d, dist))) shorten(from, rays[i], dist);
-                else adddecal(DECAL_BULLET, rays[i], vec(from).sub(rays[i]).normalize(), 2.0f);
+                else raildecal(from, rays[i]);
             }
             loopi(maxrays) if(hits[i])
             {
@@ -599,7 +618,7 @@ namespace game
             shorten(from, to, dist);
             hitpush(attacks[atk].damage, o, d, from, to, atk, 1);
         }
-        else if(attacks[atk].action!=ACT_MELEE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
+        else if(attacks[atk].action!=ACT_MELEE) raildecal(from, to);
     }
 
     void shoot(gameent *d, const vec &targ)

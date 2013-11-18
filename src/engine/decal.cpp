@@ -84,6 +84,8 @@ struct decalbuffer
         startvert = d.endvert;
         availverts = endvert < startvert ? startvert - endvert - 3 : maxverts - 3 - (endvert - startvert);
     }
+    
+    bool faded(const decalinfo &d) const { return verts[d.startvert].alpha < 255; }
 
     void fadedecal(const decalinfo &d, bvec color, uchar alpha)
     {
@@ -227,7 +229,9 @@ struct decalrenderer
         return verts[d.owner].freedecal(d);
     }
 
-    void fadedecal(decalinfo &d, uchar alpha)
+    bool faded(const decalinfo &d) const { return verts[d.owner].faded(d); }
+
+    void fadedecal(const decalinfo &d, uchar alpha)
     {
         bvec color;
         if(flags&DF_OVERBRIGHT)
@@ -237,7 +241,7 @@ struct decalrenderer
         else
         {
             color = d.color;
-            if(flags&(DF_ADD|DF_INVMOD)) loopk(3) color[k] = uchar((int(color[k])*int(alpha))>>8);
+            if(flags&(DF_ADD|DF_INVMOD)) color.scale(alpha, 255);
         }
 
         verts[d.owner].fadedecal(d, color, alpha);
@@ -268,8 +272,9 @@ struct decalrenderer
         {
             d--;
             int fade = lastmillis - d->millis;
-            if(fade >= fadeintime) return;
-            fadedecal(*d, (fade<<8)/fadeintime);
+            if(fade < fadeintime) fadedecal(*d, (fade<<8)/fadeintime);
+            else if(faded(*d)) fadedecal(*d, 255);
+            else return;
         }
         if(enddecal < startdecal)
         {
@@ -279,8 +284,9 @@ struct decalrenderer
             {
                 d--;
                 int fade = lastmillis - d->millis;
-                if(fade >= fadeintime) return;
-                fadedecal(*d, (fade<<8)/fadeintime);
+                if(fade < fadeintime) fadedecal(*d, (fade<<8)/fadeintime);
+                else if(faded(*d)) fadedecal(*d, 255);
+                else return;
             }
         }
     }
@@ -672,9 +678,11 @@ struct decalrenderer
 
 decalrenderer decals[] =
 {
-    decalrenderer("<grey>media/particle/pulse_decal.png", DF_ROTATE, 200),
     decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<grey>media/particle/rail_decal.png", DF_ROTATE|DF_OVERBRIGHT)
+    decalrenderer("<grey>media/particle/rail_hole.png", DF_ROTATE|DF_OVERBRIGHT),
+    decalrenderer("<grey>media/particle/rail_glow.png", DF_ROTATE|DF_ADD|DF_SATURATE, 150, 500, 1000),
+    decalrenderer("<grey>media/particle/pulse_scorch.png", DF_ROTATE, 500),
+    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_ADD|DF_SATURATE, 150, 500, 1000)
 };
 
 void initdecals()

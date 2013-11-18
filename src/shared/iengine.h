@@ -307,6 +307,7 @@ enum
     PART_SPARK, PART_EDIT,
     PART_SNOW,
     PART_MUZZLE_FLASH1, PART_MUZZLE_FLASH2, PART_MUZZLE_FLASH3,
+    PART_RAIL_TRAIL, PART_PULSE_SIDE, PART_PULSE_FRONT,
     PART_HUD_ICON,
     PART_HUD_ICON_GREY,
     PART_TEXT,
@@ -330,9 +331,11 @@ extern void removetrackedparticles(physent *owner = NULL);
 // decal
 enum
 {
-    DECAL_SCORCH = 0,
-    DECAL_BLOOD,
-    DECAL_BULLET
+    DECAL_BLOOD = 0,
+    DECAL_RAIL_HOLE,
+    DECAL_RAIL_GLOW,
+    DECAL_PULSE_SCORCH,
+    DECAL_PULSE_GLOW
 };
 
 extern void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
