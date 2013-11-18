@@ -1910,14 +1910,14 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
 
 COMMAND(texture, "ssiiif");
 
-void autograss(char *name)
+void texgrass(char *name)
 {
     if(slots.empty()) return;
     Slot &s = *slots.last();
-    DELETEA(s.autograss);
-    s.autograss = name[0] ? newstring(makerelpath("media/texture", name)) : NULL;
+    DELETEA(s.grass);
+    s.grass = name[0] ? newstring(makerelpath("media/texture", name)) : NULL;
 }
-COMMAND(autograss, "s");
+COMMAND(texgrass, "s");
 
 void texscroll(float *scrollS, float *scrollT)
 {
