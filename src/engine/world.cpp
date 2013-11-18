@@ -987,7 +987,7 @@ void entreplace()
 {
     if(noentedit() || entcopybuf.empty()) return;
     const entity &c = entcopybuf[0];
-    if(entgroup.length() || enthover >= 0) 
+    if(entgroup.length() || enthover >= 0)
     {
         groupedit({
             e.type = c.type;
@@ -1003,7 +1003,7 @@ void entreplace()
         newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4, c.attr5);
     }
 }
- 
+
 COMMAND(newent, "siiiii");
 COMMAND(delent, "");
 COMMAND(dropent, "");

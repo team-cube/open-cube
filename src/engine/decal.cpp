@@ -84,7 +84,7 @@ struct decalbuffer
         startvert = d.endvert;
         availverts = endvert < startvert ? startvert - endvert - 3 : maxverts - 3 - (endvert - startvert);
     }
-    
+
     bool faded(const decalinfo &d) const { return verts[d.startvert].alpha < 255; }
 
     void fadedecal(const decalinfo &d, bvec color, uchar alpha)

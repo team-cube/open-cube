@@ -285,7 +285,7 @@ namespace game
 
     ICOMMAND(shoot, "D", (int *down), doaction(*down ? ACT_SHOOT : ACT_IDLE));
     ICOMMAND(melee, "D", (int *down), doaction(*down ? ACT_MELEE : ACT_IDLE));
- 
+
     bool canjump()
     {
         if(!intermission) respawn();

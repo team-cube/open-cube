@@ -499,7 +499,7 @@ namespace game
         adddecal(DECAL_RAIL_HOLE, to, dir, size);
         adddecal(DECAL_RAIL_GLOW, to, dir, size, 0x50CFE5);
     }
-        
+
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
     {
         int gun = attacks[atk].gun, sound = attacks[atk].sound;
@@ -514,7 +514,7 @@ namespace game
             case ATK_RAIL_SHOOT:
                 particle_splash(PART_SPARK, 200, 500, to, 0xB49B4B, 0.24f);
                 //particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
-				particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_RAIL_TRAIL, 0xFFC864, 0.28f);
+                particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_RAIL_TRAIL, 0xFFC864, 0.28f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
                 if(!local) raildecal(from, to);
