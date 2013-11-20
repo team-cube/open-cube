@@ -441,6 +441,8 @@ namespace game
 
     void updateprojectiles(int time)
     {
+        if(projs.empty()) return;
+        gameent *noside = hudplayer();
         loopv(projs)
         {
             projectile &p = projs[i];
@@ -477,11 +479,14 @@ namespace game
                 {
                     vec pos = vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)).add(v);
                     particle_splash(PART_PULSE_FRONT, 1, 1, pos, 0x50CFE5, 2.4f, 150, 20);
-                    float len = min(20.0f, vec(p.offset).add(p.from).dist(pos));
-                    vec dir = vec(dv).normalize(),
-                        tail = vec(dir).mul(-len).add(pos),
-                        head = vec(dir).mul(2.4f).add(pos);
-                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0x50CFE5, 2.5f);
+                    if(p.owner != noside)
+                    {
+                        float len = min(20.0f, vec(p.offset).add(p.from).dist(pos));
+                        vec dir = vec(dv).normalize(),
+                            tail = vec(dir).mul(-len).add(pos),
+                            head = vec(dir).mul(2.4f).add(pos);
+                        particle_flare(tail, head, 1, PART_PULSE_SIDE, 0x50CFE5, 2.5f);
+                    }
                 }
             }
             if(exploded)
