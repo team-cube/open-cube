@@ -366,7 +366,7 @@ namespace game
 
     void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int damage, int atk)
     {
-        particle_splash(PART_SPARK, 200, 300, v, 0x50CFE5, 0.24f);
+        particle_splash(PART_SPARK, 200, 300, v, 0x50CFE5, 0.45f);
         playsound(S_PULSEEXPLODE, &v);
         particle_fireball(v, 1.15f*attacks[atk].exprad, PART_PULSE_BURST, int(attacks[atk].exprad*20), 0x50CFE5, 4.0f);
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
@@ -481,7 +481,7 @@ namespace game
                     vec dir = vec(dv).normalize(),
                         tail = vec(dir).mul(-len).add(pos),
                         head = vec(dir).mul(2.4f).add(pos);
-                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0x50CFE5, 2.4f);
+                    particle_flare(tail, head, 1, PART_PULSE_SIDE, 0x50CFE5, 2.5f);
                 }
             }
             if(exploded)
@@ -518,7 +518,7 @@ namespace game
                 break;
 
             case ATK_RAIL_SHOOT:
-                particle_splash(PART_SPARK, 200, 500, to, 0x50CFE5, 0.24f);
+                particle_splash(PART_SPARK, 200, 250, to, 0x50CFE5, 0.45f);
                 particle_flare(hudgunorigin(gun, from, to, d), to, 500, PART_RAIL_TRAIL, 0x50CFE5, 0.5f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
