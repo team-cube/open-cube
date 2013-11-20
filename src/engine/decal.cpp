@@ -683,8 +683,8 @@ decalrenderer decals[] =
     decalrenderer("<grey>media/particle/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
     decalrenderer("<grey>media/particle/pulse_scorch.png", DF_ROTATE, 500),
     decalrenderer("<grey>media/particle/rail_hole.png", DF_ROTATE|DF_OVERBRIGHT),
-    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 200, 1300, 200),
-    decalrenderer("<grey>media/particle/rail_glow.png",  DF_ROTATE|DF_GLOW|DF_SATURATE, 50, 900, 50)
+    decalrenderer("<grey>media/particle/pulse_glow.png", DF_ROTATE|DF_GLOW|DF_SATURATE, 250, 1500, 250),
+    decalrenderer("<grey>media/particle/rail_glow.png",  DF_ROTATE|DF_GLOW|DF_SATURATE, 100, 1100, 100)
 };
 
 void initdecals()

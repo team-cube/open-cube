@@ -501,9 +501,8 @@ namespace game
     void raildecal(const vec &from, const vec &to)
     {
         vec dir = vec(from).sub(to).normalize();
-        float size = 2.0f;
-        adddecal(DECAL_RAIL_HOLE, to, dir, size);
-        adddecal(DECAL_RAIL_GLOW, to, dir, size, 0x50CFE5);
+        adddecal(DECAL_RAIL_HOLE, to, dir, 2.0f);
+        adddecal(DECAL_RAIL_GLOW, to, dir, 2.5f, 0x50CFE5);
     }
 
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
