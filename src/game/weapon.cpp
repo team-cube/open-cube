@@ -13,9 +13,11 @@ namespace game
     };
     vector<hitmsg> hits;
 
+#if 0
     #define MINDEBRIS 3
     VARP(maxdebris, MINDEBRIS, 10, 100);
     VARP(maxgibs, 0, 4, 100);
+#endif
 
     ICOMMAND(getweapon, "", (), intret(player1->gunselect));
 
@@ -286,9 +288,11 @@ namespace game
 
     void gibeffect(int damage, const vec &vel, gameent *d)
     {
+#if 0
         if(!blood || !maxgibs || damage < 0) return;
         vec from = d->abovehead();
         loopi(rnd(maxgibs)+1) spawnbouncer(from, vel, d, BNC_GIBS);
+#endif
     }
 
     void hit(int damage, dynent *d, gameent *at, const vec &vel, int atk, float info1, int info2 = 1)
@@ -365,15 +369,17 @@ namespace game
         particle_splash(PART_SPARK, 200, 300, v, 0x50CFE5, 0.24f);
         playsound(S_PULSEEXPLODE, &v);
         particle_fireball(v, 1.15f*attacks[atk].exprad, PART_PULSE_BURST, int(attacks[atk].exprad*20), 0x50CFE5, 4.0f);
-        int numdebris = maxdebris > MINDEBRIS ? rnd(maxdebris-MINDEBRIS)+MINDEBRIS : min(maxdebris, MINDEBRIS);
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
         adddynlight(safe ? v : debrisorigin, 2*attacks[atk].exprad, vec(1.0f, 3.0f, 4.0f), 350, 40, 0, attacks[atk].exprad/2, vec(0.5f, 1.5f, 2.0f));
+#if 0
+        int numdebris = maxdebris > MINDEBRIS ? rnd(maxdebris-MINDEBRIS)+MINDEBRIS : min(maxdebris, MINDEBRIS);
         if(numdebris)
         {
             vec debrisvel = vec(vel).neg();
             loopi(numdebris)
                 spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);
         }
+#endif
         if(!local) return;
         int numdyn = numdynents();
         loopi(numdyn)
@@ -686,13 +692,17 @@ namespace game
         }
     }
 
+#if 0
     static const char * const gibnames[3] = { "gibs/gib01", "gibs/gib02", "gibs/gib03" };
     static const char * const debrisnames[4] = { "debris/debris01", "debris/debris02", "debris/debris03", "debris/debris04" };
+#endif
 
     void preloadbouncers()
     {
+#if 0
         loopi(sizeof(gibnames)/sizeof(gibnames[0])) preloadmodel(gibnames[i]);
         loopi(sizeof(debrisnames)/sizeof(debrisnames[0])) preloadmodel(debrisnames[i]);
+#endif
     }
 
     void renderbouncers()
@@ -718,8 +728,10 @@ namespace game
             if(bnc.lifetime < 250) fade = bnc.lifetime/250.0f;
             switch(bnc.bouncetype)
             {
+#if 0
                 case BNC_GIBS: mdl = gibnames[bnc.variant]; break;
                 case BNC_DEBRIS: mdl = debrisnames[bnc.variant]; break;
+#endif
                 default: continue;
             }
             rendermodel(mdl, ANIM_MAPMODEL|ANIM_LOOP, pos, yaw, pitch, 0, cull, NULL, NULL, 0, 0, fade);
