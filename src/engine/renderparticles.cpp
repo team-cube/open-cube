@@ -119,6 +119,7 @@ enum
     PT_SHADER    = 1<<21,
     PT_SWIZZLE   = 1<<22,
     PT_NOLAYER   = 1<<23,
+    PT_COLLIDE   = 1<<24,
     PT_FLIP      = PT_HFLIP | PT_VFLIP | PT_ROT
 };
 
@@ -161,15 +162,15 @@ struct partrenderer
     const char *texname;
     int texclamp;
     uint type;
-    int collide;
+    int decal;
     string info;
 
-    partrenderer(const char *texname, int texclamp, int type, int collide = 0)
-        : tex(NULL), texname(texname), texclamp(texclamp), type(type), collide(collide)
+    partrenderer(const char *texname, int texclamp, int type, int decal = -1)
+        : tex(NULL), texname(texname), texclamp(texclamp), type(type), decal(decal)
     {
     }
-    partrenderer(int type, int collide = 0)
-        : tex(NULL), texname(NULL), texclamp(0), type(type), collide(collide)
+    partrenderer(int type, int decal = -1)
+        : tex(NULL), texname(NULL), texclamp(0), type(type), decal(decal)
     {
     }
     virtual ~partrenderer()
@@ -217,9 +218,9 @@ struct partrenderer
                 o.add(vec(d).mul(t/5000.0f));
                 o.z -= t*t/(2.0f * 5000.0f * p->gravity);
             }
-            if(collide && o.z < p->val && canstep)
+            if(type&PT_COLLIDE && o.z < p->val && canstep)
             {
-                if(collide >= 0)
+                if(decal >= 0)
                 {
                     vec surface;
                     float floorz = rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
@@ -228,7 +229,7 @@ struct partrenderer
                         p->val = collidez+COLLIDEERROR;
                     else
                     {
-                        adddecal(collide, vec(o.x, o.y, collidez), vec(p->o).sub(o).normalize(), 2*p->size, p->color, type&PT_RND4 ? (p->flags>>5)&3 : 0);
+                        adddecal(decal, vec(o.x, o.y, collidez), vec(p->o).sub(o).normalize(), 2*p->size, p->color, type&PT_RND4 ? (p->flags>>5)&3 : 0);
                         blend = 0;
                     }
                 }
@@ -245,7 +246,7 @@ struct partrenderer
         if(type&PT_RND4) concatstring(info, "r,");
         if(type&PT_TRACK) concatstring(info, "t,");
         if(type&PT_FLIP) concatstring(info, "f,");
-        if(collide) concatstring(info, "c,");
+        if(type&PT_COLLIDE) concatstring(info, "c,");
         int len = strlen(info);
         info[len-1] = info[len-1] == ',' ? ')' : '\0';
         if(texname)
@@ -268,12 +269,12 @@ struct listrenderer : partrenderer
     static listparticle *parempty;
     listparticle *list;
 
-    listrenderer(const char *texname, int texclamp, int type, int collide = 0)
-        : partrenderer(texname, texclamp, type, collide), list(NULL)
+    listrenderer(const char *texname, int texclamp, int type, int decal = -1)
+        : partrenderer(texname, texclamp, type, decal), list(NULL)
     {
     }
-    listrenderer(int type, int collide = 0)
-        : partrenderer(type, collide), list(NULL)
+    listrenderer(int type, int decal = -1)
+        : partrenderer(type, decal), list(NULL)
     {
     }
 
@@ -615,8 +616,8 @@ struct varenderer : partrenderer
     int maxparts, numparts, lastupdate, rndmask;
     GLuint vbo;
 
-    varenderer(const char *texname, int type, int collide = 0)
-        : partrenderer(texname, 3, type, collide),
+    varenderer(const char *texname, int type, int decal = -1)
+        : partrenderer(texname, 3, type, decal),
           verts(NULL), parts(NULL), maxparts(0), numparts(0), lastupdate(-1), rndmask(0), vbo(0)
     {
         if(type & PT_HFLIP) rndmask |= 0x01;
@@ -832,15 +833,15 @@ typedef varenderer<PT_TRAIL> trailrenderer;
 
 struct softquadrenderer : quadrenderer
 {
-    softquadrenderer(const char *texname, int type, int collide = 0)
-        : quadrenderer(texname, type|PT_SOFT, collide)
+    softquadrenderer(const char *texname, int type, int decal = -1)
+        : quadrenderer(texname, type|PT_SOFT, decal)
     {
     }
 };
 
 static partrenderer *parts[] =
 {
-    new quadrenderer("<grey>media/particle/blood.png", PT_PART|PT_FLIP|PT_MOD|PT_RND4, DECAL_BLOOD), // blood spats (note: rgb is inverted)
+    new quadrenderer("<grey>media/particle/blood.png", PT_PART|PT_FLIP|PT_MOD|PT_RND4|PT_COLLIDE, DECAL_BLOOD), // blood spats (note: rgb is inverted)
     new trailrenderer("media/particle/base.png", PT_TRAIL|PT_LERP),                            // water, entity
     new quadrenderer("<grey>media/particle/smoke.png", PT_PART|PT_FLIP|PT_LERP),               // smoke
     new quadrenderer("<grey>media/particle/steam.png", PT_PART|PT_FLIP),                       // steam
@@ -857,7 +858,7 @@ static partrenderer *parts[] =
     &pulsebursts,                                                                              // pulse burst
     new quadrenderer("media/particle/spark.png", PT_PART|PT_FLIP|PT_BRIGHT),                   // sparks
     new quadrenderer("media/particle/base.png",  PT_PART|PT_FLIP|PT_BRIGHT),                   // edit mode entities
-    new quadrenderer("media/particle/snow.png", PT_PART|PT_FLIP|PT_RND4, -1),                  // colliding snow
+    new quadrenderer("media/particle/snow.png", PT_PART|PT_FLIP|PT_RND4|PT_COLLIDE),           // colliding snow
     new quadrenderer("media/particle/rail_muzzle.png", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK),  // rail muzzle flash
     new quadrenderer("media/particle/pulse_muzzle.png", PT_PART|PT_FEW|PT_FLIP|PT_BRIGHT|PT_TRACK), // pulse muzzle flash
     new quadrenderer("media/interface/hud/items.png", PT_PART|PT_FEW|PT_ICON),                 // hud icon
@@ -1013,7 +1014,7 @@ VARP(maxparticledistance, 256, 1024, 4096);
 static void splash(int type, int color, int radius, int num, int fade, const vec &p, float size, int gravity)
 {
     if(camera1->o.dist(p) > maxparticledistance && !seedemitter) return;
-    float collidez = parts[type]->collide ? p.z - raycube(p, vec(0, 0, -1), COLLIDERADIUS, RAY_CLIPMAT) + (parts[type]->collide >= 0 ? COLLIDEERROR : 0) : -1;
+    float collidez = parts[type]->type&PT_COLLIDE ? p.z - raycube(p, vec(0, 0, -1), COLLIDERADIUS, RAY_CLIPMAT) + (parts[type]->decal >= 0 ? COLLIDEERROR : 0) : -1;
     int fmin = 1;
     int fmax = fade*3;
     loopi(num)
@@ -1241,8 +1242,8 @@ void regularshape(int type, int radius, int color, int dir, int num, int fade, c
         {
             vec d = vec(to).sub(from).rescale(vel); //velocity
             particle *n = newparticle(from, d, rnd(fade*3)+1, type, color, size, gravity);
-            if(parts[type]->collide)
-                n->val = from.z - raycube(from, vec(0, 0, -1), parts[type]->collide >= 0 ? COLLIDERADIUS : max(from.z, 0.0f), RAY_CLIPMAT) + (parts[type]->collide >= 0 ? COLLIDEERROR : 0);
+            if(parts[type]->type&PT_COLLIDE)
+                n->val = from.z - raycube(from, vec(0, 0, -1), parts[type]->decal >= 0 ? COLLIDERADIUS : max(from.z, 0.0f), RAY_CLIPMAT) + (parts[type]->decal >= 0 ? COLLIDEERROR : 0);
         }
     }
 }
