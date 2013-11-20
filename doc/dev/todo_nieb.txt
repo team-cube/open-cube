@@ -3,7 +3,7 @@ Weapon Models
    RailGun
     X low-base
     X high-base
-      low-world
+    X low-world
       low-HUD
       high-detail
       dDo-HUD
@@ -11,26 +11,24 @@ Weapon Models
 
    PulseRifle
     X low-base
-      high-base
+    X high-base
       low-world
       low-HUD
       high-detail
       dDo-HUD
       dDo-World
 
-   Knife/Blade?
-      for left-hand melee attack (or use gunbutt animation)
-
 
 ===============================================================
 Player Model
    -Add more detail to highpoly etc.
+
    -HUD arm models
 
    -Fix tag_weapon parenting
    -Re-pose upper body to hold weapons
    -Melee animation?
-   -Fix seam in helmet texture
+   -Fix seam in helmet texture (reUV)
    -fix ray miss in AOmap
 
 
@@ -42,7 +40,8 @@ Weapon Models
    PulseRifle
       HUD Animation
 
-   Knife/Blade?
+   Knife/Blade/Punch
+      ...
       HUD Animation
 
 
