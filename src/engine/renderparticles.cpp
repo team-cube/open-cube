@@ -972,9 +972,9 @@ void renderparticles(int layer)
                     else if(flags&PT_NOTEX) particlenotextureshader->set();
                     else particleshader->setvariant(swizzle, 0);
                 }
-                if(changedbits&(PT_BRIGHT|PT_SOFT|PT_NOTEX|PT_SHADER|PT_SWIZZLE))
+                if(changedbits&(PT_MOD|PT_BRIGHT|PT_SOFT|PT_NOTEX|PT_SHADER|PT_SWIZZLE))
                 {
-                    float colorscale = ldrscale;
+                    float colorscale = flags&PT_MOD ? 1 : ldrscale;
                     if(flags&PT_BRIGHT) colorscale *= particlebright;
                     LOCALPARAMF(colorscale, colorscale, colorscale, colorscale, 1);
                 }
