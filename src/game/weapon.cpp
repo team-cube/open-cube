@@ -365,7 +365,7 @@ namespace game
         particle_splash(PART_SPARK, 200, 300, v, 0x50CFE5, 0.24f);
         playsound(S_PULSEEXPLODE, &v);
         particle_fireball(v, 1.15f*attacks[atk].exprad, PART_EXPLOSION, int(attacks[atk].exprad*20), 0x50CFE5, 4.0f);
-        int numdebris = rnd(maxdebris-MINDEBRIS)+MINDEBRIS;
+        int numdebris = maxdebris > MINDEBRIS ? rnd(maxdebris-MINDEBRIS)+MINDEBRIS : min(maxdebris, MINDEBRIS);
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
         adddynlight(safe ? v : debrisorigin, 2*attacks[atk].exprad, vec(1.0f, 3.0f, 4.0f), 350, 40, 0, attacks[atk].exprad/2, vec(0.5f, 1.5f, 2.0f));
         if(numdebris)
