@@ -854,7 +854,7 @@ static partrenderer *parts[] =
     new quadrenderer("media/particle/pulse_front.png", PT_PART|PT_FLIP|PT_FEW|PT_BRIGHT),      // pulse front
     &lightnings,                                                                               // lightning
     &fireballs,                                                                                // explosion fireball
-    &bluefireballs,                                                                            // bluish explosion fireball
+    &pulsebursts,                                                                              // pulse burst
     new quadrenderer("media/particle/spark.png", PT_PART|PT_FLIP|PT_BRIGHT),                   // sparks
     new quadrenderer("media/particle/base.png",  PT_PART|PT_FLIP|PT_BRIGHT),                   // edit mode entities
     new quadrenderer("media/particle/snow.png", PT_PART|PT_FLIP|PT_RND4, -1),                  // colliding snow
