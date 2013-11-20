@@ -362,12 +362,12 @@ namespace game
 
     void explode(bool local, gameent *owner, const vec &v, const vec &vel, dynent *safe, int damage, int atk)
     {
-        particle_splash(PART_SPARK, 200, 300, v, 0xB49B4B, 0.24f);
+        particle_splash(PART_SPARK, 200, 300, v, 0x50CFE5, 0.24f);
         playsound(S_PULSEEXPLODE, &v);
-        particle_fireball(v, 1.15f*attacks[atk].exprad, PART_EXPLOSION, int(attacks[atk].exprad*20), 0xFF8080, 4.0f);
+        particle_fireball(v, 1.15f*attacks[atk].exprad, PART_EXPLOSION, int(attacks[atk].exprad*20), 0x50CFE5, 4.0f);
         int numdebris = rnd(maxdebris-MINDEBRIS)+MINDEBRIS;
         vec debrisorigin = vec(v).sub(vec(vel).mul(5));
-        adddynlight(safe ? v : debrisorigin, 2*attacks[atk].exprad, vec(4, 3.0f, 2.0), 200, 25, 0, attacks[atk].exprad/2, vec(2.0, 1.5f, 1.0f));
+        adddynlight(safe ? v : debrisorigin, 2*attacks[atk].exprad, vec(1.0f, 3.0f, 4.0f), 350, 40, 0, attacks[atk].exprad/2, vec(0.5f, 1.5f, 2.0f));
         if(numdebris)
         {
             vec debrisvel = vec(vel).neg();
@@ -495,7 +495,7 @@ namespace game
     void raildecal(const vec &from, const vec &to)
     {
         vec dir = vec(from).sub(to).normalize();
-        float size = 3.0f;
+        float size = 2.0f;
         adddecal(DECAL_RAIL_HOLE, to, dir, size);
         adddecal(DECAL_RAIL_GLOW, to, dir, size, 0x50CFE5);
     }
@@ -512,9 +512,8 @@ namespace game
                 break;
 
             case ATK_RAIL_SHOOT:
-                particle_splash(PART_SPARK, 200, 500, to, 0xB49B4B, 0.24f);
-                //particle_trail(PART_SMOKE, 500, hudgunorigin(gun, from, to, d), to, 0x404040, 0.6f, 20);
-                particle_flare(hudgunorigin(gun, from, to, d), to, 600, PART_RAIL_TRAIL, 0xFFC864, 0.28f);
+                particle_splash(PART_SPARK, 200, 500, to, 0x50CFE5, 0.24f);
+                particle_flare(hudgunorigin(gun, from, to, d), to, 500, PART_RAIL_TRAIL, 0x50CFE5, 0.5f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 150, PART_MUZZLE_FLASH3, 0xFFFFFF, 1.25f, d);
                 if(!local) raildecal(from, to);

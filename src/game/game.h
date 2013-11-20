@@ -269,7 +269,7 @@ static const struct attackinfo { int gun, action, anim, vwepanim, hudanim, sound
 {
     { GUN_RAIL,  ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_RAIL,  1000, 1, 0,    0, 30, 2048, 1, 5000,  0, 0, 0 },
     { GUN_RAIL,  ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  250, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 },
-    { GUN_PULSE, ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_PULSE,  650, 1, 0, 1000, 30, 1024, 1, 5000, 10, 0, 0 },
+    { GUN_PULSE, ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_PULSE,  650, 1, 0, 1000, 30, 1024, 1, 5000, 15, 0, 0 },
     { GUN_PULSE, ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  250, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 }
 };
 
