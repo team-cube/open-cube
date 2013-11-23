@@ -517,7 +517,7 @@ namespace game
         {
             case ATK_PULSE_SHOOT:
                 if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, 250, PART_PULSE_MUZZLE_FLASH, 0x50CFE5, 3.0f, d);
+                    particle_flare(d->muzzle, d->muzzle, 140, PART_PULSE_MUZZLE_FLASH, 0x50CFE5, 3.0f, d);
                 newprojectile(from, to, attacks[atk].projspeed, local, id, d, atk);
                 break;
 
@@ -525,7 +525,7 @@ namespace game
                 particle_splash(PART_SPARK, 200, 250, to, 0x50CFE5, 0.45f);
                 particle_flare(hudgunorigin(gun, from, to, d), to, 500, PART_RAIL_TRAIL, 0x50CFE5, 0.5f);
                 if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, 150, PART_RAIL_MUZZLE_FLASH, 0x50CFE5, 1.25f, d);
+                    particle_flare(d->muzzle, d->muzzle, 140, PART_RAIL_MUZZLE_FLASH, 0x50CFE5, 2.75f, d);
                 if(!local) raildecal(from, to);
                 if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 35, vec(0.25f, 0.75f, 1.00f), 75, 75, DL_FLASH, 0, vec(0, 0, 0), d);
                 break;
