@@ -12,7 +12,7 @@ Weapon Models
    PulseRifle
     X low-base
     X high-base
-      low-world
+    X low-world
       low-HUD
       high-detail
       dDo-HUD
