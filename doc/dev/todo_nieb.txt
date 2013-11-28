@@ -5,7 +5,7 @@ Weapon Models
     X high-base
     X low-world
     X low-HUD
-      high-detail
+    X high-detail
       dDo-HUD
       dDo-World
 
@@ -14,7 +14,7 @@ Weapon Models
     X high-base
     X low-world
     X low-HUD
-      high-detail
+    X high-detail
       dDo-HUD
       dDo-World
 
