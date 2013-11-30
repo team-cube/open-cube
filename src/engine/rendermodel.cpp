@@ -799,7 +799,7 @@ void rendertransparentmodelbatches()
             batchedmodel &bm = batchedmodels[j];
             j = bm.next;
             bm.culled = cullmodel(b.m, bm.center, bm.radius, bm.flags, bm.d);
-            if(bm.culled || bm.colorscale.a >= 1) continue;
+            if(bm.culled || bm.colorscale.a >= 1 || bm.flags&MDL_ONLYSHADOW) continue;
             if(!rendered)
             {
                 b.m->startrender();

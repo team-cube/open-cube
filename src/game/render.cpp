@@ -358,9 +358,7 @@ namespace game
             renderplayer(d, fade);
         }
         if(exclude)
-        {
-            if(exclude->state!=CS_LAGGED) renderplayer(exclude, 1, MDL_ONLYSHADOW);
-        }
+            renderplayer(exclude, 1, MDL_ONLYSHADOW);
         else if(!followingplayer() && (player1->state==CS_ALIVE || player1->state==CS_EDITING || (player1->state==CS_DEAD && !hidedead)))
             renderplayer(player1, 1, isthirdperson() ? 0 : MDL_ONLYSHADOW);
         entities::renderentities();
