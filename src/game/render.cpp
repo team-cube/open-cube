@@ -245,7 +245,7 @@ namespace game
             }
             a[ai++] = modelattach("tag_weapon", guns[d->gunselect].vwep, vanim, vtime);
         }
-        if(mainpass)
+        if(mainpass && !(flags&MDL_ONLYSHADOW))
         {
             d->muzzle = vec(-1, -1, -1);
             if(guns[d->gunselect].vwep) a[ai++] = modelattach("tag_muzzle", &d->muzzle);
