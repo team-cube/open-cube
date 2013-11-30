@@ -214,7 +214,7 @@ namespace game
     VAR(testanims, 0, 0, 1);
     VAR(testpitch, -90, 0, 90);
 
-    void renderplayer(gameent *d, const playermodelinfo &mdl, int color, int team, float fade, bool mainpass = true)
+    void renderplayer(gameent *d, const playermodelinfo &mdl, int color, int team, float fade, int flags = 0, bool mainpass = true)
     {
         int lastaction = d->lastaction, anim = ANIM_IDLE|ANIM_LOOP, attack = 0, delay = 0;
         if(d->lastattack >= 0)
@@ -310,7 +310,6 @@ namespace game
             if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) anim >>= ANIM_SECONDARY;
         }
         if(!((anim>>ANIM_SECONDARY)&ANIM_INDEX)) anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY;
-        int flags = 0;
         if(d!=player1) flags |= MDL_CULL_VFC | MDL_CULL_OCCLUDED | MDL_CULL_QUERY;
         if(d->type==ENT_PLAYER) flags |= MDL_FULLBRIGHT;
         else flags |= MDL_CULL_DIST;
@@ -319,10 +318,10 @@ namespace game
         rendermodel(mdlname, anim, o, yaw, pitch, 0, flags, d, a[0].tag ? a : NULL, basetime, 0, fade, vec4(vec::hexcolor(color), trans));
     }
 
-    static inline void renderplayer(gameent *d, float fade = 1)
+    static inline void renderplayer(gameent *d, float fade = 1, int flags = 0)
     {
         int team = m_teammode && validteam(d->team) ? d->team : 0;
-        renderplayer(d, getplayermodelinfo(d), getplayercolor(d, team), team, fade);
+        renderplayer(d, getplayermodelinfo(d), getplayercolor(d, team), team, fade, flags);
     }
 
     void rendergame()
@@ -358,8 +357,12 @@ namespace game
                 fade -= clamp(float(lastmillis - (d->lastupdate + max(ragdollmillis - ragdollfade, 0)))/min(ragdollmillis, ragdollfade), 0.0f, 1.0f);
             renderplayer(d, fade);
         }
-        if(isthirdperson() && !followingplayer() && (player1->state!=CS_DEAD || !hidedead))
-            renderplayer(player1);
+        if(exclude)
+        {
+            if(exclude->state!=CS_LAGGED) renderplayer(exclude, 1, MDL_ONLYSHADOW);
+        }
+        else if(!followingplayer() && (player1->state!=CS_DEAD || !hidedead))
+            renderplayer(player1, 1, isthirdperson() ? 0 : MDL_ONLYSHADOW);
         entities::renderentities();
         renderbouncers();
         renderprojectiles();
@@ -466,7 +469,7 @@ namespace game
         previewent->yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;
-        renderplayer(previewent, *mdlinfo, getplayercolor(team, color), team, 1, false);
+        renderplayer(previewent, *mdlinfo, getplayercolor(team, color), team, 1, 0, false);
     }
 
     vec hudgunorigin(int gun, const vec &from, const vec &to, gameent *d)
