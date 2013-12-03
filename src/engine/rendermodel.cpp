@@ -1022,7 +1022,7 @@ hasboundbox:
         m->startrender();
         setaamask(true);
         if(flags&MDL_FULLBRIGHT) anim |= ANIM_FULLBRIGHT;
-        m->render(anim, basetime, basetime2, o, yaw, pitch, roll, d, a, size);
+        m->render(anim, basetime, basetime2, o, yaw, pitch, roll, d, a, size, color);
         m->endrender();
         if(flags&MDL_CULL_QUERY && !viewidx && d->query) endquery(d->query);
         return;

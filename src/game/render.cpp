@@ -423,11 +423,13 @@ namespace game
         if(!hudgunsway) sway = d->o;
 
         const playermodelinfo &mdl = getplayermodelinfo(d);
-        defformatstring(gunname, "%s/%s", mdl.hudguns[m_teammode && validteam(d->team) ? d->team : 0], file);
+        int team = m_teammode && validteam(d->team) ? d->team : 0,
+            color = getplayercolor(d, team);
+        defformatstring(gunname, "%s/%s", mdl.hudguns[team], file);
         modelattach a[2];
         d->muzzle = vec(-1, -1, -1);
         a[0] = modelattach("tag_muzzle", &d->muzzle);
-        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, NULL, a, basetime);
+        rendermodel(gunname, anim, sway, d->yaw, d->pitch, 0, MDL_NOBATCH, NULL, a, basetime, 0, 1, vec4(vec::hexcolor(color), 1));
         if(d->muzzle.x >= 0) d->muzzle = calcavatarpos(d->muzzle, 12);
     }
 
