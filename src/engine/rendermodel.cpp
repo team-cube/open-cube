@@ -517,7 +517,7 @@ void addbatchedmodel(model *m, batchedmodel &bm, int idx)
     b->batched = idx;
 }
 
-FVAR(onlyshadowbias, 0, 8, 16);
+FVAR(onlyshadowbias, 0, 4, 16);
 
 static inline void renderbatchedmodel(model *m, const batchedmodel &b)
 {
