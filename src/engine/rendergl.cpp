@@ -1248,11 +1248,11 @@ void pophudmatrix(bool flush, bool flushparams)
 int vieww = -1, viewh = -1, viewidx = 0;
 float curfov = 100, curavatarfov = 65, fovy, aspect;
 int farplane;
-VARP(zoominvel, 0, 250, 5000);
-VARP(zoomoutvel, 0, 100, 5000);
+VARP(zoominvel, 0, 30, 500);
+VARP(zoomoutvel, 0, 40, 500);
 VARP(zoomfov, 10, 35, 60);
 VARP(fov, 10, 100, 150);
-VAR(avatarzoomfov, 10, 25, 60);
+VAR(avatarzoomfov, 1, 1, 1);
 VAR(avatarfov, 10, 40, 100);
 FVAR(avatardepth, 0, 0.8f, 1);
 FVARNP(aspect, forceaspect, 0, 0, 1e3f);
