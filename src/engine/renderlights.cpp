@@ -3997,7 +3997,12 @@ void preparegbuffer(bool depthclear)
     if(drawtex == DRAWTEX_MINIMAP)
     {
         linearworldmatrix.mul(invcamprojmatrix, invscreenmatrix);
-        worldmatrix = linearworldmatrix;
+        if(!gdepthformat) worldmatrix = linearworldmatrix;
+        linearworldmatrix.a.z = invcammatrix.a.z;
+        linearworldmatrix.b.z = invcammatrix.b.z;
+        linearworldmatrix.c.z = invcammatrix.c.z;
+        linearworldmatrix.d.z = invcammatrix.d.z; 
+        if(gdepthformat) worldmatrix = linearworldmatrix;
 
         GLOBALPARAMF(radialfogscale, 0, 0, 0, 0);
     }
