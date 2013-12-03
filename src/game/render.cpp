@@ -53,7 +53,7 @@ namespace game
         0xB27436,
         0x735E48,
         0xABA561,
-		0x425E32,
+        0x425E32,
         0x468046,
         0x3B8180,
         0x657F8A,
@@ -324,8 +324,6 @@ namespace game
         renderplayer(d, getplayermodelinfo(d), getplayercolor(d, team), team, fade, flags);
     }
 
-    FVAR(playershadowscale, 0.25f, 0.85, 1);
-
     void rendergame()
     {
         ai::render();
@@ -360,12 +358,9 @@ namespace game
             renderplayer(d, fade);
         }
         if(exclude)
-            renderplayer(exclude, playershadowscale, MDL_ONLYSHADOW);
+            renderplayer(exclude, 1, MDL_ONLYSHADOW);
         else if(!followingplayer() && (player1->state==CS_ALIVE || player1->state==CS_EDITING || (player1->state==CS_DEAD && !hidedead)))
-        {
-            if(isthirdperson()) renderplayer(player1);
-            else renderplayer(player1, playershadowscale, MDL_ONLYSHADOW);
-        }
+            renderplayer(player1, 1, isthirdperson() ? 0 : MDL_ONLYSHADOW);
         entities::renderentities();
         renderbouncers();
         renderprojectiles();

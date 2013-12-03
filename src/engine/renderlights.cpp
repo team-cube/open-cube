@@ -1589,6 +1589,8 @@ VARFP(smfilter, 0, 2, 3, { cleardeferredlightshaders(); cleanupshadowatlas(); })
 VARFP(smgather, 0, 0, 1, { cleardeferredlightshaders(); cleanupshadowatlas(); });
 VAR(smnoshadow, 0, 0, 1);
 VAR(smdynshadow, 0, 1, 1);
+FVAR(avatarshadowdist, 0, 8, 100);
+FVAR(avatarshadowbias, 0, 8, 100);
 VAR(lighttilesused, 1, 0, 0);
 VAR(lightpassesused, 1, 0, 0);
 

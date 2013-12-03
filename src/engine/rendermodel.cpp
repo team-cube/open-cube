@@ -517,8 +517,6 @@ void addbatchedmodel(model *m, batchedmodel &bm, int idx)
     b->batched = idx;
 }
 
-FVAR(onlyshadowbias, 0, 4, 16);
-
 static inline void renderbatchedmodel(model *m, const batchedmodel &b)
 {
     modelattach *a = NULL;
@@ -528,23 +526,6 @@ static inline void renderbatchedmodel(model *m, const batchedmodel &b)
     if(shadowmapping > SM_REFLECT)
     {
         anim |= ANIM_NOSKIN;
-        if(b.flags&MDL_ONLYSHADOW)
-        {
-            vec pos = b.pos, dir;
-            switch(shadowmapping)
-            {
-                case SM_CASCADE: case SM_SPOT:
-                    dir = shadowdir;
-                    break;
-                default: 
-                    dir = vec(pos).sub(shadoworigin).normalize();
-                    break;
-            }
-            dir.z = 0;
-            pos.madd(dir, onlyshadowbias);
-            m->render(anim, b.basetime, b.basetime2, pos, b.yaw, b.pitch, b.roll, b.d, a, b.sizescale, b.colorscale);
-            return;
-        } 
     }
     else
     {
