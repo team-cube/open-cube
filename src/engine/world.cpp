@@ -11,18 +11,22 @@ VARNR(emptymap, _emptymap, 1, 0, 0);
 VAR(octaentsize, 0, 64, 1024);
 VAR(entselradius, 0, 2, 10);
 
+static inline void transformbb(const entity &e,vec &center, vec &radius)
+{
+    if(e.attr5 > 0) { float scale = e.attr5/100.0f; center.mul(scale); radius.mul(scale); }
+    rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
+}
+    
 static inline void mmboundbox(const entity &e, model *m, vec &center, vec &radius)
 {
     m->boundbox(center, radius);
-    if(e.attr5 > 0) { float scale = e.attr5/100.0f; center.mul(scale); radius.mul(scale); }
-    rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
+    transformbb(e, center, radius);
 }
 
 static inline void mmcollisionbox(const entity &e, model *m, vec &center, vec &radius)
 {
     m->collisionbox(center, radius);
-    if(e.attr5 > 0) { float scale = e.attr5/100.0f; center.mul(scale); radius.mul(scale); }
-    rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
+    transformbb(e, center, radius);
 }
 
 bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
