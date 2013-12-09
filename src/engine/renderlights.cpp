@@ -3866,7 +3866,7 @@ void rendertransparent()
         }
         else
         {
-            maskgbuffer(maskedaa() || msaasamples ? "cg" : "cng");
+            maskgbuffer("cg");
             bool scissor = sx1 > -1 || sy1 > -1 || sx2 < 1 || sy2 < 1;
             if(scissor)
             {
