@@ -1,15 +1,15 @@
 ===============================================================
 Player Model
-   -Add more detail to highpoly etc.
+   Texture
 
-   -HUD arm models
-
-   -Fix tag_weapon parenting
-   -Re-pose upper body to hold weapons
-   -Melee animation?
-   -Fix seam in helmet texture (reUV)
-   -fix ray miss in AOmap
-
+===============================================================
+HUD Arms Model
+   Lowpoly
+   Highpoly
+   Texture
+   Animation Setup
+      Skeleton
+      Vertex-Weights
 
 ===============================================================
 Weapon Models
@@ -19,10 +19,8 @@ Weapon Models
    PulseRifle
       HUD Animation
 
-   Knife/Blade/Punch
-      ...
+   Melee
       HUD Animation
-
 
 ===============================================================
 ===============================================================
@@ -131,18 +129,18 @@ UI Stuff
                 undo size
                 ...
 
+===============================================================
+Quick CTF test map
 
+===============================================================
+
+***First package release approximately here***
 
 ===============================================================
 MAP Flagstone CTF
    Wild-West / Old Mine Theme
    New/Reworked layout
       accommodate new player movement speed
-
-
-===============================================================
-
-***First package release approximately here***
 
 ===============================================================
 MAP Shipwreck CTF
@@ -151,11 +149,9 @@ MAP Shipwreck CTF
       accommodate new player movement speed
       better balanced gameplay
 
-
 ===============================================================
 MAP Turbine ARENA
    Desert Theme
-
 
 ===============================================================
 MAP Ot ARENA
@@ -164,9 +160,8 @@ MAP Ot ARENA
 
 
 
-===============================================================
-===============================================================
-
+***************************************************************
+***************************************************************
 Theme Ideas:
    -evil lair
       cafateria (from clone map)
@@ -180,6 +175,5 @@ Theme Ideas:
    -(autumn-ish)
    -(garden-ish)
 
-
-===============================================================
-===============================================================
+***************************************************************
+***************************************************************
