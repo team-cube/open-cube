@@ -268,9 +268,9 @@ static struct itemstat { int add, max, sound; const char *name; int icon, info; 
 static const struct attackinfo { int gun, action, anim, vwepanim, hudanim, sound, attackdelay, damage, spread, projspeed, kickamount, range, rays, hitpush, exprad, ttl, use; } attacks[NUMATKS] =
 {
     { GUN_RAIL,  ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_RAIL,  1300, 1, 0,    0, 30, 2048, 1, 5000,  0, 0, 0 },
-    { GUN_RAIL,  ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  900, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 },
+    { GUN_RAIL,  ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  500, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 },
     { GUN_PULSE, ACT_SHOOT, ANIM_SHOOT, ANIM_VWEP_SHOOT, ANIM_GUN_SHOOT, S_PULSE,  700, 1, 0, 1000, 30, 1024, 1, 5000, 15, 0, 0 },
-    { GUN_PULSE, ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  900, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 }
+    { GUN_PULSE, ACT_MELEE, ANIM_MELEE, ANIM_VWEP_MELEE, ANIM_GUN_MELEE, S_MELEE,  500, 1, 0,    0,  0,   14, 1,    0,  0, 0, 0 }
 };
 
 static const struct guninfo { const char *name, *file, *vwep; int attacks[NUMACTS]; } guns[NUMGUNS] =
