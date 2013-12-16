@@ -1,8 +1,4 @@
 ===============================================================
-Player Model
-   Texture
-
-===============================================================
 HUD Arms Model
    Lowpoly
    Highpoly
@@ -14,9 +10,12 @@ HUD Arms Model
 ===============================================================
 Weapon Models
    RailGun
+      Texture Tweaks
       HUD Animation
 
+
    PulseRifle
+      Texture Tweaks
       HUD Animation
 
    Melee
