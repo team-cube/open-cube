@@ -1,8 +1,5 @@
 ===============================================================
 HUD Arms Model
-   Lowpoly
-   Highpoly
-   Texture
    Animation Setup
       Skeleton
       Vertex-Weights
@@ -12,7 +9,6 @@ Weapon Models
    RailGun
       Texture Tweaks
       HUD Animation
-
 
    PulseRifle
       Texture Tweaks
