@@ -1179,6 +1179,7 @@ int main(int argc, char **argv)
     initing = NOT_INITING;
 
     logoutf("init: shaders");
+    renderbackground("initializing...");
     initgbuffer();
     loadshaders();
     initparticles();
