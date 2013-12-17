@@ -62,8 +62,8 @@ PFNGLTEXTUREIMAGE3DMULTISAMPLENVPROC         glTextureImage3DMultisampleNV_     
 PFNGLTEXTUREIMAGE2DMULTISAMPLECOVERAGENVPROC glTextureImage2DMultisampleCoverageNV_ = NULL;
 PFNGLTEXTUREIMAGE3DMULTISAMPLECOVERAGENVPROC glTextureImage3DMultisampleCoverageNV_ = NULL;
 
-// OpenGL 2.1
-#ifndef __APPLE__
+// OpenGL 1.3
+#ifdef WIN32
 PFNGLACTIVETEXTUREPROC    glActiveTexture_    = NULL;
 
 PFNGLBLENDEQUATIONEXTPROC glBlendEquation_ = NULL;
@@ -82,6 +82,10 @@ PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC glCompressedTexSubImage1D_ = NULL;
 PFNGLGETCOMPRESSEDTEXIMAGEPROC   glGetCompressedTexImage_   = NULL;
 
 PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements_ = NULL;
+#endif
+
+// OpenGL 2.1
+#ifndef __APPLE__
 PFNGLMULTIDRAWARRAYSPROC   glMultiDrawArrays_   = NULL;
 PFNGLMULTIDRAWELEMENTSPROC glMultiDrawElements_ = NULL;
 
@@ -361,7 +365,7 @@ void gl_checkextensions()
 
     if(glversion < 210) fatal("OpenGL 2.1 or greater is required!");
 
-#ifndef __APPLE__
+#ifdef WIN32
     glActiveTexture_ =            (PFNGLACTIVETEXTUREPROC)            getprocaddress("glActiveTexture");
 
     glBlendEquation_ =            (PFNGLBLENDEQUATIONPROC)            getprocaddress("glBlendEquation");
@@ -380,6 +384,9 @@ void gl_checkextensions()
     glGetCompressedTexImage_ =    (PFNGLGETCOMPRESSEDTEXIMAGEPROC)    getprocaddress("glGetCompressedTexImage");
 
     glDrawRangeElements_ =        (PFNGLDRAWRANGEELEMENTSPROC)        getprocaddress("glDrawRangeElements");
+#endif
+
+#ifndef __APPLE__
     glMultiDrawArrays_ =          (PFNGLMULTIDRAWARRAYSPROC)          getprocaddress("glMultiDrawArrays");
     glMultiDrawElements_ =        (PFNGLMULTIDRAWELEMENTSPROC)        getprocaddress("glMultiDrawElements");
 

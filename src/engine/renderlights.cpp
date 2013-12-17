@@ -4001,7 +4001,7 @@ void preparegbuffer(bool depthclear)
         linearworldmatrix.a.z = invcammatrix.a.z;
         linearworldmatrix.b.z = invcammatrix.b.z;
         linearworldmatrix.c.z = invcammatrix.c.z;
-        linearworldmatrix.d.z = invcammatrix.d.z; 
+        linearworldmatrix.d.z = invcammatrix.d.z;
         if(gdepthformat) worldmatrix = linearworldmatrix;
 
         GLOBALPARAMF(radialfogscale, 0, 0, 0, 0);

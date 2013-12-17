@@ -16,7 +16,7 @@ static inline void transformbb(const entity &e,vec &center, vec &radius)
     if(e.attr5 > 0) { float scale = e.attr5/100.0f; center.mul(scale); radius.mul(scale); }
     rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
 }
-    
+
 static inline void mmboundbox(const entity &e, model *m, vec &center, vec &radius)
 {
     m->boundbox(center, radius);
