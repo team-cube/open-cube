@@ -1,10 +1,4 @@
 ===============================================================
-HUD Arms Model
-   Animation Setup
-      Skeleton
-      Vertex-Weights
-
-===============================================================
 Weapon Models
    RailGun
       Texture Tweaks
