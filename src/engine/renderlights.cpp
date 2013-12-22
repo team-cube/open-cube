@@ -2897,7 +2897,7 @@ void collectlights()
         glFlush();
     }
 
-    if(rhinoq && oqfrags && !drawtex) renderradiancehints();
+    if(rhinoq && oqfrags && !drawtex && (!wireframe || !editmode)) renderradiancehints();
 }
 
 static inline void addlighttiles(const lightinfo &l, int idx)
@@ -3881,7 +3881,6 @@ void rendertransparent()
         }
         maskgbuffer("cngd"); // workaround for strange Radeon HD 7340 bug, if not here (instead of inside the glClear branch where it should be), stencil doesn't work!
 
-        extern int wireframe;
         if(wireframe && editmode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         switch(layer)

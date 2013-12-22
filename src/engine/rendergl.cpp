@@ -2354,7 +2354,7 @@ void gl_drawview()
 
     glFlush();
 
-    if(!rhinoq || !oqfrags)
+    if(!rhinoq || !oqfrags || (wireframe && editmode))
     {
         renderradiancehints();
         GLERROR;
