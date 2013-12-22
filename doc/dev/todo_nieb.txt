@@ -1,18 +1,4 @@
 ===============================================================
-Weapon Models
-   RailGun
-      Texture Tweaks
-      HUD Animation
-
-   PulseRifle
-      Texture Tweaks
-      HUD Animation
-
-   Melee
-      HUD Animation
-
-===============================================================
-===============================================================
 UI Stuff
 
    EditHUD rework...
