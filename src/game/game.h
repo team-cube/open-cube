@@ -109,13 +109,13 @@ static struct gamemodeinfo
 } gamemodes[] =
 {
     { "demo", M_DEMO | M_LOCAL, NULL},
-    { "coop edit", M_EDIT, "Cooperative Editing: Edit maps with multiple players simultaneously." },
-    { "railgun deathmatch", M_LOBBY | M_RAIL, "Railgun Deathmatch: Frag everyone with railguns to score points." },
-    { "pulse rifle deathmatch", M_LOBBY | M_PULSE, "Pulse Rifle Deathmatch: Frag everyone with pulse rifles to score points." },
-    { "railgun team deathmatch", M_TEAM | M_RAIL, "Railgun Team Deathmatch: Frag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
-    { "pulse rifle team deathmatch", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch: Frag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
-    { "railgun ctf", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
-    { "pulse rifle ctf", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "edit", M_EDIT, "Cooperative Editing: Edit maps with multiple players simultaneously." },
+    { "rdm", M_LOBBY | M_RAIL, "Railgun Deathmatch: Frag everyone with railguns to score points." },
+    { "pdm", M_LOBBY | M_PULSE, "Pulse Rifle Deathmatch: Frag everyone with pulse rifles to score points." },
+    { "rtdm", M_TEAM | M_RAIL, "Railgun Team Deathmatch: Frag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
+    { "ptdm", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch: Frag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
+    { "rctf", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "pctf", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag: Capture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
 };
 
 #define STARTGAMEMODE (-1)
