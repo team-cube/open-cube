@@ -1153,8 +1153,9 @@ int main(int argc, char **argv)
     execfile("config/keymap.cfg");
     execfile("config/sound.cfg");
     execfile("config/stdedit.cfg");
-    execfile("config/stdui.cfg");
-    execfile("config/menu.cfg");
+    execfile("config/ui_lib.cfg");
+	execfile("config/ui_style.cfg");
+    execfile("config/ui.cfg");
     execfile("config/heightmap.cfg");
     execfile("config/blendbrush.cfg");
     if(game::savedservers()) execfile(game::savedservers(), false);
