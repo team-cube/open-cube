@@ -580,13 +580,13 @@ struct ctfclientmode : clientmode
         vec fromexp(from), toexp(to);
         if(from.x >= 0)
         {
-            fromexp.z += 8;
+            //fromexp.z += 8;
             flagexplosion(i, team, fromexp);
         }
         if(from==to) return;
         if(to.x >= 0)
         {
-            toexp.z += 8;
+            //toexp.z += 8;
             flagexplosion(i, team, toexp);
         }
         if(from.x >= 0 && to.x >= 0)
