@@ -336,8 +336,8 @@ struct ctfclientmode : clientmode
 #else
     void preload()
     {
-        preloadmodel("game/flag/red");
-        preloadmodel("game/flag/blue");
+        preloadmodel("game/flag/rojo");
+        preloadmodel("game/flag/azul");
         for(int i = S_FLAGPICKUP; i <= S_FLAGFAIL; i++) preloadsound(i);
     }
 
@@ -461,7 +461,7 @@ struct ctfclientmode : clientmode
         {
             flag &f = flags[i];
             if(!f.owner && f.droptime && f.droploc.x < 0) continue;
-            const char *flagname = f.team==1 ? "game/flag/blue" : "game/flag/red";
+            const char *flagname = f.team==1 ? "game/flag/azul" : "game/flag/rojo";
             float angle;
             vec pos = interpflagpos(f, angle);
             rendermodel(flagname, ANIM_MAPMODEL|ANIM_LOOP,
