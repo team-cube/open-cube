@@ -180,6 +180,10 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
     bgquad(lx, ly, lw, lh);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    pushfont();
+    setfont("default_outline");
+
     if(caption)
     {
         int tw = text_width(caption);
@@ -201,28 +205,11 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
             text_boundsf(mapinfo, mw, mh, infowidth);
             x -= 0.5f*(mw*msz + FONTH*msz);
         }
-        if(mapshot && mapshot!=notexture)
-        {
-            glBindTexture(GL_TEXTURE_2D, mapshot->id);
-            bgquad(x, y, sz, sz);
-        }
-        else
-        {
-            float qw, qh;
-            text_boundsf("?", qw, qh);
-            float qsz = sz*0.5f/max(qw, qh);
-            pushhudmatrix();
-            hudmatrix.translate(x + 0.5f*(sz - qw*qsz), y + 0.5f*(sz - qh*qsz), 0);
-            hudmatrix.scale(qsz, qsz, 1);
-            flushhudmatrix();
-            draw_text("?", 0, 0);
-            pophudmatrix();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
+        if(mapshot && mapshot!=notexture) glBindTexture(GL_TEXTURE_2D, mapshot->id);
+        else settexture("media/interface/cube.png", 3);
+        bgquad(x, y, sz, sz);
         if(mapname)
         {
-            pushfont();
-            setfont("default_outline");
             float tw = text_widthf(mapname),
                   tsz = sz/(8*FONTH),
                   tx = 0.9f*sz - tw*tsz, ty = 0.9f*sz - FONTH*tsz;
@@ -233,7 +220,6 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
             flushhudmatrix();
             draw_text(mapname, 0, 0);
             pophudmatrix();
-            popfont();
         }
         if(mapinfo)
         {
@@ -245,6 +231,9 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
             pophudmatrix();
         }
     }
+
+    popfont();
+
     glDisable(GL_BLEND);
 
     gle::disable();
@@ -346,6 +335,8 @@ void renderprogressview(int w, int h, float bar, const char *text, GLuint tex)  
 
     if(text)
     {
+        pushfont();
+        setfont("default_outline");
         int tw = text_width(text);
         float tsz = bh*0.6f/FONTH;
         if(tw*tsz > mw) tsz = mw/tw;
@@ -355,6 +346,7 @@ void renderprogressview(int w, int h, float bar, const char *text, GLuint tex)  
         flushhudmatrix();
         draw_text(text, 0, 0);
         pophudmatrix();
+        popfont();
     }
 
     glDisable(GL_BLEND);
