@@ -390,7 +390,7 @@ struct ctfclientmode : clientmode
         float margin = 0.04f, roffset = s*margin, rsize = s + 2*roffset;
         setradartex();
         drawradar(x - roffset, y - roffset, rsize);
-        #if 0
+        //#if 0
         settexture("media/interface/radar/compass.png", 3);
         pushhudmatrix();
         hudmatrix.translate(x - roffset + 0.5f*rsize, y - roffset + 0.5f*rsize, 0);
@@ -398,7 +398,7 @@ struct ctfclientmode : clientmode
         flushhudmatrix();
         drawradar(-0.5f*rsize, -0.5f*rsize, rsize);
         pophudmatrix();
-        #endif
+        //#endif
         loopv(flags)
         {
             flag &f = flags[i];
