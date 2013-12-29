@@ -717,7 +717,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
     {
         gle::colorub(0, 40, 0);
         gle::defvertex();
-        gle::begin(GL_LINES);
+        gle::begin(GL_LINES, entgroup.length()*24);
         loopv(entgroup) entfocus(entgroup[i],
             entselectionbox(e, eo, es);
             renderentbox(eo, es);
