@@ -898,7 +898,7 @@ COMMAND(attachent, "");
 
 static int keepents = 0;
 
-extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4, int v5, int &idx)
+extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3, int v4, int v5, int &idx, bool fix = true)
 {
     vector<extentity *> &ents = entities::getents();
     if(local)
@@ -917,7 +917,7 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     e.attr5 = v5;
     e.type = type;
     e.reserved = 0;
-    if(local)
+    if(local && fix)
     {
         switch(type)
         {
@@ -939,10 +939,10 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     return &e;
 }
 
-void newentity(int type, int a1, int a2, int a3, int a4, int a5)
+void newentity(int type, int a1, int a2, int a3, int a4, int a5, bool fix = true)
 {
     int idx;
-    extentity *t = newentity(true, player->o, type, a1, a2, a3, a4, a5, idx);
+    extentity *t = newentity(true, player->o, type, a1, a2, a3, a4, a5, idx, fix);
     if(!t) return;
     dropentity(*t);
     t->type = ET_EMPTY;
@@ -1009,7 +1009,7 @@ void entreplace()
     }
     else
     {
-        newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4, c.attr5);
+        newentity(c.type, c.attr1, c.attr2, c.attr3, c.attr4, c.attr5, false);
     }
 }
 
