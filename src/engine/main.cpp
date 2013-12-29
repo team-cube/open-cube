@@ -181,9 +181,6 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    pushfont();
-    setfont("default_outline");
-
     if(caption)
     {
         int tw = text_width(caption);
@@ -198,41 +195,44 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
     }
     if(mapshot || mapname)
     {
-        float infowidth = 12*FONTH, sz = 0.35f*min(w, h), msz = (0.75f*min(w, h) - sz)/(infowidth + FONTH), x = 0.5f*(w-sz), y = ly+lh - sz/15;
+        float infowidth = 14*FONTH, sz = 0.35f*min(w, h), msz = (0.85f*min(w, h) - sz)/(infowidth + FONTH), x = 0.5f*w, y = ly+lh - sz/15, mx = 0, my = 0, mw = 0, mh = 0;
         if(mapinfo)
         {
-            float mw, mh;
             text_boundsf(mapinfo, mw, mh, infowidth);
-            x -= 0.5f*(mw*msz + FONTH*msz);
+            x -= 0.5f*mw*msz;
+            if(mapshot && mapshot!=notexture)
+            {
+                x -= 0.5f*FONTH*msz;
+                mx = sz + FONTH*msz;
+            }
         }
-        if(mapshot && mapshot!=notexture) glBindTexture(GL_TEXTURE_2D, mapshot->id);
-        else settexture("media/interface/cube.png", 3);
-        bgquad(x, y, sz, sz);
+        if(mapshot && mapshot!=notexture)
+        {
+            x -= 0.5f*sz;
+            glBindTexture(GL_TEXTURE_2D, mapshot->id);
+            bgquad(x, y, sz, sz);
+        }
         if(mapname)
         {
-            float tw = text_widthf(mapname),
-                  tsz = sz/(8*FONTH),
-                  tx = 0.9f*sz - tw*tsz, ty = 0.9f*sz - FONTH*tsz;
-            if(tx < 0.1f*sz) { tsz = 0.1f*sz/tw; tx = 0.1f; }
+            float tw = text_widthf(mapname), tsz = sz/(8*FONTH), tx = max(0.5f*(mw*msz - tw*tsz), 0.0f);
             pushhudmatrix();
-            hudmatrix.translate(x+tx, y+ty, 0);
+            hudmatrix.translate(x+mx+tx, y, 0);
             hudmatrix.scale(tsz, tsz, 1);
             flushhudmatrix();
             draw_text(mapname, 0, 0);
             pophudmatrix();
+            my = 1.5f*FONTH*tsz;
         }
         if(mapinfo)
         {
             pushhudmatrix();
-            hudmatrix.translate(x+sz+FONTH*msz, y, 0);
+            hudmatrix.translate(x+mx, y+my, 0);
             hudmatrix.scale(msz, msz, 1);
             flushhudmatrix();
             draw_text(mapinfo, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF, -1, infowidth);
             pophudmatrix();
         }
     }
-
-    popfont();
 
     glDisable(GL_BLEND);
 
@@ -299,7 +299,7 @@ void restorebackground(int w, int h)
 
 float loadprogress = 0;
 
-void renderprogressview(int w, int h, float bar, const char *text, GLuint tex)   // also used during loading
+void renderprogressview(int w, int h, float bar, const char *text)   // also used during loading
 {
     hudmatrix.ortho(0, w, h, 0, -1, 1);
     resethudmatrix();
@@ -335,8 +335,6 @@ void renderprogressview(int w, int h, float bar, const char *text, GLuint tex)  
 
     if(text)
     {
-        pushfont();
-        setfont("default_outline");
         int tw = text_width(text);
         float tsz = bh*0.6f/FONTH;
         if(tw*tsz > mw) tsz = mw/tw;
@@ -346,28 +344,14 @@ void renderprogressview(int w, int h, float bar, const char *text, GLuint tex)  
         flushhudmatrix();
         draw_text(text, 0, 0);
         pophudmatrix();
-        popfont();
     }
 
     glDisable(GL_BLEND);
 
-    if(tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, tex);
-        float sz = 0.35f*min(w, h), x = 0.5f*(w-sz), y = 0.5f*min(w, h) - sz/15;
-        bgquad(x, y, sz, sz);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        settexture("media/interface/mapshot_frame.png", 3);
-        bgquad(x, y, sz, sz);
-        glDisable(GL_BLEND);
-    }
-
     gle::disable();
 }
 
-void renderprogress(float bar, const char *text, GLuint tex, bool background)   // also used during loading
+void renderprogress(float bar, const char *text, bool background)   // also used during loading
 {
     if(!inbetweenframes || drawtex) return;
 
@@ -395,7 +379,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
                 glClear(GL_COLOR_BUFFER_BIT);
                 restorebackground(w, h);
             }
-            renderprogressview(w, h, bar, text, tex);
+            renderprogressview(w, h, bar, text);
             ovr::warp();
         }
         viewidx = 0;
@@ -404,7 +388,7 @@ void renderprogress(float bar, const char *text, GLuint tex, bool background)   
     else
     {
         if(background) restorebackground(w, h);
-        renderprogressview(w, h, bar, text, tex);
+        renderprogressview(w, h, bar, text);
     }
     swapbuffers(false);
 }
