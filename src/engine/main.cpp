@@ -221,6 +221,8 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
         }
         if(mapname)
         {
+            pushfont();
+            setfont("default_outline");
             float tw = text_widthf(mapname),
                   tsz = sz/(8*FONTH),
                   tx = 0.9f*sz - tw*tsz, ty = 0.9f*sz - FONTH*tsz;
@@ -231,6 +233,7 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
             flushhudmatrix();
             draw_text(mapname, 0, 0);
             pophudmatrix();
+            popfont();
         }
         if(mapinfo)
         {
