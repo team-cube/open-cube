@@ -47,14 +47,14 @@ namespace game
         gle::end();
     }
 
-    void drawteammate(gameent *d, float x, float y, float s, gameent *o, float scale)
+    void drawteammate(gameent *d, float x, float y, float s, gameent *o, float scale, float blipsize = 1)
     {
         vec dir = d->o;
         dir.sub(o->o).div(scale);
         float dist = dir.magnitude2(), maxdist = 1 - 0.05f - 0.05f;
         if(dist >= maxdist) dir.mul(maxdist/dist);
         dir.rotate_around_z(-camera1->yaw*RAD);
-        float bs = 0.06f*s,
+        float bs = 0.06f*blipsize*s,
               bx = x + s*0.5f*(1.0f + dir.x),
               by = y + s*0.5f*(1.0f + dir.y);
         vec v(-0.5f, -0.5f, 0);
@@ -69,6 +69,18 @@ namespace game
     {
         defformatstring(blipname, "media/interface/radar/blip%s%s.png", teamblipcolor[validteam(team) ? team : 0], type);
         settexture(blipname, 3);
+    }
+
+    void drawplayerblip(gameent *d, float x, float y, float s, float blipsize = 1)
+    {
+        if(d->state != CS_ALIVE && d->state != CS_DEAD) return;
+        float scale = calcradarscale();
+        setbliptex(d->team, d->state == CS_DEAD ? "_dead" : "_alive");
+        gle::defvertex(2);
+        gle::deftexcoord0();
+        gle::begin(GL_QUADS);
+        drawteammate(d, x, y, s, d, scale, blipsize);
+        gle::end();
     }
 
     void drawteammates(gameent *d, float x, float y, float s)

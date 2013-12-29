@@ -399,6 +399,7 @@ struct ctfclientmode : clientmode
         drawradar(-0.5f*rsize, -0.5f*rsize, rsize);
         pophudmatrix();
         //#endif
+        drawplayerblip(d, x, y, s, 1.5f);
         loopv(flags)
         {
             flag &f = flags[i];
