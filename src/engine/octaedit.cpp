@@ -484,6 +484,8 @@ void rendereditcursor()
 
     boxoutline = false;
 
+    gle::disable();
+
     glDisable(GL_BLEND);
 }
 

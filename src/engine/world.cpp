@@ -555,7 +555,7 @@ void renderentring(const extentity &e, float radius, int axis)
         p[axis>=1 ? 2 : 1] += radius*sc.y;
         gle::attrib(p);
     }
-    gle::end();
+    xtraverts += gle::end();
 }
 
 void renderentsphere(const extentity &e, float radius)
@@ -571,7 +571,7 @@ void renderentattachment(const extentity &e)
     gle::begin(GL_LINES);
     gle::attrib(e.o);
     gle::attrib(e.attached->o);
-    gle::end();
+    xtraverts += gle::end();
 }
 
 void renderentarrow(const extentity &e, const vec &dir, float radius)
@@ -588,12 +588,12 @@ void renderentarrow(const extentity &e, const vec &dir, float radius)
     gle::begin(GL_LINES);
     gle::attrib(e.o);
     gle::attrib(target);
-    gle::end();
+    xtraverts += gle::end();
 
     gle::begin(GL_TRIANGLE_FAN);
     gle::attrib(target);
     loopi(5) gle::attrib(vec(spoke).rotate(2*M_PI*i/4.0f, dir).add(arrowbase));
-    gle::end();
+    xtraverts += gle::end();
 }
 
 void renderentcone(const extentity &e, const vec &dir, float radius, float angle)
@@ -612,11 +612,11 @@ void renderentcone(const extentity &e, const vec &dir, float radius, float angle
         gle::attrib(e.o);
         gle::attrib(vec(spoke).rotate(2*M_PI*i/8.0f, dir).add(spot));
     }
-    gle::end();
+    xtraverts += gle::end();
 
     gle::begin(GL_LINE_LOOP);
     loopi(8) gle::attrib(vec(spoke).rotate(2*M_PI*i/8.0f, dir).add(spot));
-    gle::end();
+    xtraverts += gle::end();
 }
 
 void renderentradius(extentity &e, bool color)
@@ -685,16 +685,45 @@ void renderentradius(extentity &e, bool color)
     }
 }
 
+static void renderentbox(const vec &eo, vec es)
+{
+    es.add(eo);
+
+    // bottom quad
+    gle::attrib(eo.x, eo.y, eo.z); gle::attrib(es.x, eo.y, eo.z);
+    gle::attrib(es.x, eo.y, eo.z); gle::attrib(es.x, es.y, eo.z);
+    gle::attrib(es.x, es.y, eo.z); gle::attrib(eo.x, es.y, eo.z);
+    gle::attrib(eo.x, es.y, eo.z); gle::attrib(eo.x, eo.y, eo.z);
+
+    // top quad
+    gle::attrib(eo.x, eo.y, es.z); gle::attrib(es.x, eo.y, es.z);
+    gle::attrib(es.x, eo.y, es.z); gle::attrib(es.x, es.y, es.z);
+    gle::attrib(es.x, es.y, es.z); gle::attrib(eo.x, es.y, es.z);
+    gle::attrib(eo.x, es.y, es.z); gle::attrib(eo.x, eo.y, es.z);
+
+    // sides
+    gle::attrib(eo.x, eo.y, eo.z); gle::attrib(eo.x, eo.y, es.z);
+    gle::attrib(es.x, eo.y, eo.z); gle::attrib(es.x, eo.y, es.z);
+    gle::attrib(es.x, es.y, eo.z); gle::attrib(es.x, es.y, es.z);
+    gle::attrib(eo.x, es.y, eo.z); gle::attrib(eo.x, es.y, es.z);
+}
+
 void renderentselection(const vec &o, const vec &ray, bool entmoving)
 {
-    if(noentedit()) return;
+    if(noentedit() || (entgroup.empty() && enthover < 0)) return;
     vec eo, es;
 
-    gle::colorub(0, 40, 0);
-    loopv(entgroup) entfocus(entgroup[i],
-        entselectionbox(e, eo, es);
-        boxs3D(eo, es, 1);
-    );
+    if(entgroup.length())
+    {
+        gle::colorub(0, 40, 0);
+        gle::defvertex();
+        gle::begin(GL_LINES);
+        loopv(entgroup) entfocus(entgroup[i],
+            entselectionbox(e, eo, es);
+            renderentbox(eo, es);
+        );
+        xtraverts += gle::end();
+    }
 
     if(enthover >= 0)
     {
@@ -712,7 +741,7 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
         boxs(entorient, eo, es);
     }
 
-    if(showentradius && (entgroup.length() || enthover >= 0))
+    if(showentradius)
     {
         glDepthFunc(GL_GREATER);
         gle::colorf(0.25f, 0.25f, 0.25f);
@@ -721,8 +750,9 @@ void renderentselection(const vec &o, const vec &ray, bool entmoving)
         glDepthFunc(GL_LESS);
         loopv(entgroup) entfocus(entgroup[i], renderentradius(e, true));
         if(enthover>=0) entfocus(enthover, renderentradius(e, true));
-        gle::disable();
     }
+
+    gle::disable();
 }
 
 bool enttoggle(int id)
