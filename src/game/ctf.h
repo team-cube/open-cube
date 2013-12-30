@@ -334,6 +334,9 @@ struct ctfclientmode : clientmode
     }
 };
 #else
+    static const float FLAGCENTER = 3.5f;
+    static const float FLAGFLOAT = 7;
+
     void preload()
     {
         preloadmodel("game/flag/rojo");
@@ -440,10 +443,11 @@ struct ctfclientmode : clientmode
 
     vec interpflagpos(flag &f, float &angle)
     {
-        vec pos = f.owner ? vec(f.owner->abovehead()).add(vec(0, 0, 1)) : (f.droptime ? f.droploc : f.spawnloc);
+        vec pos = f.owner ? vec(f.owner->abovehead()).addz(1) : (f.droptime ? f.droploc : f.spawnloc);
         if(f.owner) angle = f.owner->yaw;
-        else angle = f.droptime ? f.dropangle : f.spawnangle;
+        else { angle = f.droptime ? f.dropangle : f.spawnangle; pos.addz(FLAGFLOAT); }
         if(pos.x < 0) return pos;
+        pos.addz(FLAGCENTER);
         if(f.interptime && f.interploc.x >= 0)
         {
             float t = min((lastmillis - f.interptime)/500.0f, 1.0f);
@@ -522,11 +526,7 @@ struct ctfclientmode : clientmode
                 f.droploc = dropped ? droploc : f.spawnloc;
                 f.interptime = 0;
 
-                if(dropped)
-                {
-                    f.droploc.z += 4;
-                    if(!droptofloor(f.droploc, 4, 0)) f.droploc = vec(-1, -1, -1);
-                }
+                if(dropped && !droptofloor(f.droploc.addz(4), 4, 0)) f.droploc = vec(-1, -1, -1);
             }
         }
     }
@@ -554,9 +554,8 @@ struct ctfclientmode : clientmode
         f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = lastmillis;
         dropflag(i, droploc, d->yaw, 1);
-        f.droploc.z += 4;
         d->flagpickup |= 1<<f.id;
-        if(!droptofloor(f.droploc, 4, 0))
+        if(!droptofloor(f.droploc.addz(4), 4, 0))
         {
             f.droploc = vec(-1, -1, -1);
             f.interptime = 0;
@@ -578,20 +577,13 @@ struct ctfclientmode : clientmode
 
     void flageffect(int i, int team, const vec &from, const vec &to)
     {
-        vec fromexp(from), toexp(to);
         if(from.x >= 0)
-        {
-            //fromexp.z += 8;
-            flagexplosion(i, team, fromexp);
-        }
+            flagexplosion(i, team, from);
         if(from==to) return;
         if(to.x >= 0)
-        {
-            //toexp.z += 8;
-            flagexplosion(i, team, toexp);
-        }
+            flagexplosion(i, team, to);
         if(from.x >= 0 && to.x >= 0)
-            particle_flare(fromexp, toexp, 600, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
+            particle_flare(from, to, 600, PART_LIGHTNING, team==1 ? 0x2222FF : 0xFF2222, 1.0f);
     }
 
     void returnflag(gameent *d, int i, int version)
@@ -599,7 +591,7 @@ struct ctfclientmode : clientmode
         if(!flags.inrange(i)) return;
         flag &f = flags[i];
         f.version = version;
-        flageffect(i, f.team, interpflagpos(f), f.spawnloc);
+        flageffect(i, f.team, interpflagpos(f), vec(f.spawnloc).addz(FLAGFLOAT+FLAGCENTER));
         f.interptime = 0;
         returnflag(i);
         conoutf(CON_GAMEINFO, "%s returned %s", teamcolorname(d), teamcolorflag(f));
@@ -611,7 +603,7 @@ struct ctfclientmode : clientmode
         if(!flags.inrange(i)) return;
         flag &f = flags[i];
         f.version = version;
-        flageffect(i, f.team, interpflagpos(f), f.spawnloc);
+        flageffect(i, f.team, interpflagpos(f), vec(f.spawnloc).addz(FLAGFLOAT+FLAGCENTER));
         f.interptime = 0;
         returnflag(i);
         conoutf(CON_GAMEINFO, "%s reset", teamcolorflag(f));
@@ -628,9 +620,9 @@ struct ctfclientmode : clientmode
             if(relay >= 0)
             {
                 flags[relay].version = relayversion;
-                flageffect(goal, team, f.spawnloc, flags[relay].spawnloc);
+                flageffect(goal, team, vec(f.spawnloc).addz(FLAGFLOAT+FLAGCENTER), vec(flags[relay].spawnloc).addz(FLAGFLOAT+FLAGCENTER));
             }
-            else flageffect(goal, team, interpflagpos(f), f.spawnloc);
+            else flageffect(goal, team, interpflagpos(f), vec(f.spawnloc).addz(FLAGFLOAT+FLAGCENTER));
             f.interptime = 0;
             returnflag(relay >= 0 ? relay : goal);
             d->flagpickup &= ~(1<<f.id);
