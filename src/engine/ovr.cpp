@@ -85,6 +85,7 @@ namespace ovr
 
     void getorient()
     {
+        if(!sensor) return;
         Quatf orient = fusion->GetOrientation();
         vec angles = quat(orient.z, orient.y, orient.x, -orient.w).calcangles().div(RAD);
         yaw = angles.x;
