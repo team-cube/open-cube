@@ -86,11 +86,10 @@ namespace ovr
     void getorient()
     {
         Quatf orient = fusion.GetOrientation();
-        yaw = pitch = roll = 0;
-        orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
-        yaw /= -RAD;
-        pitch /= RAD;
-        roll /= -RAD;
+        vec angles = quat(orient.z, orient.y, orient.x, -orient.w).calcangles().div(RAD);
+        yaw = angles.x;
+        pitch = -angles.y;
+        roll = angles.z;
     }
 
     void update()
