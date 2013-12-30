@@ -334,8 +334,8 @@ struct ctfclientmode : clientmode
     }
 };
 #else
-    static const float FLAGCENTER = 3.5f;
-    static const float FLAGFLOAT = 7;
+    #define FLAGCENTER 3.5f
+    #define FLAGFLOAT 7
 
     void preload()
     {
