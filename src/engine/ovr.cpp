@@ -49,7 +49,7 @@ namespace ovr
     DeviceManager *manager = NULL;
     HMDDevice *hmd = NULL;
     SensorDevice *sensor = NULL;
-    SensorFusion fusion;
+    SensorFusion *fusion = NULL;
     HMDInfo hmdinfo;
 
     bool inited = false;
@@ -85,7 +85,7 @@ namespace ovr
 
     void getorient()
     {
-        Quatf orient = fusion.GetOrientation();
+        Quatf orient = fusion->GetOrientation();
         vec angles = quat(orient.z, orient.y, orient.x, -orient.w).calcangles().div(RAD);
         yaw = angles.x;
         pitch = -angles.y;
@@ -212,6 +212,7 @@ namespace ovr
     void disable()
     {
         if(sensor) { sensor->Release(); sensor = NULL; }
+        if(fusion) { delete fusion; fusion = NULL; }
         if(hmd) { hmd->Release(); hmd = NULL; }
         if(manager) { manager->Release(); manager = NULL; }
     }
@@ -220,7 +221,7 @@ namespace ovr
     {
         if(sensor)
         {
-            fusion.Reset();
+            fusion->Reset();
             getorient();
         }
     }
@@ -237,8 +238,8 @@ namespace ovr
                 if(!sensor) sensor = hmd->GetSensor();
                 if(sensor)
                 {
-                    fusion.AttachToSensor(sensor);
-                    fusion.SetPredictionEnabled(true);
+                    if(fusion) fusion->AttachToSensor(sensor);
+                    else fusion = new SensorFusion(sensor);
                     getorient();
                 }
                 conoutf("detected %s (%s), %ux%u, %.1fcm x %.1fcm, %s", hmdinfo.ProductName, hmdinfo.Manufacturer, hmdinfo.HResolution, hmdinfo.VResolution, hmdinfo.HScreenSize*100.0f, hmdinfo.VScreenSize*100.0f, sensor ? "using sensor" : "no sensor");
@@ -253,9 +254,7 @@ namespace ovr
     {
         disable();
 
-#ifdef WIN32
         if(inited) { System::Destroy(); inited = false; }
-#endif
     }
 #endif
 }
