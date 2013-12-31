@@ -126,31 +126,36 @@ CLIENT_OBJS= \
 
 CLIENT_PCH= shared/cube.h.gch engine/engine.h.gch game/game.h.gch
 
+SERVER_INCLUDES= -DSTANDALONE -Istandalone/shared -Istandalone/engine -Istandalone/game $(INCLUDES)
 ifneq (,$(findstring MINGW,$(PLATFORM)))
-SERVER_INCLUDES= -DSTANDALONE $(INCLUDES) -Iinclude
+SERVER_INCLUDES+= -Iinclude
 SERVER_LIBS= -mwindows $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lzlib1 -lenet -lws2_32 -lwinmm
 MASTER_LIBS= $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lzlib1 -lenet -lws2_32 -lwinmm
 else
-SERVER_INCLUDES= -DSTANDALONE $(INCLUDES)
 SERVER_LIBS= -Lenet -lenet -lz
 MASTER_LIBS= $(SERVER_LIBS)
 endif
+
 SERVER_OBJS= \
-	shared/crypto-standalone.o \
-	shared/stream-standalone.o \
-	shared/tools-standalone.o \
-	engine/command-standalone.o \
-	engine/server-standalone.o \
-	engine/worldio-standalone.o \
-	game/entities-standalone.o \
-	game/server-standalone.o
+	standalone/shared/crypto.o \
+	standalone/shared/stream.o \
+	standalone/shared/tools.o \
+	standalone/engine/command.o \
+	standalone/engine/server.o \
+	standalone/engine/worldio.o \
+	standalone/game/entities.o \
+	standalone/game/server.o
+
+SERVER_PCH= standalone/shared/cube.h.gch standalone/engine/engine.h.gch standalone/game/game.h.gch
 
 MASTER_OBJS= \
-	shared/crypto-standalone.o \
-	shared/stream-standalone.o \
-	shared/tools-standalone.o \
-	engine/command-standalone.o \
-	engine/master-standalone.o
+	standalone/shared/crypto.o \
+	standalone/shared/stream.o \
+	standalone/shared/tools.o \
+	standalone/engine/command.o \
+	standalone/engine/master.o
+
+SERVER_MASTER_OBJS= $(SERVER_OBJS) $(filter-out $(SERVER_OBJS),$(MASTER_OBJS))
 
 ifeq ($(PLATFORM),SunOS)
 CLIENT_LIBS+= -lsocket -lnsl -lX11
@@ -162,25 +167,27 @@ default: all
 all: client server
 
 clean:
-	-$(RM) $(CLIENT_PCH) $(CLIENT_OBJS) $(SERVER_OBJS) $(MASTER_OBJS) tess_client tess_server tess_master
+	-$(RM) $(CLIENT_PCH) $(CLIENT_OBJS) $(SERVER_PCH) $(SERVER_MASTER_OBJS) tess_client tess_server tess_master
 
 fixspace:
 	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.c shared/*.cpp shared/*.h engine/*.cpp engine/*.h game/*.cpp game/*.h
 
-%.h.gch: %.h
-	$(CXX) $(CXXFLAGS) -x c++-header -o $(subst .h.gch,.tmp.h.gch,$@) $(subst .h.gch,.h,$@)
-	$(MV) $(subst .h.gch,.tmp.h.gch,$@) $@
+%.h.gch standalone/%.h.gch: %.h
+	$(CXX) $(CXXFLAGS) -x c++-header -o $(@:.h.gch=.tmp.h.gch) $<
+	$(MV) $(@:.h.gch=.tmp.h.gch) $@
 
-%-standalone.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $(subst -standalone.o,.cpp,$@)
+standalone/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(CLIENT_OBJS): CXXFLAGS += $(CLIENT_INCLUDES)
 $(filter shared/%,$(CLIENT_OBJS)): $(filter shared/%,$(CLIENT_PCH))
 $(filter engine/%,$(CLIENT_OBJS)): $(filter engine/%,$(CLIENT_PCH))
 $(filter game/%,$(CLIENT_OBJS)): $(filter game/%,$(CLIENT_PCH))
 
-$(SERVER_OBJS): CXXFLAGS += $(SERVER_INCLUDES)
-$(filter-out $(SERVER_OBJS),$(MASTER_OBJS)): CXXFLAGS += $(SERVER_INCLUDES)
+$(SERVER_MASTER_OBJS): CXXFLAGS += $(SERVER_INCLUDES)
+$(filter standalone/shared/%,$(SERVER_MASTER_OBJS)): $(filter standalone/shared/%,$(SERVER_PCH))
+$(filter standalone/engine/%,$(SERVER_MASTER_OBJS)): $(filter standalone/engine/%,$(SERVER_PCH))
+$(filter standalone/game/%,$(SERVER_MASTER_OBJS)): $(filter standalone/game/%,$(SERVER_PCH))
 
 ifneq (,$(findstring MINGW,$(PLATFORM)))
 client: $(CLIENT_OBJS)
@@ -225,13 +232,15 @@ enet/libenet.a:
 libenet: enet/libenet.a
 
 depend:
-	makedepend -Y -Ishared -Iengine -Igame $(subst .o,.cpp,$(CLIENT_OBJS))
-	makedepend -a -o.h.gch -Y -Ishared -Iengine -Igame $(subst .h.gch,.h,$(CLIENT_PCH))
-	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Igame $(subst -standalone.o,.cpp,$(SERVER_OBJS))
-	makedepend -a -o-standalone.o -Y -DSTANDALONE -Ishared -Iengine -Igame $(subst -standalone.o,.cpp,$(filter-out $(SERVER_OBJS), $(MASTER_OBJS)))
+	makedepend -Y -Ishared -Iengine -Igame $(CLIENT_OBJS:.o=.cpp)
+	makedepend -a -o.h.gch -Y -Ishared -Iengine -Igame $(CLIENT_PCH:.h.gch=.h)
+	makedepend -a -pstandalone/ -Y -DSTANDALONE -Ishared -Iengine -Igame $(SERVER_MASTER_OBJS:standalone/%.o=%.cpp)
+	makedepend -a -pstandalone/ -o.h.gch -Y -DSTANDALONE -Ishared -Iengine -Igame $(SERVER_PCH:standalone/%.h.gch=%.h)
 
 engine/engine.h.gch: shared/cube.h.gch
 game/game.h.gch: shared/cube.h.gch
+standalone/engine/engine.h.gch: standalone/shared/cube.h.gch
+standalone/game/game.h.gch: standalone/shared/cube.h.gch
 
 # DO NOT DELETE
 
@@ -475,32 +484,42 @@ game/game.h.gch: shared/cube.h shared/tools.h shared/geom.h shared/ents.h
 game/game.h.gch: shared/command.h shared/glexts.h shared/glemu.h
 game/game.h.gch: shared/iengine.h shared/igame.h game/ai.h
 
-shared/crypto-standalone.o: shared/cube.h shared/tools.h shared/geom.h
-shared/crypto-standalone.o: shared/ents.h shared/command.h shared/iengine.h
-shared/crypto-standalone.o: shared/igame.h
-shared/stream-standalone.o: shared/cube.h shared/tools.h shared/geom.h
-shared/stream-standalone.o: shared/ents.h shared/command.h shared/iengine.h
-shared/stream-standalone.o: shared/igame.h
-shared/tools-standalone.o: shared/cube.h shared/tools.h shared/geom.h
-shared/tools-standalone.o: shared/ents.h shared/command.h shared/iengine.h
-shared/tools-standalone.o: shared/igame.h
-engine/command-standalone.o: engine/engine.h shared/cube.h shared/tools.h
-engine/command-standalone.o: shared/geom.h shared/ents.h shared/command.h
-engine/command-standalone.o: shared/iengine.h shared/igame.h engine/world.h
-engine/server-standalone.o: engine/engine.h shared/cube.h shared/tools.h
-engine/server-standalone.o: shared/geom.h shared/ents.h shared/command.h
-engine/server-standalone.o: shared/iengine.h shared/igame.h engine/world.h
-engine/worldio-standalone.o: engine/engine.h shared/cube.h shared/tools.h
-engine/worldio-standalone.o: shared/geom.h shared/ents.h shared/command.h
-engine/worldio-standalone.o: shared/iengine.h shared/igame.h engine/world.h
-game/entities-standalone.o: game/game.h shared/cube.h shared/tools.h
-game/entities-standalone.o: shared/geom.h shared/ents.h shared/command.h
-game/entities-standalone.o: shared/iengine.h shared/igame.h game/ai.h
-game/server-standalone.o: game/game.h shared/cube.h shared/tools.h
-game/server-standalone.o: shared/geom.h shared/ents.h shared/command.h
-game/server-standalone.o: shared/iengine.h shared/igame.h game/ai.h
-game/server-standalone.o: game/ctf.h game/extinfo.h game/aiman.h
+standalone/shared/crypto.o: shared/cube.h shared/tools.h shared/geom.h
+standalone/shared/crypto.o: shared/ents.h shared/command.h shared/iengine.h
+standalone/shared/crypto.o: shared/igame.h
+standalone/shared/stream.o: shared/cube.h shared/tools.h shared/geom.h
+standalone/shared/stream.o: shared/ents.h shared/command.h shared/iengine.h
+standalone/shared/stream.o: shared/igame.h
+standalone/shared/tools.o: shared/cube.h shared/tools.h shared/geom.h
+standalone/shared/tools.o: shared/ents.h shared/command.h shared/iengine.h
+standalone/shared/tools.o: shared/igame.h
+standalone/engine/command.o: engine/engine.h shared/cube.h shared/tools.h
+standalone/engine/command.o: shared/geom.h shared/ents.h shared/command.h
+standalone/engine/command.o: shared/iengine.h shared/igame.h engine/world.h
+standalone/engine/server.o: engine/engine.h shared/cube.h shared/tools.h
+standalone/engine/server.o: shared/geom.h shared/ents.h shared/command.h
+standalone/engine/server.o: shared/iengine.h shared/igame.h engine/world.h
+standalone/engine/worldio.o: engine/engine.h shared/cube.h shared/tools.h
+standalone/engine/worldio.o: shared/geom.h shared/ents.h shared/command.h
+standalone/engine/worldio.o: shared/iengine.h shared/igame.h engine/world.h
+standalone/game/entities.o: game/game.h shared/cube.h shared/tools.h
+standalone/game/entities.o: shared/geom.h shared/ents.h shared/command.h
+standalone/game/entities.o: shared/iengine.h shared/igame.h game/ai.h
+standalone/game/server.o: game/game.h shared/cube.h shared/tools.h
+standalone/game/server.o: shared/geom.h shared/ents.h shared/command.h
+standalone/game/server.o: shared/iengine.h shared/igame.h game/ai.h
+standalone/game/server.o: game/ctf.h game/extinfo.h game/aiman.h
+standalone/engine/master.o: shared/cube.h shared/tools.h shared/geom.h
+standalone/engine/master.o: shared/ents.h shared/command.h shared/iengine.h
+standalone/engine/master.o: shared/igame.h
 
-engine/master-standalone.o: shared/cube.h shared/tools.h shared/geom.h
-engine/master-standalone.o: shared/ents.h shared/command.h shared/iengine.h
-engine/master-standalone.o: shared/igame.h
+standalone/shared/cube.h.gch: shared/tools.h shared/geom.h shared/ents.h
+standalone/shared/cube.h.gch: shared/command.h shared/iengine.h
+standalone/shared/cube.h.gch: shared/igame.h
+standalone/engine/engine.h.gch: shared/cube.h shared/tools.h shared/geom.h
+standalone/engine/engine.h.gch: shared/ents.h shared/command.h
+standalone/engine/engine.h.gch: shared/iengine.h shared/igame.h
+standalone/engine/engine.h.gch: engine/world.h
+standalone/game/game.h.gch: shared/cube.h shared/tools.h shared/geom.h
+standalone/game/game.h.gch: shared/ents.h shared/command.h shared/iengine.h
+standalone/game/game.h.gch: shared/igame.h game/ai.h
