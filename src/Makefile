@@ -174,8 +174,8 @@ fixspace:
 
 $(filter-out shared/%,$(CLIENT_PCH)): $(filter shared/%,$(CLIENT_PCH))
 $(CLIENT_PCH): %.h.gch: %.h
-	$(CXX) $(CXXFLAGS) -x c++-header -o $(@:.h.gch=.tmp.h.gch) $<
-	$(MV) $(@:.h.gch=.tmp.h.gch) $@
+	$(CXX) $(CXXFLAGS) -x c++-header -o $@.tmp $<
+	$(MV) $@.tmp $@
 
 $(CLIENT_OBJS): CXXFLAGS += $(CLIENT_INCLUDES)
 $(filter shared/%,$(CLIENT_OBJS)): $(filter shared/%,$(CLIENT_PCH))
@@ -184,8 +184,8 @@ $(filter game/%,$(CLIENT_OBJS)): $(filter game/%,$(CLIENT_PCH))
 
 $(filter-out standalone/shared/%,$(SERVER_PCH)): $(filter standalone/shared/%,$(SERVER_PCH))
 $(SERVER_PCH): standalone/%.h.gch: %.h
-	$(CXX) $(CXXFLAGS) -x c++-header -o $(@:.h.gch=.tmp.h.gch) $<
-	$(MV) $(@:.h.gch=.tmp.h.gch) $@
+	$(CXX) $(CXXFLAGS) -x c++-header -o $@.tmp $<
+	$(MV) $@.tmp $@
 
 $(SERVER_MASTER_OBJS): CXXFLAGS += $(SERVER_INCLUDES)
 $(filter standalone/shared/%,$(SERVER_MASTER_OBJS)): $(filter standalone/shared/%,$(SERVER_PCH))
