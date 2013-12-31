@@ -172,22 +172,28 @@ clean:
 fixspace:
 	sed -i 's/[ \t]*$$//; :rep; s/^\([ ]*\)\t/\1    /g; trep' shared/*.c shared/*.cpp shared/*.h engine/*.cpp engine/*.h game/*.cpp game/*.h
 
-%.h.gch standalone/%.h.gch: %.h
+$(filter-out shared/%,$(CLIENT_PCH)): $(filter shared/%,$(CLIENT_PCH))
+$(CLIENT_PCH): %.h.gch: %.h
 	$(CXX) $(CXXFLAGS) -x c++-header -o $(@:.h.gch=.tmp.h.gch) $<
 	$(MV) $(@:.h.gch=.tmp.h.gch) $@
-
-standalone/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(CLIENT_OBJS): CXXFLAGS += $(CLIENT_INCLUDES)
 $(filter shared/%,$(CLIENT_OBJS)): $(filter shared/%,$(CLIENT_PCH))
 $(filter engine/%,$(CLIENT_OBJS)): $(filter engine/%,$(CLIENT_PCH))
 $(filter game/%,$(CLIENT_OBJS)): $(filter game/%,$(CLIENT_PCH))
 
+$(filter-out standalone/shared/%,$(SERVER_PCH)): $(filter standalone/shared/%,$(SERVER_PCH))
+$(SERVER_PCH): standalone/%.h.gch: %.h
+	$(CXX) $(CXXFLAGS) -x c++-header -o $(@:.h.gch=.tmp.h.gch) $<
+	$(MV) $(@:.h.gch=.tmp.h.gch) $@
+
 $(SERVER_MASTER_OBJS): CXXFLAGS += $(SERVER_INCLUDES)
 $(filter standalone/shared/%,$(SERVER_MASTER_OBJS)): $(filter standalone/shared/%,$(SERVER_PCH))
 $(filter standalone/engine/%,$(SERVER_MASTER_OBJS)): $(filter standalone/engine/%,$(SERVER_PCH))
 $(filter standalone/game/%,$(SERVER_MASTER_OBJS)): $(filter standalone/game/%,$(SERVER_PCH))
+
+$(SERVER_MASTER_OBJS): standalone/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 ifneq (,$(findstring MINGW,$(PLATFORM)))
 client: $(CLIENT_OBJS)
@@ -236,11 +242,6 @@ depend:
 	makedepend -a -o.h.gch -Y -Ishared -Iengine -Igame $(CLIENT_PCH:.h.gch=.h)
 	makedepend -a -pstandalone/ -Y -DSTANDALONE -Ishared -Iengine -Igame $(SERVER_MASTER_OBJS:standalone/%.o=%.cpp)
 	makedepend -a -pstandalone/ -o.h.gch -Y -DSTANDALONE -Ishared -Iengine -Igame $(SERVER_PCH:standalone/%.h.gch=%.h)
-
-engine/engine.h.gch: shared/cube.h.gch
-game/game.h.gch: shared/cube.h.gch
-standalone/engine/engine.h.gch: standalone/shared/cube.h.gch
-standalone/game/game.h.gch: standalone/shared/cube.h.gch
 
 # DO NOT DELETE
 
