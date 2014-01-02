@@ -26,6 +26,8 @@ struct vec2
     float magnitude() const  { return sqrtf(squaredlen()); }
     vec2 &normalize() { mul(1/magnitude()); return *this; }
     float cross(const vec2 &o) const { return x*o.y - y*o.x; }
+    float squaredist(const vec2 &e) const { return vec2(*this).sub(e).squaredlen(); }
+    float dist(const vec2 &e) const { return sqrtf(squaredist(e)); }
 
     vec2 &mul(float f)       { x *= f; y *= f; return *this; }
     vec2 &mul(const vec2 &o) { x *= o.x; y *= o.y; return *this; }
@@ -137,7 +139,7 @@ struct vec
     vec &normalize()         { div(magnitude()); return *this; }
     bool isnormalized() const { float m = squaredlen(); return (m>0.99f && m<1.01f); }
     float squaredist(const vec &e) const { return vec(*this).sub(e).squaredlen(); }
-    float dist(const vec &e) const { vec t; return dist(e, t); }
+    float dist(const vec &e) const { return sqrtf(squaredist(e)); }
     float dist(const vec &e, vec &t) const { t = *this; t.sub(e); return t.magnitude(); }
     float dist2(const vec &o) const { float dx = x-o.x, dy = y-o.y; return sqrtf(dx*dx + dy*dy); }
     template<class T>
