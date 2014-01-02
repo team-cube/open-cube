@@ -157,11 +157,25 @@ namespace UI
             clearchildren();
         }
 
-        void reset(Object *parent_ = NULL)
+        void resetlayout()
         {
-            parent = parent_;
             x = y = w = h = 0;
+        }
+
+        void reset()
+        {
+            resetlayout();
+            parent = NULL;
             adjust = ALIGN_HCENTER | ALIGN_VCENTER;
+        }
+
+        virtual uchar childalign() const { return ALIGN_HCENTER | ALIGN_VCENTER; }
+
+        void reset(Object *parent_)
+        {
+            resetlayout();
+            parent = parent_;
+            adjust = parent->childalign();
         }
 
         void setup()
@@ -183,6 +197,14 @@ namespace UI
 
         #define loopchildrenrev(o, body) do { \
             loopvrev(children) \
+            { \
+                Object *o = children[i]; \
+                body; \
+            } \
+        } while(0)
+
+        #define loopchildrange(start, end, o, body) do { \
+            for(int i = start; i < end; i++) \
             { \
                 Object *o = children[i]; \
                 body; \
@@ -265,8 +287,8 @@ namespace UI
         void setalign(int xalign, int yalign)
         {
             adjust &= ~ALIGN_MASK;
-            adjust |= (clamp(xalign, -1, 1)+2)<<ALIGN_HSHIFT;
-            adjust |= (clamp(yalign, -1, 1)+2)<<ALIGN_VSHIFT;
+            adjust |= (clamp(xalign, -2, 1)+2)<<ALIGN_HSHIFT;
+            adjust |= (clamp(yalign, -2, 1)+2)<<ALIGN_VSHIFT;
         }
 
         void setclamp(int left, int right, int top, int bottom)
@@ -776,6 +798,8 @@ namespace UI
             space = space_;
         }
 
+        uchar childalign() const { return ALIGN_VCENTER; }
+
         void layout()
         {
             subw = h = 0;
@@ -794,13 +818,16 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float offset = 0, cspace = (w - subw) / max(children.length() - 1, 1);
-            loopchildren(o,
+            float offset = 0, sx = 0, cspace = (w - subw) / max(children.length() - 1, 1), cstep = (w - subw) / children.length();
+            for(int i = 0; i < children.length(); i++)
             {
+                Object *o = children[i];
                 o->x = offset;
                 offset += o->w + cspace;
-                o->adjustlayout(o->x, 0, o->w, h);
-            });
+                float sw = o->w + cstep;
+                o->adjustlayout(sx, 0, sw, h);
+                sx += sw;
+            }
         }
     };
 
@@ -816,6 +843,8 @@ namespace UI
             Object::setup();
             space = space_;
         }
+
+        uchar childalign() const { return ALIGN_HCENTER; }
 
         void layout()
         {
@@ -835,12 +864,14 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float offset = 0, rspace = (h - subh) / max(children.length() - 1, 1);
+            float offset = 0, sy = 0, rspace = (h - subh) / max(children.length() - 1, 1), rstep = (h - subh) / children.length();
             loopchildren(o,
             {
                 o->y = offset;
                 offset += o->h + rspace;
-                o->adjustlayout(0, o->y, w, o->h);
+                float sh = o->h + rstep;
+                o->adjustlayout(0, sy, w, sh);
+                sy += sh;
             });
         }
     };
@@ -861,6 +892,8 @@ namespace UI
             spacew = spacew_;
             spaceh = spaceh_;
         }
+
+        uchar childalign() const { return 0; }
 
         void layout()
         {
@@ -890,24 +923,26 @@ namespace UI
         {
             if(children.empty()) return;
 
-            int column = 0, row = 0;
-            float offsetx = 0, offsety = 0,
+            float offsety = 0, sy = 0,
                   cspace = (w - subw) / max(widths.length() - 1, 1),
-                  rspace = (h - subh) / max(heights.length() - 1, 1);
-            loopchildren(o,
+                  cstep = (w - subw) / widths.length(),
+                  rspace = (h - subh) / max(heights.length() - 1, 1),
+                  rstep = (h - subh) / heights.length();
+            for(int i = 0, row = 0; i < children.length(); row++)
             {
-                o->x = offsetx;
-                o->y = offsety;
-                o->adjustlayout(offsetx, offsety, widths[column], heights[row]);
-                offsetx += widths[column] + cspace;
-                column = (column + 1) % columns;
-                if(!column)
+                float offsetx = 0, sx = 0;
+                for(int column = 0; column < widths.length(); column++, i++)
                 {
-                    offsetx = 0;
-                    offsety += heights[row] + rspace;
-                    row++;
+                    Object *o = children[i];
+                    o->x = offsetx;
+                    o->y = offsety;
+                    o->adjustlayout(sx, sy, widths[column] + cstep, heights[row] + rstep);
+                    offsetx += widths[column] + cspace;
+                    sx += widths[column] + cstep;
                 }
-            });
+                offsety += heights[row] + rspace;
+                sy += heights[row] + rstep;
+            }
         }
     };
 
@@ -919,6 +954,8 @@ namespace UI
 
         static const char *typestr() { return "#TableHeader"; }
         const char *gettype() const { return typestr(); }
+
+        uchar childalign() const { return ALIGN_VCENTER; }
 
         int childcolumns() const { return columns; }
 
@@ -940,23 +977,21 @@ namespace UI
 
         void adjustchildren()
         {
-            for(int i = columns; i < children.length(); i++) children[i]->adjustlayout(0, 0, w, h);
+            loopchildrange(columns, children.length(), o, o->adjustlayout(0, 0, w, h));
         }
 
         void draw(float sx, float sy)
         {
-            for(int i = columns; i < children.length(); i++)
+            loopchildrange(columns, children.length(), o,
             {
-                Object *o = children[i];
                 if(!isfullyclipped(sx + o->x, sy + o->y, o->w, o->h))
                     o->draw(sx + o->x, sy + o->y);
-            }
-            loopi(columns)
+            });
+            loopchildrange(0, columns, o,
             {
-                Object *o = children[i];
                 if(!isfullyclipped(sx + o->x, sy + o->y, o->w, o->h))
                     o->draw(sx + o->x, sy + o->y);
-            }
+            });
         }
     };
 
@@ -995,6 +1030,8 @@ namespace UI
             spaceh = spaceh_;
         }
 
+        uchar childalign() const { return 0; }
+
         void layout()
         {
             widths.setsize(0);
@@ -1024,25 +1061,32 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float offsety = 0,
+            float offsety = 0, sy = 0,
                   cspace = (w - subw) / max(widths.length() - 1, 1),
-                  rspace = (h - subh) / max(children.length() - 1, 1);
+                  cstep = (w - subw) / widths.length(),
+                  rspace = (h - subh) / max(children.length() - 1, 1),
+                  rstep = (h - subh) / children.length();
             loopchildren(o,
             {
                 o->x = 0;
                 o->y = offsety;
                 o->w = w;
-                o->adjustlayout(0, o->y, w, o->h);
+                offsety += o->h + rspace;
+                float sh = o->h + rstep;
+                o->adjustlayout(0, sy, w, sh);
+                sy += sh;
+
                 float offsetx = 0;
+                float sx = 0;
                 int cols = o->childcolumns();
                 loopj(cols)
                 {
                     Object *c = o->children[j];
                     c->x = offsetx;
-                    c->adjustlayout(c->x, c->y, widths[j], o->h);
+                    c->adjustlayout(sx, 0, widths[j] + cstep, o->h);
                     offsetx += widths[j] + cspace;
+                    sx += widths[j] + cstep;
                 }
-                offsety += o->h + rspace;
             });
         }
     };
