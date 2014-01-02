@@ -848,17 +848,18 @@ namespace UI
     struct Grid : Object
     {
         int columns;
-        float space, subw, subh;
+        float spacew, spaceh, subw, subh;
         vector<float> widths, heights;
 
         static const char *typestr() { return "#Grid"; }
         const char *gettype() const { return typestr(); }
 
-        void setup(int columns_, float space_ = 0)
+        void setup(int columns_, float spacew_ = 0, float spaceh_ = 0)
         {
             Object::setup();
             columns = columns_;
-            space = space_;
+            spacew = spacew_;
+            spaceh = spaceh_;
         }
 
         void layout()
@@ -881,8 +882,8 @@ namespace UI
             subw = subh = 0;
             loopv(widths) subw += widths[i];
             loopv(heights) subh += heights[i];
-            w = subw + space*max(widths.length() - 1, 0);
-            h = subh + space*max(heights.length() - 1, 0);
+            w = subw + spacew*max(widths.length() - 1, 0);
+            h = subh + spaceh*max(heights.length() - 1, 0);
         }
 
         void adjustchildren()
@@ -981,16 +982,17 @@ namespace UI
 
     struct Table : Object
     {
-        float space, subw, subh;
+        float spacew, spaceh, subw, subh;
         vector<float> widths;
 
         static const char *typestr() { return "#Table"; }
         const char *gettype() const { return typestr(); }
 
-        void setup(float space_ = 0)
+        void setup(float spacew_ = 0, float spaceh_ = 0)
         {
             Object::setup();
-            space = space_;
+            spacew = spacew_;
+            spaceh = spaceh_;
         }
 
         void layout()
@@ -1014,8 +1016,8 @@ namespace UI
 
             subw = 0;
             loopv(widths) subw += widths[i];
-            w = max(w, subw + space*max(widths.length() - 1, 0));
-            h = subh + space*max(children.length() - 1, 0);
+            w = max(w, subw + spacew*max(widths.length() - 1, 0));
+            h = subh + spaceh*max(children.length() - 1, 0);
         }
 
         void adjustchildren()
@@ -2997,15 +2999,15 @@ namespace UI
         BUILD(HorizontalList, o, o->setup(*space), children);
     });
 
-    ICOMMAND(uigrid, "ife", (int *columns, float *space, uint *children),
-        BUILD(Grid, o, o->setup(*columns, *space), children));
+    ICOMMAND(uigrid, "iffe", (int *columns, float *spacew, float *spaceh, uint *children),
+        BUILD(Grid, o, o->setup(*columns, *spacew, *spaceh), children));
 
     ICOMMAND(uitableheader, "ee", (uint *columndata, uint *children),
         BUILDCOLUMNS(TableHeader, o, o->setup(), columndata, children));
     ICOMMAND(uitablerow, "ee", (uint *columndata, uint *children),
         BUILDCOLUMNS(TableRow, o, o->setup(), columndata, children));
-    ICOMMAND(uitable, "fe", (float *space, uint *children),
-        BUILD(Table, o, o->setup(*space), children));
+    ICOMMAND(uitable, "ffe", (float *spacew, float *spaceh, uint *children),
+        BUILD(Table, o, o->setup(*spacew, *spaceh), children));
 
     ICOMMAND(uispace, "ffe", (float *spacew, float *spaceh, uint *children),
         BUILD(Spacer, o, o->setup(*spacew, *spaceh), children));
