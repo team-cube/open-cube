@@ -228,14 +228,15 @@ namespace game
 
     void saveauthkeys()
     {
-        stream *f = openfile("auth.cfg", "w");
-        if(!f) { conoutf(CON_ERROR, "failed to open auth.cfg for writing"); return; }
+        string fname = "config/auth.cfg";
+        stream *f = openfile(path(fname), "w");
+        if(!f) { conoutf(CON_ERROR, "failed to open %s for writing", fname); return; }
         loopv(authkeys)
         {
             authkey *a = authkeys[i];
             f->printf("authkey %s %s %s\n", escapestring(a->name), escapestring(a->key), escapestring(a->desc));
         }
-        conoutf("saved authkeys to auth.cfg");
+        conoutf("saved authkeys to %s", fname);
         delete f;
     }
     COMMAND(saveauthkeys, "");
