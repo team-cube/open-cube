@@ -1083,9 +1083,10 @@ namespace UI
                 {
                     Object *c = o->children[j];
                     c->x = offsetx;
-                    c->adjustlayout(sx, 0, widths[j] + cstep, o->h);
                     offsetx += widths[j] + cspace;
-                    sx += widths[j] + cstep;
+                    float sw = widths[j] + cstep;
+                    c->adjustlayout(sx, 0, sw, o->h);
+                    sx += sw;
                 }
             });
         }
