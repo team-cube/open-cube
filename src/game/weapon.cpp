@@ -456,7 +456,7 @@ namespace game
             if(p.local)
             {
                 vec halfdv = vec(dv).mul(0.5f), bo = vec(p.o).add(halfdv);
-                float br = max(fabs(halfdv.x), fabs(halfdv.y)) + 1;
+                float br = max(fabs(halfdv.x), fabs(halfdv.y)) + 1 + attacks[p.atk].margin;
                 loopj(numdynents())
                 {
                     dynent *o = iterdynents(j);
