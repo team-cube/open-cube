@@ -2212,6 +2212,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
 }
 
 VAR(modelpreviewfov, 10, 40, 100);
+VAR(modelpreviewpitch, -90, -30, 90);
 
 namespace modelpreview
 {
@@ -2245,7 +2246,7 @@ namespace modelpreview
         camera.type = ENT_CAMERA;
         camera.o = vec(0, 0, 0);
         camera.yaw = 0;
-        camera.pitch = 0;
+        camera.pitch = modelpreviewpitch;
         camera.roll = 0;
         camera1 = &camera;
 
@@ -2301,10 +2302,11 @@ namespace modelpreview
     }
 }
 
-vec calcmodelpreviewpos(const vec &radius, float zoffset, float &yaw)
+vec calcmodelpreviewpos(const vec &radius, float &yaw)
 {
     yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
-    return vec(0, max(radius.magnitude(), (1+zoffset)*radius.z)/tan(fovy/2*RAD) + radius.magnitude2(), -2*radius.z*zoffset);
+    float dist = max(radius.magnitude2()/aspect, radius.magnitude())/sinf(fovy/2*RAD);
+    return vec(0, dist, 0).rotate_around_x(camera1->pitch*RAD);
 }
 
 int xtraverts, xtravertsva;
