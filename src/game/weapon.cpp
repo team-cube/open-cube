@@ -503,12 +503,15 @@ namespace game
     VARP(muzzleflash, 0, 1, 1);
     VARP(muzzlelight, 0, 1, 1);
 
-    void raildecal(const vec &from, const vec &to)
+    void railhit(const vec &from, const vec &to, bool decal = true)
     {
         vec dir = vec(from).sub(to).normalize();
-        adddecal(DECAL_RAIL_HOLE, to, dir, 2.0f);
-        adddecal(DECAL_RAIL_GLOW, to, dir, 2.5f, 0x50CFE5);
-        adddynlight(vec(to).msub(dir, -4), 10, vec(0.25f, 0.75f, 1.0f), 225, 75);
+        if(decal)
+        {
+            adddecal(DECAL_RAIL_HOLE, to, dir, 2.0f);
+            adddecal(DECAL_RAIL_GLOW, to, dir, 2.5f, 0x50CFE5);
+        }
+        adddynlight(vec(to).madd(dir, 4), 10, vec(0.25f, 0.75f, 1.0f), 225, 75);
     }
 
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
@@ -527,7 +530,7 @@ namespace game
                 particle_flare(hudgunorigin(gun, from, to, d), to, 500, PART_RAIL_TRAIL, 0x50CFE5, 0.5f);
                 if(muzzleflash && d->muzzle.x >= 0)
                     particle_flare(d->muzzle, d->muzzle, 140, PART_RAIL_MUZZLE_FLASH, 0x50CFE5, 2.75f, d);
-                if(!local) raildecal(from, to);
+                if(!local) railhit(from, to);
                 if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 35, vec(0.25f, 0.75f, 1.0f), 75, 75, DL_FLASH, 0, vec(0, 0, 0), d);
                 break;
 
@@ -592,7 +595,7 @@ namespace game
         return best;
     }
 
-    void shorten(vec &from, vec &target, float dist)
+    void shorten(const vec &from, vec &target, float dist)
     {
         target.sub(from).mul(min(1.0f, dist)).add(from);
     }
@@ -607,8 +610,12 @@ namespace game
             int maxrays = attacks[atk].rays;
             loopi(maxrays)
             {
-                if((hits[i] = intersectclosest(from, rays[i], d, dist))) shorten(from, rays[i], dist);
-                else raildecal(from, rays[i]);
+                if((hits[i] = intersectclosest(from, rays[i], d, dist)))
+                {
+                    shorten(from, rays[i], dist);
+                    railhit(from, rays[i], false);
+                }
+                else railhit(from, rays[i]);
             }
             loopi(maxrays) if(hits[i])
             {
@@ -626,9 +633,10 @@ namespace game
         else if((o = intersectclosest(from, to, d, dist)))
         {
             shorten(from, to, dist);
+            railhit(from, to, false);
             hitpush(attacks[atk].damage, o, d, from, to, atk, 1);
         }
-        else if(attacks[atk].action!=ACT_MELEE) raildecal(from, to);
+        else if(attacks[atk].action!=ACT_MELEE) railhit(from, to);
     }
 
     void shoot(gameent *d, const vec &targ)
