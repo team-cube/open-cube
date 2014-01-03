@@ -2211,7 +2211,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
     drawtex = 0;
 }
 
-VAR(modelpreviewfov, 10, 40, 100);
+VAR(modelpreviewfov, 10, 20, 100);
 VAR(modelpreviewpitch, -90, -20, 90);
 
 namespace modelpreview
