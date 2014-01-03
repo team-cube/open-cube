@@ -1237,8 +1237,8 @@ static void compilelookup(vector<uint> &code, const char *&p, int ltype, int pre
                     if(prevargs >= MAXRESULTS) code.add(CODE_ENTER);
                     for(const char *fmt = id->args; *fmt; fmt++) switch(*fmt)
                     {
-                        case 'S': compilestr(code, NULL, 0, true); numargs++; break;
-                        case 's': compilestr(code); numargs++; break;
+                        case 'S': compilestr(code); numargs++; break;
+                        case 's': compilestr(code, NULL, 0, true); numargs++; break;
                         case 'i': compileint(code); numargs++; break;
                         case 'b': compileint(code, INT_MIN); numargs++; break;
                         case 'f': compilefloat(code); numargs++; break;
@@ -3985,7 +3985,22 @@ ICOMMAND(echo, "C", (char *s), conoutf("\f1%s", s));
 ICOMMAND(error, "C", (char *s), conoutf(CON_ERROR, "%s", s));
 ICOMMAND(strstr, "ss", (char *a, char *b), { char *s = strstr(a, b); intret(s ? s-a : -1); });
 ICOMMAND(strlen, "s", (char *s), intret(strlen(s)));
+ICOMMAND(strcode, "si", (char *s, int *i), intret(*i > 0 ? (memchr(s, 0, *i) ? 0 : uchar(s[*i])) : uchar(s[0])));
+ICOMMAND(codestr, "i", (int *i), { char *s = newstring(1); s[0] = char(*i); s[1] = '\0'; stringret(s); });
 
+#define STRMAPCOMMAND(name, map) \
+    ICOMMAND(name, "s", (char *s), \
+    { \
+        int len = strlen(s); \
+        char *m = newstring(len); \
+        loopi(len) m[i] = map(s[i]); \
+        m[len] = '\0'; \
+        stringret(m); \
+    })
+
+STRMAPCOMMAND(strlower, cubelower);
+STRMAPCOMMAND(strupper, cubeupper);
+ 
 char *strreplace(const char *s, const char *oldval, const char *newval, const char *newval2)
 {
     vector<char> buf;
