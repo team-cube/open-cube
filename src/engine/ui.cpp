@@ -923,26 +923,28 @@ namespace UI
         {
             if(children.empty()) return;
 
-            float offsety = 0, sy = 0,
+            int row = 0, column = 0;
+            float offsety = 0, sy = 0, offsetx = 0, sx = 0,
                   cspace = (w - subw) / max(widths.length() - 1, 1),
                   cstep = (w - subw) / widths.length(),
                   rspace = (h - subh) / max(heights.length() - 1, 1),
                   rstep = (h - subh) / heights.length();
-            for(int i = 0, row = 0; i < children.length(); row++)
+            loopchildren(o,
             {
-                float offsetx = 0, sx = 0;
-                for(int end = min(i + widths.length(), children.length()), column = 0; i < end; i++, column++)
+                o->x = offsetx;
+                o->y = offsety;
+                o->adjustlayout(sx, sy, widths[column] + cstep, heights[row] + rstep);
+                offsetx += widths[column] + cspace;
+                sx += widths[column] + cstep;
+                column = (column + 1) % columns;
+                if(!column)
                 {
-                    Object *o = children[i];
-                    o->x = offsetx;
-                    o->y = offsety;
-                    o->adjustlayout(sx, sy, widths[column] + cstep, heights[row] + rstep);
-                    offsetx += widths[column] + cspace;
-                    sx += widths[column] + cstep;
+                    offsetx = sx = 0;
+                    offsety += heights[row] + rspace;
+                    sy += heights[row] + rstep;
+                    row++;
                 }
-                offsety += heights[row] + rspace;
-                sy += heights[row] + rstep;
-            }
+            });
         }
     };
 
