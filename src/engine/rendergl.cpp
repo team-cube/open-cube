@@ -2299,6 +2299,12 @@ namespace modelpreview
     }
 }
 
+vec calcmodelpreviewpos(const vec &radius, float zoffset, float &yaw)
+{
+    yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
+    return vec(0, max(radius.magnitude(), (1+zoffset)*radius.z)/tan(fovy/2*RAD) + radius.magnitude2(), -2*radius.z*zoffset);
+}
+
 int xtraverts, xtravertsva;
 
 void gl_drawview()

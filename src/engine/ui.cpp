@@ -2764,9 +2764,8 @@ namespace UI
             {
                 vec center, radius;
                 m->boundbox(center, radius);
-                float dist =  2.0f*max(radius.magnitude2(), 1.1f*radius.z),
-                      yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
-                vec o(-center.x, dist - center.y, -0.1f*dist - center.z);
+                float yaw;
+                vec o = calcmodelpreviewpos(radius, 0.1f, yaw).sub(center);
                 rendermodel(name, anim, o, yaw, 0, 0, 0, NULL, NULL, 0);
             }
             if(clipstack.length()) clipstack.last().scissor();

@@ -463,11 +463,13 @@ namespace game
         if(!previewent)
         {
             previewent = new gameent;
-            previewent->o = vec(0, 0.9f*(previewent->eyeheight + previewent->aboveeye), previewent->eyeheight - (previewent->eyeheight + previewent->aboveeye)/2);
             loopi(NUMGUNS) previewent->ammo[i] = 1;
         }
+        float height = previewent->eyeheight + previewent->aboveeye,
+              xyrad = max(height/4, previewent->radius),
+              zrad = height/2;
+        previewent->o = calcmodelpreviewpos(vec(xyrad, xyrad, zrad), 0, previewent->yaw).addz(previewent->eyeheight - zrad);
         previewent->gunselect = validgun(weap) ? weap : GUN_RAIL;
-        previewent->yaw = fmod(lastmillis/10000.0f*360.0f, 360.0f);
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;
         renderplayer(previewent, *mdlinfo, getplayercolor(team, color), team, 1, 0, false);
