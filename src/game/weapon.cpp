@@ -431,7 +431,7 @@ namespace game
     bool projdamage(dynent *o, projectile &p, const vec &v)
     {
         if(o->state!=CS_ALIVE) return false;
-        if(!intersect(o, p.o, v)) return false;
+        if(!intersect(o, p.o, v, attacks[p.atk].margin)) return false;
         projsplash(p, v, o);
         vec dir;
         projdist(o, dir, v, p.dir);
@@ -565,15 +565,15 @@ namespace game
 
     float intersectdist = 1e16f;
 
-    bool intersect(dynent *d, const vec &from, const vec &to, float &dist)   // if lineseg hits entity bounding box
+    bool intersect(dynent *d, const vec &from, const vec &to, float margin, float &dist)   // if lineseg hits entity bounding box
     {
         vec bottom(d->o), top(d->o);
-        bottom.z -= d->eyeheight;
-        top.z += d->aboveeye;
-        return linecylinderintersect(from, to, bottom, top, d->radius, dist);
+        bottom.z -= d->eyeheight + margin;
+        top.z += d->aboveeye + margin;
+        return linecylinderintersect(from, to, bottom, top, d->radius + margin, dist);
     }
 
-    dynent *intersectclosest(const vec &from, const vec &to, gameent *at, float &bestdist)
+    dynent *intersectclosest(const vec &from, const vec &to, gameent *at, float margin, float &bestdist)
     {
         dynent *best = NULL;
         bestdist = 1e16f;
@@ -582,7 +582,7 @@ namespace game
             dynent *o = iterdynents(i);
             if(o==at || o->state!=CS_ALIVE) continue;
             float dist;
-            if(!intersect(o, from, to, dist)) continue;
+            if(!intersect(o, from, to, margin, dist)) continue;
             if(dist<bestdist)
             {
                 best = o;
@@ -601,13 +601,13 @@ namespace game
     {
         dynent *o;
         float dist;
+        int maxrays = attacks[atk].rays, margin = attacks[atk].margin;
         if(attacks[atk].rays > 1)
         {
             dynent *hits[MAXRAYS];
-            int maxrays = attacks[atk].rays;
             loopi(maxrays)
             {
-                if((hits[i] = intersectclosest(from, rays[i], d, dist)))
+                if((hits[i] = intersectclosest(from, rays[i], d, margin, dist)))
                 {
                     shorten(from, rays[i], dist);
                     railhit(from, rays[i], false);
@@ -627,7 +627,7 @@ namespace game
                 hitpush(numhits*attacks[atk].damage, o, d, from, to, atk, numhits);
             }
         }
-        else if((o = intersectclosest(from, to, d, dist)))
+        else if((o = intersectclosest(from, to, d, margin, dist)))
         {
             shorten(from, to, dist);
             railhit(from, to, false);

@@ -992,7 +992,7 @@ namespace ai
         bool enemyok = e && targetable(d, e);
         if(!enemyok || d->skill >= 50)
         {
-            gameent *f = (gameent *)intersectclosest(dp, d->ai->target, d);
+            gameent *f = (gameent *)intersectclosest(dp, d->ai->target, d, 1);
             if(f)
             {
                 if(targetable(d, f))
