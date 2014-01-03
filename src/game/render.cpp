@@ -466,9 +466,9 @@ namespace game
             loopi(NUMGUNS) previewent->ammo[i] = 1;
         }
         float height = previewent->eyeheight + previewent->aboveeye,
-              xyrad = max(height/4, previewent->radius),
               zrad = height/2;
-        previewent->o = calcmodelpreviewpos(vec(xyrad, xyrad, zrad), previewent->yaw).addz(previewent->eyeheight - zrad);
+        vec2 xyrad = vec2(previewent->xradius, previewent->yradius).max(height/4);
+        previewent->o = calcmodelpreviewpos(vec(xyrad, zrad), previewent->yaw).addz(previewent->eyeheight - zrad);
         previewent->gunselect = validgun(weap) ? weap : GUN_RAIL;
         const playermodelinfo *mdlinfo = getplayermodelinfo(model);
         if(!mdlinfo) return;
