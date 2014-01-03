@@ -950,12 +950,12 @@ namespace UI
     {
         int columns;
 
-        TableHeader() : columns(0) {}
+        TableHeader() : columns(-1) {}
 
         static const char *typestr() { return "#TableHeader"; }
         const char *gettype() const { return typestr(); }
 
-        uchar childalign() const { return ALIGN_VCENTER; }
+        uchar childalign() const { return columns < 0 ? ALIGN_VCENTER : ALIGN_HCENTER | ALIGN_VCENTER; }
 
         int childcolumns() const { return columns; }
 
