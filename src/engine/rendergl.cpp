@@ -1253,7 +1253,7 @@ void pophudmatrix(bool flush, bool flushparams)
 }
 
 int vieww = -1, viewh = -1, viewidx = 0;
-float curfov = 100, curavatarfov = 40, fovy, aspect;
+float curfov, curavatarfov, fovy, aspect;
 int farplane;
 VARP(zoominvel, 0, 40, 500);
 VARP(zoomoutvel, 0, 50, 500);
@@ -2211,6 +2211,8 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
     drawtex = 0;
 }
 
+VAR(modelpreviewfov, 10, 40, 100);
+
 namespace modelpreview
 {
     physent *oldcamera;
@@ -2257,7 +2259,7 @@ namespace modelpreview
         oldviewh = viewh;
 
         aspect = w/float(h);
-        fovy = 40;
+        fovy = modelpreviewfov;
         curfov = 2*atan2(tan(fovy/2*RAD), 1/aspect)/RAD;
         farplane = 1024;
         vieww = min(gw, w);
