@@ -931,7 +931,7 @@ namespace UI
             for(int i = 0, row = 0; i < children.length(); row++)
             {
                 float offsetx = 0, sx = 0;
-                for(int column = 0; column < widths.length(); column++, i++)
+                for(int end = min(i + widths.length(), children.length()), column = 0; i < end; i++, column++)
                 {
                     Object *o = children[i];
                     o->x = offsetx;
