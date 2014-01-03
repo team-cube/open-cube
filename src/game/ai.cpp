@@ -866,7 +866,7 @@ namespace ai
         if(jump)
         {
             vec old = d->o;
-            d->o = vec(pos).add(vec(0, 0, d->eyeheight));
+            d->o = vec(pos).addz(d->eyeheight);
             if(collide(d, vec(0, 0, 1))) jump = false;
             d->o = old;
             if(jump)
@@ -977,7 +977,7 @@ namespace ai
         }
         else if(hunt(d, b))
         {
-            getyawpitch(dp, vec(d->ai->spot).add(vec(0, 0, d->eyeheight)), d->ai->targyaw, d->ai->targpitch);
+            getyawpitch(dp, vec(d->ai->spot).addz(d->eyeheight), d->ai->targyaw, d->ai->targpitch);
             d->ai->lasthunt = lastmillis;
         }
         else
