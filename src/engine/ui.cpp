@@ -2496,6 +2496,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            edit->rendered = true;
+
             float k = drawscale();
             pushhudmatrix();
             hudmatrix.translate(sx, sy, 0);
@@ -3226,8 +3228,8 @@ namespace UI
     ICOMMAND(uiwrapcontext, "tffe", (tagval *text, float *wrap, float *scale, uint *children),
         buildtext(*text, *scale, FONTH*uicontextscale, Color(255, 255, 255), *wrap, children));
 
-    ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *keep, uint *children),
-        BUILD(TextEditor, o, o->setup(name, *length, *height, (*scale <= 0 ? 1 : *scale) * uitextscale, initval, *keep ? EDITORFOREVER : EDITORUSED), children));
+    ICOMMAND(uitexteditor, "siifsie", (char *name, int *length, int *height, float *scale, char *initval, int *mode, uint *children),
+        BUILD(TextEditor, o, o->setup(name, *length, *height, (*scale <= 0 ? 1 : *scale) * uitextscale, initval, *mode <= 0 ? EDITORFOREVER : *mode), children));
 
     ICOMMAND(uifont, "se", (char *name, uint *children),
         BUILD(Font, o, o->setup(name), children));
