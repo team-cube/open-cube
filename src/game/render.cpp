@@ -125,6 +125,8 @@ namespace game
         }
     }
 
+    ICOMMAND(getplayercolor, "ii", (int *color, int *team), intret(getplayercolor(*team, *color)));
+
     HVAR(testplayercolor, 0, 0, 0xFFFFFF);
 
     int getplayercolor(gameent *d, int team)
