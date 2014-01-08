@@ -1187,6 +1187,17 @@ namespace UI
         }
     };
 
+    struct Target : Filler
+    {
+        static const char *typestr() { return "#Target"; }
+        const char *gettype() const { return typestr(); }
+
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+    };
+
     struct Color
     {
         uchar r, g, b, a;
@@ -3080,6 +3091,9 @@ namespace UI
 
     ICOMMAND(uifill, "ffe", (float *minw, float *minh, uint *children),
         BUILD(Filler, o, o->setup(*minw, *minh), children));
+
+    ICOMMAND(uitarget, "ffe", (float *minw, float *minh, uint *children),
+        BUILD(Target, o, o->setup(*minw, *minh), children));
 
     ICOMMAND(uiclip, "ffe", (float *clipw, float *cliph, uint *children),
         BUILD(Clipper, o, o->setup(*clipw, *cliph), children));
