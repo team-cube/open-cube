@@ -513,7 +513,7 @@ namespace game
 
     void shoteffects(int atk, const vec &from, const vec &to, gameent *d, bool local, int id, int prevaction)     // create visual effect from a shot
     {
-        int gun = attacks[atk].gun, sound = attacks[atk].sound;
+        int gun = attacks[atk].gun;
         switch(atk)
         {
             case ATK_PULSE_SHOOT:
@@ -535,7 +535,8 @@ namespace game
                 break;
         }
 
-        playsound(sound, d==hudplayer() ? NULL : &d->o);
+        if(d==hudplayer()) playsound(attacks[atk].hudsound, NULL);
+        else playsound(attacks[atk].sound, &d->o);
     }
 
     void particletrack(physent *owner, vec &o, vec &d)
