@@ -170,6 +170,7 @@ namespace ai
         copystring(d->name, name, MAXNAMELEN+1);
         d->team = validteam(team) ? team : 0;
         d->ownernum = ocn;
+        d->plag = 0;
         d->skill = sk;
         d->playermodel = chooserandomplayermodel(pm);
         d->playercolor = col;
