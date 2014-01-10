@@ -3255,7 +3255,7 @@ namespace server
                 int who = getint(p), team = getint(p);
                 if(!ci->privilege && !ci->local) break;
                 clientinfo *wi = getinfo(who);
-                if(!m_teammode || !validteam(team) || wi->team == team) break;
+                if(!m_teammode || !validteam(team) || !wi || !wi->connected || wi->team == team) break;
                 if(!smode || smode->canchangeteam(wi, wi->team, team))
                 {
                     if(wi->state.state==CS_ALIVE) suicide(wi);
