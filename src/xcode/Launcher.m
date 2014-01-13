@@ -3,7 +3,7 @@
 #include <crt_externs.h>
 
 // If you make a MOD then please change this, the bundle indentifier, the file extensions (.ogz, .dmo), and the url registration.
-#define kSAUERBRATEN @"tesseract"
+#define kGAMEDIR @"tesseract"
 
 @implementation Launcher
 
@@ -30,7 +30,7 @@
             {
                 path = [path stringByDeletingLastPathComponent];
                 
-                NSString *probe = [path stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.app/Contents/gamedata", kSAUERBRATEN]];
+                NSString *probe = [path stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.app/Contents/gamedata", kGAMEDIR]];
                 if ([fm fileExistsAtPath:[probe stringByAppendingPathComponent:@"media"]])
                 {
                     dataPath = [probe retain];
@@ -48,13 +48,13 @@
         }
         NSLog(@"type=%@", type);
     }
-    // userpath: directory where user files are kept - typically /Users/<name>/Application Support/sauerbraten
+    // userpath: directory where user files are kept - typically /Users/<name>/Application Support/tesseract
     path = nil;
     NSArray *supports = [fm URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask];
     if ([supports count])
     {
         path = [[supports objectAtIndex:0] path];
-        path = [path stringByAppendingPathComponent:kSAUERBRATEN];
+        path = [path stringByAppendingPathComponent:kGAMEDIR];
         if (![fm fileExistsAtPath:path]) [fm createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL]; // ensure it exists
     }
     userPath = [path retain];    
@@ -77,7 +77,6 @@
 - (NSArray*)launchArgs
 {
     NSMutableArray *args = [NSMutableArray array];
-    [args addObject:@"-z24"]; // otherwise seems to have a fondness to use -z16
     [args addObject:[NSString stringWithFormat:@"-q%@", userPath]];     
 
     char **argv = *_NSGetArgv();
@@ -173,7 +172,7 @@
 #pragma mark -
 #pragma mark url opening
 
-// plist registers 'sauerbraten' as a url scheme
+// plist registers 'tesseract' as a url scheme
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
 {
     NSURL *url = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];

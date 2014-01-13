@@ -14,7 +14,7 @@
 			<key>CFBundleTypeIconFile</key>
 			<string>Maps.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Sauerbraten demo</string>
+			<string>Tesseract demo</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSTypeIsPackage</key>
@@ -30,7 +30,7 @@
 			<key>CFBundleTypeIconFile</key>
 			<string>Maps.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Sauerbraten map</string>
+			<string>Tesseract map</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSTypeIsPackage</key>
@@ -61,10 +61,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>SauerbratenServer</string>
+			<string>TesseractServer</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>sauerbraten</string>
+				<string>tesseract</string>
 			</array>
 		</dict>
 	</array>
