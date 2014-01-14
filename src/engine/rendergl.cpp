@@ -664,7 +664,7 @@ void gl_checkextensions()
         if(hasext("GL_NV_half_float"))
         {
             hasHFV = hasHFP = true;
-            if(dbgexts) conoutf(CON_INIT, "Using GL_NV_half_float");
+            if(dbgexts) conoutf(CON_INIT, "Using GL_NV_half_float extension.");
         }
         else
         {
