@@ -1139,6 +1139,9 @@ int main(int argc, char **argv)
     execfile("config/blendbrush.cfg");
     if(game::savedservers()) execfile(game::savedservers(), false);
 
+    initing = INIT_GAME;
+    execfile(game::gameconfig());
+
     identflags |= IDF_PERSIST;
 
     initing = INIT_LOAD;
@@ -1153,8 +1156,6 @@ int main(int argc, char **argv)
     identflags &= ~IDF_PERSIST;
 
     initing = INIT_GAME;
-    execfile(game::gameconfig());
-
     game::loadconfigs();
     initing = NOT_INITING;
 
