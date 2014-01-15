@@ -545,7 +545,7 @@ namespace game
     {
         if(multiplayer(false) && !m_mp(mode))
         {
-            conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modename(gamemode), gamemode);
+            conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer", server::modeprettyname(gamemode), gamemode);
             loopi(NUMGAMEMODES) if(m_mp(STARTGAMEMODE + i)) { mode = STARTGAMEMODE + i; break; }
         }
 
@@ -565,7 +565,7 @@ namespace game
     {
         if(multiplayer(false) && !m_mp(mode))
         {
-            conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer",  server::modename(mode), mode);
+            conoutf(CON_ERROR, "mode %s (%d) not supported in multiplayer",  server::modeprettyname(mode), mode);
             intret(0);
             return;
         }
@@ -576,6 +576,7 @@ namespace game
     ICOMMAND(getmode, "", (), intret(gamemode));
     ICOMMAND(getnextmode, "", (), intret(m_valid(nextmode) ? nextmode : (remote ? 1 : 0)));
     ICOMMAND(getmodename, "i", (int *mode), result(server::modename(*mode, "")));
+    ICOMMAND(getmodeprettyname, "i", (int *mode), result(server::modeprettyname(*mode, "")));
     ICOMMAND(timeremaining, "i", (int *formatted),
     {
         int val = max(maplimit - lastmillis, 0)/1000;

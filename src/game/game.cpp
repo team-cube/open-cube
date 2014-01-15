@@ -533,7 +533,7 @@ namespace game
             cmode->setup();
         }
 
-        conoutf(CON_GAMEINFO, "\f2game mode is %s", server::modename(gamemode));
+        conoutf(CON_GAMEINFO, "\f2game mode is %s", server::modeprettyname(gamemode));
 
         const char *info = m_valid(gamemode) ? gamemodes[gamemode - STARTGAMEMODE].info : NULL;
         if(showmodeinfo && info) conoutf(CON_GAMEINFO, "\f0%s", info);
@@ -808,7 +808,7 @@ namespace game
     ICOMMAND(servinfomodename, "i", (int *i),
         GETSERVINFOATTR(*i, 0, mode,
         {
-            const char *name = server::modename(mode, NULL);
+            const char *name = server::modeprettyname(mode, NULL);
             if(name) result(name);
         }));
     ICOMMAND(servinfomastermode, "i", (int *i), GETSERVINFOATTR(*i, 2, mm, intret(mm)));

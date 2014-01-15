@@ -103,19 +103,19 @@ enum
 
 static struct gamemodeinfo
 {
-    const char *name;
+    const char *name, *prettyname;
     int flags;
     const char *info;
 } gamemodes[] =
 {
-    { "demo", M_DEMO | M_LOCAL, NULL},
-    { "edit", M_EDIT, "Cooperative Editing:\nEdit maps with multiple players simultaneously." },
-    { "rdm", M_LOBBY | M_RAIL, "Railgun Deathmatch:\nFrag everyone with railguns to score points." },
-    { "pdm", M_LOBBY | M_PULSE, "Pulse Rifle Deathmatch:\nFrag everyone with pulse rifles to score points." },
-    { "rtdm", M_TEAM | M_RAIL, "Railgun Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
-    { "ptdm", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
-    { "rctf", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
-    { "pctf", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "demo", "Demo", M_DEMO | M_LOCAL, NULL},
+    { "edit", "Edit", M_EDIT, "Cooperative Editing:\nEdit maps with multiple players simultaneously." },
+    { "rdm", "rDM", M_LOBBY | M_RAIL, "Railgun Deathmatch:\nFrag everyone with railguns to score points." },
+    { "pdm", "pDM", M_LOBBY | M_PULSE, "Pulse Rifle Deathmatch:\nFrag everyone with pulse rifles to score points." },
+    { "rtdm", "rTDM", M_TEAM | M_RAIL, "Railgun Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
+    { "ptdm", "pTDM", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
+    { "rctf", "rCTF", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
+    { "pctf", "pCTF", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
 };
 
 #define STARTGAMEMODE (-1)
@@ -596,6 +596,7 @@ namespace game
 namespace server
 {
     extern const char *modename(int n, const char *unknown = "unknown");
+    extern const char *modeprettyname(int n, const char *unknown = "unknown");
     extern const char *mastermodename(int n, const char *unknown = "unknown");
     extern void startintermission();
     extern void stopdemo();
