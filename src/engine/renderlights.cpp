@@ -2818,8 +2818,12 @@ void collectlights()
         if(calclightscissor(l)) lightorder.add(lights.length()-1);
     }
 
-    updatedynlights();
-    int numdynlights = finddynlights();
+    int numdynlights = 0;
+    if(!drawtex)
+    {
+        updatedynlights();
+        numdynlights = finddynlights();
+    }
     loopi(numdynlights)
     {
         vec o, color, dir;
