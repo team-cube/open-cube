@@ -2040,7 +2040,8 @@ void drawminimap()
     setviewcell(vec(-1, -1, -1));
 
     float oldldrscale = ldrscale, oldldrscaleb = ldrscaleb;
-    int oldvieww = vieww, oldviewh = viewh;
+    int oldfarplane = farplane, oldvieww = vieww, oldviewh = viewh;
+    farplane = worldsize*2;
     vieww = viewh = size;
 
     float zscale = max(float(minimapheight), minimapcenter.z + minimapradius.z + 1) + 1;
@@ -2081,6 +2082,7 @@ void drawminimap()
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
+    farplane = oldfarplane;
     vieww = oldvieww;
     viewh = oldviewh;
     ldrscale = oldldrscale;
