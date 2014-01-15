@@ -1024,7 +1024,7 @@ int main(int argc, char **argv)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
-            case 'q':
+            case 'u':
             {
                 const char *dir = sethomedir(&argv[i][2]);
                 if(dir) logoutf("Using home directory: %s", dir);
@@ -1037,8 +1037,7 @@ int main(int argc, char **argv)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
-            case 'q': /* parsed first */ break;
-            case 'r': /* compat, ignore */ break;
+            case 'u': /* parsed first */ break;
             case 'k':
             {
                 const char *dir = addpackagedir(&argv[i][2]);
@@ -1049,13 +1048,8 @@ int main(int argc, char **argv)
             case 'd': dedicated = atoi(&argv[i][2]); if(dedicated<=0) dedicated = 2; break;
             case 'w': scr_w = clamp(atoi(&argv[i][2]), SCR_MINW, SCR_MAXW); if(!findarg(argc, argv, "-h")) scr_h = -1; break;
             case 'h': scr_h = clamp(atoi(&argv[i][2]), SCR_MINH, SCR_MAXH); if(!findarg(argc, argv, "-w")) scr_w = -1; break;
-            case 'z': /* compat, ignore */ break;
-            case 'b': /* compat, ignore */ break;
-            case 'a': /* compat, ignore */ break;
             case 'v': vsync = atoi(&argv[i][2]); if(vsync < 0) { vsynctear = 1; vsync = 1; } else vsynctear = 0; break;
-            case 't': fullscreen = atoi(&argv[i][2]); break;
-            case 's': /* compat, ignore */ break;
-            case 'f': /* compat, ignore */ break;
+            case 'f': fullscreen = atoi(&argv[i][2]); break;
             case 'l':
             {
                 char pkgdir[] = "media/";

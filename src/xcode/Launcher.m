@@ -77,7 +77,7 @@
 - (NSArray*)launchArgs
 {
     NSMutableArray *args = [NSMutableArray array];
-    [args addObject:[NSString stringWithFormat:@"-q%@", userPath]];     
+    [args addObject:[NSString stringWithFormat:@"-u%@", userPath]];     
 
     char **argv = *_NSGetArgv();
     int argc = *_NSGetArgc();
