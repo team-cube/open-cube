@@ -8,8 +8,8 @@ TESS_DATA=.
 TESS_BIN=${TESS_DATA}/bin_unix
 
 # TESS_OPTIONS contains any command line options you would like to start Tesseract with.
-#TESS_OPTIONS="-f"
-TESS_OPTIONS="-q${HOME}/.tesseract"
+#TESS_OPTIONS=""
+TESS_OPTIONS="-u${HOME}/.tesseract"
 
 # SYSTEM_NAME should be set to the name of your operating system.
 #SYSTEM_NAME=Linux
