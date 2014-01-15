@@ -690,6 +690,7 @@ namespace game
                    arg1, arg2, arg3);
                 break;
             }
+            case EDIT_CALCLIGHT:
             case EDIT_REMIP:
             {
                 addmsg(N_EDITF + op, "r");
@@ -1633,12 +1634,15 @@ namespace game
                 break;
             }
             case N_REMIP:
-            {
                 if(!d) return;
                 conoutf("%s remipped", colorname(d));
                 mpremip(false);
                 break;
-            }
+            case N_CALCLIGHT:
+                if(!d) return;
+                conoutf("%s calced lights", colorname(d));
+                mpcalclight(false);
+                break;
             case N_EDITENT:            // coop edit of ent
             {
                 if(!d) return;

@@ -57,7 +57,7 @@ extern bool settexture(const char *name, int clamp = 0);
 
 // octaedit
 
-enum { EDIT_FACE = 0, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT_ROTATE, EDIT_REPLACE, EDIT_DELCUBE, EDIT_REMIP };
+enum { EDIT_FACE = 0, EDIT_TEX, EDIT_MAT, EDIT_FLIP, EDIT_COPY, EDIT_PASTE, EDIT_ROTATE, EDIT_REPLACE, EDIT_DELCUBE, EDIT_CALCLIGHT, EDIT_REMIP };
 
 struct selinfo
 {
@@ -105,6 +105,7 @@ extern void mprotate(int cw, selinfo &sel, bool local);
 extern void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local);
 extern void mpdelcube(selinfo &sel, bool local);
 extern void mpremip(bool local);
+extern void mpcalclight(bool local);
 
 // command
 extern int variable(const char *name, int min, int cur, int max, int *storage, identfun fun, int flags);
