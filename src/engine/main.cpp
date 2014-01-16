@@ -66,8 +66,10 @@ void fatal(const char *s, ...)    // failure exit
     exit(EXIT_FAILURE);
 }
 
+VAR(desktopw, 1, 0, 0);
+VAR(desktoph, 1, 0, 0);
+int screenw = 0, screenh = 0;
 SDL_Window *screen = NULL;
-int screenw = 0, screenh = 0, desktopw = 0, desktoph = 0;
 SDL_GLContext glcontext = NULL;
 
 int curtime = 0, lastmillis = 1, elapsedtime = 0, totalmillis = 1;
