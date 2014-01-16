@@ -496,18 +496,23 @@ void screenres(int w, int h)
 
 ICOMMAND(screenres, "ii", (int *w, int *h), screenres(*w, *h));
 
+static void setgamma(int val)
+{
+    if(screen && SDL_SetWindowBrightness(screen, val/100.0f) < 0) conoutf(CON_ERROR, "Could not set gamma: %s", SDL_GetError());
+}
+
 static int curgamma = 100;
 VARFP(gamma, 30, 100, 300,
 {
-    if(gamma == curgamma) return;
+    if(initing || gamma == curgamma) return;
     curgamma = gamma;
-    if(SDL_SetWindowBrightness(screen, gamma/100.0f)==-1) conoutf(CON_ERROR, "Could not set gamma: %s", SDL_GetError());
+    setgamma(curgamma);
 });
 
 void restoregamma()
 {
-    if(curgamma == 100) return;
-    SDL_SetWindowBrightness(screen, curgamma/100.0f);
+    if(initing || curgamma == 100) return;
+    setgamma(curgamma);
 }
 
 void cleargamma()
@@ -517,8 +522,9 @@ void cleargamma()
 
 void restorevsync()
 {
+    if(initing || !glcontext) return;
     extern int vsync, vsynctear;
-    if(glcontext) SDL_GL_SetSwapInterval(vsync ? (vsynctear ? -1 : 1) : 0);
+    SDL_GL_SetSwapInterval(vsync ? (vsynctear ? -1 : 1) : 0);
 }
 
 VARFP(vsync, 0, 0, 1, restorevsync());
@@ -591,8 +597,6 @@ void setupscreen()
     renderh = min(scr_h, screenh);
     hudw = screenw;
     hudh = screenh;
-
-    restorevsync();
 }
 
 void resetgl()
@@ -633,6 +637,7 @@ void resetgl()
     inbetweenframes = true;
     renderbackground("initializing...");
     restoregamma();
+    restorevsync();
     initgbuffer();
     reloadshaders();
     reloadtextures();
@@ -1063,7 +1068,6 @@ int main(int argc, char **argv)
         }
         else gameargs.add(argv[i]);
     }
-    initing = NOT_INITING;
 
     numcpus = clamp(SDL_GetCPUCount(), 1, 16);
 
@@ -1123,6 +1127,7 @@ int main(int argc, char **argv)
     initsound();
 
     logoutf("init: cfg");
+    initing = INIT_LOAD;
     execfile("config/keymap.cfg");
     execfile("config/sound.cfg");
     execfile("config/stdedit.cfg");
@@ -1132,29 +1137,28 @@ int main(int argc, char **argv)
     execfile("config/heightmap.cfg");
     execfile("config/blendbrush.cfg");
     if(game::savedservers()) execfile(game::savedservers(), false);
-
-    initing = INIT_GAME;
     execfile(game::gameconfig());
 
     identflags |= IDF_PERSIST;
 
-    initing = INIT_LOAD;
     if(!execfile(game::savedconfig(), false))
     {
         execfile(game::defaultconfig());
         writecfg(game::restoreconfig());
     }
     execfile(game::autoexec(), false);
-    initing = NOT_INITING;
 
     identflags &= ~IDF_PERSIST;
 
     initing = INIT_GAME;
     game::loadconfigs();
+
     initing = NOT_INITING;
 
-    logoutf("init: shaders");
+    logoutf("init: render");
     renderbackground("initializing...");
+    restoregamma();
+    restorevsync();
     initgbuffer();
     loadshaders();
     initparticles();
