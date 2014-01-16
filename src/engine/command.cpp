@@ -3986,6 +3986,10 @@ MINMAXCMD(maxf, f, float, max);
 ICOMMAND(abs, "i", (int *n), intret(abs(*n)));
 ICOMMAND(absf, "f", (float *n), floatret(fabs(*n)));
 
+ICOMMAND(floor, "f", (float *n), floatret(floor(*n)));
+ICOMMAND(ceil, "f", (float *n), floatret(ceil(*n)));
+ICOMMAND(round, "f", (float *n), floatret(floor(*n + 0.5)));
+
 ICOMMAND(cond, "ee2V", (tagval *args, int numargs),
 {
     for(int i = 0; i < numargs; i += 2)
