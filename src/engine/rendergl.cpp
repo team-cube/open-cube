@@ -1960,13 +1960,11 @@ void clearminimap()
 
 VARR(minimapheight, 0, 0, 2<<16);
 bvec minimapcolor(0, 0, 0);
-HVARFR(minimapcolour, 0, 0, 0xFFFFFF,
-{
-    minimapcolor = bvec((minimapcolour>>16)&0xFF, (minimapcolour>>8)&0xFF, minimapcolour&0xFF);
-});
+HVARFR(minimapcolour, 0, 0, 0xFFFFFF, { minimapcolor = bvec::hexcolor(minimapcolour); });
 VARR(minimapclip, 0, 0, 1);
 VARFP(minimapsize, 7, 8, 10, { if(minimaptex) drawminimap(); });
 VARFP(showminimap, 0, 1, 1, { if(minimaptex) drawminimap(); });
+HVARFP(nominimapcolour, 0, 0x101010, 0xFFFFFF, { if(minimaptex && !showminimap) drawminimap(); });
 
 void bindminimap()
 {
@@ -1994,8 +1992,8 @@ void drawminimap()
     if(!showminimap)
     {
         if(!minimaptex) glGenTextures(1, &minimaptex);
-        static const uchar black[3] = { 0, 0, 0 };
-        createtexture(minimaptex, 1, 1, black, 3, 0, GL_RGB, GL_TEXTURE_2D);
+        bvec color = bvec::hexcolor(nominimapcolour);
+        createtexture(minimaptex, 1, 1, color.v, 3, 0, GL_RGB, GL_TEXTURE_2D);
         return;
     }
 
