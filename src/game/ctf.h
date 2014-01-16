@@ -376,7 +376,7 @@ struct ctfclientmode : clientmode
         {
             loopv(flags) if(flags[i].owner == d)
             {
-                float x = 1800*w/h*0.5f-HICON_SIZE/2; float y = 1800*0.95f-HICON_SIZE/2;
+                float x = 1800*w/h*0.5f-HICON_SIZE/2, y = 1800*0.95f-HICON_SIZE/2;
                 drawicon(flags[i].team==1 ? HICON_BLUE_FLAG : HICON_RED_FLAG, x, y);
                 break;
             }
