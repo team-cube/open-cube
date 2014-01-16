@@ -1796,10 +1796,7 @@ void debugquad(float x, float y, float w, float h, float tx, float ty, float tw,
 
 VARR(fog, 16, 4000, 1000024);
 bvec fogcolor(0x80, 0x99, 0xB3);
-HVARFR(fogcolour, 0, 0x8099B3, 0xFFFFFF,
-{
-    fogcolor = bvec((fogcolour>>16)&0xFF, (fogcolour>>8)&0xFF, fogcolour&0xFF);
-});
+HVARFR(fogcolour, 0, 0x8099B3, 0xFFFFFF, { fogcolor = bvec::hexcolor(fogcolour); });
 VAR(fogoverlay, 0, 1, 1);
 
 static float findsurface(int fogmat, const vec &v, int &abovemat)
