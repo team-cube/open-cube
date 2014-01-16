@@ -1966,6 +1966,7 @@ HVARFR(minimapcolour, 0, 0, 0xFFFFFF,
 });
 VARR(minimapclip, 0, 0, 1);
 VARFP(minimapsize, 7, 8, 10, { if(minimaptex) drawminimap(); });
+VARFP(showminimap, 0, 1, 1, { if(minimaptex) drawminimap(); });
 
 void bindminimap()
 {
@@ -1989,6 +1990,14 @@ void clipminimap(ivec &bbmin, ivec &bbmax, cube *c = worldroot, const ivec &co =
 void drawminimap()
 {
     if(!game::needminimap()) { clearminimap(); return; }
+
+    if(!showminimap)
+    {
+        if(!minimaptex) glGenTextures(1, &minimaptex);
+        static const uchar black[3] = { 0, 0, 0 };
+        createtexture(minimaptex, 1, 1, black, 3, 0, GL_RGB, GL_TEXTURE_2D);
+        return;
+    }
 
     GLERROR;
     renderprogress(0, "generating mini-map...", !renderedframe);

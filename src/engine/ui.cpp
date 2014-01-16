@@ -1665,7 +1665,7 @@ namespace UI
             if(type == OUTLINE) return false;
             bool side = vec2(cx, cy).sub(b).cross(vec2(a).sub(b)) < 0;
             return (vec2(cx, cy).sub(c).cross(vec2(b).sub(c)) < 0) == side &&
-                   (vec2(cx, cy).sub(a).cross(vec2(c).sub(a)) < 0) == side; 
+                   (vec2(cx, cy).sub(a).cross(vec2(c).sub(a)) < 0) == side;
         }
 
         void draw(float sx, float sy)
@@ -1705,7 +1705,7 @@ namespace UI
         {
             if(type == OUTLINE) return false;
             float r = radius <= 0 ? min(w, h)/2 : radius;
-            return vec2(cx, cy).sub(r).squaredlen() <= r*r;    
+            return vec2(cx, cy).sub(r).squaredlen() <= r*r;
         }
 
         void draw(float sx, float sy)

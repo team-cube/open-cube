@@ -324,7 +324,7 @@ static inline void undoarg(ident &id, identstack &stack)
         undoarg(*identmap[i], argstack[i]); \
     identlink *prevstack = aliasstack->next; \
     identlink aliaslink = { aliasstack->id, aliasstack, prevstack->usedargs, prevstack->argstack }; \
-    aliasstack = &aliaslink; 
+    aliasstack = &aliaslink;
 
 static inline void redoarg(ident &id, const identstack &stack)
 {
@@ -3404,7 +3404,7 @@ static inline char *listelem(const char *start = liststart, const char *end = li
     else copystring(s, start, len+1);
     return s;
 }
- 
+
 void explodelist(const char *s, vector<char *> &elems, int limit)
 {
     const char *start, *end, *qstart;
@@ -4081,7 +4081,7 @@ ICOMMAND(unistr, "i", (int *i), { char *s = newstring(1); s[0] = uni2cube(*i); s
 
 STRMAPCOMMAND(strlower, cubelower);
 STRMAPCOMMAND(strupper, cubeupper);
- 
+
 char *strreplace(const char *s, const char *oldval, const char *newval, const char *newval2)
 {
     vector<char> buf;
