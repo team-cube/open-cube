@@ -2240,7 +2240,7 @@ void rendertexturepanel(int w, int h)
                     if(vslot.rotation >= 2 && vslot.rotation <= 4) { xoff *= -1; loopk(4) tc[k].x *= -1; }
                     if(vslot.rotation <= 2 || vslot.rotation == 5) { yoff *= -1; loopk(4) tc[k].y *= -1; }
                 }
-                loopk(4) { tc[k].x = tc[k].x/sx - xoff/tex->xs; tc[k].x = tc[k].x/sy - yoff/tex->ys; }
+                loopk(4) { tc[k].x = tc[k].x/sx - xoff/tex->xs; tc[k].y = tc[k].y/sy - yoff/tex->ys; }
                 glBindTexture(GL_TEXTURE_2D, tex->id);
                 loopj(glowtex ? 3 : 2)
                 {
