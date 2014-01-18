@@ -3680,21 +3680,28 @@ int listincludes(const char *list, const char *needle, int needlelen)
 }
 ICOMMAND(indexof, "ss", (char *list, char *elem), intret(listincludes(list, elem, strlen(elem))));
 
-char *listdel(const char *s, const char *del)
-{
-    vector<char> p;
-    for(const char *start, *end, *qstart, *qend; parselist(s, start, end, qstart, qend);)
-    {
-        if(listincludes(del, start, end-start) < 0)
-        {
-            if(!p.empty()) p.add(' ');
-            p.put(qstart, qend-qstart);
-        }
-    }
-    p.add('\0');
-    return newstring(p.getbuf(), p.length()-1);
-}
-ICOMMAND(listdel, "ss", (char *list, char *del), commandret->setstr(listdel(list, del)));
+#define LISTMERGECMD(name, init, iter, filter, dir) \
+    ICOMMAND(name, "ss", (const char *list, const char *elems), \
+    { \
+        vector<char> p; \
+        init; \
+        for(const char *start, *end, *qstart, *qend; parselist(iter, start, end, qstart, qend);) \
+        { \
+            int len = end - start; \
+            if(listincludes(filter, start, len) dir 0) \
+            { \
+                if(!p.empty()) p.add(' '); \
+                p.put(qstart, qend-qstart); \
+            } \
+        } \
+        p.add('\0'); \
+        commandret->setstr(p.getbuf()); \
+        p.disown(); \
+    })
+
+LISTMERGECMD(listdel, , list, elems, <);
+LISTMERGECMD(listintersect, , list, elems, >=);
+LISTMERGECMD(listunion, p.put(list, strlen(list)), elems, list, <);
 
 void listsplice(const char *s, const char *vals, int *skip, int *count, int *numargs)
 {
