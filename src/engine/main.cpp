@@ -4,6 +4,8 @@
 
 extern void cleargamma();
 
+extern "C" void macMessageBox(const char*, const char*);
+
 void cleanup()
 {
     recorder::stop();
@@ -20,7 +22,10 @@ void cleanup()
     extern void clear_sound();   clear_sound();
     closelogfile();
     ovr::destroy();
-    SDL_Quit();
+    #ifdef __APPLE__
+        if(screen) SDL_SetWindowFullscreen(screen, 0);
+    #endif
+    SDL_Quit();    
 }
 
 extern void writeinitcfg();
@@ -59,7 +64,13 @@ void fatal(const char *s, ...)    // failure exit
             #ifdef WIN32
                 MessageBox(NULL, msg, "Tesseract fatal error", MB_OK|MB_SYSTEMMODAL);
             #endif
+            #ifdef __APPLE__
+                if(screen) SDL_SetWindowFullscreen(screen, 0);
+            #endif
             SDL_Quit();
+            #ifdef __APPLE__
+                macMessageBox(msg, "Tesseract fatal error");
+            #endif
         }
     }
 

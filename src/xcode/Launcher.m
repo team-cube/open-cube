@@ -5,6 +5,16 @@
 // If you make a MOD then please change this, the bundle indentifier, the file extensions (.ogz, .dmo), and the url registration.
 #define kGAMEDIR @"tesseract"
 
+void macMessageBox(const char *text, const char *caption)
+{
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert addButtonWithTitle:@"Quit"];
+    [alert setMessageText:[NSString stringWithUTF8String:caption]];
+    [alert setInformativeText:[NSString stringWithUTF8String:text]];
+    [alert setAlertStyle:NSWarningAlertStyle];
+    [alert runModal];
+}
+
 @implementation Launcher
 
 - (void)findPaths
