@@ -260,7 +260,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
         else stack[sp] = c;
         switch(c)
         {
-            case '0': color = bvec(137, 250, 100); break;   // green: player talk
+            case '0': color = bvec( 64, 255, 128); break;   // green: player talk
             case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
             case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages
             case '3': color = bvec(255,  64,  64); break;   // red: important errors
@@ -269,6 +269,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
             case '6': color = bvec(255, 128,   0); break;   // orange
             case '7': color = bvec(255, 255, 255); break;   // white
             case '8': color = bvec( 80, 207, 229); break;   // "Tesseract Blue"
+            case '9': color = bvec(160, 240, 120); break;
             default: gle::color(color, a); return;          // provided color: everything else
         }
         if(textbright != 100) color.scale(textbright, 100);
