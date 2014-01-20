@@ -534,7 +534,7 @@ ICOMMAND(servinfoplayers, "i", (int *i),
     }));
 ICOMMAND(servinfoattr, "ii", (int *i, int *n), GETSERVERINFO(*i, si, { if(si.attr.inrange(*n)) intret(si.attr[*n]); }));
 
-ICOMMAND(connectservinfo, "i", (int *i), GETSERVERINFO(*i, si, connectserv(si.name, si.address.port, si.password)));
+ICOMMAND(connectservinfo, "is", (int *i, char *pw), GETSERVERINFO(*i, si, connectserv(si.name, si.address.port, pw[0] ? pw : si.password)));
 
 servinfo *getservinfo(int i)
 {
