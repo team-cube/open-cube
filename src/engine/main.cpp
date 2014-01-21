@@ -4,8 +4,6 @@
 
 extern void cleargamma();
 
-extern "C" void macMessageBox(const char*, const char*);
-
 void cleanup()
 {
     recorder::stop();
@@ -60,15 +58,16 @@ void fatal(const char *s, ...)    // failure exit
                 SDL_SetRelativeMouseMode(SDL_FALSE);
                 SDL_ShowCursor(SDL_TRUE);
                 cleargamma();
+                #ifdef __APPLE__
+                    if(screen) SDL_SetWindowFullscreen(screen, 0);
+                #endif
             }
             #ifdef WIN32
                 MessageBox(NULL, msg, "Tesseract fatal error", MB_OK|MB_SYSTEMMODAL);
             #endif
-            #ifdef __APPLE__
-                if(screen) SDL_SetWindowFullscreen(screen, 0);
-            #endif
             SDL_Quit();
             #ifdef __APPLE__
+                extern "C" void macMessageBox(const char*, const char*);
                 macMessageBox(msg, "Tesseract fatal error");
             #endif
         }
