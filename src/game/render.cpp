@@ -64,7 +64,7 @@ namespace game
         0x27508A,
         0x3F748C,
         0x3B3B80,
-        0x4F60B8
+        0x5364B5
     };
 
     static const int playercolorsrojo[] =
