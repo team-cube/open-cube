@@ -48,42 +48,35 @@ namespace game
 
     static const int playercolors[] =
     {
-        0x5E1F2A,
-        0xAB3E38,
-        0xB27436,
-        0x735E48,
-        0xABA561,
-        0x425E32,
-        0x468046,
-        0x3B8180,
-        0x657F8A,
-        0x295182,
-        0x915E75,
-        0x5B4573,
-        0x392A54,
-        0x555453,
-        0x737577,
-        0xBFB8AC
+        0xAC2C2A,
+        0xB27232,
+        0xB3A250,
+        0x4C7A3D,
+        0x3F748C,
+        0x27508A,
+        0xA15879,
+        0x5A3B80,
+        0xB8B1A5
     };
 
     static const int playercolorsazul[] =
     {
-        0x2A4778,
-        0x407187,
-        0x393973,
-        0x5D6EC6
+        0x27508A,
+        0x3F748C,
+        0x3B3B80,
+        0x4F60B8
     };
 
     static const int playercolorsrojo[] =
     {
         0xAC2C2A,
-        0x7E211B,
-        0x772235,
+        0x992417,
+        0x802438,
         0xA3435B
     };
 
     extern void changedplayercolor();
-    VARFP(playercolor, 0, 2, sizeof(playercolors)/sizeof(playercolors[0])-1, changedplayercolor());
+    VARFP(playercolor, 0, 4, sizeof(playercolors)/sizeof(playercolors[0])-1, changedplayercolor());
     VARFP(playercolorazul, 0, 0, sizeof(playercolorsazul)/sizeof(playercolorsazul[0])-1, changedplayercolor());
     VARFP(playercolorrojo, 0, 0, sizeof(playercolorsrojo)/sizeof(playercolorsrojo[0])-1, changedplayercolor());
 
