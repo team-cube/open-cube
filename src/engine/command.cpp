@@ -3149,6 +3149,20 @@ void floatret(float v)
     commandret->setfloat(v);
 }
 
+const char *numberstr(double v)
+{
+    retidx = (retidx + 1)%4;
+    numberformat(retbuf[retidx], v);
+    return retbuf[retidx];
+}
+
+void numberret(double v)
+{
+    int i = int(v);
+    if(v == i) commandret->setint(i);
+    else commandret->setfloat(v);
+}
+
 #undef ICOMMANDNAME
 #define ICOMMANDNAME(name) _stdcmd
 #undef ICOMMANDSNAME

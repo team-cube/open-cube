@@ -68,6 +68,7 @@ struct tagval : identval
 
     void setint(int val) { type = VAL_INT; i = val; }
     void setfloat(float val) { type = VAL_FLOAT; f = val; }
+    void setnumber(double val) { i = int(val); if(val == i) type = VAL_INT; else { type = VAL_FLOAT; f = val; } }
     void setstr(char *val) { type = VAL_STR; s = val; }
     void setnull() { type = VAL_NULL; i = 0; }
     void setcode(const uint *val) { type = VAL_CODE; code = val; }
@@ -78,6 +79,7 @@ struct tagval : identval
     const char *getstr() const;
     int getint() const;
     float getfloat() const;
+    double getnumber() const;
     bool getbool() const;
     void getval(tagval &r) const;
 
@@ -189,6 +191,7 @@ struct ident
 
     float getfloat() const;
     int getint() const;
+    double getnumber() const;
     const char *getstr() const;
     void getval(tagval &r) const;
     void getcstr(tagval &v) const;
@@ -202,6 +205,8 @@ extern const char *intstr(int v);
 extern void intret(int v);
 extern const char *floatstr(float v);
 extern void floatret(float v);
+extern const char *numberstr(double v);
+extern void numberret(double v);
 extern void stringret(char *s);
 extern void result(tagval &v);
 extern void result(const char *s);
@@ -211,16 +216,25 @@ static inline int parseint(const char *s)
     return int(strtoul(s, NULL, 0));
 }
 
-static inline float parsefloat(const char *s)
-{
-    // not all platforms (windows) can parse hexadecimal integers via strtod
-    char *end;
-    double val = strtod(s, &end);
-    return val || end==s || (*end!='x' && *end!='X') ? float(val) : float(parseint(s));
-}
+#define PARSEFLOAT(name, type, parsefun) \
+    static inline type parse##name(const char *s) \
+    { \
+        /* not all platforms (windows) can parse hexadecimal integers via strtod/strtof */ \
+        char *end; \
+        type val = parsefun(s, &end); \
+        return val || end==s || (*end!='x' && *end!='X') ? val : type(parseint(s)); \
+    }
+PARSEFLOAT(float, float, strtof)
+PARSEFLOAT(number, double, strtod)
 
 static inline void intformat(char *buf, int v, int len = 20) { nformatstring(buf, len, "%d", v); }
 static inline void floatformat(char *buf, float v, int len = 20) { nformatstring(buf, len, v==int(v) ? "%.1f" : "%.7g", v); }
+static inline void numberformat(char *buf, double v, int len = 20)
+{
+    int i = int(v);
+    if(v == i) nformatstring(buf, len, "%d", i);
+    else nformatstring(buf, len, "%.7g", v);
+}
 
 static inline const char *getstr(const identval &v, int type)
 {
@@ -235,31 +249,22 @@ static inline const char *getstr(const identval &v, int type)
 inline const char *tagval::getstr() const { return ::getstr(*this, type); }
 inline const char *ident::getstr() const { return ::getstr(val, valtype); }
 
-static inline int getint(const identval &v, int type)
-{
-    switch(type)
-    {
-        case VAL_INT: return v.i;
-        case VAL_FLOAT: return int(v.f);
-        case VAL_STR: case VAL_MACRO: case VAL_CSTR: return parseint(v.s);
-        default: return 0;
-    }
-}
-inline int tagval::getint() const { return ::getint(*this, type); }
-inline int ident::getint() const { return ::getint(val, valtype); }
-
-static inline float getfloat(const identval &v, int type)
-{
-    switch(type)
-    {
-        case VAL_FLOAT: return v.f;
-        case VAL_INT: return float(v.i);
-        case VAL_STR: case VAL_MACRO: case VAL_CSTR: return parsefloat(v.s);
-        default: return 0.0f;
-    }
-}
-inline float tagval::getfloat() const { return ::getfloat(*this, type); }
-inline float ident::getfloat() const { return ::getfloat(val, valtype); }
+#define GETNUMBER(name, ret) \
+    static inline ret get##name(const identval &v, int type) \
+    { \
+        switch(type) \
+        { \
+            case VAL_FLOAT: return ret(v.f); \
+            case VAL_INT: return ret(v.i); \
+            case VAL_STR: case VAL_MACRO: case VAL_CSTR: return parse##name(v.s); \
+            default: return ret(0); \
+        } \
+    } \
+    inline ret tagval::get##name() const { return ::get##name(*this, type); } \
+    inline ret ident::get##name() const { return ::get##name(val, valtype); }
+GETNUMBER(int, int)
+GETNUMBER(float, float)
+GETNUMBER(number, double)
 
 static inline void getval(const identval &v, int type, tagval &r)
 {

@@ -2253,9 +2253,16 @@ namespace UI
         {
             case ID_VAR: val = *id->storage.i; break;
             case ID_FVAR: val = *id->storage.f; break;
-            case ID_SVAR: val = parsefloat(*id->storage.s); break;
-            case ID_ALIAS: val = id->getfloat(); break;
-            case ID_COMMAND: val = executefloat(id, NULL, 0, true); break;
+            case ID_SVAR: val = parsenumber(*id->storage.s); break;
+            case ID_ALIAS: val = id->getnumber(); break;
+            case ID_COMMAND:
+            {
+                tagval t;
+                executeret(id, NULL, 0, true, t);
+                val = t.getnumber();
+                t.cleanup();
+                break;
+            }
         }
         return val;
     }
@@ -2266,12 +2273,12 @@ namespace UI
         {
             case ID_VAR: setvarchecked(id, int(clamp(val, double(INT_MIN), double(INT_MAX)))); break;
             case ID_FVAR: setfvarchecked(id, val); break;
-            case ID_SVAR: setsvarchecked(id, floatstr(val)); break;
-            case ID_ALIAS: alias(id->name, floatstr(val)); break;
+            case ID_SVAR: setsvarchecked(id, numberstr(val)); break;
+            case ID_ALIAS: alias(id->name, numberstr(val)); break;
             case ID_COMMAND:
             {
                 tagval t;
-                t.setfloat(val);
+                t.setnumber(val);
                 execute(id, &t, 1);
                 break;
             }
