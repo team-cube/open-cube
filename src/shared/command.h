@@ -216,16 +216,16 @@ static inline int parseint(const char *s)
     return int(strtoul(s, NULL, 0));
 }
 
-#define PARSEFLOAT(name, type, parsefun) \
+#define PARSEFLOAT(name, type) \
     static inline type parse##name(const char *s) \
     { \
-        /* not all platforms (windows) can parse hexadecimal integers via strtod/strtof */ \
+        /* not all platforms (windows) can parse hexadecimal integers via strtod */ \
         char *end; \
-        type val = parsefun(s, &end); \
-        return val || end==s || (*end!='x' && *end!='X') ? val : type(parseint(s)); \
+        double val = strtod(s, &end); \
+        return val || end==s || (*end!='x' && *end!='X') ? type(val) : type(parseint(s)); \
     }
-PARSEFLOAT(float, float, strtof)
-PARSEFLOAT(number, double, strtod)
+PARSEFLOAT(float, float)
+PARSEFLOAT(number, double)
 
 static inline void intformat(char *buf, int v, int len = 20) { nformatstring(buf, len, "%d", v); }
 static inline void floatformat(char *buf, float v, int len = 20) { nformatstring(buf, len, v==int(v) ? "%.1f" : "%.7g", v); }
