@@ -7,7 +7,7 @@ namespace game
 
     VARP(ragdoll, 0, 1, 1);
     VARP(ragdollmillis, 0, 10000, 300000);
-    VARP(ragdollfade, 0, 1000, 300000);
+    VARP(ragdollfade, 0, 100, 5000);
     VARP(forceplayermodels, 0, 0, 1);
     VARP(hidedead, 0, 0, 1);
 
@@ -50,7 +50,7 @@ namespace game
     {
         0xAC2C2A,
         0xB27232,
-        0xB3A250,
+        0xBF984C,
         0x4C7A3D,
         0x3F748C,
         0x27508A,
