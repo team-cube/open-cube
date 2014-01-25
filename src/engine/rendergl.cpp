@@ -1002,7 +1002,7 @@ void gl_checkextensions()
             intel_texgatheroffsetcomp_bug = 1;
         }
     }
-    tqaaresolvegather = hasGPU5 && hasTG && !intel_texgatheroffsetcomp_bug ? 1 : 0;
+    if(hasGPU5 && hasTG && !intel_texgatheroffsetcomp_bug) tqaaresolvegather = 1;
 }
 
 ICOMMAND(glext, "s", (char *ext), intret(hasext(ext) ? 1 : 0));
