@@ -972,7 +972,7 @@ void gl_checkextensions()
         if(dbgexts) conoutf(CON_INIT, "Using GL_NV_copy_image extension.");
     }
 
-    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect;
+    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect, tqaaresolvegather, smaagreenluma, fxaagreenluma;
     if(amd)
     {
         msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
@@ -986,10 +986,20 @@ void gl_checkextensions()
     else if(intel)
     {
         glineardepth = 1; // causes massive slowdown in windows driver (and sometimes in linux driver) if not using linear depth
-        if(mesa) batchsunlight = 0; // causes massive slowdown in linux driver
         smgather = 1; // native shadow filter is slow
-        if(mesa) mesa_texrectoffset_bug = 1; // mesa i965 driver has buggy textureOffset with texture rectangles
+        if(mesa)
+        {
+            batchsunlight = 0; // causes massive slowdown in linux driver
+            mesa_texrectoffset_bug = 1; // mesa i965 driver has buggy textureOffset with texture rectangles
+        }
+        else
+        {
+            // luma tonemap shaders are buggy and slightly slower on Intel's Windows driver
+            smaagreenluma = fxaagreenluma = 1;
+        }
     }
+    // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
+    tqaaresolvegather = hasGPU5 && hasTG && (!intel || mesa);
 }
 
 ICOMMAND(glext, "s", (char *ext), intret(hasext(ext) ? 1 : 0));

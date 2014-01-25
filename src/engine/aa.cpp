@@ -8,6 +8,7 @@ VARF(tqaamovemask, 0, 1, 1, cleanupaa());
 VARP(tqaaquincunx, 0, 1, 1);
 FVAR(tqaacolorweightscale, 0, 0.25f, 1e3f);
 FVAR(tqaacolorweightbias, 0, 0.01f, 1);
+VAR(tqaaresolvegather, 1, 0, 0);
 
 struct tqaaview
 {
