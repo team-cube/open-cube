@@ -284,6 +284,8 @@ void glerror(const char *file, int line, GLenum error)
 
 VAR(amd_pf_bug, 0, 0, 1);
 VAR(mesa_texrectoffset_bug, 0, 0, 1);
+VAR(intel_fragalpha_bug, 0, 0, 1);
+VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -972,7 +974,7 @@ void gl_checkextensions()
         if(dbgexts) conoutf(CON_INIT, "Using GL_NV_copy_image extension.");
     }
 
-    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect, tqaaresolvegather, smaagreenluma, fxaagreenluma;
+    extern int msaadepthstencil, gdepthstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect, tqaaresolvegather;
     if(amd)
     {
         msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
@@ -995,11 +997,12 @@ void gl_checkextensions()
         else
         {
             // luma tonemap shaders are buggy and slightly slower on Intel's Windows driver
-            smaagreenluma = fxaagreenluma = 1;
+            intel_fragalpha_bug = 1;
+            // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
+            intel_texgatheroffsetcomp_bug = 1;
         }
     }
-    // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
-    tqaaresolvegather = hasGPU5 && hasTG && (!intel || mesa);
+    tqaaresolvegather = hasGPU5 && hasTG && !intel_texgatheroffsetcomp_bug ? 1 : 0;
 }
 
 ICOMMAND(glext, "s", (char *ext), intret(hasext(ext) ? 1 : 0));
