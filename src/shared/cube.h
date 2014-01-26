@@ -55,19 +55,11 @@
 
 #include <zlib.h>
 
-#ifdef __sun__
-#undef sun
-#undef MAXNAMELEN
-#ifdef queue
-  #undef queue
-#endif
-#define queue __squeue
-#endif
-
 #include "tools.h"
 #include "geom.h"
 #include "ents.h"
 #include "command.h"
+
 #ifndef STANDALONE
 #include "glexts.h"
 #include "glemu.h"

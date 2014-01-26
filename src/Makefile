@@ -157,11 +157,6 @@ MASTER_OBJS= \
 
 SERVER_MASTER_OBJS= $(SERVER_OBJS) $(filter-out $(SERVER_OBJS),$(MASTER_OBJS))
 
-ifeq ($(PLATFORM),SunOS)
-CLIENT_LIBS+= -lsocket -lnsl -lX11
-SERVER_LIBS+= -lsocket -lnsl
-endif
-
 default: all
 
 all: client server
