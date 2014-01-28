@@ -3509,9 +3509,10 @@ void listfind(ident *id, const char *list, const uint *body)
     {
         ++n;
         setiter(*id, newstring(start, end-start), stack);
-        if(executebool(body)) break;
+        if(executebool(body)) { intret(n); goto found; }
     }
-    intret(n);
+    intret(-1);
+found:
     if(n >= 0) poparg(*id);
 }
 COMMAND(listfind, "rse");
