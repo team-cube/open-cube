@@ -1178,8 +1178,22 @@ void findplayerspawn(dynent *d, int forceent, int tag) // place at random spawn
     if(pick<0)
     {
         int r = rnd(10)+1;
-        loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1, -1, tag);
         pick = spawncycle;
+        loopi(r)
+        {
+            pick = findentity(ET_PLAYERSTART, pick+1, -1, tag);
+            if(pick < 0) break;
+        }
+        if(pick < 0 && tag)
+        {
+            pick = spawncycle;
+            loopi(r)
+            {
+                pick = findentity(ET_PLAYERSTART, pick+1, -1, 0);
+                if(pick < 0) break;
+            }
+        }
+        if(pick >= 0) spawncycle = pick;
     }
     if(pick>=0)
     {
@@ -1200,11 +1214,6 @@ void findplayerspawn(dynent *d, int forceent, int tag) // place at random spawn
                 break;
             }
         }
-    }
-    else if(tag)    
-    {
-        findplayerspawn(d);
-        return;
     }
     else
     {
