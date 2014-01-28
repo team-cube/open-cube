@@ -1944,8 +1944,7 @@ static inline const uint *forcecode(tagval &v)
         buf.reserve(64);
         compilemain(buf, v.getstr());
         freearg(v);
-        v.setcode(buf.getbuf()+1);
-        buf.disown();
+        v.setcode(buf.disown()+1);
     }
     return v.code;
 }
@@ -2413,8 +2412,7 @@ static const uint *runcode(const uint *code, tagval &result)
                     case VAL_STR: case VAL_MACRO: case VAL_CSTR: buf.reserve(64); compilemain(buf, arg.s); freearg(arg); break;
                     default: buf.reserve(8); buf.add(CODE_START); compilenull(buf); buf.add(CODE_RESULT); buf.add(CODE_EXIT); break;
                 }
-                arg.setcode(buf.getbuf()+1);
-                buf.disown();
+                arg.setcode(buf.disown()+1);
                 continue;
             }
             case CODE_COND:
@@ -2429,8 +2427,7 @@ static const uint *runcode(const uint *code, tagval &result)
                             buf.reserve(64);
                             compilemain(buf, arg.s);
                             freearg(arg);
-                            arg.setcode(buf.getbuf()+1);
-                            buf.disown();
+                            arg.setcode(buf.disown()+1);
                         }
                         else forcenull(arg);
                         break;
@@ -3293,8 +3290,7 @@ static inline void loopconc(ident &id, int offset, int n, int step, uint *body, 
     }
     if(n > 0) poparg(id);
     s.add('\0');
-    commandret->setstr(s.getbuf());
-    s.disown();
+    commandret->setstr(s.disown());
 }
 ICOMMAND(loopconcat, "rie", (ident *id, int *n, uint *body), loopconc(*id, 0, *n, 1, body, true));
 ICOMMAND(loopconcat+, "riie", (ident *id, int *offset, int *n, uint *body), loopconc(*id, *offset, *n, 1, body, true));
@@ -3360,8 +3356,7 @@ void format(tagval *args, int numargs)
         else s.add(c);
     }
     s.add('\0');
-    commandret->setstr(s.getbuf());
-    s.disown();
+    commandret->setstr(s.disown());
 }
 COMMAND(format, "V");
 
@@ -3633,8 +3628,7 @@ void looplistconc(ident *id, const char *list, const uint *body, bool space)
     }
     if(n) poparg(*id);
     r.add('\0');
-    commandret->setstr(r.getbuf());
-    r.disown();
+    commandret->setstr(r.disown());
 }
 ICOMMAND(looplistconcat, "rse", (ident *id, char *list, uint *body), looplistconc(id, list, body, true));
 ICOMMAND(looplistconcatword, "rse", (ident *id, char *list, uint *body), looplistconc(id, list, body, false));
@@ -3658,8 +3652,7 @@ void listfilter(ident *id, const char *list, const uint *body)
     }
     if(n) poparg(*id);
     r.add('\0');
-    commandret->setstr(r.getbuf());
-    r.disown();
+    commandret->setstr(r.disown());
 }
 COMMAND(listfilter, "rse");
 
@@ -3683,8 +3676,7 @@ void prettylist(const char *s, const char *conj)
         }
     }
     p.add('\0');
-    commandret->setstr(p.getbuf());
-    p.disown();
+    commandret->setstr(p.disown());
 }
 COMMAND(prettylist, "ss");
 
@@ -3716,8 +3708,7 @@ ICOMMAND(indexof, "ss", (char *list, char *elem), intret(listincludes(list, elem
             } \
         } \
         p.add('\0'); \
-        commandret->setstr(p.getbuf()); \
-        p.disown(); \
+        commandret->setstr(p.disown()); \
     })
 
 LISTMERGECMD(listdel, , list, elems, <);
@@ -3747,8 +3738,7 @@ void listsplice(const char *s, const char *vals, int *skip, int *count, int *num
             break;
     }
     p.add('\0');
-    commandret->setstr(p.getbuf());
-    p.disown();
+    commandret->setstr(p.disown());
 }
 COMMAND(listsplice, "ssiiN");
 
