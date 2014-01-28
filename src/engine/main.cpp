@@ -4,6 +4,10 @@
 
 extern void cleargamma();
 
+#ifdef __APPLE__
+    extern "C" void macMessageBox(const char*, const char*);
+#endif
+
 void cleanup()
 {
     recorder::stop();
@@ -67,7 +71,6 @@ void fatal(const char *s, ...)    // failure exit
             #endif
             SDL_Quit();
             #ifdef __APPLE__
-                extern "C" void macMessageBox(const char*, const char*);
                 macMessageBox(msg, "Tesseract fatal error");
             #endif
         }
