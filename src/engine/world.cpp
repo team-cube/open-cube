@@ -1172,7 +1172,7 @@ int findentity(int type, int index, int attr1, int attr2)
 
 int spawncycle = -1;
 
-void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spawn. also used by monsters!
+void findplayerspawn(dynent *d, int forceent, int tag) // place at random spawn
 {
     int pick = forceent;
     if(pick<0)
@@ -1181,7 +1181,7 @@ void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spaw
         loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1, -1, tag);
         pick = spawncycle;
     }
-    if(pick!=-1)
+    if(pick>=0)
     {
         const vector<extentity *> &ents = entities::getents();
         d->pitch = 0;
@@ -1194,12 +1194,17 @@ void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spaw
             attempt = findentity(ET_PLAYERSTART, attempt+1, -1, tag);
             if(attempt<0 || attempt==pick)
             {
-                d->o = ents[attempt]->o;
-                d->yaw = ents[attempt]->attr1;
+                d->o = ents[pick]->o;
+                d->yaw = ents[pick]->attr1;
                 entinmap(d);
                 break;
             }
         }
+    }
+    else if(tag)    
+    {
+        findplayerspawn(d);
+        return;
     }
     else
     {
