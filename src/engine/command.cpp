@@ -3504,15 +3504,15 @@ void listfind(ident *id, const char *list, const uint *body)
 {
     if(id->type!=ID_ALIAS) { intret(-1); return; }
     identstack stack;
-    int n = 0;
-    for(const char *s = list, *start, *end; parselist(s, start, end); n++)
+    int n = -1;
+    for(const char *s = list, *start, *end; parselist(s, start, end);)
     {
+        ++n;
         setiter(*id, newstring(start, end-start), stack);
-        if(executebool(body)) { intret(n); goto found; }
+        if(executebool(body)) break;
     }
-    intret(-1);
-found:
-    if(n) poparg(*id);
+    intret(n);
+    if(n >= 0) poparg(*id);
 }
 COMMAND(listfind, "rse");
 
@@ -3520,14 +3520,15 @@ void listassoc(ident *id, const char *list, const uint *body)
 {
     if(id->type!=ID_ALIAS) return;
     identstack stack;
-    int n = 0;
-    for(const char *s = list, *start, *end, *qstart; parselist(s, start, end); n++)
+    int n = -1;
+    for(const char *s = list, *start, *end, *qstart; parselist(s, start, end);)
     {
+        ++n;
         setiter(*id, newstring(start, end-start), stack);
         if(executebool(body)) { if(parselist(s, start, end, qstart)) stringret(listelem(start, end, qstart)); break; }
         if(!parselist(s)) break;
     }
-    if(n) poparg(*id);
+    if(n >= 0) poparg(*id);
 }
 COMMAND(listassoc, "rse");
 
