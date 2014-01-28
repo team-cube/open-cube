@@ -3199,7 +3199,7 @@ ICOMMAND(pushif, "rTe", (ident *id, tagval *v, uint *code),
     }
 });
 
-void loopiter(ident *id, identstack &stack, tagval &v)
+void loopiter(ident *id, identstack &stack, const tagval &v)
 {
     if(id->stack != &stack)
     {
@@ -3293,7 +3293,8 @@ static inline void loopconc(ident &id, int offset, int n, int step, uint *body, 
     }
     if(n > 0) poparg(id);
     s.add('\0');
-    commandret->setstr(newstring(s.getbuf(), s.length()-1));
+    commandret->setstr(s.getbuf());
+    s.disown();
 }
 ICOMMAND(loopconcat, "rie", (ident *id, int *n, uint *body), loopconc(*id, 0, *n, 1, body, true));
 ICOMMAND(loopconcat+, "riie", (ident *id, int *offset, int *n, uint *body), loopconc(*id, *offset, *n, 1, body, true));
@@ -3359,7 +3360,8 @@ void format(tagval *args, int numargs)
         else s.add(c);
     }
     s.add('\0');
-    result(s.getbuf());
+    commandret->setstr(s.getbuf());
+    s.disown();
 }
 COMMAND(format, "V");
 
@@ -3631,7 +3633,8 @@ void looplistconc(ident *id, const char *list, const uint *body, bool space)
     }
     if(n) poparg(*id);
     r.add('\0');
-    commandret->setstr(newstring(r.getbuf(), r.length()-1));
+    commandret->setstr(r.getbuf());
+    r.disown();
 }
 ICOMMAND(looplistconcat, "rse", (ident *id, char *list, uint *body), looplistconc(id, list, body, true));
 ICOMMAND(looplistconcatword, "rse", (ident *id, char *list, uint *body), looplistconc(id, list, body, false));
@@ -3655,7 +3658,8 @@ void listfilter(ident *id, const char *list, const uint *body)
     }
     if(n) poparg(*id);
     r.add('\0');
-    commandret->setstr(newstring(r.getbuf(), r.length()-1));
+    commandret->setstr(r.getbuf());
+    r.disown();
 }
 COMMAND(listfilter, "rse");
 
@@ -3679,7 +3683,8 @@ void prettylist(const char *s, const char *conj)
         }
     }
     p.add('\0');
-    result(p.getbuf());
+    commandret->setstr(p.getbuf());
+    p.disown();
 }
 COMMAND(prettylist, "ss");
 
@@ -3742,7 +3747,8 @@ void listsplice(const char *s, const char *vals, int *skip, int *count, int *num
             break;
     }
     p.add('\0');
-    commandret->setstr(newstring(p.getbuf(), p.length()-1));
+    commandret->setstr(p.getbuf());
+    p.disown();
 }
 COMMAND(listsplice, "ssiiN");
 
