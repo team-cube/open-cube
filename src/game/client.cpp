@@ -328,6 +328,12 @@ namespace game
         if(d) intret(d->flags);
     });
 
+    ICOMMAND(getclientdeaths, "i", (int *cn),
+    {
+        gameent *d = getclient(*cn);
+        if(d) intret(d->deaths);
+    });
+
     bool ismaster(int cn)
     {
         gameent *d = getclient(cn);
@@ -1197,6 +1203,7 @@ namespace game
             else d->state = getint(p);
             d->frags = getint(p);
             d->flags = getint(p);
+            d->deaths = getint(p);
         }
         d->lifesequence = getint(p);
         d->health = getint(p);

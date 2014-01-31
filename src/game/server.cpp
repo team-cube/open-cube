@@ -1836,6 +1836,7 @@ namespace server
                 putint(p, oi->state.state);
                 putint(p, oi->state.frags);
                 putint(p, oi->state.flags);
+                putint(p, oi->state.deaths);
                 sendstate(oi->state, p);
             }
             putint(p, -1);
@@ -1860,8 +1861,8 @@ namespace server
     void sendresume(clientinfo *ci)
     {
         servstate &gs = ci->state;
-        sendf(-1, 1, "ri3i6vi", N_RESUME, ci->clientnum,
-            gs.state, gs.frags, gs.flags,
+        sendf(-1, 1, "ri3i7vi", N_RESUME, ci->clientnum, gs.state,
+            gs.frags, gs.flags, gs.deaths,
             gs.lifesequence,
             gs.health, gs.maxhealth,
             gs.gunselect, NUMGUNS, gs.ammo, -1);

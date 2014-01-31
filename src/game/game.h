@@ -405,6 +405,15 @@ struct gameent : dynent, gamestate
         flagpickup = 0;
         lastnode = -1;
     }
+
+    void startgame()
+    {
+        frags = flags = deaths = 0;
+        totaldamage = totalshots = 0;
+        maxhealth = 1;
+        lifesequence = -1;
+        respawned = suicided = -2;
+    }
 };
 
 struct teamscore
