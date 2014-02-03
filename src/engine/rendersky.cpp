@@ -379,7 +379,7 @@ void cleanupsky()
 }
 
 VARR(atmo, 0, 0, 1);
-FVARR(atmoplanetsize, 1e-3f, 1, 1e3f);
+FVARR(atmoplanetsize, 1e-3f, 8, 1e3f);
 FVARR(atmoheight, 1e-3f, 1, 1e3f);
 FVARR(atmobright, 0, 4, 16);
 HVARFR(atmosunlight, 0, 0, 0xFFFFFF,
