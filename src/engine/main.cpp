@@ -1146,13 +1146,13 @@ int main(int argc, char **argv)
     execfile("config/keymap.cfg");
     execfile("config/sound.cfg");
     execfile("config/stdedit.cfg");
+    execfile(game::gameconfig());
     execfile("config/ui_lib.cfg");
     execfile("config/ui_style.cfg");
     execfile("config/ui.cfg");
     execfile("config/heightmap.cfg");
     execfile("config/blendbrush.cfg");
     if(game::savedservers()) execfile(game::savedservers(), false);
-    execfile(game::gameconfig());
 
     identflags |= IDF_PERSIST;
 
