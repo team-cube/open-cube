@@ -3,31 +3,49 @@
 ***First package release approximately here***
 
 ===============================================================
-MAP Flagstone CTF
-   Wild-West / Old Mine Theme
-   New/Reworked layout
-      accommodate new player movement speed
+
+UI Stuff
+
+   -Scoreboard
+      Convert to tables
+
+   -Edit HUD
+      Revamp*
+
+   -Edit Entity
+      ...
+
+   -Texture Browser
+      Directories
+      Used & Listed Texture View
+      allfaces toggle
+      Thumbnail Size
+
+   -Mapmodel Browser
+      Revamp*
+      Directories
+      Thumbnails?
+
+   -Environment Settings
+      ...
+
+   -Misc Editing?
+
+   -Master
+
+   -Bots
 
 ===============================================================
-MAP Shipwreck CTF
-   Tropical Island / PirateShip Theme
-   New layout
-      accommodate new player movement speed
-      better balanced gameplay
-
-===============================================================
-MAP Turbine ARENA
-   Desert Theme
-
-===============================================================
-MAP Ot ARENA
-   Theme?
-
 
 ***************************************************************
 ***************************************************************
 Misc Stuff:
    -tweak hudgun animations
+
+   -Flagstone remake
+   -shipwreck remake
+   -turbine remake
+   -Ot remake
 
 ***************************************************************
 ***************************************************************
@@ -36,11 +54,15 @@ Theme Ideas:
       cafateria (from clone map)
       big screen room from goldeneye
    -Chess/checkers board
-   -Halloween (hallo-ish)
+   -Halloween (Hallo-ish)
    -Classical architecture (nmp8-ish)
    -Lego blocks / Toys
-   -Movie-TV studio / Music stage
+   -Movie-TV studio / Music stage / Club
    -Video Game Arcade / Game hall / Casino
+   -Castle in the Alps
+   -Asian Cliff Temple
+   -Suburbia / modern american neighborhood
+   -NiebTek Labs (Portal-ish)
    -(autumn-ish)
    -(garden-ish)
 
