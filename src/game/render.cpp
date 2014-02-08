@@ -54,7 +54,7 @@ namespace game
         0x4C7A3D,
         0x3F748C,
         0x27508A,
-        0xB85E88,
+        0xB8658C,
         0x5A3B80,
         0xB8B1A5
     };
