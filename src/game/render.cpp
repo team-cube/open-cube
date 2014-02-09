@@ -120,12 +120,9 @@ namespace game
 
     ICOMMAND(getplayercolor, "ii", (int *color, int *team), intret(getplayercolor(*team, *color)));
 
-    HVAR(testplayercolor, 0, 0, 0xFFFFFF);
-
     int getplayercolor(gameent *d, int team)
     {
-        if(testplayercolor) return testplayercolor;
-        else if(d==player1) switch(team)
+        if(d==player1) switch(team)
         {
             case 1: return getplayercolor(1, playercolorazul);
             case 2: return getplayercolor(2, playercolorrojo);
