@@ -528,6 +528,8 @@ void sendserverinforeply(ucharbuf &p)
     enet_socket_send(serverhost->socket, &serverinfoaddress, &buf, 1);
 }
 
+#define MAXPINGDATA 32
+
 void checkserversockets()        // reply all server info requests
 {
     static ENetSocketSet readset, writeset;
@@ -554,7 +556,7 @@ void checkserversockets()        // reply all server info requests
         buf.data = data;
         buf.dataLength = sizeof(data);
         int len = enet_socket_receive(lansock, &serverinfoaddress, &buf, 1);
-        if(len < 2 || data[0] != 0xFF || data[1] != 0xFF) return;
+        if(len < 2 || data[0] != 0xFF || data[1] != 0xFF || len-2 > MAXPINGDATA) return;
         ucharbuf req(data+2, len-2), p(data+2, sizeof(data)-2);
         p.len += len-2;
         server::serverinforeply(req, p);
@@ -586,7 +588,7 @@ void checkserversockets()        // reply all server info requests
 
 static int serverinfointercept(ENetHost *host, ENetEvent *event)
 {
-    if(host->receivedDataLength < 2 || host->receivedData[0] != 0xFF || host->receivedData[1] != 0xFF) return 0;
+    if(host->receivedDataLength < 2 || host->receivedData[0] != 0xFF || host->receivedData[1] != 0xFF || host->receivedDataLength-2 > MAXPINGDATA) return 0;
     serverinfoaddress = host->receivedAddress;
     ucharbuf req(host->receivedData+2, host->receivedDataLength-2), p(host->receivedData+2, sizeof(host->packetData[0])-2);
     p.len += host->receivedDataLength-2;
