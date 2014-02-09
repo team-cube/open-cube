@@ -3509,7 +3509,7 @@ namespace server
 
     void serverinforeply(ucharbuf &req, ucharbuf &p)
     {
-        if(!getint(req))
+        if(req.remaining() && !getint(req))
         {
             extserverinforeply(req, p);
             return;
