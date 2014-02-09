@@ -50,7 +50,7 @@ namespace game
     {
         0xAC2C2A,
         0xAD6932,
-        0xB89A51,
+        0xBFAA56,
         0x4C7A3D,
         0x3F748C,
         0x27508A,
