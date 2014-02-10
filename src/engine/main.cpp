@@ -992,10 +992,13 @@ void getfps(int &fps, int &bestdiff, int &worstdiff)
 
 void getfps_(int *raw)
 {
-    int fps, bestdiff, worstdiff;
-    if(*raw) fps = 1000/fpshistory[(fpspos+MAXFPSHISTORY-1)%MAXFPSHISTORY];
-    else getfps(fps, bestdiff, worstdiff);
-    intret(fps);
+    if(*raw) floatret(1000.0f/fpshistory[(fpspos+MAXFPSHISTORY-1)%MAXFPSHISTORY]);
+    else
+    {
+        int fps, bestdiff, worstdiff;
+        getfps(fps, bestdiff, worstdiff);
+        intret(fps);
+    }
 }
 
 COMMANDN(getfps, getfps_, "i");
