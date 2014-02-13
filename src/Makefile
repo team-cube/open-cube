@@ -44,11 +44,7 @@ override CXX+= -m32
 override WINDRES+= -F pe-i386
 endif
 CLIENT_INCLUDES= $(INCLUDES) -Iinclude
-ifneq (,$(findstring TDM,$(PLATFORM)))
-STD_LIBS=
-else
 STD_LIBS= -static-libgcc -static-libstdc++
-endif
 CLIENT_LIBS= -mwindows $(STD_LIBS) -L$(WINBIN) -L$(WINLIB) -lSDL2 -lSDL2_image -lSDL2_mixer -lzlib1 -lopengl32 -lenet -lws2_32 -lwinmm
 else	
 CLIENT_INCLUDES= $(INCLUDES) -I/usr/X11R6/include `sdl2-config --cflags`
