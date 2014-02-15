@@ -3656,6 +3656,22 @@ void listfilter(ident *id, const char *list, const uint *body)
 }
 COMMAND(listfilter, "rse");
 
+void listcount(ident *id, const char *list, const uint *body)
+{
+    if(id->type!=ID_ALIAS) return;
+    identstack stack;
+    int n = 0, r = 0;
+    for(const char *s = list, *start, *end; parselist(s, start, end); n++)
+    {
+        char *val = newstring(start, end-start);
+        setiter(*id, val, stack);
+        if(executebool(body)) r++;
+    }
+    if(n) poparg(*id);
+    intret(r);
+}
+COMMAND(listcount, "rse");
+
 void prettylist(const char *s, const char *conj)
 {
     vector<char> p;
