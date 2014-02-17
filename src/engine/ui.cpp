@@ -1841,7 +1841,7 @@ namespace UI
         float val;
         char str[20];
 
-        TextFloat() { memset(&val, -1, sizeof(val)); str[0] = '\0'; }
+        TextFloat() : val(0) { memcpy(str, "0.0", 4); }
 
         void setup(float val_, float scale_ = 1, const Color &color_ = Color(255, 255, 255), float wrap_ = -1)
         {
