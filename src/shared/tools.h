@@ -1041,46 +1041,6 @@ template<class K, class T> struct hashtable : hashbase<hashtable<K, T>, hashtabl
 #define enumeratekt(ht,k,e,t,f,b) loopi((ht).size) for(void *ec = (ht).chains[i]; ec;) { k &e = (ht).enumkey(ec); t &f = (ht).enumdata(ec); ec = (ht).enumnext(ec); b; }
 #define enumerate(ht,t,e,b)       loopi((ht).size) for(void *ec = (ht).chains[i]; ec;) { t &e = (ht).enumdata(ec); ec = (ht).enumnext(ec); b; }
 
-struct unionfind
-{
-    struct ufval
-    {
-        int rank, next;
-
-        ufval() : rank(0), next(-1) {}
-    };
-
-    vector<ufval> ufvals;
-
-    int find(int k)
-    {
-        if(k>=ufvals.length()) return k;
-        while(ufvals[k].next>=0) k = ufvals[k].next;
-        return k;
-    }
-
-    int compressfind(int k)
-    {
-        if(ufvals[k].next<0) return k;
-        return ufvals[k].next = compressfind(ufvals[k].next);
-    }
-
-    void unite (int x, int y)
-    {
-        while(ufvals.length() <= max(x, y)) ufvals.add();
-        x = compressfind(x);
-        y = compressfind(y);
-        if(x==y) return;
-        ufval &xval = ufvals[x], &yval = ufvals[y];
-        if(xval.rank < yval.rank) xval.next = y;
-        else
-        {
-            yval.next = x;
-            if(xval.rank==yval.rank) yval.rank++;
-        }
-    }
-};
-
 template <class T, int SIZE> struct queue
 {
     int head, tail, len;
