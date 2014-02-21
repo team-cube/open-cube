@@ -20,7 +20,7 @@ static void FUNCNAME(shifttexture)(uchar *src, uint sw, uint sh, uint stride, uc
     uint tshift = wshift + hshift;
     for(uchar *yend = &src[sh*stride]; src < yend;)
     {
-        for(uchar *xend = &src[stride], *xsrc = src; xsrc < xend; xsrc += wfrac*BPP, dst += BPP)
+        for(uchar *xend = &src[sw*BPP], *xsrc = src; xsrc < xend; xsrc += wfrac*BPP, dst += BPP)
         {
             #define OP(c, n) c##t = 0
             DEFPIXEL
