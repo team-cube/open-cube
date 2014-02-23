@@ -1043,7 +1043,7 @@ namespace UI
             {
                 o->layout();
                 int cols = o->childcolumns();
-                while(widths.length() <= cols) widths.add(0);
+                while(widths.length() < cols) widths.add(0);
                 loopj(cols)
                 {
                     Object *c = o->children[j];
