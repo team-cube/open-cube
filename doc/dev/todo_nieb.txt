@@ -6,9 +6,6 @@
 
 UI Stuff
 
-   -Scoreboard
-      Convert to tables
-
    -Edit HUD
       Revamp*
 
