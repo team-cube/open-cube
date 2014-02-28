@@ -4,10 +4,6 @@
 
 extern void cleargamma();
 
-#ifdef __APPLE__
-    extern "C" void macMessageBox(const char*, const char*);
-#endif
-
 void cleanup()
 {
     recorder::stop();
@@ -66,13 +62,8 @@ void fatal(const char *s, ...)    // failure exit
                     if(screen) SDL_SetWindowFullscreen(screen, 0);
                 #endif
             }
-            #ifdef WIN32
-                MessageBox(NULL, msg, "Tesseract fatal error", MB_OK|MB_SYSTEMMODAL);
-            #endif
             SDL_Quit();
-            #ifdef __APPLE__
-                macMessageBox(msg, "Tesseract fatal error");
-            #endif
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Tesseract fatal error", msg, NULL);
         }
     }
 
@@ -905,7 +896,7 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
     if(!ep) fatal("unknown type");
     EXCEPTION_RECORD *er = ep->ExceptionRecord;
     CONTEXT *context = ep->ContextRecord;
-    string out, t;
+    char out[512];
     formatstring(out, "Tesseract Win32 Exception: 0x%x [0x%x]\n\n", er->ExceptionCode, er->ExceptionCode==EXCEPTION_ACCESS_VIOLATION ? er->ExceptionInformation[1] : -1);
     SymInitialize(GetCurrentProcess(), NULL, TRUE);
 #ifdef _AMD64_
@@ -934,8 +925,7 @@ void stackdumper(unsigned int type, EXCEPTION_POINTERS *ep)
 #endif
         {
             char *del = strrchr(line.FileName, '\\');
-            formatstring(t, "%s - %s [%d]\n", sym.Name, del ? del + 1 : line.FileName, line.LineNumber);
-            concatstring(out, t);
+            concformatstring(out, "%s - %s [%d]\n", sym.Name, del ? del + 1 : line.FileName, line.LineNumber);
         }
     }
     fatal(out);
