@@ -151,7 +151,7 @@ namespace UI
         ushort state, childstate;
         vector<Object *> children;
 
-        Object() : state(0), childstate(0) {}
+        Object() : adjust(0), state(0), childstate(0) {}
         virtual ~Object()
         {
             clearchildren();
