@@ -301,6 +301,17 @@ static bool checkseries(const char *s, const char *name, int low, int high)
     return n >= low && n <= high;
 }
 
+static bool checkmesaversion(const char *s, int major, int minor, int patch)
+{
+    const char *v = strstr(s, "Mesa");
+    if(!v) return false;
+    int vmajor = 0, vminor = 0, vpatch = 0;
+    if(sscanf(v, "Mesa %d.%d.%d", &vmajor, &vminor, &vpatch) < 1) return false;
+    if(vmajor > major) return true; else if(vmajor < major) return false;
+    if(vminor > minor) return true; else if(vminor < minor) return false;
+    return vpatch >= patch;
+}
+    
 VAR(dbgexts, 0, 0, 1);
 
 hashset<const char *> glexts;
@@ -992,7 +1003,8 @@ void gl_checkextensions()
         if(mesa)
         {
             batchsunlight = 0; // causes massive slowdown in linux driver
-            mesa_texrectoffset_bug = 1; // mesa i965 driver has buggy textureOffset with texture rectangles
+            if(!checkmesaversion(version, 10, 0, 3))
+                mesa_texrectoffset_bug = 1; // mesa i965 driver has buggy textureOffset with texture rectangles
         }
         else
         {
