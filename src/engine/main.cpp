@@ -1164,7 +1164,6 @@ int main(int argc, char **argv)
     initing = NOT_INITING;
 
     logoutf("init: render");
-    renderbackground("initializing...");
     restoregamma();
     restorevsync();
     initgbuffer();
