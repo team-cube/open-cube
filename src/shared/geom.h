@@ -1692,7 +1692,7 @@ struct matrix4
     vec4 rowz() const { return vec4(a.z, b.z, c.z, d.z); }
     vec4 roww() const { return vec4(a.w, b.w, c.w, d.w); }
 
-    bool invert(const matrix4 &m, double mindet = 1.0e-10);
+    bool invert(const matrix4 &m, double mindet = 1.0e-12);
 
     vec2 lineardepthscale() const
     {
