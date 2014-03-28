@@ -2082,7 +2082,7 @@ namespace UI
             return true;
         }
 
-        virtual void scrollto(float cx, float cy) {}
+        virtual void scrollto(float cx, float cy, bool closest = false) {}
 
         void hold(float cx, float cy)
         {
@@ -2094,7 +2094,7 @@ namespace UI
         {
             ScrollButton *button = (ScrollButton *)find(ScrollButton::typestr(), false);
             if(button && button->haschildstate(STATE_PRESS)) { offsetx = cx - button->x; offsety = cy - button->y; }
-            else scrollto(cx, cy);
+            else scrollto(cx, cy, true);
         }
 
         virtual void addscroll(Scroller *scroller, float dir) = 0;
@@ -2165,14 +2165,14 @@ namespace UI
             scroller->addhscroll(dir);
         }
 
-        void scrollto(float cx, float cy)
+        void scrollto(float cx, float cy, bool closest = false)
         {
             Scroller *scroller = (Scroller *)findsibling(Scroller::typestr());
             if(!scroller) return;
             ScrollButton *button = (ScrollButton *)find(ScrollButton::typestr(), false);
             if(!button) return;
             float bscale = (w - button->w) / (1 - scroller->hscale()),
-                  offset = bscale > 1e-3f ? cx/bscale : 0;
+                  offset = bscale > 1e-3f ? (closest && cx >= button->x + button->w ? cx - button->w : cx)/bscale : 0;
             scroller->sethscroll(offset*scroller->virtw);
         }
 
@@ -2207,14 +2207,14 @@ namespace UI
             scroller->addvscroll(dir);
         }
 
-        void scrollto(float cx, float cy)
+        void scrollto(float cx, float cy, bool closest = false)
         {
             Scroller *scroller = (Scroller *)findsibling(Scroller::typestr());
             if(!scroller) return;
             ScrollButton *button = (ScrollButton *)find(ScrollButton::typestr(), false);
             if(!button) return;
             float bscale = (h - button->h) / (1 - scroller->vscale()),
-                  offset = bscale > 1e-3f ? cy/bscale : 0;
+                  offset = bscale > 1e-3f ? (closest && cy >= button->y + button->h ? cy - button->h : cy)/bscale : 0;
             scroller->setvscroll(offset*scroller->virth);
         }
 
