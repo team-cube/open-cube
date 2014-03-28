@@ -112,8 +112,8 @@ static struct gamemodeinfo
     { "edit", "Edit", M_EDIT, "Cooperative Editing:\nEdit maps with multiple players simultaneously." },
     { "rdm", "rDM", M_LOBBY | M_RAIL, "Railgun Deathmatch:\nFrag everyone with railguns to score points." },
     { "pdm", "pDM", M_LOBBY | M_PULSE, "Pulse Rifle Deathmatch:\nFrag everyone with pulse rifles to score points." },
-    { "rtdm", "rTDM", M_TEAM | M_RAIL, "Railgun Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with railguns to score points for \fs\f1your team\fr." },
-    { "ptdm", "pTDM", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch:\nFrag \fs\f3the enemy team\fr to with pulse rifles to score points for \fs\f1your team\fr." },
+    { "rtdm", "rTDM", M_TEAM | M_RAIL, "Railgun Team Deathmatch:\nFrag \fs\f3the enemy team\fr with railguns to score points for \fs\f1your team\fr." },
+    { "ptdm", "pTDM", M_TEAM | M_PULSE, "Pulse Rifle Team Deathmatch:\nFrag \fs\f3the enemy team\fr with pulse rifles to score points for \fs\f1your team\fr." },
     { "rctf", "rCTF", M_CTF | M_TEAM | M_RAIL, "Railgun Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
     { "pctf", "pCTF", M_CTF | M_TEAM | M_PULSE, "Pulse Rifle Capture The Flag:\nCapture \fs\f3the enemy flag\fr and bring it back to \fs\f1your flag\fr to score points for \fs\f1your team\fr." },
 };
