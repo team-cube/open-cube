@@ -194,18 +194,15 @@ namespace fogdome
     struct vert
     {
         vec pos;
-        uchar color[4];
+        bvec4 color;
 
         vert() {}
-        vert(const vec &pos, const bvec &fcolor, float alpha) : pos(pos)
+        vert(const vec &pos, const bvec &fcolor, float alpha) : pos(pos), color(fcolor, uchar(alpha*255))
         {
-            memcpy(color, fcolor.v, 3);
-            color[3] = uchar(alpha*255);
         }
-        vert(const vert &v0, const vert &v1) : pos(vec(v0.pos).add(v1.pos).normalize())
+        vert(const vert &v0, const vert &v1) : pos(vec(v0.pos).add(v1.pos).normalize()), color(v0.color)
         {
-            memcpy(color, v0.color, 4);
-            if(v0.pos.z != v1.pos.z) color[3] += uchar((v1.color[3] - v0.color[3]) * (pos.z - v0.pos.z) / (v1.pos.z - v0.pos.z));
+            if(v0.pos.z != v1.pos.z) color.a += uchar((v1.color.a - v0.color.a) * (pos.z - v0.pos.z) / (v1.pos.z - v0.pos.z));
         }
     } *verts = NULL;
     GLushort *indices = NULL;

@@ -29,8 +29,7 @@ static struct grasswedge
 struct grassvert
 {
     vec pos;
-    bvec color;
-    uchar alpha;
+    bvec4 color;
     float u, v;
 };
 
@@ -172,12 +171,12 @@ static void gengrassquads(grassgroup *&group, const grasswedge &w, const grasstr
               tc1 = tc.dot(p1) + tcoffset, tc2 = tc.dot(p2) + tcoffset,
               fade = dist - t > taperdist ? (grassdist - (dist - t))*taperscale : 1,
               height = grassheight * fade;
-        uchar color[4] = { grasscolour.x, grasscolour.y, grasscolour.z, 255 };
+        bvec4 color(grasscolour, 255);
 
         #define GRASSVERT(n, tcv, modify) { \
             grassvert &gv = grassverts.add(); \
             gv.pos = p##n; \
-            memcpy(gv.color.v, color, sizeof(color)); \
+            gv.color = color; \
             gv.u = tc##n; gv.v = tcv; \
             modify; \
         }

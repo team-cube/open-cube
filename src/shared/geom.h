@@ -1331,6 +1331,8 @@ static inline uint hthash(const ivec4 &k)
     return k.x^k.y^k.z^k.w;
 }
 
+struct bvec4;
+
 struct bvec
 {
     union
@@ -1343,6 +1345,7 @@ struct bvec
     bvec() {}
     bvec(uchar x, uchar y, uchar z) : x(x), y(y), z(z) {}
     bvec(const vec &v) : x((uchar)((v.x+1)*255/2)), y((uchar)((v.y+1)*255/2)), z((uchar)((v.z+1)*255/2)) {}
+    explicit bvec(const bvec4 &v);
 
     uchar &operator[](int i)       { return v[i]; }
     uchar  operator[](int i) const { return v[i]; }
@@ -1382,6 +1385,32 @@ struct bvec
     }
     int tohexcolor() const { return (int(r)<<16)|(int(g)<<8)|int(b); }
 };
+
+struct bvec4
+{
+    union
+    {
+        struct { uchar x, y, z, w; };
+        struct { uchar r, g, b, a; };
+        uchar v[4];
+    };
+
+    bvec4() {}
+    bvec4(uchar x, uchar y, uchar z, uchar w) : x(x), y(y), z(z), w(w) {}
+    bvec4(const bvec &v, uchar w) : x(v.x), y(v.y), z(v.z), w(w) {}
+  
+    uchar &operator[](int i)       { return v[i]; }
+    uchar  operator[](int i) const { return v[i]; }
+
+    bool operator==(const bvec4 &v) const { return x==v.x && y==v.y && z==v.z && w==v.w; }
+    bool operator!=(const bvec4 &v) const { return x!=v.x || y!=v.y || z!=v.z || w!=v.w; }
+
+    bool iszero() const { return x==0 && y==0 && z==0 && w==0; }
+
+    void flip() { x -= 128; y -= 128; z -= 128; w -= 128; }
+};
+
+inline bvec::bvec(const bvec4 &v) : x(v.x), y(v.y), z(v.z) {}
 
 struct usvec
 {
