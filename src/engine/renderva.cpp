@@ -543,7 +543,7 @@ bool bboccluded(const ivec &bo, const ivec &br)
 }
 
 VAR(outline, 0, 0, 1);
-HVARP(outlinecolour, 0, 0, 0xFFFFFF);
+CVARP(outlinecolour, 0);
 VAR(dtoutline, 0, 1, 1);
 
 void renderoutline()
@@ -553,7 +553,7 @@ void renderoutline()
     gle::enablevertex();
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    gle::color(vec::hexcolor(outlinecolour));
+    gle::color(outlinecolour);
 
     enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
 
@@ -597,7 +597,7 @@ void renderoutline()
     gle::disablevertex();
 }
 
-HVAR(blendbrushcolor, 0, 0x0000C0, 0xFFFFFF);
+CVARP(blendbrushcolour, 0x0000C0);
 
 void renderblendbrush(GLuint tex, float x, float y, float w, float h)
 {
@@ -611,7 +611,7 @@ void renderblendbrush(GLuint tex, float x, float y, float w, float h)
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glBindTexture(GL_TEXTURE_2D, tex);
-    gle::color(vec::hexcolor(blendbrushcolor), 0.25f);
+    gle::color(blendbrushcolour, 0x40);
 
     LOCALPARAMF(texgenS, 1.0f/w, 0, 0, -x/w);
     LOCALPARAMF(texgenT, 0, 1.0f/h, 0, -y/h);
@@ -1946,7 +1946,7 @@ void renderalphageom(int side)
     cleanupgeom(cur);
 }
 
-HVARP(explicitskycolour, 0, 0x800080, 0xFFFFFF);
+CVARP(explicitskycolour, 0x800080);
 
 bool renderexplicitsky(bool outline)
 {
@@ -1961,7 +1961,7 @@ bool renderexplicitsky(bool outline)
                 if(outline)
                 {
                     ldrnotextureshader->set();
-                    gle::color(vec::hexcolor(explicitskycolour));
+                    gle::color(explicitskycolour);
                     glDepthMask(GL_FALSE);
                     enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
