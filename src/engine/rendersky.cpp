@@ -186,7 +186,7 @@ FVARR(fogdomemin, 0, 0, 1);
 FVARR(fogdomemax, 0, 0, 1);
 VARR(fogdomecap, 0, 1, 1);
 FVARR(fogdomeclip, 0, 1, 1);
-CVARR(fogdomecolour, fogdomecolor, 0);
+CVARR(fogdomecolour, 0);
 VARR(fogdomeclouds, 0, 1, 1);
 
 namespace fogdome
@@ -320,7 +320,7 @@ namespace fogdome
     void draw()
     {
         float capsize = fogdomecap && fogdomeheight < 1 ? (1 + fogdomeheight) / (1 - fogdomeheight) : -1;
-        bvec color = fogdomecolour ? fogdomecolor : fogcolor;
+        bvec color = !fogdomecolour.iszero() ? fogdomecolour : fogcolour;
         if(!numverts || lastcolor != color || lastminalpha != fogdomemin || lastmaxalpha != fogdomemax || lastcapsize != capsize || lastclipz != fogdomeclip)
         {
             init(color, min(fogdomemin, fogdomemax), fogdomemax, capsize, fogdomeclip);
@@ -404,7 +404,7 @@ static void drawatmosphere()
     sunmatrix.mul(invprojmatrix);
     LOCALPARAM(sunmatrix, sunmatrix);
 
-    LOCALPARAM(sunlight, (atmosunlight ? vec::hexcolor(atmosunlight).mul(atmosunlightscale) : sunlightcolor.tocolor().mul(sunlightscale)).mul(atmobright*ldrscale));
+    LOCALPARAM(sunlight, (atmosunlight ? vec::hexcolor(atmosunlight).mul(atmosunlightscale) : sunlight.tocolor().mul(sunlightscale)).mul(atmobright*ldrscale));
     LOCALPARAM(sundir, sunlightdir);
 
     vec sundiskparams;

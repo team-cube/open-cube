@@ -1298,8 +1298,8 @@ static void makeparticles(entity &e)
             else
             {
                 int mat = MAT_WATER + clamp(-e.attr3, 0, 3);
-                color = getwaterfallcolor(mat).tohexcolor();
-                if(!color) color = getwatercolor(mat).tohexcolor();
+                color = getwaterfallcolour(mat).tohexcolor();
+                if(!color) color = getwatercolour(mat).tohexcolor();
             }
             regularsplash(PART_WATER, color, 150, 4, 200, offsetvec(e.o, e.attr2, rnd(10)), 0.6f, 2);
             break;

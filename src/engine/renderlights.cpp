@@ -2124,7 +2124,7 @@ void radiancehints::bindparams()
 
 bool useradiancehints()
 {
-    return sunlight && csmshadowmap && gi && giscale && gidist;
+    return !sunlight.iszero() && csmshadowmap && gi && giscale && gidist;
 }
 
 static Shader *deferredlightshader = NULL, *deferredminimapshader = NULL, *deferredmsaapixelshader = NULL, *deferredmsaasampleshader = NULL;
@@ -2160,7 +2160,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
 
     int usecsm = 0, userh = 0, usebase = 0;
     if(common[0] != 'm' && ao) sun[sunlen++] = 'a';
-    if(sunlight && csmshadowmap)
+    if(!sunlight.iszero() && csmshadowmap)
     {
         usecsm = csmsplits;
         sun[sunlen++] = 'c';
@@ -2383,7 +2383,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         glActiveTexture_(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_RECTANGLE, aotex[2] ? aotex[2] : aotex[0]);
     }
-    if(sunlight && csmshadowmap && gi && giscale && gidist) loopi(4)
+    if(useradiancehints()) loopi(4)
     {
         glActiveTexture_(GL_TEXTURE6 + i);
         glBindTexture(GL_TEXTURE_3D, rhtex[i]);
@@ -2408,10 +2408,10 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     if(editmode && fullbright)
         GLOBALPARAMF(lightscale, fullbrightlevel*lightscale, fullbrightlevel*lightscale, fullbrightlevel*lightscale, 255*lightscale);
     else
-        GLOBALPARAMF(lightscale, ambientcolor.x*lightscale*ambientscale, ambientcolor.y*lightscale*ambientscale, ambientcolor.z*lightscale*ambientscale, 255*lightscale);
+        GLOBALPARAMF(lightscale, ambient.x*lightscale*ambientscale, ambient.y*lightscale*ambientscale, ambient.z*lightscale*ambientscale, 255*lightscale);
 
     bool sunpass = !lighttilebatch;
-    if(sunlight && csmshadowmap)
+    if(!sunlight.iszero() && csmshadowmap)
     {
         csm.bindparams();
         rh.bindparams();
@@ -2425,9 +2425,9 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
         else
         {
             GLOBALPARAM(sunlightdir, sunlightdir);
-            GLOBALPARAMF(sunlightcolor, sunlightcolor.x*lightscale*sunlightscale, sunlightcolor.y*lightscale*sunlightscale, sunlightcolor.z*lightscale*sunlightscale);
+            GLOBALPARAMF(sunlightcolor, sunlight.x*lightscale*sunlightscale, sunlight.y*lightscale*sunlightscale, sunlight.z*lightscale*sunlightscale);
             GLOBALPARAMF(giscale, 2*giscale);
-            GLOBALPARAMF(skylightcolor, 2*giaoscale*skylightcolor.x*lightscale*skylightscale, 2*giaoscale*skylightcolor.y*lightscale*skylightscale, 2*giaoscale*skylightcolor.z*lightscale*skylightscale);
+            GLOBALPARAMF(skylightcolor, 2*giaoscale*skylight.x*lightscale*skylightscale, 2*giaoscale*skylight.y*lightscale*skylightscale, 2*giaoscale*skylight.z*lightscale*skylightscale);
         }
         if(batchsunlight <= (gi && giscale && gidist ? 1 : 0)) sunpass = true;
     }
@@ -3004,7 +3004,7 @@ void packlights()
     if(lighttilebatch) loop(y, lighttileh)
     {
         int band = lighttilebands && lighttilebands < lighttileh ? (y * lighttilebands) / lighttileh : y;
-        bool sunpass = sunlight && csmshadowmap && batchsunlight < (gi && giscale && gidist ? 1 : 0);
+        bool sunpass = !sunlight.iszero() && csmshadowmap && batchsunlight < (gi && giscale && gidist ? 1 : 0);
         loop(x, lighttilew)
         {
             lighttile &tile = lighttiles[y][x];
@@ -3434,7 +3434,7 @@ VAR(rhinoq, 0, 1, 1);
 
 void renderradiancehints()
 {
-    if(!sunlight || !csmshadowmap || !gi || !giscale || !gidist) return;
+    if(!useradiancehints()) return;
 
     timer *rhcputimer = begintimer("radiance hints", false);
     timer *rhtimer = begintimer("radiance hints");
@@ -3734,7 +3734,7 @@ void rendershadowatlas()
     glEnable(GL_SCISSOR_TEST);
 
     // sun light
-    if(sunlight && csmshadowmap)
+    if(!sunlight.iszero() && csmshadowmap)
     {
         csm.setup();
         rendercsmshadowmaps();
@@ -4181,7 +4181,7 @@ void setuplights()
     if(bloomw < 0 || bloomh < 0) setupbloom(gw, gh);
     if(ao && (aow < 0 || aoh < 0)) setupao(gw, gh);
     if(!shadowatlasfbo) setupshadowatlas();
-    if(sunlight && csmshadowmap && gi && giscale && gidist && !rhfbo) setupradiancehints();
+    if(useradiancehints() && !rhfbo) setupradiancehints();
     if(!deferredlightshader) loaddeferredlightshaders();
     if(drawtex == DRAWTEX_MINIMAP && !deferredminimapshader) deferredminimapshader = loaddeferredlightshader(msaasamples ? "mM" : "m");
     setupaa(gw, gh);

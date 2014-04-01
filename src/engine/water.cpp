@@ -102,11 +102,10 @@ void renderwaterfog(int mat, float surface)
 
     if((mat&MATF_VOLUME) == MAT_WATER)
     {
-        const bvec &deepcolor = getwaterdeepcolor(mat);
-        const bvec &deepfadecolor = getwaterdeepfadecolor(mat);
+        const bvec &deepcolor = getwaterdeepcolour(mat);
         int deep = getwaterdeep(mat);
         GLOBALPARAMF(waterdeepcolor, deepcolor.x*ldrscaleb, deepcolor.y*ldrscaleb, deepcolor.z*ldrscaleb);
-        vec deepfade = deepfadecolor.tocolor().mul(deep);
+        vec deepfade = getwaterdeepfade(mat).tocolor().mul(deep);
         GLOBALPARAMF(waterdeepfade,
             deepfade.x ? calcfogdensity(deepfade.x) : -1e4f,
             deepfade.y ? calcfogdensity(deepfade.y) : -1e4f,
@@ -338,16 +337,16 @@ static inline void renderwater(const materialsurface &m, int mat = MAT_WATER)
 }
 
 #define WATERVARS(name) \
-    CVAR0R(name##colour, name##color, 0x01212C); \
-    CVAR0R(name##deepcolour, name##deepcolor, 0x010A10); \
-    CVAR0R(name##deepfade, name##deepfadecolor, 0x60BFFF); \
-    CVAR0R(name##refractcolour, name##refractcolor, 0xFFFFFF); \
+    CVAR0R(name##colour, 0x01212C); \
+    CVAR0R(name##deepcolour, 0x010A10); \
+    CVAR0R(name##deepfade, 0x60BFFF); \
+    CVAR0R(name##refractcolour, 0xFFFFFF); \
     VARR(name##fog, 0, 30, 10000); \
     VARR(name##deep, 0, 50, 10000); \
     VARR(name##spec, 0, 150, 200); \
     FVARR(name##refract, 0, 0.1f, 1e3f); \
-    CVARR(name##fallcolour, name##fallcolor, 0); \
-    CVARR(name##fallrefractcolour, name##fallrefractcolor, 0); \
+    CVARR(name##fallcolour, 0); \
+    CVARR(name##fallrefractcolour, 0); \
     VARR(name##fallspec, 0, 150, 200); \
     FVARR(name##fallrefract, 0, 0.1f, 1e3f);
 
@@ -356,18 +355,12 @@ WATERVARS(water2)
 WATERVARS(water3)
 WATERVARS(water4)
 
-GETMATIDXVAR(water, colour, int)
-GETMATIDXVAR(water, color, const bvec &)
-GETMATIDXVAR(water, deepcolour, int)
-GETMATIDXVAR(water, deepcolor, const bvec &)
-GETMATIDXVAR(water, deepfade, int)
-GETMATIDXVAR(water, deepfadecolor, const bvec &)
-GETMATIDXVAR(water, refractcolour, int)
-GETMATIDXVAR(water, refractcolor, const bvec &)
-GETMATIDXVAR(water, fallcolour, int)
-GETMATIDXVAR(water, fallcolor, const bvec &)
-GETMATIDXVAR(water, fallrefractcolour, int)
-GETMATIDXVAR(water, fallrefractcolor, const bvec &)
+GETMATIDXVAR(water, colour, const bvec &)
+GETMATIDXVAR(water, deepcolour, const bvec &)
+GETMATIDXVAR(water, deepfade, const bvec &)
+GETMATIDXVAR(water, refractcolour, const bvec &)
+GETMATIDXVAR(water, fallcolour, const bvec &)
+GETMATIDXVAR(water, fallrefractcolour, const bvec &)
 GETMATIDXVAR(water, fog, int)
 GETMATIDXVAR(water, deep, int)
 GETMATIDXVAR(water, spec, int)
@@ -376,7 +369,7 @@ GETMATIDXVAR(water, fallspec, int)
 GETMATIDXVAR(water, fallrefract, float)
 
 #define LAVAVARS(name) \
-    CVAR0R(name##colour, name##color, 0xFF4000); \
+    CVAR0R(name##colour, 0xFF4000); \
     VARR(name##fog, 0, 50, 10000); \
     FVARR(name##glowmin, 0, 0.25f, 2); \
     FVARR(name##glowmax, 0, 1.0f, 2); \
@@ -387,8 +380,7 @@ LAVAVARS(lava2)
 LAVAVARS(lava3)
 LAVAVARS(lava4)
 
-GETMATIDXVAR(lava, colour, int)
-GETMATIDXVAR(lava, color, const bvec &)
+GETMATIDXVAR(lava, colour, const bvec &)
 GETMATIDXVAR(lava, fog, int)
 GETMATIDXVAR(lava, glowmin, float)
 GETMATIDXVAR(lava, glowmax, float)
@@ -560,9 +552,9 @@ void renderwaterfalls()
         wfxscale = TEX_SCALE/(tex->xs*wslot.scale);
         wfyscale = TEX_SCALE/(tex->ys*wslot.scale);
 
-        bvec color = getwaterfallcolor(k), refractcolor = getwaterfallrefractcolor(k);
-        if(color.iszero()) color = getwatercolor(k);
-        if(refractcolor.iszero()) refractcolor = getwaterrefractcolor(k);
+        bvec color = getwaterfallcolour(k), refractcolor = getwaterfallrefractcolour(k);
+        if(color.iszero()) color = getwatercolour(k);
+        if(refractcolor.iszero()) refractcolor = getwaterrefractcolour(k);
         float colorscale = (0.5f/255), refractscale = colorscale/ldrscale;
         float refract = getwaterfallrefract(k);
         int spec = getwaterfallspec(k);
@@ -618,17 +610,16 @@ void renderwater()
         glActiveTexture_(GL_TEXTURE0);
 
         float colorscale = 0.5f/255, refractscale = colorscale/ldrscale, reflectscale = 0.5f/ldrscale;
-        const bvec &color = getwatercolor(k);
-        const bvec &deepcolor = getwaterdeepcolor(k);
-        const bvec &deepfadecolor = getwaterdeepfadecolor(k);
-        const bvec &refractcolor = getwaterrefractcolor(k);
+        const bvec &color = getwatercolour(k);
+        const bvec &deepcolor = getwaterdeepcolour(k);
+        const bvec &refractcolor = getwaterrefractcolour(k);
         int fog = getwaterfog(k), deep = getwaterdeep(k), spec = getwaterspec(k);
         float refract = getwaterrefract(k);
         GLOBALPARAMF(watercolor, color.x*colorscale, color.y*colorscale, color.z*colorscale);
         GLOBALPARAMF(waterdeepcolor, deepcolor.x*colorscale, deepcolor.y*colorscale, deepcolor.z*colorscale);
         float fogdensity = fog ? calcfogdensity(fog) : -1e4f;
         GLOBALPARAMF(waterfog, fogdensity);
-        vec deepfade = deepfadecolor.tocolor().mul(deep);
+        vec deepfade = getwaterdeepfade(k).tocolor().mul(deep);
         GLOBALPARAMF(waterdeepfade,
             deepfade.x ? calcfogdensity(deepfade.x) : -1e4f,
             deepfade.y ? calcfogdensity(deepfade.y) : -1e4f,

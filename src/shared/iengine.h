@@ -41,7 +41,7 @@ enum // cube empty-space materials
 #define isdeadly(mat) ((mat)==MAT_LAVA)
 
 extern void lightent(extentity &e, float height = 8.0f);
-extern void lightreaching(const vec &target, vec &color, vec &dir, bool fast = false, extentity *e = 0, float ambient = 0.4f);
+extern void lightreaching(const vec &target, vec &color, vec &dir, bool fast = false, extentity *e = 0, float minambient = 0.4f);
 
 enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_ENTS = 9, RAY_CLIPMAT = 16, RAY_SKIPFIRST = 32, RAY_EDITMAT = 64, RAY_SHADOW = 128, RAY_PASS = 256, RAY_SKIPSKY = 512 };
 
