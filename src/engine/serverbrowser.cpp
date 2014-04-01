@@ -274,9 +274,9 @@ struct serverinfo : servinfo
 
     bool limitpong()
     {
-        bool result = !lastpong || totalmillis - lastpong >= 1000;
+        if(lastpong && totalmillis - lastpong < 1000) return false;
         lastpong = totalmillis;
-        return result;
+        return true;
     }
 
     void calcping()
