@@ -683,12 +683,7 @@ extern const vec matnormals[6] =
 };
 
 #define GLASSVARS(name) \
-    bvec name##color(0xB0, 0xD8, 0xFF); \
-    HVARFR(name##colour, 0, 0xB0D8FF, 0xFFFFFF, \
-    { \
-        if(!name##colour) name##colour = 0xB0D8FF; \
-        name##color = bvec::hexcolor(name##colour); \
-    }); \
+    CVAR0R(name##colour, name##color, 0xB0D8FF); \
     FVARR(name##refract, 0, 0.1f, 1e3f); \
     VARR(name##spec, 0, 150, 200);
 

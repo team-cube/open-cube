@@ -325,7 +325,7 @@ inline void ident::getcval(tagval &v) const
 #define VARFR(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, IDF_OVERRIDE)
 #define VARFNP(name, global, min, cur, max, body) _VARF(name, global, min, cur, max, body, IDF_PERSIST)
 #define VARFNR(name, global, min, cur, max, body) _VARF(name, global, min, cur, max, body, IDF_OVERRIDE)
-#define _VARM(name, min, cur, max, scale, persist) extern int name; _VARF(name, _##name, min, cur, max, { name = _##name * scale; }, persist); int name = _##name * scale
+#define _VARM(name, min, cur, max, scale, persist) int name = cur * scale; _VARF(name, _##name, min, cur, max, { name = _##name * scale; }, persist)
 #define VARMP(name, min, cur, max, scale) _VARM(name, min, cur, max, scale, IDF_PERSIST)
 #define VARMR(name, min, cur, max, scale) _VARM(name, min, cur, max, scale, IDF_OVERRIDE)
 
@@ -343,6 +343,22 @@ inline void ident::getcval(tagval &v) const
 #define HVARFR(name, min, cur, max, body) _HVARF(name, name, min, cur, max, body, IDF_OVERRIDE)
 #define HVARFNP(name, global, min, cur, max, body) _HVARF(name, global, min, cur, max, body, IDF_PERSIST)
 #define HVARFNR(name, global, min, cur, max, body) _HVARF(name, global, min, cur, max, body, IDF_OVERRIDE)
+
+#define _CVAR(name, global, cur, init, body, persist) bvec global = bvec::hexcolor(cur); _HVARF(name, name, 0, cur, 0xFFFFFF, { init; global = bvec::hexcolor(name); body; }, persist)
+#define CVARP(name, global, cur) _CVAR(name, global, cur, , , IDF_PERSIST) 
+#define CVARR(name, global, cur) _CVAR(name, global, cur, , , IDF_OVERRIDE) 
+#define CVARFP(name, global, cur, body) _CVAR(name, global, cur, , body, IDF_PERSIST) 
+#define CVARFR(name, global, cur, body) _CVAR(name, global, cur, , body, IDF_OVERRIDE) 
+#define _CVAR0(name, global, cur, body, persist) _CVAR(name, global, cur, { if(!name) name = cur; }, body, persist)
+#define CVAR0P(name, global, cur) _CVAR0(name, global, cur, , IDF_PERSIST) 
+#define CVAR0R(name, global, cur) _CVAR0(name, global, cur, , IDF_OVERRIDE) 
+#define CVAR0FP(name, global, cur, body) _CVAR0(name, global, cur, body, IDF_PERSIST) 
+#define CVAR0FR(name, global, cur, body) _CVAR0(name, global, cur, body, IDF_OVERRIDE) 
+#define _CVAR1(name, global, cur, body, persist) _CVAR(name, global, cur, { if(name <= 255) name |= (name<<8) | (name<<16); }, body, persist)
+#define CVAR1P(name, global, cur) _CVAR1(name, global, cur, , IDF_PERSIST) 
+#define CVAR1R(name, global, cur) _CVAR1(name, global, cur, , IDF_OVERRIDE) 
+#define CVAR1FP(name, global, cur, body) _CVAR1(name, global, cur, body, IDF_PERSIST) 
+#define CVAR1FR(name, global, cur, body) _CVAR1(name, global, cur, body, IDF_OVERRIDE) 
 
 #define _FVAR(name, global, min, cur, max, persist) float global = fvariable(#name, min, cur, max, &global, NULL, persist)
 #define FVARN(name, global, min, cur, max) _FVAR(name, global, min, cur, max, 0)

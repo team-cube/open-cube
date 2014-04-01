@@ -63,12 +63,7 @@ static void animategrass()
 }
 
 VARR(grassscale, 1, 2, 64);
-bvec grasscolor(255, 255, 255);
-HVARFR(grasscolour, 0, 0xFFFFFF, 0xFFFFFF,
-{
-    if(!grasscolour) grasscolour = 0xFFFFFF;
-    grasscolor = bvec::hexcolor(grasscolour);
-});
+CVAR0R(grasscolour, grasscolor, 0xFFFFFF);
 FVARR(grasstest, 0, 0.6f, 1);
 
 static void gengrassquads(grassgroup *&group, const grasswedge &w, const grasstri &g, Texture *tex)

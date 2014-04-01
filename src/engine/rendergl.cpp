@@ -1820,8 +1820,7 @@ void debugquad(float x, float y, float w, float h, float tx, float ty, float tw,
 }
 
 VARR(fog, 16, 4000, 1000024);
-bvec fogcolor(0x80, 0x99, 0xB3);
-HVARFR(fogcolour, 0, 0x8099B3, 0xFFFFFF, { fogcolor = bvec::hexcolor(fogcolour); });
+CVARR(fogcolour, fogcolor, 0x8099B3);
 VAR(fogoverlay, 0, 1, 1);
 
 static float findsurface(int fogmat, const vec &v, int &abovemat)
@@ -1981,12 +1980,11 @@ void clearminimap()
 }
 
 VARR(minimapheight, 0, 0, 2<<16);
-bvec minimapcolor(0, 0, 0);
-HVARFR(minimapcolour, 0, 0, 0xFFFFFF, { minimapcolor = bvec::hexcolor(minimapcolour); });
+CVARR(minimapcolour, minimapcolor, 0);
 VARR(minimapclip, 0, 0, 1);
 VARFP(minimapsize, 7, 8, 10, { if(minimaptex) drawminimap(); });
 VARFP(showminimap, 0, 1, 1, { if(minimaptex) drawminimap(); });
-HVARFP(nominimapcolour, 0, 0x101010, 0xFFFFFF, { if(minimaptex && !showminimap) drawminimap(); });
+CVARFP(nominimapcolour, nominimapcolor, 0x101010, { if(minimaptex && !showminimap) drawminimap(); });
 
 void bindminimap()
 {
@@ -2014,8 +2012,7 @@ void drawminimap()
     if(!showminimap)
     {
         if(!minimaptex) glGenTextures(1, &minimaptex);
-        bvec color = bvec::hexcolor(nominimapcolour);
-        createtexture(minimaptex, 1, 1, color.v, 3, 0, GL_RGB, GL_TEXTURE_2D);
+        createtexture(minimaptex, 1, 1, nominimapcolor.v, 3, 0, GL_RGB, GL_TEXTURE_2D);
         return;
     }
 

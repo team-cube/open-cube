@@ -1,32 +1,20 @@
 #include "engine.h"
 
-bvec ambientcolor(0x19, 0x19, 0x19);
-HVARFR(ambient, 1, 0x191919, 0xFFFFFF,
-{
-    if(ambient <= 255) ambient |= (ambient<<8) | (ambient<<16);
-    ambientcolor = bvec::hexcolor(ambient);
-});
+CVAR1R(ambient, ambientcolor, 0x191919);
 FVARR(ambientscale, 0, 1, 16);
 
-bvec skylightcolor(0, 0, 0);
-HVARFR(skylight, 0, 0, 0xFFFFFF,
-{
-    if(skylight <= 255) skylight |= (skylight<<8) | (skylight<<16);
-    skylightcolor = bvec::hexcolor(skylight);
-});
+CVAR1R(skylight, skylightcolor, 0);
 FVARR(skylightscale, 0, 1, 16);
 
 extern void setupsunlight();
-bvec sunlightcolor(0, 0, 0);
-HVARFR(sunlight, 0, 0, 0xFFFFFF,
+CVAR1FR(sunlight, sunlightcolor, 0,
 {
-    if(sunlight <= 255) sunlight |= (sunlight<<8) | (sunlight<<16);
-    sunlightcolor = bvec::hexcolor(sunlight);
     setupsunlight();
     cleardeferredlightshaders();
     clearshadowcache();
 });
 FVARFR(sunlightscale, 0, 1, 16, setupsunlight());
+
 vec sunlightdir(0, 0, 1);
 extern void setsunlightdir();
 FVARFR(sunlightyaw, 0, 0, 360, setsunlightdir());
