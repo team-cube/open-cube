@@ -864,8 +864,8 @@ bool hashstring(const char *str, char *result, int maxlen)
     loopi(sizeof(hv.bytes))
     {
         uchar c = hv.bytes[i];
-        *result++ = "0123456789abcdef"[c&0xF];
         *result++ = "0123456789abcdef"[c>>4];
+        *result++ = "0123456789abcdef"[c&0xF];
     }
     *result = '\0';
     return true;
