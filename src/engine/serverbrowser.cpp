@@ -225,7 +225,7 @@ struct serverinfo : servinfo
         MAXPINGS = 3
     };
 
-    int resolved, lastping, nextping;
+    int resolved, lastping, nextping, lastpong;
     int pings[MAXPINGS];
     ENetAddress address;
     bool keep;
@@ -248,6 +248,7 @@ struct serverinfo : servinfo
         loopk(MAXPINGS) pings[k] = WAITING;
         nextping = 0;
         lastping = -1;
+        lastpong = 0;
     }
 
     void cleanup()
@@ -261,6 +262,7 @@ struct serverinfo : servinfo
     void reset()
     {
         lastping = -1;
+        lastpong = 0;
     }
 
     void checkdecay(int decay)
@@ -268,6 +270,13 @@ struct serverinfo : servinfo
         if(lastping >= 0 && totalmillis - lastping >= decay)
             cleanup();
         if(lastping < 0) lastping = totalmillis;
+    }
+
+    bool limitpong()
+    {
+        bool result = !lastpong || totalmillis - lastpong >= 1000;
+        lastpong = totalmillis;
+        return result;
     }
 
     void calcping()
@@ -463,7 +472,7 @@ void checkpings()
         serverinfo *si = NULL;
         loopv(servers) if(addr.host == servers[i]->address.host && addr.port == servers[i]->address.port) { si = servers[i]; break; }
         if(!si && searchlan) si = newserver(NULL, addr.port, addr.host);
-        if(!si) continue;
+        if(!si || !si->limitpong()) continue;
         ucharbuf p(ping, len);
         int millis = getint(p), rtt = clamp(totalmillis - millis, 0, min(servpingdecay, totalmillis));
         if(millis >= lastreset && rtt < servpingdecay) si->addping(rtt, millis);
