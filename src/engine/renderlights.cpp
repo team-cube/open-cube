@@ -1331,6 +1331,7 @@ VARFP(rhprec, 0, 0, 1, cleanupradiancehints());
 VARFP(rsmprec, 0, 0, 3, cleanupradiancehints());
 VARFP(rsmdepthprec, 0, 0, 2, cleanupradiancehints());
 FVAR(rhnudge, 0, 0.5f, 4);
+FVARF(rhworldbias, 0, 0.5f, 10, clearradiancehintscache());
 FVARF(rhsplitweight, 0.20f, 0.6f, 0.95f, clearradiancehintscache());
 VARF(rhgrid, 3, 27, RH_MAXGRID, cleanupradiancehints());
 FVARF(rsmspread, 0, 0.15f, 1, clearradiancehintscache());
@@ -3191,7 +3192,6 @@ void radiancehints::renderslices()
 
     memset(rhclearmasks[0], 0xFF, sizeof(rhclearmasks[0]));
 
-    float nudge = rhnudge*2*splits[0].bounds/rhgrid;
     loopirev(rhsplits)
     {
         splitinfo &split = splits[i];
@@ -3207,7 +3207,7 @@ void radiancehints::renderslices()
             }
         }
 
-        float cellradius = split.bounds/rhgrid, step = 2*cellradius;
+        float cellradius = split.bounds/rhgrid, step = 2*cellradius, nudge = rhnudge*2*splits[0].bounds/rhgrid + rhworldbias*step;
         GLOBALPARAM(rhcenter, split.center);
         GLOBALPARAMF(rhbounds, split.bounds);
         GLOBALPARAMF(rhspread, cellradius);
