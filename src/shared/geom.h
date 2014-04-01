@@ -1453,8 +1453,8 @@ struct matrix4
 
     void rotate_around_x(float ck, float sk)
     {
-        vec4 rb = vec4(b).mul(ck).add(vec4(c).mul(sk)),
-             rc = vec4(c).mul(ck).sub(vec4(b).mul(sk));
+        vec4 rb = vec4(b).mul(ck).madd(c, sk),
+             rc = vec4(c).mul(ck).msub(b, sk);
         b = rb;
         c = rc;
     }
@@ -1463,8 +1463,8 @@ struct matrix4
 
     void rotate_around_y(float ck, float sk)
     {
-        vec4 rc = vec4(c).mul(ck).add(vec4(a).mul(sk)),
-             ra = vec4(a).mul(ck).sub(vec4(c).mul(sk));
+        vec4 rc = vec4(c).mul(ck).madd(a, sk),
+             ra = vec4(a).mul(ck).msub(c, sk);
         c = rc;
         a = ra;
     }
@@ -1473,8 +1473,8 @@ struct matrix4
 
     void rotate_around_z(float ck, float sk)
     {
-        vec4 ra = vec4(a).mul(ck).add(vec4(b).mul(sk)),
-             rb = vec4(b).mul(ck).sub(vec4(a).mul(sk));
+        vec4 ra = vec4(a).mul(ck).madd(b, sk),
+             rb = vec4(b).mul(ck).msub(a, sk);
         a = ra;
         b = rb;
     }
@@ -1615,12 +1615,12 @@ struct matrix4
 
     void transform(const vec &in, vec4 &out) const
     {
-        out = vec4(a).mul(in.x).add(vec4(b).mul(in.y)).add(vec4(c).mul(in.z)).add(d);
+        out = vec4(a).mul(in.x).madd(b, in.y).madd(c, in.z).add(d);
     }
 
     void transform(const vec4 &in, vec4 &out) const
     {
-        out = vec4(a).mul(in.x).add(vec4(b).mul(in.y)).add(vec4(c).mul(in.z)).add(vec4(d).mul(in.w));
+        out = vec4(a).mul(in.x).madd(b, in.y).madd(c, in.z).madd(d, in.w);
     }
 
     template<class T, class U> T transform(const U &in) const
@@ -1644,7 +1644,7 @@ struct matrix4
 
     void transformnormal(const vec &in, vec4 &out) const
     {
-        out = vec4(a).mul(in.x).add(vec4(b).mul(in.y)).add(vec4(c).mul(in.z));
+        out = vec4(a).mul(in.x).madd(b, in.y).madd(c, in.z);
     }
 
     template<class T, class U> T transformnormal(const U &in) const
