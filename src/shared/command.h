@@ -325,6 +325,9 @@ inline void ident::getcval(tagval &v) const
 #define VARFR(name, min, cur, max, body) _VARF(name, name, min, cur, max, body, IDF_OVERRIDE)
 #define VARFNP(name, global, min, cur, max, body) _VARF(name, global, min, cur, max, body, IDF_PERSIST)
 #define VARFNR(name, global, min, cur, max, body) _VARF(name, global, min, cur, max, body, IDF_OVERRIDE)
+#define _VARM(name, min, cur, max, scale, persist) extern int name; _VARF(name, _##name, min, cur, max, { name = _##name * scale; }, persist); int name = _##name * scale
+#define VARMP(name, min, cur, max, scale) _VARM(name, min, cur, max, scale, IDF_PERSIST)
+#define VARMR(name, min, cur, max, scale) _VARM(name, min, cur, max, scale, IDF_OVERRIDE)
 
 #define _HVAR(name, global, min, cur, max, persist)  int global = variable(#name, min, cur, max, &global, NULL, persist | IDF_HEX)
 #define HVARN(name, global, min, cur, max) _HVAR(name, global, min, cur, max, 0)
