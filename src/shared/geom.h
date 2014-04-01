@@ -1369,7 +1369,7 @@ struct bvec
 
     void lerp(const bvec &a, const bvec &b, float t) { x = uchar(a.x + (b.x-a.x)*t); y = uchar(a.y + (b.y-a.y)*t); z = uchar(a.z + (b.z-a.z)*t); }
 
-    void flip() { x -= 128; y -= 128; z -= 128; }
+    void flip() { x ^= 0x80; y ^= 0x80; z ^= 0x80; }
 
     void scale(int k, int d) { x = uchar((x*k)/d); y = uchar((y*k)/d); z = uchar((z*k)/d); }
 
@@ -1393,6 +1393,7 @@ struct bvec4
         struct { uchar x, y, z, w; };
         struct { uchar r, g, b, a; };
         uchar v[4];
+        uint mask;
     };
 
     bvec4() {}
@@ -1407,7 +1408,7 @@ struct bvec4
 
     bool iszero() const { return x==0 && y==0 && z==0 && w==0; }
 
-    void flip() { x -= 128; y -= 128; z -= 128; w -= 128; }
+    void flip() { mask ^= 0x80808080; }
 };
 
 inline bvec::bvec(const bvec4 &v) : x(v.x), y(v.y), z(v.z) {}
