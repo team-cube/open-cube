@@ -284,7 +284,6 @@ void glerror(const char *file, int line, GLenum error)
 
 VAR(amd_pf_bug, 0, 0, 1);
 VAR(mesa_texrectoffset_bug, 0, 0, 1);
-VAR(intel_fragalpha_bug, 0, 0, 1);
 VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
@@ -1008,8 +1007,6 @@ void gl_checkextensions()
         }
         else
         {
-            // luma tonemap shaders are buggy and slightly slower on Intel's Windows driver
-            intel_fragalpha_bug = 1;
             // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
             intel_texgatheroffsetcomp_bug = 1;
         }
