@@ -380,7 +380,7 @@ FVARR(atmosunlightscale, 0, 1, 16);
 FVARR(atmosundisksize, 0, 1, 10);
 FVARR(atmosundiskbright, 0, 1, 16);
 FVARR(atmohaze, 0, 0.03f, 1);
-CVAR0R(atmohazefade, 0xAEACA);
+CVAR0R(atmohazefade, 0xAEACA9);
 FVARR(atmohazefadescale, 0, 1, 1);
 FVARR(atmoclarity, 0, 0.2f, 10);
 FVARR(atmodensity, 1e-3f, 0.99f, 10);
