@@ -11,7 +11,7 @@ VARNR(emptymap, _emptymap, 1, 0, 0);
 VAR(octaentsize, 0, 64, 1024);
 VAR(entselradius, 0, 2, 10);
 
-static inline void transformbb(const entity &e,vec &center, vec &radius)
+static inline void transformbb(const entity &e, vec &center, vec &radius)
 {
     if(e.attr5 > 0) { float scale = e.attr5/100.0f; center.mul(scale); radius.mul(scale); }
     rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
