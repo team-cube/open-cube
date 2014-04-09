@@ -291,6 +291,8 @@ VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
+VAR(maxdrawbufs, 1, 0, 0);
+VAR(maxdualdrawbufs, 1, 0, 0);
 
 static bool checkseries(const char *s, const char *name, int low, int high)
 {
@@ -536,7 +538,8 @@ void gl_checkextensions()
     glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &cubetexsize);
     hwcubetexsize = cubetexsize;
     glGetIntegerv(GL_MAX_DRAW_BUFFERS, &drawbufs);
-    if(drawbufs < 4) fatal("Hardware does not support at least 4 draw buffers.");
+    maxdrawbufs = drawbufs;
+    if(maxdrawbufs < 4) fatal("Hardware does not support at least 4 draw buffers.");
     glGetQueryiv_(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &oqbits);
     if(!oqbits)
     {
@@ -922,6 +925,13 @@ void gl_checkextensions()
             hasOQ2 = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_occlusion_query2 extension.");
         }
+    }
+
+    if(hasBFE)
+    {
+        GLint dualbufs = 0;
+        glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, &dualbufs);
+        maxdualdrawbufs = dualbufs;
     }
 
     if(glversion >= 400)
