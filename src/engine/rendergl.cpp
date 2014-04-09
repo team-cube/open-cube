@@ -900,7 +900,7 @@ void gl_checkextensions()
 
     if(glversion >= 330)
     {
-        hasTSW = hasBFE = hasEAL = hasOQ2 = true;
+        hasTSW = hasEAL = hasOQ2 = true;
     }
     else
     {
@@ -908,12 +908,6 @@ void gl_checkextensions()
         {
             hasTSW = true;
             if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_texture_swizzle extension.");
-        }
-        if(hasext("GL_ARB_blend_func_extended"))
-        {
-            glBindFragDataLocationIndexed_ = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)getprocaddress("glBindFragDataLocationIndexed");
-            hasBFE = true;
-            if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_blend_func_extended extension.");
         }
         if(hasext("GL_ARB_explicit_attrib_location"))
         {
@@ -927,11 +921,16 @@ void gl_checkextensions()
         }
     }
 
-    if(hasBFE)
+    if(glversion >= 330 || hasext("GL_ARB_blend_func_extended"))
     {
+        glBindFragDataLocationIndexed_ = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)getprocaddress("glBindFragDataLocationIndexed");
+
         GLint dualbufs = 0;
         glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, &dualbufs);
         maxdualdrawbufs = dualbufs;
+
+        hasBFE = true;
+        if(glversion < 330 && dbgexts) conoutf(CON_INIT, "Using GL_ARB_blend_func_extended extension.");
     }
 
     if(glversion >= 400)
