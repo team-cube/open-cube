@@ -250,7 +250,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
         loopv(s.fragdatalocs)
         {
             FragDataLoc &d = s.fragdatalocs[i];
-            if(s.index) continue;
+            if(d.index) continue;
             if(i >= 4) break;
             static string defs[4];
             const char *swizzle = "";
@@ -352,7 +352,7 @@ static void linkglslprogram(Shader &s, bool msg = true)
         if(glslversion >= 130 && glslversion < 330 && (glslversion < 150 || !hasEAL) && glversion >= 300) loopv(s.fragdatalocs)
         {
             FragDataLoc &d = s.fragdatalocs[i];
-            if(s.index)
+            if(d.index)
             {
                 if(hasBFE) glBindFragDataLocationIndexed_(s.program, d.loc, d.index, d.name);
             }
