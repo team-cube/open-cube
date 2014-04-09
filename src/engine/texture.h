@@ -137,7 +137,8 @@ struct FragDataLoc
     const char *name;
     int loc;
     GLenum format;
-    FragDataLoc(const char *name = NULL, int loc = -1, GLenum format = GL_FALSE) : name(name), loc(loc), format(format) {}
+    int index;
+    FragDataLoc(const char *name = NULL, int loc = -1, GLenum format = GL_FALSE, int index = 0) : name(name), loc(loc), format(format), index(index) {}
 };
 
 struct Shader
