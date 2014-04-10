@@ -3,7 +3,7 @@
 
 namespace UI
 {
-    float cursorx = 0.5f, cursory = 0.5f;
+    float cursorx = 0.499f, cursory = 0.499f;
 
     static void quads(float x, float y, float w, float h, float tx = 0, float ty = 0, float tw = 1, float th = 1)
     {
@@ -2886,7 +2886,7 @@ namespace UI
                 if(!slot.thumbnail)
                 {
                     if(totalmillis - lastthumbnail < uislotviewtime) return;
-                    loadthumbnail(slot);
+                    slot.loadthumbnail();
                     lastthumbnail = totalmillis;
                 }
                 if(slot.thumbnail != notexture) t = slot.thumbnail;

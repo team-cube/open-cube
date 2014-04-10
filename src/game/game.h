@@ -66,6 +66,7 @@ enum                            // static entity types
     PARTICLES = ET_PARTICLES,
     MAPSOUND = ET_SOUND,
     SPOTLIGHT = ET_SPOTLIGHT,
+    DECAL = ET_DECAL,
     TELEPORT,                   // attr1 = idx, attr2 = model, attr3 = tag
     TELEDEST,                   // attr1 = angle, attr2 = idx
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush

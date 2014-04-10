@@ -46,7 +46,7 @@ namespace entities
     {
         static const char * const entmdlnames[MAXENTTYPES] =
         {
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             "game/teleport", NULL, NULL,
             NULL
         };
@@ -377,7 +377,7 @@ namespace entities
     {
         static const char * const entnames[MAXENTTYPES] =
         {
-            "none?", "light", "mapmodel", "playerstart", "envmap", "particles", "sound", "spotlight",
+            "none?", "light", "mapmodel", "playerstart", "envmap", "particles", "sound", "spotlight", "decal",
             "teleport", "teledest", "jumppad",
             "flag"
         };

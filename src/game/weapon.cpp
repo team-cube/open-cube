@@ -191,7 +191,7 @@ namespace game
         bouncer *b = (bouncer *)d;
         if(b->bouncetype != BNC_GIBS || b->bounces >= 2) return;
         b->bounces++;
-        adddecal(DECAL_BLOOD, vec(b->o).sub(vec(surface).mul(b->radius)), surface, 2.96f/b->bounces, bvec(0x60, 0xFF, 0xFF), rnd(4));
+        addstain(STAIN_BLOOD, vec(b->o).sub(vec(surface).mul(b->radius)), surface, 2.96f/b->bounces, bvec(0x60, 0xFF, 0xFF), rnd(4));
     }
 
     void updatebouncers(int time)
@@ -390,18 +390,18 @@ namespace game
         }
     }
 
-    void pulsedecal(const projectile &p, const vec &pos)
+    void pulsestain(const projectile &p, const vec &pos)
     {
         vec dir = vec(p.dir).neg();
         float rad = attacks[p.atk].exprad*0.75f;
-        adddecal(DECAL_PULSE_SCORCH, pos, dir, rad);
-        adddecal(DECAL_PULSE_GLOW, pos, dir, rad, 0x50CFE5);
+        addstain(STAIN_PULSE_SCORCH, pos, dir, rad);
+        addstain(STAIN_PULSE_GLOW, pos, dir, rad, 0x50CFE5);
     }
 
     void projsplash(projectile &p, const vec &v, dynent *safe)
     {
         explode(p.local, p.owner, v, p.dir, safe, attacks[p.atk].damage, p.atk);
-        pulsedecal(p, v);
+        pulsestain(p, v);
     }
 
     void explodeeffects(int atk, gameent *d, bool local, int id)
@@ -417,7 +417,7 @@ namespace game
                     {
                         vec pos = vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)).add(p.o);
                         explode(p.local, p.owner, pos, p.dir, NULL, 0, atk);
-                        pulsedecal(p, pos);
+                        pulsestain(p, pos);
                         projs.remove(i);
                         break;
                     }
@@ -500,13 +500,13 @@ namespace game
         }
     }
 
-    void railhit(const vec &from, const vec &to, bool decal = true)
+    void railhit(const vec &from, const vec &to, bool stain = true)
     {
         vec dir = vec(from).sub(to).normalize();
-        if(decal)
+        if(stain)
         {
-            adddecal(DECAL_RAIL_HOLE, to, dir, 2.0f);
-            adddecal(DECAL_RAIL_GLOW, to, dir, 2.5f, 0x50CFE5);
+            addstain(STAIN_RAIL_HOLE, to, dir, 2.0f);
+            addstain(STAIN_RAIL_GLOW, to, dir, 2.5f, 0x50CFE5);
         }
         adddynlight(vec(to).madd(dir, 4), 10, vec(0.25f, 0.75f, 1.0f), 225, 75);
     }

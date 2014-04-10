@@ -79,7 +79,6 @@ CLIENT_OBJS= \
 	engine/client.o	\
 	engine/command.o \
 	engine/console.o \
-	engine/decal.o \
 	engine/dynlight.o \
 	engine/grass.o \
 	engine/light.o \
@@ -105,6 +104,7 @@ CLIENT_OBJS= \
 	engine/serverbrowser.o \
 	engine/shader.o \
 	engine/sound.o \
+	engine/stain.o \
 	engine/texture.o \
 	engine/ui.o \
 	engine/water.o \
@@ -281,10 +281,6 @@ engine/console.o: shared/ents.h shared/command.h shared/glexts.h
 engine/console.o: shared/glemu.h shared/iengine.h shared/igame.h
 engine/console.o: engine/world.h engine/octa.h engine/light.h
 engine/console.o: engine/texture.h engine/bih.h engine/model.h
-engine/decal.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
-engine/decal.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
-engine/decal.o: shared/iengine.h shared/igame.h engine/world.h engine/octa.h
-engine/decal.o: engine/light.h engine/texture.h engine/bih.h engine/model.h
 engine/dynlight.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/dynlight.o: shared/ents.h shared/command.h shared/glexts.h
 engine/dynlight.o: shared/glemu.h shared/iengine.h shared/igame.h
@@ -412,6 +408,10 @@ engine/sound.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/sound.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
 engine/sound.o: shared/iengine.h shared/igame.h engine/world.h engine/octa.h
 engine/sound.o: engine/light.h engine/texture.h engine/bih.h engine/model.h
+engine/stain.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
+engine/stain.o: shared/ents.h shared/command.h shared/glexts.h shared/glemu.h
+engine/stain.o: shared/iengine.h shared/igame.h engine/world.h engine/octa.h
+engine/stain.o: engine/light.h engine/texture.h engine/bih.h engine/model.h
 engine/texture.o: engine/engine.h shared/cube.h shared/tools.h shared/geom.h
 engine/texture.o: shared/ents.h shared/command.h shared/glexts.h
 engine/texture.o: shared/glemu.h shared/iengine.h shared/igame.h

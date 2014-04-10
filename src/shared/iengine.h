@@ -332,21 +332,21 @@ extern void particle_flare(const vec &p, const vec &dest, int fade, int type, in
 extern void particle_fireball(const vec &dest, float max, int type, int fade = -1, int color = 0xFFFFFF, float size = 4.0f);
 extern void removetrackedparticles(physent *owner = NULL);
 
-// decal
+// stain
 enum
 {
-    DECAL_BLOOD = 0,
-    DECAL_PULSE_SCORCH,
-    DECAL_RAIL_HOLE,
-    DECAL_PULSE_GLOW,
-    DECAL_RAIL_GLOW
+    STAIN_BLOOD = 0,
+    STAIN_PULSE_SCORCH,
+    STAIN_RAIL_HOLE,
+    STAIN_PULSE_GLOW,
+    STAIN_RAIL_GLOW
 };
 
-extern void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
+extern void addstain(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
 
-static inline void adddecal(int type, const vec &center, const vec &surface, float radius, int color, int info = 0)
+static inline void addstain(int type, const vec &center, const vec &surface, float radius, int color, int info = 0)
 {
-    adddecal(type, center, surface, radius, bvec::hexcolor(color), info);
+    addstain(type, center, surface, radius, bvec::hexcolor(color), info);
 }
 
 // worldio

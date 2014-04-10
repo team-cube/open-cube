@@ -29,7 +29,6 @@
 		D1FCB14A18832B7500AFC227 /* client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0EC18832B7500AFC227 /* client.cpp */; };
 		D1FCB14B18832B7500AFC227 /* command.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0ED18832B7500AFC227 /* command.cpp */; };
 		D1FCB14C18832B7500AFC227 /* console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0EE18832B7500AFC227 /* console.cpp */; };
-		D1FCB14D18832B7500AFC227 /* decal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0EF18832B7500AFC227 /* decal.cpp */; };
 		D1FCB14E18832B7500AFC227 /* dynlight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0F018832B7500AFC227 /* dynlight.cpp */; };
 		D1FCB14F18832B7500AFC227 /* grass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0F318832B7500AFC227 /* grass.cpp */; };
 		D1FCB15018832B7500AFC227 /* light.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0F718832B7500AFC227 /* light.cpp */; };
@@ -56,6 +55,7 @@
 		D1FCB16618832B7500AFC227 /* serverbrowser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB11818832B7500AFC227 /* serverbrowser.cpp */; };
 		D1FCB16718832B7500AFC227 /* shader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB11918832B7500AFC227 /* shader.cpp */; };
 		D1FCB16818832B7500AFC227 /* sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB11C18832B7500AFC227 /* sound.cpp */; };
+		D1FCB14D18832B7500AFC227 /* stain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB0EF18832B7500AFC227 /* stain.cpp */; };
 		D1FCB16918832B7500AFC227 /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB11E18832B7500AFC227 /* texture.cpp */; };
 		D1FCB16A18832B7500AFC227 /* ui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB12018832B7500AFC227 /* ui.cpp */; };
 		D1FCB16B18832B7500AFC227 /* water.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB12218832B7500AFC227 /* water.cpp */; };
@@ -140,7 +140,6 @@
 		D1FCB0EC18832B7500AFC227 /* client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
 		D1FCB0ED18832B7500AFC227 /* command.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = command.cpp; sourceTree = "<group>"; };
 		D1FCB0EE18832B7500AFC227 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
-		D1FCB0EF18832B7500AFC227 /* decal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = decal.cpp; sourceTree = "<group>"; };
 		D1FCB0F018832B7500AFC227 /* dynlight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dynlight.cpp; sourceTree = "<group>"; };
 		D1FCB0F118832B7500AFC227 /* engine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = engine.h; sourceTree = "<group>"; };
 		D1FCB0F218832B7500AFC227 /* explosion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = explosion.h; sourceTree = "<group>"; };
@@ -185,6 +184,7 @@
 		D1FCB11A18832B7500AFC227 /* skelmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skelmodel.h; sourceTree = "<group>"; };
 		D1FCB11B18832B7500AFC227 /* smd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = smd.h; sourceTree = "<group>"; };
 		D1FCB11C18832B7500AFC227 /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
+		D1FCB0EF18832B7500AFC227 /* stain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stain.cpp; sourceTree = "<group>"; };
 		D1FCB11D18832B7500AFC227 /* textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textedit.h; sourceTree = "<group>"; };
 		D1FCB11E18832B7500AFC227 /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = texture.cpp; sourceTree = "<group>"; };
 		D1FCB11F18832B7500AFC227 /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = texture.h; sourceTree = "<group>"; };
@@ -380,7 +380,6 @@
 				D1FCB0EC18832B7500AFC227 /* client.cpp */,
 				D1FCB0ED18832B7500AFC227 /* command.cpp */,
 				D1FCB0EE18832B7500AFC227 /* console.cpp */,
-				D1FCB0EF18832B7500AFC227 /* decal.cpp */,
 				D1FCB0F018832B7500AFC227 /* dynlight.cpp */,
 				D1FCB0F118832B7500AFC227 /* engine.h */,
 				D1FCB0F218832B7500AFC227 /* explosion.h */,
@@ -425,6 +424,7 @@
 				D1FCB11A18832B7500AFC227 /* skelmodel.h */,
 				D1FCB11B18832B7500AFC227 /* smd.h */,
 				D1FCB11C18832B7500AFC227 /* sound.cpp */,
+				D1FCB0EF18832B7500AFC227 /* stain.cpp */,
 				D1FCB11D18832B7500AFC227 /* textedit.h */,
 				D1FCB11E18832B7500AFC227 /* texture.cpp */,
 				D1FCB11F18832B7500AFC227 /* texture.h */,
@@ -588,7 +588,6 @@
 				D1FCB14A18832B7500AFC227 /* client.cpp in Sources */,
 				D1FCB14B18832B7500AFC227 /* command.cpp in Sources */,
 				D1FCB14C18832B7500AFC227 /* console.cpp in Sources */,
-				D1FCB14D18832B7500AFC227 /* decal.cpp in Sources */,
 				D1FCB14E18832B7500AFC227 /* dynlight.cpp in Sources */,
 				D1FCB14F18832B7500AFC227 /* grass.cpp in Sources */,
 				D1FCB15018832B7500AFC227 /* light.cpp in Sources */,
@@ -615,6 +614,7 @@
 				D1FCB16618832B7500AFC227 /* serverbrowser.cpp in Sources */,
 				D1FCB16718832B7500AFC227 /* shader.cpp in Sources */,
 				D1FCB16818832B7500AFC227 /* sound.cpp in Sources */,
+				D1FCB14D18832B7500AFC227 /* stain.cpp in Sources */,
 				D1FCB16918832B7500AFC227 /* texture.cpp in Sources */,
 				D1FCB16A18832B7500AFC227 /* ui.cpp in Sources */,
 				D1FCB16B18832B7500AFC227 /* water.cpp in Sources */,

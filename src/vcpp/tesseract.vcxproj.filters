@@ -28,9 +28,6 @@
     <ClCompile Include="..\shared\crypto.cpp">
       <Filter>shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\engine\decal.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
     <ClCompile Include="..\engine\dynlight.cpp">
       <Filter>engine</Filter>
     </ClCompile>
@@ -134,6 +131,9 @@
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\engine\sound.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\engine\stain.cpp">
       <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\stream.cpp">

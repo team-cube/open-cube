@@ -354,7 +354,7 @@ static void linkglslprogram(Shader &s, bool msg = true)
             FragDataLoc &d = s.fragdatalocs[i];
             if(d.index)
             {
-                if(hasBFE) glBindFragDataLocationIndexed_(s.program, d.loc, d.index, d.name);
+                if(maxdualdrawbufs) glBindFragDataLocationIndexed_(s.program, d.loc, d.index, d.name);
             }
             else glBindFragDataLocation_(s.program, d.loc, d.name);
         }
@@ -430,7 +430,7 @@ void findfragdatalocs(Shader &s, const char *psstr)
     if(!psstr || glslversion >= 330 || (glslversion >= 150 && hasEAL)) return;
 
     findfragdatalocs(s, psstr, "fragdata(", 0);
-    if(hasBFE) findfragdatalocs(s, psstr, "blenddata(", 1);
+    if(maxdualdrawbufs) findfragdatalocs(s, psstr, "blenddata(", 1);
 }
 
 int getlocalparam(const char *name)
@@ -602,28 +602,34 @@ static inline void setslotparam(SlotShaderParamState &l, uint &mask, int i, cons
     }
 }
 
+#define SETSLOTPARAMS(slotparams) \
+    loopv(slotparams) \
+    { \
+        SlotShaderParam &p = slotparams[i]; \
+        if(!defaultparams.inrange(p.loc)) continue; \
+        SlotShaderParamState &l = defaultparams[p.loc]; \
+        setslotparam(l, unimask, p.loc, p.val); \
+    }
+#define SETDEFAULTPARAMS \
+    loopv(defaultparams) \
+    { \
+        SlotShaderParamState &l = defaultparams[i]; \
+        setslotparam(l, unimask, i, l.val); \
+    }
+
+void Shader::setslotparams(Slot &slot)
+{
+    uint unimask = 0;
+    SETSLOTPARAMS(slot.params)
+    SETDEFAULTPARAMS
+}
+
 void Shader::setslotparams(Slot &slot, VSlot &vslot)
 {
     uint unimask = 0;
-    loopv(vslot.params)
-    {
-        SlotShaderParam &p = vslot.params[i];
-        if(!defaultparams.inrange(p.loc)) continue;
-        SlotShaderParamState &l = defaultparams[p.loc];
-        setslotparam(l, unimask, p.loc, p.val);
-    }
-    loopv(slot.params)
-    {
-        SlotShaderParam &p = slot.params[i];
-        if(!defaultparams.inrange(p.loc)) continue;
-        SlotShaderParamState &l = defaultparams[p.loc];
-        setslotparam(l, unimask, p.loc, p.val);
-    }
-    loopv(defaultparams)
-    {
-        SlotShaderParamState &l = defaultparams[i];
-        setslotparam(l, unimask, i, l.val);
-    }
+    SETSLOTPARAMS(vslot.params)
+    SETSLOTPARAMS(slot.params)
+    SETDEFAULTPARAMS
 }
 
 void Shader::bindprograms()

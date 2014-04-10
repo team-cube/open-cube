@@ -452,6 +452,8 @@ extern void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->
 #define startquery(query) do { glBeginQuery_(GL_SAMPLES_PASSED, ((occludequery *)(query))->id); } while(0)
 #define endquery(query) do { glEndQuery_(GL_SAMPLES_PASSED); } while(0)
 
+extern void renderdecals();
+
 struct shadowmesh;
 extern void clearshadowmeshes();
 extern void genshadowmeshes();
@@ -703,13 +705,13 @@ extern void renderparticles(int layer = PL_ALL);
 extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();
 
-// decal
-enum { DB_OPAQUE = 0, DB_TRANSPARENT, NUMDB };
+// stain
+enum { STAINBUF_OPAQUE = 0, STAINBUF_TRANSPARENT, NUMSTAINBUFS };
 
-extern void initdecals();
-extern void cleardecals();
-extern void renderdecals(int db = DB_OPAQUE);
-extern void cleanupdecals();
+extern void initstains();
+extern void clearstains();
+extern void renderstains(int sbuf = STAINBUF_OPAQUE);
+extern void cleanupstains();
 
 // rendersky
 extern int skytexture, skyshadow, explicitsky;
