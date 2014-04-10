@@ -559,7 +559,7 @@ struct vacollect : verthash
         if(va->decaltexs)
         {
             va->decalelems = new elementset[va->decaltexs];
-            ushort *edata = (ushort *)addvbo(va, VBO_DECALBUF, worldtris, sizeof(ushort)), *curbuf = edata;
+            ushort *edata = (ushort *)addvbo(va, VBO_DECALBUF, decaltris, sizeof(ushort)), *curbuf = edata;
             loopv(decaltexs)
             {
                 const decalkey &k = decaltexs[i];

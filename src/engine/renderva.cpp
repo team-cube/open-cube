@@ -2295,6 +2295,7 @@ void renderdecals()
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
         maskgbuffer("ng");
         cur.vbuf = 0;
+        GLOBALPARAMF(colorparams, 1, 1, 1, 1);
         for(vtxarray *va = decalva; va; va = va->next) if(va->decaltris && va->occluded < OCCLUDE_BB)
         {
             vverts += 3*va->decaltris;
