@@ -2051,7 +2051,7 @@ static void mergedecals(decalrenderer &cur, vtxarray *va)
 
     if(firstbatch < 0)
     {
-        firstbatch = geombatches.length();
+        firstbatch = decalbatches.length();
         numbatches = numtexs;
         loopi(numtexs-1)
         {
