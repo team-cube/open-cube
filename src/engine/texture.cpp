@@ -1939,8 +1939,6 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     if(s.sts.length()>=8) conoutf(CON_WARN, "warning: too many textures in %s", s.name());
     Slot::Tex &st = s.sts.add();
     st.type = tnum;
-    st.combined = -1;
-    st.t = NULL;
     copystring(st.name, name);
     path(st.name);
     if(tnum==TEX_DIFFUSE)
@@ -2208,7 +2206,7 @@ void Slot::load()
         if(combine >= 0 && (combine = findtextype(1<<combine)) >= 0)
         {
             Slot::Tex &c = sts[combine];
-            c.combined = index;
+            c.combined = i;
         }
     }    
     loopv(sts)

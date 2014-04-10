@@ -660,6 +660,8 @@ struct Slot
         Texture *t;
         string name;
         int combined;
+
+        Tex() : t(NULL), combined(-1) {}
     };
 
     int index, smooth;
