@@ -1050,7 +1050,7 @@ void processhdr(GLuint outfbo, int aa)
         if(bloompbo)
         {
             glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
-            glReadPixels(0, 0, 4, 1, hasTRG ? GL_RED : GL_RGB, GL_FLOAT, NULL);
+            glReadPixels(0, 0, 4, 1, hasTRG ? GL_RED : GL_RGB, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, NULL);
             glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
         }
 
@@ -1061,7 +1061,7 @@ void processhdr(GLuint outfbo, int aa)
     {
         glBindBuffer_(GL_ARRAY_BUFFER, bloompbo);
         gle::enablecolor();
-        gle::colorpointer(sizeof(GLfloat), (void *)0, GL_FLOAT, 1);
+        gle::colorpointer(hasTF ? sizeof(GLfloat) : sizeof(GLushort), (void *)0, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, 1);
         glBindBuffer_(GL_ARRAY_BUFFER, 0);
     }
 
