@@ -1050,6 +1050,7 @@ void processhdr(GLuint outfbo, int aa)
         if(bloompbo)
         {
             glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
             glReadPixels(0, 0, 4, 1, hasTRG ? GL_RED : GL_RGB, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, NULL);
             glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
         }
