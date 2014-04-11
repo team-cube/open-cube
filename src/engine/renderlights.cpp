@@ -5,7 +5,7 @@ GLuint gfbo = 0, gdepthtex = 0, gcolortex = 0, gnormaltex = 0, gglowtex = 0, gde
 bool gdepthinit = false;
 int scalew = -1, scaleh = -1;
 GLuint scalefbo[2] = { 0, 0 }, scaletex[2] = { 0, 0 };
-GLuint hdrfbo = 0, hdrtex = 0, bloomfbo[6] = { 0, 0, 0, 0, 0, 0 }, bloomtex[6] = { 0, 0, 0, 0, 0, 0 };
+GLuint hdrfbo = 0, hdrtex = 0, bloompbo = 0, bloomfbo[6] = { 0, 0, 0, 0, 0, 0 }, bloomtex[6] = { 0, 0, 0, 0, 0, 0 };
 int hdrclear = 0;
 GLuint refractfbo = 0, refracttex = 0;
 GLenum bloomformat = 0, hdrformat = 0, stencilformat = 0;
@@ -56,9 +56,17 @@ void setupbloom(int w, int h)
         createtexture(bloomtex[5], bloomw, bloomh, NULL, 3, 1, bloomformat, GL_TEXTURE_RECTANGLE);
     }
 
-    static const uchar gray[3] = { 32, 32, 32 };
-    static const float grayf[3] = { 0.125f, 0.125f, 0.125f };
-    createtexture(bloomtex[4], 1, 1, hasTF ? (const void *)grayf : (const void *)gray, 3, 1, hasTF ? (hasTRG ? GL_R16F : GL_RGB16F) : (hasTRG ? GL_R16 : GL_RGB16));
+    if(!hwvtexunits)
+    {
+        glGenBuffers_(1, &bloompbo); 
+        glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
+        glBufferData_(GL_PIXEL_PACK_BUFFER, 4*sizeof(GLfloat)*(hasTRG ? 1 : 3), NULL, GL_DYNAMIC_COPY);
+        glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
+    } 
+
+    static const uchar gray[12] = { 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32 };
+    static const float grayf[12] = { 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f };
+    createtexture(bloomtex[4], bloompbo ? 4 : 1, 1, hasTF ? (const void *)grayf : (const void *)gray, 3, 1, hasTF ? (hasTRG ? GL_R16F : GL_RGB16F) : (hasTRG ? GL_R16 : GL_RGB16));
 
     loopi(5 + (bloomformat != GL_RGB ? 1 : 0))
     {
@@ -74,6 +82,7 @@ void setupbloom(int w, int h)
 
 void cleanupbloom()
 {
+    if(bloompbo) { glDeleteBuffers_(1, &bloompbo); bloompbo = 0; }
     loopi(6) if(bloomfbo[i]) { glDeleteFramebuffers_(1, &bloomfbo[i]); bloomfbo[i] = 0; }
     loopi(6) if(bloomtex[i]) { glDeleteTextures(1, &bloomtex[i]); bloomtex[i] = 0; }
     bloomw = bloomh = -1;
@@ -1029,7 +1038,7 @@ void processhdr(GLuint outfbo, int aa)
         }
 
         glBindFramebuffer_(GL_FRAMEBUFFER, bloomfbo[4]);
-        glViewport(0, 0, 1, 1);
+        glViewport(0, 0, bloompbo ? 4 : 1, 1);
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
         SETSHADER(hdraccum);
@@ -1038,7 +1047,22 @@ void processhdr(GLuint outfbo, int aa)
         screenquad(2, 2);
         glDisable(GL_BLEND);
 
+        if(bloompbo)
+        {
+            glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
+            glReadPixels(0, 0, 4, 1, hasTRG ? GL_RED : GL_RGB, GL_FLOAT, NULL);
+            glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
+        }
+
         lasthdraccum = lastmillis;
+    }
+
+    if(bloompbo)
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER, bloompbo);
+        gle::enablecolor();
+        gle::colorpointer(sizeof(GLfloat), (void *)0, GL_FLOAT, 1);
+        glBindBuffer_(GL_ARRAY_BUFFER, 0);
     }
 
     b0fbo = bloomfbo[3];
@@ -1178,6 +1202,8 @@ void processhdr(GLuint outfbo, int aa)
             }
         }
     }
+
+    if(bloompbo) gle::disablecolor();
 
     endtimer(hdrtimer);
 }

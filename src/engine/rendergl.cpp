@@ -525,7 +525,7 @@ void gl_checkextensions()
     GLint texsize = 0, texunits = 0, vtexunits = 0, cubetexsize = 0, oqbits = 0, drawbufs = 0;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
     hwtexsize = texsize;
-    if(hwtexsize < 4096)
+    if(hwtexsize < 2048)
         fatal("Large texture support is required!");
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texunits);
     hwtexunits = texunits;
@@ -533,8 +533,8 @@ void gl_checkextensions()
         fatal("Hardware does not support at least 16 texture units.");
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &vtexunits);
     hwvtexunits = vtexunits;
-    if(hwvtexunits < 4)
-        fatal("Hardware does not support at least 4 vertex texture units.");
+    //if(hwvtexunits < 4)
+    //    fatal("Hardware does not support at least 4 vertex texture units.");
     glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &cubetexsize);
     hwcubetexsize = cubetexsize;
     glGetIntegerv(GL_MAX_DRAW_BUFFERS, &drawbufs);
