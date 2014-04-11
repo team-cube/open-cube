@@ -1437,6 +1437,9 @@ void calcgeombb(const ivec &co, int size, ivec &bbmin, ivec &bbmax)
     bbmax = ivec(vmax.mul(8)).add(7).shr(3);
 }
 
+static int entdepth = -1;
+static octaentities *entstack[32];
+
 void setva(cube &c, const ivec &co, int size, int csi)
 {
     ASSERT(size <= 0x1000);
@@ -1446,6 +1449,12 @@ void setva(cube &c, const ivec &co, int size, int csi)
 
     vc.origin = co;
     vc.size = size;
+
+    loopi(entdepth+1)
+    {
+        octaentities *oe = entstack[i];
+        if(oe->decals.length()) vc.decals.add(oe);
+    }
 
     int maxlevel = -1;
     rendercube(c, co, size, csi, maxlevel);
@@ -1519,7 +1528,12 @@ int updateva(cube *c, const ivec &co, int size, int csi)
         }
         else
         {
-            if(c[i].children) count += updateva(c[i].children, o, size/2, csi-1);
+            if(c[i].children)
+            {
+                if(c[i].ext && c[i].ext->ents) entstack[++entdepth] = c[i].ext->ents;
+                count += updateva(c[i].children, o, size/2, csi-1);
+                if(c[i].ext && c[i].ext->ents) --entdepth;
+            }
             else if(!isempty(c[i])) count += setcubevisibility(c[i], o, size);
             int tcount = count + (csi <= MAXMERGELEVEL ? vamerges[csi].length() : 0);
             if(tcount > vafacemax || (tcount >= vafacemin && size >= vacubesize) || size == min(0x1000, worldsize/2))
