@@ -60,7 +60,7 @@ void setupbloom(int w, int h)
     {
         glGenBuffers_(1, &bloompbo); 
         glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
-        glBufferData_(GL_PIXEL_PACK_BUFFER, 4*sizeof(GLfloat)*(hasTRG ? 1 : 3), NULL, GL_DYNAMIC_COPY);
+        glBufferData_(GL_PIXEL_PACK_BUFFER, 4*(hasTF ? sizeof(GLfloat) : sizeof(GLushort))*(hasTRG ? 1 : 3), NULL, GL_DYNAMIC_COPY);
         glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
     } 
 
