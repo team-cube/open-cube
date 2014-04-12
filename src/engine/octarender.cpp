@@ -1234,6 +1234,8 @@ void updatevabb(vtxarray *va, bool force)
         va->bbmin.min(oe->bbmin);
         va->bbmax.max(oe->bbmax);
     }
+    va->bbmin.max(va->o);
+    va->bbmax.min(ivec(va->o).add(va->size));
     worldmin.min(va->bbmin);
     worldmax.max(va->bbmax);
     nogimin.min(va->nogimin);
