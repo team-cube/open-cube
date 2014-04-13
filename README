@@ -58,3 +58,20 @@ To fix this you still need to use the calclight command, however, it no longer g
 It just does a remip optimization pass as well as calculates smoothed normals to make things look better.
 Eventually this may be done differently using some sort of background optimization while editing.
 
+To make decals:
+
+newent decal SLOT YAW PITCH ROLL SIZE
+
+If you don't specify the yaw, pitch, and roll, or leave them all 0, then newent will fill them with current direction you are looking at.
+The slot refers to a decal slot in the map configuration, starting at offset 0.
+The size is specified in cube units.
+
+To make decal slots:
+
+decelreset // functions like texture reset, clears all decal texture slots
+
+setshader bumpspecmapdecal  // shaders work like for world shaders, but with the -decal suffix instead of -world
+texture decal "diffuse.png" // all decal slots start with the "decal" sub-slot instead of "0", and this texture must have an alpha-channel
+texture n "normals.png"
+texture s "spec.png"
+
