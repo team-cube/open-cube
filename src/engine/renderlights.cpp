@@ -189,6 +189,13 @@ void setupao(int w, int h)
         glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, aotex[i], 0);
         if(glCheckFramebufferStatus_(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             fatal("failed allocating AO buffer!");
+        if(!i && packformat == GL_RG16F)
+        {
+            glViewport(0, 0, aow, aoh);
+            glClearColor(0, 0, 0, 0);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glViewport(0, 0, hudw, hudh);
+        }
     }
 
     if(aoreducedepth && (aoreduce || aoreducedepth > 1))
