@@ -1957,6 +1957,13 @@ void gettexname(int *tex, int *subslot)
     result(slot.sts[*subslot].name);
 }
 
+void getslottex(int *idx)
+{
+    if(*idx < 0 || !slots.inrange(*idx)) { intret(-1); return; }
+    Slot &slot = lookupslot(*idx, false);
+    intret(slot.variants->index);
+}
+ 
 COMMANDN(edittex, edittex_, "i");
 ICOMMAND(settex, "i", (int *tex), { if(!vslots.inrange(*tex) || noedit()) return; filltexlist(); edittex(*tex); });
 COMMAND(gettex, "");
@@ -1974,6 +1981,7 @@ ICOMMAND(looptexmru, "re", (ident *id, uint *body),
 });
 ICOMMAND(numvslots, "", (), intret(vslots.length()));
 ICOMMAND(numslots, "", (), intret(slots.length()));
+COMMAND(getslottex, "i");
 
 void replacetexcube(cube &c, int oldtex, int newtex)
 {
