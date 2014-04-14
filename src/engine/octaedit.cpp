@@ -548,7 +548,15 @@ void commitchanges(bool force)
     updatevabbs();
 }
 
-void changed(const block3 &sel, bool commit = true)
+void changed(const ivec &bbmin, const ivec &bbmax, bool commit)
+{
+    readychanges(bbmin, bbmax, worldroot, ivec(0, 0, 0), worldsize/2);
+    haschanged = true;
+
+    if(commit) commitchanges();
+}
+
+void changed(const block3 &sel, bool commit)
 {
     if(sel.s.iszero()) return;
     readychanges(ivec(sel.o).sub(1), ivec(sel.s).mul(sel.grid).add(sel.o).add(1), worldroot, ivec(0, 0, 0), worldsize/2);

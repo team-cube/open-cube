@@ -77,7 +77,8 @@ bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
 enum
 {
     MODOE_ADD      = 1<<0,
-    MODOE_UPDATEBB = 1<<1
+    MODOE_UPDATEBB = 1<<1,
+    MODOE_CHANGED  = 1<<2
 };
 
 void modifyoctaentity(int flags, int id, extentity &e, cube *c, const ivec &cor, int size, const ivec &bo, const ivec &br, int leafsize, vtxarray *lastva = NULL)
@@ -223,8 +224,12 @@ static bool modifyoctaent(int flags, int id, extentity &e)
         modifyoctaentity(flags, id, e, worldroot, ivec(0, 0, 0), worldsize>>1, o, r, leafsize);
     }
     e.flags ^= EF_OCTA;
-    if(e.type == ET_LIGHT) clearlightcache(id);
-    else if(e.type == ET_PARTICLES) clearparticleemitters();
+    switch(e.type)
+    {
+        case ET_LIGHT: clearlightcache(id); break;
+        case ET_PARTICLES: clearparticleemitters(); break;
+        case ET_DECAL: if(flags&MODOE_CHANGED) changed(o, r, false); break;
+    }
     return true;
 }
 
@@ -234,8 +239,10 @@ static inline bool modifyoctaent(int flags, int id)
     return ents.inrange(id) && modifyoctaent(flags, id, *ents[id]);
 }
 
-static inline void addentity(int id)    { modifyoctaent(MODOE_ADD|MODOE_UPDATEBB, id); }
-static inline void removeentity(int id) { modifyoctaent(MODOE_UPDATEBB, id); }
+static inline void addentity(int id)        { modifyoctaent(MODOE_ADD|MODOE_UPDATEBB, id); }
+static inline void addentityedit(int id)    { modifyoctaent(MODOE_ADD|MODOE_UPDATEBB|MODOE_CHANGED, id); }
+static inline void removeentity(int id)     { modifyoctaent(MODOE_UPDATEBB, id); }
+static inline void removeentityedit(int id) { modifyoctaent(MODOE_UPDATEBB|MODOE_CHANGED, id); }
 
 void freeoctaentities(cube &c)
 {
@@ -456,10 +463,10 @@ void attachentities()
     entfocusv(i, \
     { \
         int oldtype = e.type; \
-        removeentity(n);  \
+        removeentityedit(n);  \
         f; \
         if(oldtype!=e.type) detachentity(e); \
-        if(e.type!=ET_EMPTY) { addentity(n); if(oldtype!=e.type) attachentity(e); } \
+        if(e.type!=ET_EMPTY) { addentityedit(n); if(oldtype!=e.type) attachentity(e); } \
         entities::editent(n, true); \
         clearshadowcache(); \
     }, v); \
@@ -468,7 +475,7 @@ void attachentities()
 #define addgroup(exp)   { vector<extentity *> &ents = entities::getents(); loopv(ents) entfocusv(i, if(exp) entadd(n), ents); }
 #define setgroup(exp)   { entcancel(); addgroup(exp); }
 #define groupeditloop(f){ vector<extentity *> &ents = entities::getents(); entlooplevel++; int _ = efocus; loopv(entgroup) enteditv(entgroup[i], f, ents); efocus = _; entlooplevel--; }
-#define groupeditpure(f){ if(entlooplevel>0) { entedit(efocus, f); } else groupeditloop(f); }
+#define groupeditpure(f){ if(entlooplevel>0) { entedit(efocus, f); } else { groupeditloop(f); commitchanges(); } }
 #define groupeditundo(f){ makeundoent(); groupeditpure(f); }
 #define groupedit(f)    { addimplicit(groupeditundo(f)); }
 
@@ -1093,6 +1100,7 @@ void newentity(int type, int a1, int a2, int a3, int a4, int a5, bool fix = true
     enttoggle(idx);
     makeundoent();
     entedit(idx, e.type = type);
+    commitchanges();
 }
 
 void newent(char *what, int *a1, int *a2, int *a3, int *a4, int *a5)
@@ -1502,23 +1510,24 @@ void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, i
     {
         extentity *e = newentity(local, o, type, attr1, attr2, attr3, attr4, attr5, i);
         if(!e) return;
-        addentity(i);
+        addentityedit(i);
         attachentity(*e);
     }
     else
     {
         extentity &e = *ents[i];
-        removeentity(i);
+        removeentityedit(i);
         int oldtype = e.type;
         if(oldtype!=type) detachentity(e);
         e.type = type;
         e.o = o;
         e.attr1 = attr1; e.attr2 = attr2; e.attr3 = attr3; e.attr4 = attr4; e.attr5 = attr5;
-        addentity(i);
+        addentityedit(i);
         if(oldtype!=type) attachentity(e);
     }
     entities::editent(i, local);
     clearshadowcache();
+    commitchanges();
 }
 
 int getworldsize() { return worldsize; }
