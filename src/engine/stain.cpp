@@ -3,8 +3,7 @@
 struct stainvert
 {
     vec pos;
-    bvec color;
-    uchar alpha;
+    bvec4 color;
     float u, v;
 };
 
@@ -85,16 +84,15 @@ struct stainbuffer
         availverts = endvert < startvert ? startvert - endvert - 3 : maxverts - 3 - (endvert - startvert);
     }
 
-    bool faded(const staininfo &d) const { return verts[d.startvert].alpha < 255; }
+    bool faded(const staininfo &d) const { return verts[d.startvert].color.a < 255; }
 
-    void fadestain(const staininfo &d, bvec color, uchar alpha)
+    void fadestain(const staininfo &d, const bvec4 &color)
     {
         stainvert *vert = &verts[d.startvert],
                   *end = &verts[d.endvert < d.startvert ? maxverts : d.endvert];
         while(vert < end)
         {
             vert->color = color;
-            vert->alpha = alpha;
             vert++;
         }
         if(d.endvert < d.startvert)
@@ -104,7 +102,6 @@ struct stainbuffer
             while(vert < end)
             {
                 vert->color = color;
-                vert->alpha = alpha;
                 vert++;
             }
         }
@@ -235,7 +232,7 @@ struct stainrenderer
     {
         bvec color = d.color;
         if(flags&(SF_OVERBRIGHT|SF_GLOW|SF_INVMOD)) color.scale(alpha, 255);
-        verts[d.owner].fadestain(d, color, alpha);
+        verts[d.owner].fadestain(d, bvec4(color, alpha));
     }
 
     void clearfadedstains()
@@ -400,7 +397,7 @@ struct stainrenderer
     ivec bbmin, bbmax;
     vec staincenter, stainnormal, staintangent, stainbitangent;
     float stainradius, stainu, stainv;
-    bvec staincolor;
+    bvec4 staincolor;
 
     void addstain(const vec &center, const vec &dir, float radius, const bvec &color, int info)
     {
@@ -408,7 +405,7 @@ struct stainrenderer
         bbmin = ivec(center).sub(bbradius);
         bbmax = ivec(center).add(bbradius);
 
-        staincolor = color;
+        staincolor = bvec4(color, 255);
         staincenter = center;
         stainradius = radius;
         stainnormal = dir;
@@ -580,8 +577,8 @@ struct stainrenderer
             float tsz = flags&SF_RND4 ? 0.5f : 1.0f, scale = tsz*0.5f/stainradius,
                   tu = stainu + tsz*0.5f - ptc*scale, tv = stainv + tsz*0.5f - pbc*scale;
             pt.mul(scale); pb.mul(scale);
-            stainvert dv1 = { v2[0], staincolor, 255, pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv },
-                      dv2 = { v2[1], staincolor, 255, pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv };
+            stainvert dv1 = { v2[0], staincolor, pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv },
+                      dv2 = { v2[1], staincolor, pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv };
             int totalverts = 3*(numv-2);
             if(totalverts > buf.maxverts-3) return;
             while(buf.availverts < totalverts)
