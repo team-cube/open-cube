@@ -1453,19 +1453,19 @@ struct svec
 inline vec::vec(const svec &v) : x(v.x), y(v.y), z(v.z) {}
 inline ivec::ivec(const svec &v) : x(v.x), y(v.y), z(v.z) {}
 
-struct vec4d
+struct dvec4
 {
     double x, y, z, w;
 
-    vec4d() {}
-    vec4d(double x, double y, double z, double w) : x(x), y(y), z(z), w(w) {}
-    vec4d(const vec4 &v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+    dvec4() {}
+    dvec4(double x, double y, double z, double w) : x(x), y(y), z(z), w(w) {}
+    dvec4(const vec4 &v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 
-    template<class B> vec4d &madd(const vec4d &a, const B &b) { return add(vec4d(a).mul(b)); }
-    vec4d &mul(double f)       { x *= f; y *= f; z *= f; w *= f; return *this; }
-    vec4d &mul(const vec4d &o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; return *this; }
-    vec4d &add(double f)       { x += f; y += f; z += f; w += f; return *this; }
-    vec4d &add(const vec4d &o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
+    template<class B> dvec4 &madd(const dvec4 &a, const B &b) { return add(dvec4(a).mul(b)); }
+    dvec4 &mul(double f)       { x *= f; y *= f; z *= f; w *= f; return *this; }
+    dvec4 &mul(const dvec4 &o) { x *= o.x; y *= o.y; z *= o.z; w *= o.w; return *this; }
+    dvec4 &add(double f)       { x += f; y += f; z += f; w += f; return *this; }
+    dvec4 &add(const dvec4 &o) { x += o.x; y += o.y; z += o.z; w += o.w; return *this; }
 
     operator vec4() const { return vec4(x, y, z, w); }
 };
@@ -1506,8 +1506,8 @@ struct matrix4
     void mul(const matrix4 &x, const matrix4 &y) { mult<vec4>(x, y); }
     void mul(const matrix4 &y) { mult<vec4>(matrix4(*this), y); }
 
-    void muld(const matrix4 &x, const matrix4 &y) { mult<vec4d>(x, y); }
-    void muld(const matrix4 &y) { mult<vec4d>(matrix4(*this), y); }
+    void muld(const matrix4 &x, const matrix4 &y) { mult<dvec4>(x, y); }
+    void muld(const matrix4 &y) { mult<dvec4>(matrix4(*this), y); }
 
     void rotate_around_x(float ck, float sk)
     {
