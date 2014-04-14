@@ -415,12 +415,23 @@ struct vacollect : verthash
             octaentities *oe = decals[i];
             loopvj(oe->decals)
             {
-                const extentity &e = *ents[oe->decals[j]];
+                extentity &e = *ents[oe->decals[j]];
+                if(e.flags&EF_RENDER) continue;
+                e.flags |= EF_RENDER;
                 DecalSlot &s = lookupdecalslot(e.attr1, true);
                 if(!s.shader) continue;
                 ushort envmap = s.shader->type&SHADER_ENVMAP ? (s.texmask&(1<<TEX_ENVMAP) ? EMID_CUSTOM : closestenvmap(e.o)) : EMID_NONE;
                 decalkey k(e.attr1, envmap);
                 gendecal(e, s, k);
+            }
+        }
+        loopv(decals)
+        {
+            octaentities *oe = decals[i];
+            loopvj(oe->decals)
+            {
+                extentity &e = *ents[oe->decals[j]];
+                if(e.flags&EF_RENDER) e.flags &= ~EF_RENDER;
             }
         }
         enumeratekt(decalindices, decalkey, k, sortval, t,
