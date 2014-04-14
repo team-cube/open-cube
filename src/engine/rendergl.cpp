@@ -1247,7 +1247,7 @@ void setcamprojmatrix(bool init = true, bool flush = false)
 
     jitteraa(init);
 
-    camprojmatrix.mul(projmatrix, cammatrix);
+    camprojmatrix.muld(projmatrix, cammatrix);
 
     if(init)
     {

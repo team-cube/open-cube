@@ -3848,8 +3848,8 @@ void rendertransparent()
     if(ghasstencil) glEnable(GL_STENCIL_TEST);
 
     matrix4 raymatrix(vec(-0.5f*vieww*projmatrix.a.x, 0, 0.5f*vieww - 0.5f*vieww*projmatrix.c.x),
-                       vec(0, -0.5f*viewh*projmatrix.b.y, 0.5f*viewh - 0.5f*viewh*projmatrix.c.y));
-    raymatrix.mul(cammatrix);
+                      vec(0, -0.5f*viewh*projmatrix.b.y, 0.5f*viewh - 0.5f*viewh*projmatrix.c.y));
+    raymatrix.muld(cammatrix);
     GLOBALPARAM(raymatrix, raymatrix);
     GLOBALPARAM(linearworldmatrix, linearworldmatrix);
 
@@ -4033,10 +4033,10 @@ void preparegbuffer(bool depthclear)
     invscreenmatrix.identity();
     invscreenmatrix.settranslation(-1.0f, -1.0f, -1.0f);
     invscreenmatrix.setscale(2.0f/vieww, 2.0f/viewh, 2.0f);
-    eyematrix.mul(invprojmatrix, invscreenmatrix);
+    eyematrix.muld(invprojmatrix, invscreenmatrix);
     if(drawtex == DRAWTEX_MINIMAP)
     {
-        linearworldmatrix.mul(invcamprojmatrix, invscreenmatrix);
+        linearworldmatrix.muld(invcamprojmatrix, invscreenmatrix);
         if(!gdepthformat) worldmatrix = linearworldmatrix;
         linearworldmatrix.a.z = invcammatrix.a.z;
         linearworldmatrix.b.z = invcammatrix.b.z;
@@ -4050,9 +4050,9 @@ void preparegbuffer(bool depthclear)
     {
         float xscale = eyematrix.a.x, yscale = eyematrix.b.y, xoffset = eyematrix.d.x, yoffset = eyematrix.d.y, zscale = eyematrix.d.z;
         matrix4 depthmatrix(vec(xscale/zscale, 0, xoffset/zscale), vec(0, yscale/zscale, yoffset/zscale));
-        linearworldmatrix.mul(invcammatrix, depthmatrix);
+        linearworldmatrix.muld(invcammatrix, depthmatrix);
         if(gdepthformat) worldmatrix = linearworldmatrix;
-        else worldmatrix.mul(invcamprojmatrix, invscreenmatrix);
+        else worldmatrix.muld(invcamprojmatrix, invscreenmatrix);
 
         GLOBALPARAMF(radialfogscale, xscale/zscale, yscale/zscale, xoffset/zscale, yoffset/zscale);
     }
@@ -4060,7 +4060,7 @@ void preparegbuffer(bool depthclear)
     screenmatrix.identity();
     screenmatrix.settranslation(0.5f*vieww, 0.5f*viewh, 0.5f);
     screenmatrix.setscale(0.5f*vieww, 0.5f*viewh, 0.5f);
-    screenmatrix.mul(camprojmatrix);
+    screenmatrix.muld(camprojmatrix);
 
     GLOBALPARAMF(viewsize, vieww, viewh, 1.0f/vieww, 1.0f/viewh);
     GLOBALPARAMF(gdepthscale, eyematrix.d.z, eyematrix.c.w, eyematrix.d.w);
