@@ -449,40 +449,6 @@ struct stainrenderer
         }
     }
 
-    static int clip(const vec *in, int numin, const vec &dir, float below, float above, vec *out)
-    {
-        int numout = 0;
-        const vec *p = &in[numin-1];
-        float pc = dir.dot(*p);
-        loopi(numin)
-        {
-            const vec &v = in[i];
-            float c = dir.dot(v);
-            if(c < below)
-            {
-                if(pc > above) out[numout++] = vec(*p).sub(v).mul((above - c)/(pc - c)).add(v);
-                if(pc > below) out[numout++] = vec(*p).sub(v).mul((below - c)/(pc - c)).add(v);
-            }
-            else if(c > above)
-            {
-                if(pc < below) out[numout++] = vec(*p).sub(v).mul((below - c)/(pc - c)).add(v);
-                if(pc < above) out[numout++] = vec(*p).sub(v).mul((above - c)/(pc - c)).add(v);
-            }
-            else
-            {
-                if(pc < below)
-                {
-                    if(c > below) out[numout++] = vec(*p).sub(v).mul((below - c)/(pc - c)).add(v);
-                }
-                else if(pc > above && c < above) out[numout++] = vec(*p).sub(v).mul((above - c)/(pc - c)).add(v);
-                out[numout++] = v;
-            }
-            p = &v;
-            pc = c;
-        }
-        return numout;
-    }
-
     void gentris(cube &cu, int orient, const ivec &o, int size, materialsurface *mat = NULL, int vismask = 0)
     {
         vec pos[MAXFACEVERTS+4];
@@ -564,15 +530,15 @@ struct stainrenderer
             if(numplanes >= 2)
             {
                 if(l) { pos[1] = pos[2]; pos[2] = pos[3]; }
-                numv = clip(pos, 3, pt, ptc - stainradius, ptc + stainradius, v1);
+                numv = polyclip(pos, 3, pt, ptc - stainradius, ptc + stainradius, v1);
                 if(numv<3) continue;
             }
             else
             {
-                numv = clip(pos, numverts, pt, ptc - stainradius, ptc + stainradius, v1);
+                numv = polyclip(pos, numverts, pt, ptc - stainradius, ptc + stainradius, v1);
                 if(numv<3) continue;
             }
-            numv = clip(v1, numv, pb, pbc - stainradius, pbc + stainradius, v2);
+            numv = polyclip(v1, numv, pb, pbc - stainradius, pbc + stainradius, v2);
             if(numv<3) continue;
             float tsz = flags&SF_RND4 ? 0.5f : 1.0f, scale = tsz*0.5f/stainradius,
                   tu = stainu + tsz*0.5f - ptc*scale, tv = stainv + tsz*0.5f - pbc*scale;
