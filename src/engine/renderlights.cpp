@@ -4048,8 +4048,7 @@ void preparegbuffer(bool depthclear)
     }
     else
     {
-        linearworldmatrix.mul(invprojmatrix, invscreenmatrix);
-        float xscale = linearworldmatrix.a.x, yscale = linearworldmatrix.b.y, xoffset = linearworldmatrix.d.x, yoffset = linearworldmatrix.d.y, zscale = linearworldmatrix.d.z;
+        float xscale = eyematrix.a.x, yscale = eyematrix.b.y, xoffset = eyematrix.d.x, yoffset = eyematrix.d.y, zscale = eyematrix.d.z;
         matrix4 depthmatrix(vec(xscale/zscale, 0, xoffset/zscale), vec(0, yscale/zscale, yoffset/zscale));
         linearworldmatrix.mul(invcammatrix, depthmatrix);
         if(gdepthformat) worldmatrix = linearworldmatrix;
