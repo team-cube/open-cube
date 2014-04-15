@@ -144,31 +144,41 @@ namespace game
 
     void switchname(const char *name)
     {
-        if(name[0])
-        {
-            filtertext(player1->name, name, false, MAXNAMELEN);
-            if(!player1->name[0]) copystring(player1->name, "unnamed");
-            addmsg(N_SWITCHNAME, "rs", player1->name);
-        }
-        else conoutf("your name is: %s", colorname(player1));
+        filtertext(player1->name, name, false, MAXNAMELEN);
+        if(!player1->name[0]) copystring(player1->name, "unnamed");
+        addmsg(N_SWITCHNAME, "rs", player1->name);
     }
-    ICOMMAND(name, "sN", (char *s, int *numargs), { if(*numargs >= 0) switchname(s); else result(colorname(player1)); });
+    void printname()
+    {
+        conoutf("your name is: %s", colorname(player1));
+    }
+    ICOMMAND(name, "sN", (char *s, int *numargs),
+    {
+        if(*numargs > 0) switchname(s);
+        else if(!*numargs) printname();
+        else result(colorname(player1));
+    });
     ICOMMAND(getname, "", (), result(player1->name));
 
     void switchteam(const char *team)
     {
-        if(team[0])
-        {
-            int num = isdigit(team[0]) ? parseint(team) : teamnumber(team);
-            if(!validteam(num)) return;
-            if(player1->clientnum < 0) player1->team = num;
-            else addmsg(N_SWITCHTEAM, "ri", num);
-        }
-        else if((player1->clientnum >= 0 && !m_teammode) || !validteam(player1->team)) conoutf("you are not in a team");
+        int num = isdigit(team[0]) ? parseint(team) : teamnumber(team);
+        if(!validteam(num)) return;
+        if(player1->clientnum < 0) player1->team = num;
+        else addmsg(N_SWITCHTEAM, "ri", num);
+    }
+    void printteam()
+    {
+        if((player1->clientnum >= 0 && !m_teammode) || !validteam(player1->team)) conoutf("you are not in a team");
         else conoutf("your team is: \fs%s%s\fr", teamtextcode[player1->team], teamnames[player1->team]);
     }
-    ICOMMAND(team, "s", (char *s), switchteam(s));
-    ICOMMAND(getteam, "", (), intret(m_teammode && validteam(player1->team) ? player1->team : 0));
+    ICOMMAND(team, "sN", (char *s, int *numargs),
+    {
+        if(*numargs > 0) switchteam(s);
+        else if(!*numargs) printteam();
+        else if((player1->clientnum < 0 || m_teammode) && validteam(player1->team)) result(tempformatstring("\fs%s%s\fr", teamtextcode[player1->team], teamnames[player1->team]));
+    });
+    ICOMMAND(getteam, "", (), intret((player1->clientnum < 0 || m_teammode) && validteam(player1->team) ? player1->team : 0));
     ICOMMAND(getteamname, "i", (int *num), result(teamname(*num)));
 
     struct authkey
