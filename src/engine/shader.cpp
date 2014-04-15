@@ -242,6 +242,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
     if(glslversion < 130 && hasEGPU4) parts[numparts++] = "#define uint unsigned int\n";
     else if(glslversion < 140 && !hasEGPU4)
     {
+        if(glslversion < 130) parts[numparts++] = "#define flat\n";
         parts[numparts++] =
             "#define texture2DRectOffset(sampler, coords, offset) texture2DRect(sampler, coords + vec2(offset))\n"
             "#define shadow2DRectOffset(sampler, coords, offset) shadow2DRect(sampler, coords + vec2(offset))\n";

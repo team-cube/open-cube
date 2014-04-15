@@ -56,7 +56,7 @@ void setupbloom(int w, int h)
         createtexture(bloomtex[5], bloomw, bloomh, NULL, 3, 1, bloomformat, GL_TEXTURE_RECTANGLE);
     }
 
-    if(!hwvtexunits)
+    if(hwvtexunits < 4)
     {
         glGenBuffers_(1, &bloompbo); 
         glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
