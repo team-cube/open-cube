@@ -673,7 +673,6 @@
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/Frameworks\"";
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
-				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = ../enet/include;
 				INFOPLIST_FILE = tesseract.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
@@ -695,7 +694,6 @@
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/Frameworks\"";
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
-				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = ../enet/include;
 				INFOPLIST_FILE = tesseract.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
@@ -721,7 +719,6 @@
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/Frameworks\"";
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
-				GCC_PREPROCESSOR_DEFINITIONS = HAS_SOCKLEN_T;
 				HEADER_SEARCH_PATHS = ../enet/include;
 				INFOPLIST_FILE = tesseract.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
