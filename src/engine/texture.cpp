@@ -1,7 +1,12 @@
 // texture.cpp: texture slot management
 
 #include "engine.h"
-#include "SDL_image.h"
+
+#ifdef __APPLE__
+  #include "SDL2_image/SDL_image.h"
+#else
+  #include "SDL_image.h"
+#endif
 
 #define FUNCNAME(name) name##1
 #define DEFPIXEL uint OP(r, 0);

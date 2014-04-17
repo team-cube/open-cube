@@ -44,10 +44,13 @@
 #endif
 
 #ifndef STANDALONE
-#include <SDL.h>
-#include <SDL_opengl.h>
   #ifdef __APPLE__
-  #define main SDL_main
+    #include "SDL2/SDL.h"
+    #include "SDL2/SDL_opengl.h"
+    #define main SDL_main
+  #else
+    #include <SDL.h>
+    #include <SDL_opengl.h>
   #endif
 #endif
 

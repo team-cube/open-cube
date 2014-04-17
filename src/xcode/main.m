@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "SDL.h"
+#import "SDL2/SDL.h"
 #import "Launcher.h"
 
 @interface SDLApplication : NSApplication
