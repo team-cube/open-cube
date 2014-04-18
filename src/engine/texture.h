@@ -109,7 +109,7 @@ enum
     SHADER_DEFERRED   = 1<<9
 };
 
-#define MAXVARIANTROWS 8
+#define MAXVARIANTROWS 32
 
 struct Slot;
 struct VSlot;
@@ -150,7 +150,8 @@ struct Shader
     vector<LocalShaderParamState> localparams;
     vector<uchar> localparamremap;
     Shader *variantshader;
-    vector<Shader *> variants[MAXVARIANTROWS];
+    vector<Shader *> variants;
+    ushort *variantrows;
     bool standard, forced, used;
     Shader *reusevs, *reuseps;
     vector<UniformLoc> uniformlocs;
@@ -158,7 +159,7 @@ struct Shader
     vector<FragDataLoc> fragdatalocs;
     const void *owner;
 
-    Shader() : name(NULL), vsstr(NULL), psstr(NULL), defer(NULL), type(SHADER_DEFAULT), program(0), vsobj(0), psobj(0), variantshader(NULL), standard(false), forced(false), used(false), reusevs(NULL), reuseps(NULL), owner(NULL)
+    Shader() : name(NULL), vsstr(NULL), psstr(NULL), defer(NULL), type(SHADER_DEFAULT), program(0), vsobj(0), psobj(0), variantshader(NULL), variantrows(NULL), standard(false), forced(false), used(false), reusevs(NULL), reuseps(NULL), owner(NULL)
     {
     }
 
@@ -168,6 +169,7 @@ struct Shader
         DELETEA(vsstr);
         DELETEA(psstr);
         DELETEA(defer);
+        DELETEA(variantrows);
     }
 
     void allocparams(Slot *slot = NULL);
@@ -188,19 +190,38 @@ struct Shader
     bool loaded() const { return !(type&(SHADER_DEFERRED|SHADER_INVALID)); }
 
     bool hasoption() const { return (type&SHADER_OPTION)!=0; }
-    bool hasoption(int row) { return !variants[row].empty() && (variants[row][0]->type&SHADER_OPTION)!=0; }
 
     bool isdynamic() const { return (type&SHADER_DYNAMIC)!=0; }
+
+    int numvariants(int row) const
+    {
+        if(row < 0 || row >= MAXVARIANTROWS || !variantrows) return 0;
+        return variantrows[row+1] - variantrows[row];
+    }
+
+    Shader *getvariant(int col, int row) const
+    {
+        if(row < 0 || row >= MAXVARIANTROWS || col < 0 || !variantrows) return NULL;
+        int start = variantrows[row], end = variantrows[row+1];
+        return col < end - start ? variants[start + col] : NULL;
+    }
+
+    void addvariant(int row, Shader *s)
+    {
+        if(row < 0 || row >= MAXVARIANTROWS || variants.length() >= USHRT_MAX) return;
+        if(!variantrows) { variantrows = new ushort[MAXVARIANTROWS+1]; memset(variantrows, 0, (MAXVARIANTROWS+1)*sizeof(ushort)); }
+        variants.insert(variantrows[row+1], s);
+        for(int i = row+1; i <= MAXVARIANTROWS; ++i) ++variantrows[i];
+    }
 
     void setvariant_(int col, int row)
     {
         Shader *s = this;
-        for(col = min(col, variants[row].length()-1); col >= 0; col--)
-            if(!(variants[row][col]->type&SHADER_INVALID))
-            {
-                s = variants[row][col];
-                break;
-            }
+        if(variantrows)
+        {
+            int start = variantrows[row], end = variantrows[row+1];
+            for(col = min(start + col, end-1); col >= start; --col) if(!variants[col]->invalid()) { s = variants[col]; break; }
+        }
         if(lastshader!=s) s->bindprograms();
     }
 

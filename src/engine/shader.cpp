@@ -664,10 +664,11 @@ void Shader::cleanup(bool full)
     if(standard || full)
     {
         type = SHADER_INVALID;
-        loopi(MAXVARIANTROWS) variants[i].setsize(0);
         DELETEA(vsstr);
         DELETEA(psstr);
         DELETEA(defer);
+        variants.setsize(0);
+        DELETEA(variantrows);
         defaultparams.setsize(0);
         attriblocs.setsize(0);
         fragdatalocs.setsize(0);
@@ -730,13 +731,13 @@ Shader *newshader(int type, const char *name, const char *vs, const char *ps, Sh
         if(!vs[0] || sscanf(vs, "%d , %d", &row, &col) >= 1)
         {
             DELETEA(s.vsstr);
-            s.reusevs = !vs[0] ? variant : (variant->variants[row].inrange(col) ? variant->variants[row][col] : NULL);
+            s.reusevs = !vs[0] ? variant : variant->getvariant(col, row);
         }
         row = col = 0;
         if(!ps[0] || sscanf(ps, "%d , %d", &row, &col) >= 1)
         {
             DELETEA(s.psstr);
-            s.reuseps = !ps[0] ? variant : (variant->variants[row].inrange(col) ? variant->variants[row][col] : NULL);
+            s.reuseps = !ps[0] ? variant : variant->getvariant(col, row);
         }
     }
     if(variant) loopv(variant->defaultparams) s.defaultparams.add(variant->defaultparams[i]);
@@ -754,7 +755,7 @@ Shader *newshader(int type, const char *name, const char *vs, const char *ps, Sh
         if(variant) shaders.remove(rname);
         return NULL;
     }
-    if(variant) variant->variants[row].add(&s);
+    if(variant) variant->addvariant(row, &s);
     return &s;
 }
 
@@ -811,9 +812,10 @@ static void gengenericvariant(Shader &s, const char *sname, const char *vs, cons
     }
     row += rowoffset;
     if(row < 0 || row >= MAXVARIANTROWS) return;
-    defformatstring(varname, "<variant:%d,%d>%s", s.variants[row].length(), row, sname);
+    int col = s.numvariants(row); 
+    defformatstring(varname, "<variant:%d,%d>%s", col, row, sname);
     string reuse;
-    if(s.variants[row].length()) formatstring(reuse, "%d", row);
+    if(col) formatstring(reuse, "%d", row);
     else copystring(reuse, "");
     newshader(s.type, varname, vschanged ? vsv.getbuf() : reuse, pschanged ? psv.getbuf() : reuse, &s, row);
 }
@@ -833,7 +835,7 @@ static void genswizzle(Shader &s, const char *sname, const char *ps, int row = 0
     clen = strcspn(cname, "\r\n");
 
     string reuse;
-    if(s.variants[row].length()) formatstring(reuse, "%d", row);
+    if(s.numvariants(row)) formatstring(reuse, "%d", row);
     else copystring(reuse, "");
 
     loopi(2)
@@ -843,7 +845,7 @@ static void genswizzle(Shader &s, const char *sname, const char *ps, int row = 0
         pswz.put(cname, clen); pswz.put(" = ", 3); pswz.put(cname, clen); pswz.put(i ? ".rrrg;" : ".rrra;", 6);
         pswz.put(cname+clen, strlen(cname+clen)+1);
 
-        defformatstring(varname, "<variant:%d,%d>%s", s.variants[row].length(), row, sname);
+        defformatstring(varname, "<variant:%d,%d>%s", s.numvariants(row), row, sname);
         newshader(s.type, varname, reuse, pswz.getbuf(), &s, row);
     }
 }
@@ -1116,17 +1118,16 @@ void variantshader(int *type, char *name, int *row, char *vs, char *ps, int *max
         shader(type, name, vs, ps);
         return;
     }
-
+    else if(*row >= MAXVARIANTROWS) return;
+    
     Shader *s = lookupshaderbyname(name);
     if(!s) return;
 
-    defformatstring(varname, "<variant:%d,%d>%s", s->variants[*row].length(), *row, name);
+    defformatstring(varname, "<variant:%d,%d>%s", s->numvariants(*row), *row, name);
     if(*maxvariants > 0)
     {
-        int numvariants = 0;
-        loopi(MAXVARIANTROWS) numvariants += s->variants[i].length();
         defformatstring(info, "shader %s", name);
-        renderprogress(numvariants / float(*maxvariants), info);
+        renderprogress(s->variants.length() / float(*maxvariants), info);
     }
     vector<char> vsbuf, psbuf, vsbak, psbak;
     GENSHADER(s->defaultparams.length(), genuniformdefs(vsbuf, psbuf, vs, ps, s));
@@ -1241,15 +1242,15 @@ COMMAND(variantshader, "isissi");
 COMMAND(setshader, "s");
 COMMAND(defershader, "iss");
 ICOMMAND(forceshader, "s", (const char *name), useshaderbyname(name));
-ICOMMAND(dumpshader, "sbb", (const char *name, int *col, int *row),
+ICOMMAND(dumpshader, "sbi", (const char *name, int *col, int *row),
 {
     Shader *s = lookupshaderbyname(name);
     FILE *l = getlogfile();
     if(!s || !l) return;
     if(*col >= 0)
     {
-        if(*row >= MAXVARIANTROWS || !s->variants[max(*row, 0)].inrange(*col)) return;
-        s = s->variants[max(*row, 0)][*col];
+        s = s->getvariant(*col, *row);
+        if(!s) return;
     }
     if(s->vsstr) fprintf(l, "%s:%s\n%s\n", s->name, "VS", s->vsstr);
     if(s->psstr) fprintf(l, "%s:%s\n%s\n", s->name, "FS", s->psstr);
@@ -1507,9 +1508,9 @@ void reloadshaders()
             defformatstring(info, "shader %s", s.name);
             renderprogress(0.0, info);
             if(!s.compile()) s.cleanup(true);
-            loopi(MAXVARIANTROWS) loopvj(s.variants[i])
+            loopv(s.variants)
             {
-                Shader *v = s.variants[i][j];
+                Shader *v = s.variants[i];
                 if((v->reusevs && v->reusevs->invalid()) ||
                    (v->reuseps && v->reuseps->invalid()) ||
                    !v->compile())
