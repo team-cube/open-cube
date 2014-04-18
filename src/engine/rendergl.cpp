@@ -1033,7 +1033,7 @@ void gl_checkextensions()
         if(dbgexts) conoutf(CON_INIT, "Using GL_NV_copy_image extension.");
     }
 
-    extern int msaadepthstencil, gdepthstencil, msaastencil, gstencil, glineardepth, msaalineardepth, batchsunlight, smgather, rhrect, tqaaresolvegather;
+    extern int gdepthstencil, gstencil, glineardepth, msaadepthstencil, msaalineardepth, batchsunlight, smgather, rhrect, tqaaresolvegather;
     if(amd)
     {
         msaalineardepth = glineardepth = 1; // reading back from depth-stencil still buggy on newer cards, and requires stencil for MSAA
