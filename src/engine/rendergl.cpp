@@ -1059,10 +1059,9 @@ void gl_checkextensions()
             // causes massive slowdown in windows driver if reading depth-stencil texture
             if(checkdepthtexstencilrb())
             {
-                msaadepthstencil = gdepthstencil = 1;
-                msaastencil = gstencil = 1;
+                gdepthstencil = 1;
+                gstencil = 1;
             }
-            else glineardepth = 1;
             // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
             intel_texgatheroffsetcomp_bug = 1;
         }
