@@ -2175,6 +2175,8 @@ void cleardeferredlightshaders()
 VARF(lighttilebatch, 0, 8, 8, cleardeferredlightshaders());
 VARF(batchsunlight, 0, 2, 2, cleardeferredlightshaders());
 
+extern int spotlights;
+
 Shader *loaddeferredlightshader(const char *type = NULL)
 {
     string common, shadow, sun;
@@ -2188,6 +2190,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
     if(lighttilebatch) common[commonlen++] = '0' + lighttilebatch;
     if(usegatherforsm()) common[commonlen++] = smfilter > 2 ? 'G' : 'g';
     else if(smfilter) common[commonlen++] = smfilter > 2 ? 'E' : (smfilter > 1 ? 'F' : 'f');
+    if(spotlights) common[commonlen++] = 's';
     common[commonlen] = '\0';
 
     shadow[shadowlen++] = 'p';
@@ -2219,7 +2222,7 @@ Shader *loaddeferredlightshader(const char *type = NULL)
     sun[sunlen] = '\0';
 
     defformatstring(name, "deferredlight%s%s%s", common, shadow, sun);
-    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch, usebase);
+    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch, usebase, spotlights);
 }
 
 void loaddeferredlightshaders()
