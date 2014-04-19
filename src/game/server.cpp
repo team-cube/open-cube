@@ -3502,7 +3502,7 @@ namespace server
 
     int laninfoport() { return TESSERACT_LANINFO_PORT; }
     int serverport() { return TESSERACT_SERVER_PORT; }
-    const char *defaultmaster() { return "tesseract.gg"; }
+    const char *defaultmaster() { return "master.tesseract.gg"; }
     int masterport() { return TESSERACT_MASTER_PORT; }
     int numchannels() { return 3; }
 
