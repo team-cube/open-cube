@@ -454,13 +454,14 @@ VARF(msaatonemapblit, 0, 0, 1, cleanupgbuffer());
 VAR(msaamaxsamples, 1, 0, 0);
 VAR(msaamaxdepthtexsamples, 1, 0, 0);
 VAR(msaamaxcolortexsamples, 1, 0, 0);
+VAR(msaaminsamples, 1, 0, 0);
 VAR(msaasamples, 1, 0, 0);
 VAR(msaamincolorsamples, 1, 0, 0);
 VAR(msaacolorsamples, 1, 0, 0);
 
 void initgbuffer()
 {
-    msaamaxsamples = msaamaxdepthtexsamples = msaamaxcolortexsamples = msaasamples = msaamincolorsamples = msaacolorsamples = 0;
+    msaamaxsamples = msaamaxdepthtexsamples = msaamaxcolortexsamples = msaaminsamples = msaasamples = msaamincolorsamples = msaacolorsamples = 0;
     if(hasFBMS && hasFBB && hasTMS)
     {
         GLint val;
@@ -475,8 +476,8 @@ void initgbuffer()
     int maxsamples = min(msaamaxsamples, msaamaxcolortexsamples), samples = min(max(msaa, csaa), maxsamples);
     if(samples >= 2)
     {
-        msaasamples = 2;
-        while(msaasamples*2 <= samples) msaasamples *= 2;
+        msaaminsamples = 2;
+        while(msaaminsamples*2 <= samples) msaaminsamples *= 2;
         if(hasNVFBMSC && hasNVTMS)
         {
             if(msaa)
@@ -486,13 +487,13 @@ void initgbuffer()
                 while(msaamincolorsamples*2 <= colorsamples) msaamincolorsamples *= 2;
             }
         }
-        else msaamincolorsamples = msaasamples;
+        else msaamincolorsamples = msaaminsamples;
     }
 
     int lineardepth = glineardepth;
-    if(msaasamples)
+    if(msaaminsamples)
     {
-        if(msaamaxdepthtexsamples < msaasamples)
+        if(msaamaxdepthtexsamples < msaaminsamples)
         {
             if(msaalineardepth > 0) lineardepth = msaalineardepth;
             else if(!lineardepth) lineardepth = 1;
@@ -503,7 +504,7 @@ void initgbuffer()
     if(lineardepth > 1 && (!hasAFBO || !hasTF || !hasTRG)) gdepthformat = 1;
     else gdepthformat = lineardepth;
 
-    if(msaasamples) ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
+    if(msaaminsamples) ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
     else ghasstencil = (gdepthstencil > 1 || (gdepthstencil && gdepthformat)) && hasDS ? 2 : (gstencil ? 1 : 0);
 
     initao();
@@ -566,18 +567,18 @@ void bindmsdepth()
 
 static void texms(GLenum format, int w, int h, GLenum fixed)
 {
-    if(msaamincolorsamples < msaasamples)
-        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, msaamincolorsamples, format, w, h, fixed);
+    if(msaamincolorsamples < msaaminsamples)
+        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, msaamincolorsamples, format, w, h, fixed);
     else
-        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, format, w, h, fixed);
+        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, format, w, h, fixed);
 }
 
 static void rbms(GLenum format, int w, int h)
 {
-    if(msaamincolorsamples < msaasamples)
-        glRenderbufferStorageMultisampleCoverageNV_(GL_RENDERBUFFER, msaasamples, msaamincolorsamples, format, w, h);
+    if(msaamincolorsamples < msaaminsamples)
+        glRenderbufferStorageMultisampleCoverageNV_(GL_RENDERBUFFER, msaaminsamples, msaamincolorsamples, format, w, h);
     else
-        glRenderbufferStorageMultisample_(GL_RENDERBUFFER, msaasamples, format, w, h);
+        glRenderbufferStorageMultisample_(GL_RENDERBUFFER, msaaminsamples, format, w, h);
 }
 
 void setupmsbuffer(int w, int h)
@@ -675,18 +676,6 @@ void setupmsbuffer(int w, int h)
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | (ghasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
-    GLint colorsamples = msaasamples;
-    if(msaamincolorsamples < msaasamples) glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COLOR_SAMPLES_NV, &colorsamples);
-    msaacolorsamples = colorsamples;
-
-    memset(msaapositions, 0, sizeof(msaapositions));
-    if(fixed) loopi(msaasamples)
-    {
-        GLfloat vals[2];
-        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
-        msaapositions[i] = vec2(vals[0], vals[1]);
-    }
-
     if(!msrefracttex) glGenTextures(1, &msrefracttex);
     if(!msrefractfbo) glGenFramebuffers_(1, &msrefractfbo);
 
@@ -702,6 +691,28 @@ void setupmsbuffer(int w, int h)
         fatal("failed allocating MSAA refraction buffer!");
 
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
+
+    GLint samples, colorsamples;
+    if(msaamincolorsamples < msaaminsamples)
+    {
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COVERAGE_SAMPLES_NV, &samples);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COLOR_SAMPLES_NV, &colorsamples);     
+        msaasamples = samples;
+        msaacolorsamples = colorsamples;
+    }
+    else
+    {
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_SAMPLES, &samples);
+        msaacolorsamples = msaasamples = samples;
+    }
+
+    memset(msaapositions, 0, sizeof(msaapositions));
+    if(fixed) loopi(msaasamples)
+    {
+        GLfloat vals[2];
+        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
+        msaapositions[i] = vec2(vals[0], vals[1]);
+    }
 
     useshaderbyname("msaaedgedetect");
     useshaderbyname("msaaresolve");
@@ -753,7 +764,7 @@ void setupgbuffer()
     hdrformat = gethdrformat(hdrprec);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
-    if(msaasamples) setupmsbuffer(gw, gh);
+    if(msaaminsamples) setupmsbuffer(gw, gh);
 
     hdrfloat = floatformat(hdrformat);
     hdrclear = 3;
