@@ -481,14 +481,6 @@ void checkmsaasamples()
         msaacolorsamples = msaasamples = samples;
     }
     
-    msaapositions.setsize(0);
-    loopi(msaasamples)
-    {
-        GLfloat vals[2];
-        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
-        msaapositions.add(vec2(vals[0], vals[1]));
-    }
-
     glDeleteTextures(1, &tex);
 }
 
@@ -715,6 +707,14 @@ void setupmsbuffer(int w, int h)
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | (ghasstencil ? GL_STENCIL_BUFFER_BIT : 0));
+
+    msaapositions.setsize(0);
+    if(fixed) loopi(msaasamples)
+    {
+        GLfloat vals[2];
+        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
+        msaapositions.add(vec2(vals[0], vals[1]));
+    }
 
     if(!msrefracttex) glGenTextures(1, &msrefracttex);
     if(!msrefractfbo) glGenFramebuffers_(1, &msrefractfbo);
