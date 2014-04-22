@@ -607,18 +607,18 @@ void bindmsdepth()
 
 static void texms(GLenum format, int w, int h, GLenum fixed)
 {
-    if(msaamincolorsamples < msaaminsamples)
-        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, msaamincolorsamples, format, w, h, fixed);
+    if(msaacolorsamples < msaasamples)
+        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, msaacolorsamples, format, w, h, fixed);
     else
-        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, format, w, h, fixed);
+        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, format, w, h, fixed);
 }
 
 static void rbms(GLenum format, int w, int h)
 {
-    if(msaamincolorsamples < msaaminsamples)
-        glRenderbufferStorageMultisampleCoverageNV_(GL_RENDERBUFFER, msaaminsamples, msaamincolorsamples, format, w, h);
+    if(msaacolorsamples < msaasamples)
+        glRenderbufferStorageMultisampleCoverageNV_(GL_RENDERBUFFER, msaasamples, msaacolorsamples, format, w, h);
     else
-        glRenderbufferStorageMultisample_(GL_RENDERBUFFER, msaaminsamples, format, w, h);
+        glRenderbufferStorageMultisample_(GL_RENDERBUFFER, msaasamples, format, w, h);
 }
 
 void setupmsbuffer(int w, int h)
@@ -782,7 +782,7 @@ void setupgbuffer()
     hdrformat = gethdrformat(hdrprec);
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
-    if(msaaminsamples) setupmsbuffer(gw, gh);
+    if(msaasamples) setupmsbuffer(gw, gh);
 
     hdrfloat = floatformat(hdrformat);
     hdrclear = 3;
