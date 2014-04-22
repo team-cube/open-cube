@@ -4121,11 +4121,9 @@ void rendertransparent()
                 glScissor(x1, y1, x2 - x1, y2 - y1);
             }
 
-            maskgbuffer("c");
-            glClearColor(0, 0, 0, 0);
-            glClear(GL_COLOR_BUFFER_BIT);
             maskgbuffer("n");
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+            glClearColor(0, 0, 0, 0);
             glClear(GL_COLOR_BUFFER_BIT);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             if(scissor) glDisable(GL_SCISSOR_TEST);
