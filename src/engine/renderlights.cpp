@@ -459,6 +459,39 @@ VAR(msaasamples, 1, 0, 0);
 VAR(msaamincolorsamples, 1, 0, 0);
 VAR(msaacolorsamples, 1, 0, 0);
 
+void checkmsaasamples()
+{
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex);
+
+    GLint samples, colorsamples;
+    if(msaamincolorsamples < msaaminsamples)
+    {
+        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, msaamincolorsamples, GL_RGBA8, 1, 1, GL_TRUE);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COVERAGE_SAMPLES_NV, &samples);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COLOR_SAMPLES_NV, &colorsamples);
+        msaasamples = samples;
+        msaacolorsamples = colorsamples;
+    }
+    else
+    {
+        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaaminsamples, GL_RGBA8, 1, 1, GL_TRUE);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_SAMPLES, &samples);
+        msaacolorsamples = msaasamples = samples;
+    }
+    
+    msaapositions.setsize(0);
+    loopi(msaasamples)
+    {
+        GLfloat vals[2];
+        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
+        msaapositions.add(vec2(vals[0], vals[1]));
+    }
+
+    glDeleteTextures(1, &tex);
+}
+
 void initgbuffer()
 {
     msaamaxsamples = msaamaxdepthtexsamples = msaamaxcolortexsamples = msaaminsamples = msaasamples = msaamincolorsamples = msaacolorsamples = 0;
@@ -475,11 +508,11 @@ void initgbuffer()
         msaamaxcolortexsamples = val;
     }
 
-    int maxsamples = min(msaamaxsamples, msaamaxcolortexsamples), samples = min(max(msaa, csaa), maxsamples);
-    if(samples >= 2)
+    int maxsamples = min(msaamaxsamples, msaamaxcolortexsamples), reqsamples = min(max(msaa, csaa), maxsamples);
+    if(reqsamples >= 2)
     {
         msaaminsamples = 2;
-        while(msaaminsamples*2 <= samples) msaaminsamples *= 2;
+        while(msaaminsamples*2 <= reqsamples) msaaminsamples *= 2;
         if(hasNVFBMSC && hasNVTMS)
         {
             if(msaa)
@@ -506,7 +539,12 @@ void initgbuffer()
     if(lineardepth > 1 && (!hasAFBO || !hasTF || !hasTRG)) gdepthformat = 1;
     else gdepthformat = lineardepth;
 
-    if(msaaminsamples) ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
+    if(msaaminsamples)
+    {
+        ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
+        
+        checkmsaasamples();
+    }
     else ghasstencil = (gdepthstencil > 1 || (gdepthstencil && gdepthformat)) && hasDS ? 2 : (gstencil ? 1 : 0);
 
     initao();
@@ -693,28 +731,6 @@ void setupmsbuffer(int w, int h)
         fatal("failed allocating MSAA refraction buffer!");
 
     glBindFramebuffer_(GL_FRAMEBUFFER, 0);
-
-    GLint samples, colorsamples;
-    if(msaamincolorsamples < msaaminsamples)
-    {
-        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COVERAGE_SAMPLES_NV, &samples);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_COLOR_SAMPLES_NV, &colorsamples);     
-        msaasamples = samples;
-        msaacolorsamples = colorsamples;
-    }
-    else
-    {
-        glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_SAMPLES, &samples);
-        msaacolorsamples = msaasamples = samples;
-    }
-
-    msaapositions.setsize(0); 
-    if(fixed) loopi(msaasamples)
-    {
-        GLfloat vals[2];
-        glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
-        msaapositions.add(vec2(vals[0], vals[1]));
-    }
 
     useshaderbyname("msaaedgedetect");
     useshaderbyname("msaaresolve");
