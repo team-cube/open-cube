@@ -176,8 +176,8 @@ extern void zerofogcolor();
 extern void resetfogcolor();
 extern float calcfogdensity(float dist);
 extern float calcfogcull();
-extern void renderavatar();
 extern void writecrosshairs(stream *f);
+extern void renderavatar();
 
 namespace modelpreview
 {
@@ -353,7 +353,7 @@ extern GLuint gdepthtex, gcolortex, gnormaltex, gglowtex, gdepthrb, gstencilrb;
 extern int msaasamples;
 extern GLuint msdepthtex, mscolortex, msnormaltex, msglowtex, msdepthrb, msstencilrb;
 extern vec2 msaapositions[16];
-enum { AA_UNUSED = 0, AA_RESERVED, AA_LUMA, AA_VELOCITY, AA_VELOCITY_MASKED, AA_SPLIT, AA_SPLIT_LUMA, AA_SPLIT_VELOCITY, AA_SPLIT_VELOCITY_MASKED };
+enum { AA_UNUSED = 0, AA_LUMA, AA_VELOCITY, AA_VELOCITY_MASKED, AA_SPLIT, AA_SPLIT_LUMA, AA_SPLIT_VELOCITY, AA_SPLIT_VELOCITY_MASKED };
 
 extern void cleanupgbuffer();
 extern void initgbuffer();
@@ -377,15 +377,22 @@ extern void doscale(GLuint outfbo = 0);
 extern bool debuglights();
 extern void cleanuplights();
 
+extern int avatarmask;
+extern bool useavatarmask();
+extern void enableavatarmask();
+extern void disableavatarmask();
+
 // aa
 extern matrix4 nojittermatrix;
 
 extern void setupaa(int w, int h);
-extern void jitteraa(bool init = true);
+extern void jitteraa();
 extern bool maskedaa();
 extern bool multisampledaa();
 extern void setaavelocityparams(GLenum tmu = GL_TEXTURE0);
 extern void setaamask(bool val);
+extern void enableaamask(int stencil = 0);
+extern void disableaamask();
 extern void doaa(GLuint outfbo, void (*resolve)(GLuint, int));
 extern bool debugaa();
 extern void cleanupaa();
@@ -672,7 +679,7 @@ extern void rendershadowmodelbatches(bool dynmodel = true);
 extern void shadowmaskbatchedmodels(bool dynshadow = true);
 extern void rendermapmodelbatches();
 extern void rendermodelbatches();
-extern void rendertransparentmodelbatches();
+extern void rendertransparentmodelbatches(int stencil = 0);
 extern void rendermapmodel(int idx, int anim, const vec &o, float yaw = 0, float pitch = 0, float roll = 0, int flags = MDL_CULL_VFC | MDL_CULL_DIST, int basetime = 0, float size = 1);
 extern void clearbatchedmapmodels();
 extern void preloadusedmapmodels(bool msg = false, bool bih = false);
@@ -712,7 +719,7 @@ enum { STAINBUF_OPAQUE = 0, STAINBUF_TRANSPARENT, NUMSTAINBUFS };
 
 extern void initstains();
 extern void clearstains();
-extern void renderstains(int sbuf = STAINBUF_OPAQUE);
+extern void renderstains(int sbuf, bool gbuf);
 extern void cleanupstains();
 
 // rendersky

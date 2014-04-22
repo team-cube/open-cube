@@ -289,6 +289,7 @@ VAR(amd_pf_bug, 0, 0, 1);
 VAR(amd_eal_bug, 0, 0, 1);
 VAR(mesa_texrectoffset_bug, 0, 0, 1);
 VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
+VAR(usedbt, 1, 0, 0);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -914,6 +915,7 @@ void gl_checkextensions()
     if(hasext("GL_EXT_depth_bounds_test"))
     {
         glDepthBounds_ = (PFNGLDEPTHBOUNDSEXTPROC) getprocaddress("glDepthBoundsEXT");
+        usedbt = 1;
         hasDBT = true;
         if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_depth_bounds_test extension.");
     }
@@ -1280,7 +1282,7 @@ void setcamprojmatrix(bool init = true, bool flush = false)
             projmatrix.jitter((viewidx ? -1 : 1) * ovr::distortoffset, 0);
     }
 
-    jitteraa(init);
+    jitteraa();
 
     camprojmatrix.muld(projmatrix, cammatrix);
 
@@ -1533,18 +1535,21 @@ vec calcavatarpos(const vec &pos, float dist)
 
 void renderavatar()
 {
-    if(!isthirdperson())
-    {
-        matrix4 oldprojmatrix = projmatrix;
-        float avatarfovy = curavatarfov;
-        if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
-        projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
-        projmatrix.scalez(avatardepth);
-        setcamprojmatrix(false);
-        game::renderavatar();
-        projmatrix = oldprojmatrix;
-        setcamprojmatrix(false);
-    }
+    if(isthirdperson()) return;
+
+    matrix4 oldprojmatrix = projmatrix;
+    float avatarfovy = curavatarfov;
+    if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
+    projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
+    projmatrix.scalez(avatardepth);
+    setcamprojmatrix(false);
+
+    enableavatarmask();
+    game::renderavatar();
+    disableavatarmask();
+
+    projmatrix = oldprojmatrix;
+    setcamprojmatrix(false);
 }
 
 FVAR(polygonoffsetfactor, -1e4f, -3.0f, 1e4f);
