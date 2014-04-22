@@ -597,12 +597,12 @@ void bindmsdepth()
     }
 }
 
-static void texms(GLenum format, int w, int h, GLenum fixed)
+static void texms(GLenum format, int w, int h)
 {
     if(msaacolorsamples < msaasamples)
-        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, msaacolorsamples, format, w, h, fixed);
+        glTexImage2DMultisampleCoverageNV_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, msaacolorsamples, format, w, h, GL_TRUE);
     else
-        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, format, w, h, fixed);
+        glTexImage2DMultisample_(GL_TEXTURE_2D_MULTISAMPLE, msaasamples, format, w, h, GL_TRUE);
 }
 
 static void rbms(GLenum format, int w, int h)
@@ -623,15 +623,12 @@ void setupmsbuffer(int w, int h)
 
     stencilformat = ghasstencil > 1 ? GL_DEPTH24_STENCIL8 : (ghasstencil ? GL_STENCIL_INDEX8 : 0);
 
-    GLenum fixed = multisampledaa() ? GL_TRUE : GL_FALSE;
-
     if(gdepthformat)
     {
         if(!msdepthrb) glGenRenderbuffers_(1, &msdepthrb);
         glBindRenderbuffer_(GL_RENDERBUFFER, msdepthrb);
         rbms(ghasstencil > 1 ? stencilformat : GL_DEPTH_COMPONENT, w, h);
         glBindRenderbuffer_(GL_RENDERBUFFER, 0);
-        fixed = GL_TRUE; // spec requires fixed sample locations if renderbuffers are used with textures
     }
     if(ghasstencil == 1)
     {
@@ -639,13 +636,12 @@ void setupmsbuffer(int w, int h)
         glBindRenderbuffer_(GL_RENDERBUFFER, msstencilrb);
         rbms(GL_STENCIL_INDEX8, w, h);
         glBindRenderbuffer_(GL_RENDERBUFFER, 0);
-        fixed = GL_TRUE; // spec requires fixed sample locations if renderbuffers are used with textures
     }
 
     static const GLenum depthformats[] = { GL_RGBA8, GL_R16F, GL_R32F };
     GLenum depthformat = gdepthformat ? depthformats[gdepthformat-1] : (ghasstencil > 1 ? stencilformat : GL_DEPTH_COMPONENT);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msdepthtex);
-    texms(depthformat, w, h, fixed);
+    texms(depthformat, w, h);
 
     bindmsdepth();
 
@@ -655,7 +651,7 @@ void setupmsbuffer(int w, int h)
         GLenum format = gethdrformat(prec);
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mshdrtex);
         glGetError();
-        texms(format, w, h, fixed);
+        texms(format, w, h);
         if(glGetError() == GL_NO_ERROR)
         {
             glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, mshdrtex, 0);
@@ -680,11 +676,11 @@ void setupmsbuffer(int w, int h)
     maskgbuffer("cngd");
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mscolortex);
-    texms(GL_RGBA8, w, h, fixed);
+    texms(GL_RGBA8, w, h);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msnormaltex);
-    texms(GL_RGBA8, w, h, fixed);
+    texms(GL_RGBA8, w, h);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msglowtex);
-    texms(hasAFBO ? hdrformat : GL_RGBA8, w, h, fixed);
+    texms(hasAFBO ? hdrformat : GL_RGBA8, w, h);
 
     bindmsdepth();
     glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, mscolortex, 0);
@@ -697,7 +693,7 @@ void setupmsbuffer(int w, int h)
         if(hasAFBO)
         {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msglowtex);
-            texms(hasAFBO ? hdrformat : GL_RGBA8, w, h, fixed);
+            texms(hasAFBO ? hdrformat : GL_RGBA8, w, h);
             glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, msglowtex, 0);
             if(glCheckFramebufferStatus_(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                 fatal("failed allocating MSAA g-buffer!");
@@ -709,7 +705,7 @@ void setupmsbuffer(int w, int h)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | (ghasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
     msaapositions.setsize(0);
-    if(fixed) loopi(msaasamples)
+    loopi(msaasamples)
     {
         GLfloat vals[2];
         glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
@@ -722,7 +718,7 @@ void setupmsbuffer(int w, int h)
     glBindFramebuffer_(GL_FRAMEBUFFER, msrefractfbo);
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msrefracttex);
-    texms(GL_RGB, w, h, fixed);
+    texms(GL_RGB, w, h);
 
     glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, msrefracttex, 0);
     bindmsdepth();
