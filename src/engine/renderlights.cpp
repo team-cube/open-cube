@@ -11,7 +11,7 @@ GLuint refractfbo = 0, refracttex = 0;
 GLenum bloomformat = 0, hdrformat = 0, stencilformat = 0;
 bool hdrfloat = false;
 GLuint msfbo = 0, msdepthtex = 0, mscolortex = 0, msnormaltex = 0, msglowtex = 0, msdepthrb = 0, msstencilrb = 0, mshdrfbo = 0, mshdrtex = 0, msrefractfbo = 0, msrefracttex = 0;
-vec2 msaapositions[16];
+vector<vec2> msaapositions;
 int aow = -1, aoh = -1;
 GLuint aofbo[4] = { 0, 0, 0, 0 }, aotex[4] = { 0, 0, 0, 0 }, aonoisetex = 0;
 matrix4 eyematrix, worldmatrix, linearworldmatrix, screenmatrix;
@@ -462,6 +462,8 @@ VAR(msaacolorsamples, 1, 0, 0);
 void initgbuffer()
 {
     msaamaxsamples = msaamaxdepthtexsamples = msaamaxcolortexsamples = msaaminsamples = msaasamples = msaamincolorsamples = msaacolorsamples = 0;
+    msaapositions.setsize(0);
+
     if(hasFBMS && hasFBB && hasTMS)
     {
         GLint val;
@@ -706,12 +708,12 @@ void setupmsbuffer(int w, int h)
         msaacolorsamples = msaasamples = samples;
     }
 
-    memset(msaapositions, 0, sizeof(msaapositions));
+    msaapositions.setsize(0); 
     if(fixed) loopi(msaasamples)
     {
         GLfloat vals[2];
         glGetMultisamplefv_(GL_SAMPLE_POSITION, i, vals);
-        msaapositions[i] = vec2(vals[0], vals[1]);
+        msaapositions.add(vec2(vals[0], vals[1]));
     }
 
     useshaderbyname("msaaedgedetect");
