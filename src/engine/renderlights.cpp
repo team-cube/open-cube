@@ -1277,6 +1277,35 @@ void viewdepth()
     debugquad(0, 0, w, h, 0, 0, gw, gh);
 }
 
+VAR(debugstencil, 0, 0, 0xFF);
+
+void viewstencil()
+{
+    if(!ghasstencil || !hdrfbo) return;
+    glBindFramebuffer_(GL_FRAMEBUFFER, hdrfbo);
+    glViewport(0, 0, gw, gh);
+
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glStencilFunc(GL_NOTEQUAL, 0, debugstencil);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glEnable(GL_STENCIL_TEST);
+    SETSHADER(hudnotexture);
+    gle::colorf(1, 1, 1);
+    debugquad(0, 0, hudw, hudh, 0, 0, gw, gh);
+    glDisable(GL_STENCIL_TEST);
+
+    glBindFramebuffer_(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, hudw, hudh);
+
+    int w = min(hudw, hudh)/2, h = (w*hudh)/hudw;
+    SETSHADER(hudrect);
+    gle::colorf(1, 1, 1);
+    glBindTexture(GL_TEXTURE_RECTANGLE, hdrtex);
+    debugquad(0, 0, w, h, 0, 0, gw, gh);
+}
+
 VAR(debugrefract, 0, 0, 1);
 
 void viewrefract()
@@ -4394,6 +4423,7 @@ bool debuglights()
     if(debugshadowatlas) viewshadowatlas();
     else if(debugao) viewao();
     else if(debugdepth) viewdepth();
+    else if(debugstencil) viewstencil();
     else if(debugrefract) viewrefract();
     else if(debuglightscissor) viewlightscissor();
     else if(debugrsm) viewrsm();
