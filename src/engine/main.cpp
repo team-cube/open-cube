@@ -1141,8 +1141,6 @@ int main(int argc, char **argv)
     execfile("config/sound.cfg");
     execfile("config/stdedit.cfg");
     execfile(game::gameconfig());
-    execfile("config/ui_lib.cfg");
-    execfile("config/ui_style.cfg");
     execfile("config/ui.cfg");
     execfile("config/heightmap.cfg");
     execfile("config/blendbrush.cfg");
