@@ -413,12 +413,17 @@ extern void changed(const block3 &sel, bool commit = true);
 extern void rendereditcursor();
 extern void tryedit();
 
+extern void renderprefab(const char *name, const vec &o, float yaw, float pitch, float roll, float size = 1, const vec &color = vec(1, 1, 1));
+extern void previewprefab(const char *name, const vec &color);
+extern void cleanupprefabs();
+
 // octarender
 extern ivec worldmin, worldmax, nogimin, nogimax;
 extern vector<tjoint> tjoints;
 
 extern ushort encodenormal(const vec &n);
 extern vec decodenormal(ushort norm);
+extern void guessnormals(const vec *pos, int numverts, vec *normals);
 extern void reduceslope(ivec &n);
 extern void findtjoints();
 extern void octarender();

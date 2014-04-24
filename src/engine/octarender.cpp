@@ -848,7 +848,6 @@ void guessnormals(const vec *pos, int numverts, vec *normals)
     else n1.normalize();
     if(n2.iszero())
     {
-        n1.normalize();
         loopk(4) normals[k] = n1;
         return;
     }

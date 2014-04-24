@@ -2838,6 +2838,49 @@ namespace UI
         }
     };
 
+    struct PrefabPreview : Filler
+    {
+        char *name;
+        vec color;
+
+        PrefabPreview() : name(NULL) {}
+        ~PrefabPreview() { delete[] name; }
+
+        void setup(const char *name_, int color_, float minw_, float minh_)
+        {
+            Filler::setup(minw_, minh_);
+            SETSTR(name, name_);
+            color = vec::hexcolor(color_);
+        }
+
+        static const char *typestr() { return "#PrefabPreview"; }
+        const char *gettype() const { return typestr(); }
+
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+
+        void draw(float sx, float sy)
+        {
+            Object::draw(sx, sy);
+
+            if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
+            int sx1, sy1, sx2, sy2;
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            glDisable(GL_BLEND);
+            gle::disable();
+            modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
+            previewprefab(name, color);
+            if(clipstack.length()) clipstack.last().scissor();
+            modelpreview::end();
+            hudshader->set();
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+            if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
+        }
+    };
+
     VARP(uislotviewtime, 0, 25, 1000);
     static int lastthumbnail = 0;
 
@@ -3316,6 +3359,9 @@ namespace UI
 
     ICOMMAND(uiplayerpreview, "iiiiffe", (int *model, int *color, int *team, int *weapon, float *minw, float *minh, uint *children),
         BUILD(PlayerPreview, o, o->setup(*model, *color, *team, *weapon, *minw, *minh), children));
+
+    ICOMMAND(uiprefabpreview, "siffe", (char *prefab, int *color, float *minw, float *minh, uint *children),
+        BUILD(PrefabPreview, o, o->setup(prefab, *color, *minw, *minh), children));
 
     ICOMMAND(uislotview, "iffe", (int *index, float *minw, float *minh, uint *children),
         BUILD(SlotViewer, o, o->setup(*index, *minw, *minh), children));
