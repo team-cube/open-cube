@@ -2878,7 +2878,7 @@ static void renderlightbatches(Shader *s, int stencilref, bool transparent, floa
                     shadowmap = l.shadowmap >= 0;
                     spotlight = l.spot > 0;
                 }
-                else if((l.shadowmap >= 0) != shadowmap || (l.spot > 0) != spotlight) break;
+                else if(n >= lighttilebatch || (l.shadowmap >= 0) != shadowmap || (l.spot > 0) != spotlight) break;
                 setlightparams(n++, l);
                 l.addscissor(sx1, sy1, sx2, sy2, sz1, sz2);
             }
