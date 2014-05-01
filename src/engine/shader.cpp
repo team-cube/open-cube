@@ -249,28 +249,37 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
     }
     if(glslversion < 130 && type == GL_FRAGMENT_SHADER)
     {
-        parts[numparts++] = "#define fragdata(loc, name, type)\n";
-        loopv(s.fragdatalocs)
+        if(hasEGPU4)
         {
-            FragDataLoc &d = s.fragdatalocs[i];
-            if(d.index) continue;
-            if(i >= 4) break;
-            static string defs[4];
-            const char *swizzle = "";
-            switch(d.format)
+            parts[numparts++] =
+                "#define fragdata(loc, name, type) varying out type name;\n"
+                "#define blenddata(loc, name, type) varying out type name;\n";
+        }
+        else
+        {
+            parts[numparts++] = "#define fragdata(loc, name, type)\n";
+            loopv(s.fragdatalocs)
             {
-                case GL_UNSIGNED_INT_VEC2:
-                case GL_INT_VEC2:
-                case GL_FLOAT_VEC2: swizzle = ".rg"; break;
-                case GL_UNSIGNED_INT_VEC3:
-                case GL_INT_VEC3:
-                case GL_FLOAT_VEC3: swizzle = ".rgb"; break;
-                case GL_UNSIGNED_INT:
-                case GL_INT:
-                case GL_FLOAT: swizzle = ".r"; break;
+                FragDataLoc &d = s.fragdatalocs[i];
+                if(d.index) continue;
+                if(i >= 4) break;
+                static string defs[4];
+                const char *swizzle = "";
+                switch(d.format)
+                {
+                    case GL_UNSIGNED_INT_VEC2:
+                    case GL_INT_VEC2:
+                    case GL_FLOAT_VEC2: swizzle = ".rg"; break;
+                    case GL_UNSIGNED_INT_VEC3:
+                    case GL_INT_VEC3:
+                    case GL_FLOAT_VEC3: swizzle = ".rgb"; break;
+                    case GL_UNSIGNED_INT:
+                    case GL_INT:
+                    case GL_FLOAT: swizzle = ".r"; break;
+                }
+                formatstring(defs[i], "#define %s gl_FragData[%d]%s\n", d.name, d.loc, swizzle);
+                parts[numparts++] = defs[i];
             }
-            formatstring(defs[i], "#define %s gl_FragData[%d]%s\n", d.name, d.loc, swizzle);
-            parts[numparts++] = defs[i];
         }
     }
     parts[numparts++] = modsource ? modsource : source;
@@ -352,7 +361,7 @@ static void linkglslprogram(Shader &s, bool msg = true)
             attribs |= 1<<a.loc;
         }
         loopi(gle::MAXATTRIBS) if(!(attribs&(1<<i))) glBindAttribLocation_(s.program, i, gle::attribnames[i]);
-        if(glslversion >= 130 && ((glslversion < 330 && (glslversion < 150 || !hasEAL)) || amd_eal_bug) && glversion >= 300) loopv(s.fragdatalocs)
+        if((glslversion >= 130 || hasEGPU4) && ((glslversion < 330 && (glslversion < 150 || !hasEAL)) || amd_eal_bug)) loopv(s.fragdatalocs)
         {
             FragDataLoc &d = s.fragdatalocs[i];
             if(d.index)
