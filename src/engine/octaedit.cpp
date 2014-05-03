@@ -1033,7 +1033,7 @@ prefab *loadprefab(const char *name, bool msg = true)
 
    return b;
 }
- 
+
 void pasteprefab(char *name)
 {
     if(!name[0] || noedit() || (nompedit && multiplayer())) return;
@@ -1076,7 +1076,7 @@ struct prefabmesh
         vtx.reserved = 0;
         return addvert(vtx);
    }
- 
+
     void setup(prefab &p)
     {
         if(tris.empty()) return;
@@ -1128,7 +1128,7 @@ static void genprefabmesh(prefabmesh &r, cube &c, const ivec &co, int size)
             if(vis&2) pos[numverts++] = vec(v[(order+3)&3]).mul(size/8.0f).add(vo);
             guessnormals(pos, numverts, norm);
             int index[4];
-            loopj(numverts) index[j] = r.addvert(pos[j], norm[j]); 
+            loopj(numverts) index[j] = r.addvert(pos[j], norm[j]);
             loopj(numverts-2) if(index[0]!=index[j+1] && index[j+1]!=index[j+2] && index[j+2]!=index[0])
             {
                 r.tris.add(index[0]);
@@ -1170,7 +1170,7 @@ void genprefabmesh(prefab &p)
     worldroot = oldworldroot;
     worldscale = oldworldscale;
     worldsize = oldworldsize;
-    
+
     useshaderbyname("prefab");
 }
 
@@ -1183,7 +1183,7 @@ static void renderprefab(prefab &p, const vec &o, float yaw, float pitch, float 
         genprefabmesh(p);
         if(!p.numtris) return;
     }
-    
+
     block3 &b = *p.copy;
 
     matrix4 m;
@@ -1197,11 +1197,11 @@ static void renderprefab(prefab &p, const vec &o, float yaw, float pitch, float 
     m.translate(vec(b.s).mul(-b.grid*0.5f));
 
     glBindBuffer_(GL_ARRAY_BUFFER, p.vbo);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, p.ebo);     
+    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, p.ebo);
     gle::enablevertex();
     gle::enablenormal();
     prefabmesh::vertex *v = (prefabmesh::vertex *)0;
-    gle::vertexpointer(sizeof(prefabmesh::vertex), v->pos.v);    
+    gle::vertexpointer(sizeof(prefabmesh::vertex), v->pos.v);
     gle::normalpointer(sizeof(prefabmesh::vertex), v->norm.v, GL_BYTE);
 
     matrix4 pm;
@@ -1218,7 +1218,7 @@ static void renderprefab(prefab &p, const vec &o, float yaw, float pitch, float 
     pm.mul(camprojmatrix, m);
     GLOBALPARAM(prefabmatrix, pm);
     SETSHADER(prefab);
-    gle::color((outlinecolour).tocolor().mul(ldrscale));    
+    gle::color((outlinecolour).tocolor().mul(ldrscale));
     glDrawRangeElements_(GL_TRIANGLES, 0, p.numverts-1, p.numtris*3, GL_UNSIGNED_SHORT, (ushort *)0);
 
     disablepolygonoffset(GL_POLYGON_OFFSET_LINE);
@@ -2195,7 +2195,7 @@ void getslottex(int *idx)
     Slot &slot = lookupslot(*idx, false);
     intret(slot.variants->index);
 }
- 
+
 COMMANDN(edittex, edittex_, "i");
 ICOMMAND(settex, "i", (int *tex), { if(!vslots.inrange(*tex) || noedit()) return; filltexlist(); edittex(*tex); });
 COMMAND(gettex, "");

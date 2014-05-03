@@ -311,7 +311,7 @@ struct stainrenderer
     {
         if(gbuf) maskgbuffer(sbuf ? "cg" : "c");
         else zerofogcolor();
- 
+
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
         enablepolygonoffset(GL_POLYGON_OFFSET_FILL);

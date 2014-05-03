@@ -695,7 +695,7 @@ struct Slot
     virtual int type() const { return OCTA; }
     virtual const char *name() const;
     virtual const char *texturedir() const { return "media/texture"; }
- 
+
     virtual VSlot &emptyvslot();
 
     virtual int cancombine(int type) const;
@@ -704,7 +704,7 @@ struct Slot
 
     void load(int index, Slot::Tex &t);
     void load();
-    
+
     Texture *loadthumbnail();
 
     void reset()

@@ -192,7 +192,7 @@ static void compileglslshader(Shader &s, GLenum type, GLuint &obj, const char *d
         {
             parts[numparts++] = "#define varying in\n";
             parts[numparts++] = (glslversion >= 330 || (glslversion >= 150 && hasEAL)) && !amd_eal_bug ?
-                "#define fragdata(loc, name, type) layout(location = loc) out type name;\n" 
+                "#define fragdata(loc, name, type) layout(location = loc) out type name;\n"
                 "#define blenddata(loc, name, type) layout(location = loc, index = 1) out type name;\n" :
                 "#define fragdata(loc, name, type) out type name;\n"
                 "#define blenddata(loc, name, type) out type name;\n";
@@ -821,7 +821,7 @@ static void gengenericvariant(Shader &s, const char *sname, const char *vs, cons
     }
     row += rowoffset;
     if(row < 0 || row >= MAXVARIANTROWS) return;
-    int col = s.numvariants(row); 
+    int col = s.numvariants(row);
     defformatstring(varname, "<variant:%d,%d>%s", col, row, sname);
     string reuse;
     if(col) formatstring(reuse, "%d", row);
@@ -1128,7 +1128,7 @@ void variantshader(int *type, char *name, int *row, char *vs, char *ps, int *max
         return;
     }
     else if(*row >= MAXVARIANTROWS) return;
-    
+
     Shader *s = lookupshaderbyname(name);
     if(!s) return;
 

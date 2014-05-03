@@ -36,7 +36,7 @@ static inline void decalboundbox(const entity &e, DecalSlot &s, vec &center, vec
     radius = vec(size/2, s.depth * size/2, size/2);
     rotatebb(center, radius, e.attr2, e.attr3, e.attr4);
 }
- 
+
 bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
 {
     switch(e.type)
@@ -48,12 +48,12 @@ bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
                 DecalSlot &s = lookupdecalslot(e.attr1, false);
                 vec center, radius;
                 decalboundbox(e, s, center, radius);
-                center.add(e.o); 
+                center.add(e.o);
                 radius.max(entselradius);
                 o = vec(center).sub(radius);
                 r = vec(center).add(radius).add(1);
                 break;
-            } 
+            }
         case ET_MAPMODEL:
             if(model *m = loadmapmodel(e.attr1))
             {
@@ -228,7 +228,7 @@ static bool modifyoctaent(int flags, int id, extentity &e)
     switch(e.type)
     {
         case ET_LIGHT: clearlightcache(id); break;
-        case ET_SPOTLIGHT: if(!(flags&MODOE_ADD ? spotlights++ : --spotlights)) cleardeferredlightshaders(); 
+        case ET_SPOTLIGHT: if(!(flags&MODOE_ADD ? spotlights++ : --spotlights)) cleardeferredlightshaders();
         case ET_PARTICLES: clearparticleemitters(); break;
         case ET_DECAL: if(flags&MODOE_CHANGED) changed(o, r, false); break;
     }
@@ -695,7 +695,7 @@ void renderentbox(const extentity &e, const vec &center, const vec &radius, int 
     orient.translate(center);
 
     gle::defvertex();
-    
+
     vec front[4] = { vec(-radius.x, -radius.y, -radius.z), vec( radius.x, -radius.y, -radius.z), vec( radius.x, -radius.y,  radius.z), vec(-radius.x, -radius.y,  radius.z) },
         back[4] = { vec(-radius.x, radius.y, -radius.z), vec( radius.x, radius.y, -radius.z), vec( radius.x, radius.y,  radius.z), vec(-radius.x, radius.y,  radius.z) };
     loopi(4)
@@ -786,7 +786,7 @@ void renderentradius(extentity &e, bool color)
             if(color) gle::colorf(0, 1, 1);
             DecalSlot &s = lookupdecalslot(e.attr1, false);
             float size = max(float(e.attr5), 1.0f);
-            renderentbox(e, vec(0, s.depth * size/2, 0), vec(size/2, s.depth * size/2, size/2), e.attr2, e.attr3, e.attr4); 
+            renderentbox(e, vec(0, s.depth * size/2, 0), vec(size/2, s.depth * size/2, size/2), e.attr2, e.attr3, e.attr4);
             break;
         }
 

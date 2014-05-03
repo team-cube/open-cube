@@ -318,7 +318,7 @@ static bool checkmesaversion(const char *s, int major, int minor, int patch)
     if(vminor > minor) return true; else if(vminor < minor) return false;
     return vpatch >= patch;
 }
-    
+
 VAR(dbgexts, 0, 0, 1);
 
 hashset<const char *> glexts;
@@ -360,7 +360,7 @@ bool checkdepthtexstencilrb()
     GLuint fbo = 0;
     glGenFramebuffers_(1, &fbo);
     glBindFramebuffer_(GL_FRAMEBUFFER, fbo);
-    
+
     GLuint depthtex = 0;
     glGenTextures(1, &depthtex);
     createtexture(depthtex, w, h, NULL, 3, 0, GL_DEPTH_COMPONENT, GL_TEXTURE_RECTANGLE);

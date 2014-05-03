@@ -1421,7 +1421,7 @@ static inline bool texturedata(ImageData &d, Slot &slot, Slot::Tex &tex, bool ms
 {
     return texturedata(d, tex.name, msg, compress, wrap, slot.texturedir(), tex.type);
 }
- 
+
 uchar *loadalphamask(Texture *t)
 {
     if(t->alphamask) return t->alphamask;
@@ -1928,7 +1928,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     else if((matslot = findmaterial(type)) >= 0)
     {
         tnum = TEX_DIFFUSE;
-        defslot = &materialslots[matslot];    
+        defslot = &materialslots[matslot];
     }
     else if(!defslot) return;
     else if(tnum < 0) tnum = TEX_UNKNOWN;
@@ -2207,7 +2207,7 @@ void Slot::load()
             Slot::Tex &c = sts[combine];
             c.combined = i;
         }
-    }    
+    }
     loopv(sts)
     {
         Slot::Tex &t = sts[i];

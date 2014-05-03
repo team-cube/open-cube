@@ -785,7 +785,7 @@ void rendermodelbatches()
                 if(bm.culled&(MDL_CULL_OCCLUDED|MDL_CULL_QUERY) && bm.flags&MDL_CULL_QUERY)
                 {
                     if(!queried)
-                    { 
+                    {
                         if(rendered) setaamask(false);
                         enablecullmodelquery();
                         queried = true;

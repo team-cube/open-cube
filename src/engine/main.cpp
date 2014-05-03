@@ -23,7 +23,7 @@ void cleanup()
     #ifdef __APPLE__
         if(screen) SDL_SetWindowFullscreen(screen, 0);
     #endif
-    SDL_Quit();    
+    SDL_Quit();
 }
 
 extern void writeinitcfg();

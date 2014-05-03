@@ -142,7 +142,7 @@ static Shader *fxaashader = NULL;
 
 void loadfxaashaders()
 {
-    fxaatype = tqaatype >= 0 ? tqaatype : (!fxaagreenluma ? AA_LUMA : AA_UNUSED); 
+    fxaatype = tqaatype >= 0 ? tqaatype : (!fxaagreenluma ? AA_LUMA : AA_UNUSED);
     loadhdrshaders(fxaatype);
 
     string opts;
@@ -730,7 +730,7 @@ void setaamask(bool on)
         if(val) glStencilFunc(GL_ALWAYS, 0x80 | aamaskstencil, ~0);
         else if(aamask >= 0) glStencilFunc(GL_ALWAYS, aamaskstencil, ~0);
     }
-        
+
     aamask = val;
 
     GLOBALPARAMF(aamask, aamask);
@@ -751,7 +751,7 @@ void disableaamask()
         aamask = -1;
     }
 }
-    
+
 bool multisampledaa()
 {
     return smaa && smaaspatial && msaasamples == 2;

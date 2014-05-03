@@ -2267,7 +2267,7 @@ void cleanupdecals(decalrenderer &cur)
 }
 
 VAR(batchdecals, 0, 1, 1);
- 
+
 void renderdecals()
 {
     vtxarray *decalva;

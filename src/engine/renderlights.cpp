@@ -58,11 +58,11 @@ void setupbloom(int w, int h)
 
     if(hwvtexunits < 4)
     {
-        glGenBuffers_(1, &bloompbo); 
+        glGenBuffers_(1, &bloompbo);
         glBindBuffer_(GL_PIXEL_PACK_BUFFER, bloompbo);
         glBufferData_(GL_PIXEL_PACK_BUFFER, 4*(hasTF ? sizeof(GLfloat) : sizeof(GLushort))*(hasTRG ? 1 : 3), NULL, GL_DYNAMIC_COPY);
         glBindBuffer_(GL_PIXEL_PACK_BUFFER, 0);
-    } 
+    }
 
     static const uchar gray[12] = { 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32 };
     static const float grayf[12] = { 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f };
@@ -480,7 +480,7 @@ void checkmsaasamples()
         glGetTexLevelParameteriv(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_TEXTURE_SAMPLES, &samples);
         msaacolorsamples = msaasamples = samples;
     }
-    
+
     glDeleteTextures(1, &tex);
 }
 
@@ -534,7 +534,7 @@ void initgbuffer()
     if(msaaminsamples)
     {
         ghasstencil = (msaadepthstencil > 1 || (msaadepthstencil && gdepthformat)) && hasDS ? 2 : (msaastencil ? 1 : 0);
-        
+
         checkmsaasamples();
     }
     else ghasstencil = (gdepthstencil > 1 || (gdepthstencil && gdepthformat)) && hasDS ? 2 : (gstencil ? 1 : 0);
@@ -832,7 +832,7 @@ void setupgbuffer()
                 createtexture(gglowtex, gw, gh, NULL, 3, 0, GL_RGBA8, GL_TEXTURE_RECTANGLE);
                 glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_RECTANGLE, gglowtex, 0);
                 if(glCheckFramebufferStatus_(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-                    fatal("failed allocating g-buffer!"); 
+                    fatal("failed allocating g-buffer!");
             }
             else fatal("failed allocating g-buffer!");
         }
@@ -2899,7 +2899,7 @@ static void renderlightbatches(Shader *s, int stencilref, bool transparent, floa
         }
 
         setavatarstencil(stencilref, false);
-    } 
+    }
 }
 
 void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 = 1, const uint *tilemask = NULL, int stencilmask = 0, int msaapass = 0, bool transparent = false)
@@ -2972,7 +2972,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
     if(!lighttilebatch)
     {
         gle::disable();
-        renderlightsnobatch(s, stencilref, transparent, bsx1, bsy1, bsx2, bsy2); 
+        renderlightsnobatch(s, stencilref, transparent, bsx1, bsy1, bsx2, bsy2);
     }
     else
     {

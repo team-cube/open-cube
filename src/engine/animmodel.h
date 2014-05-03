@@ -181,7 +181,7 @@ struct animmodel : model
                 rsmshader = generateshader(name, "rsmmodelshader \"%s\"", opts);
                 return rsmshader;
             }
-            
+
             if(shader) return shader;
 
             string opts;
