@@ -2927,7 +2927,7 @@ bool loaddds(const char *filename, ImageData &image)
 
     }
     image.setdata(NULL, d.dwWidth, d.dwHeight, bpp, d.dwMipMapCount, 4, format);
-    int size = image.calcsize();
+    size_t size = image.calcsize();
     if(f->read(image.data, size) != size) { delete f; image.cleanup(); return false; }
     delete f;
     return true;

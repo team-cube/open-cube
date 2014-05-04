@@ -769,8 +769,8 @@ void checkinput()
 
             case SDL_TEXTINPUT:
             {
-                static uchar buf[SDL_TEXTINPUTEVENT_TEXT_SIZE+1];
-                int len = decodeutf8(buf, int(sizeof(buf)-1), (const uchar *)event.text.text, strlen(event.text.text));
+                uchar buf[SDL_TEXTINPUTEVENT_TEXT_SIZE+1];
+                size_t len = decodeutf8(buf, sizeof(buf)-1, (const uchar *)event.text.text, strlen(event.text.text));
                 if(len > 0) { buf[len] = '\0'; processtextinput((const char *)buf, len); }
                 break;
             }
