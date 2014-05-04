@@ -125,7 +125,7 @@ namespace game
 
     gameent *hudplayer()
     {
-        if(thirdperson) return player1;
+        if(thirdperson || specmode > 1) return player1;
         gameent *target = followingplayer();
         return target ? target : player1;
     }
@@ -144,8 +144,9 @@ namespace game
 
     bool detachcamera()
     {
-        gameent *d = hudplayer();
-        return d->state==CS_DEAD || (specmode > 1 && !thirdperson);
+        gameent *d = followingplayer();
+        if(d) return specmode > 1 || d->state == CS_DEAD;
+        return player1->state == CS_DEAD;
     }
 
     bool collidecamera()
