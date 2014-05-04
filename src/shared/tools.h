@@ -1322,10 +1322,10 @@ extern float getfloat(ucharbuf &p);
 extern void sendstring(const char *t, ucharbuf &p);
 extern void sendstring(const char *t, packetbuf &p);
 extern void sendstring(const char *t, vector<uchar> &p);
-extern void getstring(char *t, ucharbuf &p, int len);
-template<size_t N> static inline void getstring(char (&t)[N], ucharbuf &p) { getstring(t, p, int(N)); }
-extern void filtertext(char *dst, const char *src, bool whitespace, int len);
-template<size_t N> static inline void filtertext(char (&dst)[N], const char *src, bool whitespace = true) { filtertext(dst, src, whitespace, int(N)-1); }
+extern void getstring(char *t, ucharbuf &p, size_t len);
+template<size_t N> static inline void getstring(char (&t)[N], ucharbuf &p) { getstring(t, p, N); }
+extern void filtertext(char *dst, const char *src, bool whitespace, size_t len);
+template<size_t N> static inline void filtertext(char (&dst)[N], const char *src, bool whitespace = true) { filtertext(dst, src, whitespace, N-1); }
 
 #endif
 
