@@ -6,22 +6,24 @@ namespace game
     int maptime = 0, maprealtime = 0, maplimit = -1;
     int lasthit = 0, lastspawnattempt = 0;
 
-    int following = -1, followdir = 0;
-
     gameent *player1 = NULL;         // our client
     vector<gameent *> players;       // other clients
-    int savedammo[NUMGUNS];
 
-    bool clientoption(const char *arg) { return false; }
+    int following = -1;
 
-    void taunt()
+    VARFP(specmode, 0, 0, 2,
     {
-        if(player1->state!=CS_ALIVE || player1->physstate<PHYS_SLOPE) return;
-        if(lastmillis-player1->lasttaunt<1000) return;
-        player1->lasttaunt = lastmillis;
-        addmsg(N_TAUNT, "rc", player1);
+        if(!specmode) stopfollowing();
+        else if(following < 0) nextfollow();
+    });
+
+    gameent *followingplayer()
+    {
+        if(player1->state!=CS_SPECTATOR || following<0) return NULL;
+        gameent *target = getclient(following);
+        if(target && target->state!=CS_SPECTATOR) return target;
+        return NULL;
     }
-    COMMAND(taunt, "");
 
     ICOMMAND(getfollow, "", (),
     {
@@ -29,34 +31,36 @@ namespace game
         intret(f ? f->clientnum : -1);
     });
 
+    void stopfollowing()
+    {
+        if(following<0) return;
+        following = -1;
+    }
+
     void follow(char *arg)
     {
-        if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
+        int cn = -1;
+        if(arg[0])
         {
-            following = arg[0] ? parseplayer(arg) : -1;
-            if(following==player1->clientnum) following = -1;
-            followdir = 0;
-            conoutf("follow %s", following>=0 ? "on" : "off");
+            if(player1->state != CS_SPECTATOR) return;
+            cn = parseplayer(arg);
+            if(cn == player1->clientnum) cn = -1;
         }
+        if(cn < 0 && (following < 0 || specmode)) return;
+        following = cn;
     }
     COMMAND(follow, "s");
 
     void nextfollow(int dir)
     {
-        if(player1->state!=CS_SPECTATOR || clients.empty())
-        {
-            stopfollowing();
-            return;
-        }
+        if(player1->state!=CS_SPECTATOR) return;
         int cur = following >= 0 ? following : (dir < 0 ? clients.length() - 1 : 0);
         loopv(clients)
         {
             cur = (cur + dir + clients.length()) % clients.length();
             if(clients[cur] && clients[cur]->state!=CS_SPECTATOR)
             {
-                if(following<0) conoutf("follow on");
                 following = cur;
-                followdir = dir;
                 return;
             }
         }
@@ -64,6 +68,22 @@ namespace game
     }
     ICOMMAND(nextfollow, "i", (int *dir), nextfollow(*dir < 0 ? -1 : 1));
 
+    void checkfollow()
+    {
+        if(player1->state != CS_SPECTATOR)
+        {
+            if(following >= 0) stopfollowing();
+        }
+        else
+        {
+            if(following >= 0)
+            {
+                gameent *d = clients.inrange(following) ? clients[following] : NULL;
+                if(!d || d->state == CS_SPECTATOR) stopfollowing();
+            }
+            if(following < 0 && specmode) nextfollow();
+        }
+    }
 
     const char *getclientmap() { return clientmap; }
 
@@ -103,22 +123,6 @@ namespace game
         return NULL;
     }
 
-    void stopfollowing()
-    {
-        if(following<0) return;
-        following = -1;
-        followdir = 0;
-        conoutf("follow off");
-    }
-
-    gameent *followingplayer()
-    {
-        if(player1->state!=CS_SPECTATOR || following<0) return NULL;
-        gameent *target = getclient(following);
-        if(target && target->state!=CS_SPECTATOR) return target;
-        return NULL;
-    }
-
     gameent *hudplayer()
     {
         if(thirdperson) return player1;
@@ -141,7 +145,7 @@ namespace game
     bool detachcamera()
     {
         gameent *d = hudplayer();
-        return d->state==CS_DEAD;
+        return d->state==CS_DEAD || (specmode > 1 && !thirdperson);
     }
 
     bool collidecamera()
@@ -303,6 +307,15 @@ namespace game
         return !((gameent *)d)->lasttaunt || lastmillis-((gameent *)d)->lasttaunt>=1000;
     }
 
+    void taunt()
+    {
+        if(player1->state!=CS_ALIVE || player1->physstate<PHYS_SLOPE) return;
+        if(lastmillis-player1->lasttaunt<1000) return;
+        player1->lasttaunt = lastmillis;
+        addmsg(N_TAUNT, "rc", player1);
+    }
+    COMMAND(taunt, "");
+
     VARP(hitsound, 0, 0, 1);
 
     void damaged(int damage, gameent *d, gameent *actor, bool local)
@@ -347,7 +360,6 @@ namespace game
         {
             if(deathscore) showscores(true);
             disablezoom();
-            if(!restore) loopi(NUMGUNS) savedammo[i] = player1->ammo[i];
             d->attacking = ACT_IDLE;
             //d->pitch = 0;
             d->roll = 0;
@@ -471,23 +483,25 @@ namespace game
     void clientdisconnected(int cn, bool notify)
     {
         if(!clients.inrange(cn)) return;
-        if(following==cn)
-        {
-            if(followdir) nextfollow(followdir);
-            else stopfollowing();
-        }
         unignore(cn);
         gameent *d = clients[cn];
-        if(!d) return;
-        if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
-        removeweapons(d);
-        removetrackedparticles(d);
-        removetrackeddynlights(d);
-        if(cmode) cmode->removeplayer(d);
-        removegroupedplayer(d);
-        players.removeobj(d);
-        DELETEP(clients[cn]);
-        cleardynentcache();
+        if(d)
+        {
+            if(notify && d->name[0]) conoutf("\f4leave:\f7 %s", colorname(d));
+            removeweapons(d);
+            removetrackedparticles(d);
+            removetrackeddynlights(d);
+            if(cmode) cmode->removeplayer(d);
+            removegroupedplayer(d);
+            players.removeobj(d);
+            DELETEP(clients[cn]);
+            cleardynentcache();
+        }
+        if(following == cn)
+        {
+            if(specmode) nextfollow();
+            else stopfollowing();
+        } 
     }
 
     void clearclients(bool notify)
@@ -846,5 +860,7 @@ namespace game
     {
         execfile("config/auth.cfg", false);
     }
+
+    bool clientoption(const char *arg) { return false; }
 }
 

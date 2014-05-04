@@ -1347,11 +1347,11 @@ namespace game
                 if(d==player1)
                 {
                     if(editmode) toggleedit();
-                    stopfollowing();
                     if(deathscore) showscores(true);
                 }
                 else d->resetinterp();
                 d->state = CS_DEAD;
+                checkfollow();
                 break;
             }
 
@@ -1445,8 +1445,8 @@ namespace game
                 parsestate(d, p);
                 if(!d) break;
                 d->state = CS_SPAWNING;
-                if(player1->state==CS_SPECTATOR && following==d->clientnum)
-                    lasthit = 0;
+                if(d == followingplayer()) lasthit = 0;
+                checkfollow();
                 break;
             }
 
@@ -1459,7 +1459,6 @@ namespace game
                 if(s==player1)
                 {
                     if(editmode) toggleedit();
-                    stopfollowing();
                 }
                 s->respawn();
                 parsestate(s, p);
@@ -1473,6 +1472,7 @@ namespace game
                 }
                 if(cmode) cmode->respawned(s);
                 ai::spawned(s);
+                checkfollow();
                 addmsg(N_SPAWN, "rcii", s, s->lifesequence, s->gunselect);
                 break;
             }
@@ -1743,6 +1743,7 @@ namespace game
                 demoplayback = on!=0;
                 player1->clientnum = getint(p);
                 gamepaused = false;
+                checkfollow();
                 execident(on ? "demostart" : "demoend");
                 break;
             }
@@ -1786,6 +1787,7 @@ namespace game
                     d->state = d->editstate;
                     if(d->state==CS_DEAD) deathstate(d, true);
                 }
+                checkfollow();
                 break;
             }
 
@@ -1810,11 +1812,8 @@ namespace game
                     }
                     s->state = CS_SPECTATOR;
                 }
-                else if(s->state==CS_SPECTATOR)
-                {
-                    if(s==player1) stopfollowing();
-                    deathstate(s, true);
-                }
+                else if(s->state==CS_SPECTATOR) deathstate(s, true);
+                checkfollow();
                 break;
             }
 
