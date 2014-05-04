@@ -1538,7 +1538,7 @@ void renderavatar()
 {
     if(isthirdperson()) return;
 
-    matrix4 oldprojmatrix = projmatrix;
+    matrix4 oldprojmatrix = nojittermatrix;
     float avatarfovy = curavatarfov;
     if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
     projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
