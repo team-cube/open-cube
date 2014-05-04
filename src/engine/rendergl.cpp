@@ -290,7 +290,6 @@ VAR(amd_pf_bug, 0, 0, 1);
 VAR(amd_eal_bug, 0, 0, 1);
 VAR(mesa_texrectoffset_bug, 0, 0, 1);
 VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
-VAR(usedbt, 1, 0, 0);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -918,7 +917,6 @@ void gl_checkextensions()
     if(hasext("GL_EXT_depth_bounds_test"))
     {
         glDepthBounds_ = (PFNGLDEPTHBOUNDSEXTPROC) getprocaddress("glDepthBoundsEXT");
-        usedbt = 1;
         hasDBT = true;
         if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_depth_bounds_test extension.");
     }

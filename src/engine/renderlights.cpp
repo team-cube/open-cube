@@ -2506,7 +2506,7 @@ void cleanuplightsphere()
     if(lightsphereebuf) { glDeleteBuffers_(1, &lightsphereebuf); lightsphereebuf = 0; }
 }
 
-VARF(depthtestlights, 0, 2, 2, initwarning("g-buffer setup", INIT_LOAD, CHANGE_SHADERS));
+VAR(depthtestlights, 0, 2, 2);
 FVAR(depthtestlightsclamp, 0, 0.999995f, 1);
 VAR(depthfaillights, 0, 1, 1);
 FVAR(lightradiustweak, 1, 1.11f, 2);
@@ -2697,7 +2697,7 @@ static inline void setavatarstencil(int stencilref, bool on)
 
 static void rendersunpass(Shader *s, int stencilref, bool transparent, float bsx1, float bsy1, float bsx2, float bsy2, const uint *tilemask)
 {
-    if(hasDBT && depthtestlights > 1) glDepthBounds_(-1, depthtestlightsclamp);
+    if(hasDBT && depthtestlights > 1) glDepthBounds_(0, depthtestlightsclamp);
 
     int tx1 = max(int(floor((bsx1*0.5f+0.5f)*vieww)), 0), ty1 = max(int(floor((bsy1*0.5f+0.5f)*viewh)), 0),
         tx2 = min(int(ceil((bsx2*0.5f+0.5f)*vieww)), vieww), ty2 = min(int(ceil((bsy2*0.5f+0.5f)*viewh)), viewh);
