@@ -258,6 +258,7 @@ namespace game
             else if(d->state != CS_SPECTATOR) d->state = CS_ALIVE;
         }
         else d->state = CS_ALIVE;
+        checkfollow();
     }
 
     VARP(spawnwait, 0, 0, 1000);

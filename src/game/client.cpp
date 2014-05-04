@@ -281,6 +281,7 @@ namespace game
         else if(player1->state==CS_EDITING && player1->editstate==CS_DEAD) showscores(false);
         disablezoom();
         player1->suicided = player1->respawned = -2;
+        checkfollow();
     }
 
     const char *getclientname(int cn)
