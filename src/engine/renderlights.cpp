@@ -2314,7 +2314,7 @@ void cleardeferredlightshaders()
 VARF(lighttilebatch, 0, 8, 8, cleardeferredlightshaders());
 VARF(batchsunlight, 0, 2, 2, cleardeferredlightshaders());
 
-extern int spotlights, depthtestlights;
+extern int spotlights;
 
 Shader *loaddeferredlightshader(const char *type = NULL)
 {
