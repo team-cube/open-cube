@@ -676,7 +676,7 @@ ICOMMAND(getfvarmin, "s", (char *s), floatret(getfvarmin(s)));
 ICOMMAND(getfvarmax, "s", (char *s), floatret(getfvarmax(s)));
 
 bool identexists(const char *name) { return idents.access(name)!=NULL; }
-ICOMMAND(identexists, "s", (char *s), result(identexists(s)));
+ICOMMAND(identexists, "s", (char *s), intret(identexists(s) ? 1 : 0));
 
 ident *getident(const char *name) { return idents.access(name); }
 
