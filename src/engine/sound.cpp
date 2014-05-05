@@ -339,6 +339,20 @@ static struct soundtype
         configs.setsize(0);
     }
 
+    void reset()
+    {
+        loopv(channels)
+        {
+            soundchannel &chan = channels[i];
+            if(chan.inuse && slots.inbuf(chan.slot))
+            {
+                Mix_HaltChannel(i);
+                freechannel(i);
+            }
+        }
+        clear();
+    }
+
     void cleanupsamples()
     {
         enumerate(samples, soundsample, s, s.cleanup());
@@ -376,6 +390,18 @@ COMMAND(altsound, "si");
 
 void altmapsound(char *name, int *vol) { mapsounds.addalt(name, *vol); }
 COMMAND(altmapsound, "si");
+
+void soundreset()
+{
+    gamesounds.reset();
+}
+COMMAND(soundreset, "");
+
+void mapsoundreset()
+{
+    mapsounds.reset();
+}
+COMMAND(mapsoundreset, "");
 
 void resetchannels()
 {

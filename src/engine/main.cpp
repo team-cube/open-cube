@@ -1139,6 +1139,7 @@ int main(int argc, char **argv)
     initing = INIT_LOAD;
     execfile("config/keymap.cfg");
     execfile("config/stdedit.cfg");
+    execfile("config/sound.cfg");
     execfile(game::gameconfig());
     execfile("config/ui.cfg");
     execfile("config/heightmap.cfg");
@@ -1153,7 +1154,6 @@ int main(int argc, char **argv)
         writecfg(game::restoreconfig());
     }
     execfile(game::autoexec(), false);
-    execfile("config/sound.cfg");
 
     identflags &= ~IDF_PERSIST;
 
