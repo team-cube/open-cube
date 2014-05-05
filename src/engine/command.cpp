@@ -676,6 +676,8 @@ ICOMMAND(getfvarmin, "s", (char *s), floatret(getfvarmin(s)));
 ICOMMAND(getfvarmax, "s", (char *s), floatret(getfvarmax(s)));
 
 bool identexists(const char *name) { return idents.access(name)!=NULL; }
+ICOMMAND(identexists, "s", (char *s), result(identexists(s)));
+
 ident *getident(const char *name) { return idents.access(name); }
 
 void touchvar(const char *name)

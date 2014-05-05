@@ -1139,8 +1139,8 @@ int main(int argc, char **argv)
     initing = INIT_LOAD;
     execfile("config/keymap.cfg");
     execfile("config/stdedit.cfg");
-    execfile("config/sound.cfg");
     execfile(game::gameconfig());
+    execfile("config/sound.cfg");
     execfile("config/ui.cfg");
     execfile("config/heightmap.cfg");
     execfile("config/blendbrush.cfg");
