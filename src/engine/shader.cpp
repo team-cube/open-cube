@@ -753,8 +753,8 @@ Shader *newshader(int type, const char *name, const char *vs, const char *ps, Sh
     else loopv(slotparams) s.defaultparams.add(slotparams[i]);
     s.attriblocs.setsize(0);
     s.uniformlocs.setsize(0);
-    genattriblocs(s, vs, ps);
-    genuniformlocs(s, vs, ps);
+    genattriblocs(s, s.reusevs ? s.reusevs->vsstr : vs, s.reuseps ? s.reusevs->psstr : ps);
+    genuniformlocs(s, s.reusevs ? s.reusevs->vsstr : vs, s.reuseps ? s.reusevs->psstr : ps);
     s.fragdatalocs.setsize(0);
     if(s.reuseps) s.fragdatalocs = s.reuseps->fragdatalocs;
     else findfragdatalocs(s, ps);

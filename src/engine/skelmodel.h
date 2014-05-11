@@ -346,11 +346,12 @@ struct skelmodel : animmodel
             }
         }
 
-        void setshader(Shader *s)
+        void setshader(Shader *s, int row)
         {
             skelmeshgroup *g = (skelmeshgroup *)group;
-            if(!g->skel->usegpuskel) s->set();
-            else s->setvariant(min(maxweights, g->vweights)-1, 0);
+            if(row) s->setvariant(g->skel->usegpuskel ? min(maxweights, g->vweights) : 0, row);
+            else if(g->skel->usegpuskel) s->setvariant(min(maxweights, g->vweights)-1, 0);
+            else s->set();
         }
 
         void render(const animstate *as, skin &s, vbocacheentry &vc)
