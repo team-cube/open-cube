@@ -1,6 +1,6 @@
 Name "Tesseract"
 
-OutFile "tesseract_20YY_MM_DD_foo_edition_win32_setup.exe"
+OutFile "tesseract_20YY_MM_DD_foo_edition_windows.exe"
 
 InstallDir $PROGRAMFILES\Tesseract
 
@@ -32,10 +32,10 @@ Section "Tesseract (required)"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tesseract" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
 
-  IfFileExists "$DOCUMENTS\My Games\Tesseract\config.cfg" ConfigFound NoConfig  
+  IfFileExists "$DOCUMENTS\My Games\Tesseract\config\saved.cfg" ConfigFound NoConfig  
   ConfigFound:
-     Delete "$DOCUMENTS\My Games\Tesseract\old-config.cfg"
-     Rename "$DOCUMENTS\My Games\Tesseract\config.cfg" "$DOCUMENTS\My Games\Tesseract\old-config.cfg"
+     Delete "$DOCUMENTS\My Games\Tesseract\config\old-saved.cfg"
+     Rename "$DOCUMENTS\My Games\Tesseract\config\saved.cfg" "$DOCUMENTS\My Games\Tesseract\config\old-saved.cfg"
   NoConfig:
 
 SectionEnd
@@ -47,9 +47,9 @@ Section "Start Menu Shortcuts"
   SetOutPath "$INSTDIR"
   
   CreateShortCut "$INSTDIR\Tesseract.lnk"                "$INSTDIR\tesseract.bat" "" "$INSTDIR\bin\tesseract.exe" 0 SW_SHOWMINIMIZED
-  CreateShortCut "$SMPROGRAMS\Tesseract\Tesseract.lnk" "$INSTDIR\tesseract.bat" "" "$INSTDIR\bin\tesseract.exe" 0 SW_SHOWMINIMIZED
-  CreateShortCut "$SMPROGRAMS\Tesseract\Uninstall.lnk"   "$INSTDIR\uninstall.exe"   "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\Tesseract\README.lnk"      "$INSTDIR\README.html"     "" "$INSTDIR\README.html" 0
+  CreateShortCut "$SMPROGRAMS\Tesseract\Tesseract.lnk"   "$INSTDIR\tesseract.bat" "" "$INSTDIR\bin\tesseract.exe" 0 SW_SHOWMINIMIZED
+  CreateShortCut "$SMPROGRAMS\Tesseract\Uninstall.lnk"   "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+;  CreateShortCut "$SMPROGRAMS\Tesseract\README.lnk"      "$INSTDIR\README.html"   "" "$INSTDIR\README.html" 0
   
 SectionEnd
 
