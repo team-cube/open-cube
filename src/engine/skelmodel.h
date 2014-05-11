@@ -342,7 +342,9 @@ struct skelmodel : animmodel
                 T &dst = vdata[i];
                 const dualquat &b = (src.interpindex < blendoffset ? bdata1 : bdata2)[src.interpindex];
                 dst.pos = b.transform(src.pos);
-                dst.tangent = b.transform(src.tangent);
+                quat q = b.transform(src.tangent);
+                fixqtangent(q, src.tangent.w);
+                dst.tangent = q;
             }
         }
 
