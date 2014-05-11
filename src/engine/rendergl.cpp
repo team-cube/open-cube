@@ -290,6 +290,7 @@ VAR(amd_pf_bug, 0, 0, 1);
 VAR(amd_eal_bug, 0, 0, 1);
 VAR(mesa_texrectoffset_bug, 0, 0, 1);
 VAR(intel_texgatheroffsetcomp_bug, 0, 0, 1);
+VAR(intel_mapbufferrange_bug, 0, 0, 1);
 VAR(useubo, 1, 0, 0);
 VAR(usetexgather, 1, 0, 0);
 VAR(usetexcompress, 1, 0, 0);
@@ -1067,6 +1068,8 @@ void gl_checkextensions()
             }
             // textureGatherOffset with component selection crashes Intel's GLSL compiler on Windows
             intel_texgatheroffsetcomp_bug = 1;
+            // MapBufferRange is buggy on older Intel drivers on Windows
+            if(glversion <= 310) intel_mapbufferrange_bug = 1;
         }
     }
     if(hasGPU5 && hasTG && !intel_texgatheroffsetcomp_bug) tqaaresolvegather = 1;
