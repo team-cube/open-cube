@@ -687,12 +687,13 @@ void Shader::cleanup(bool full)
     else loopv(defaultparams) defaultparams[i].loc = -1;
 }
 
-static void genattriblocs(Shader &s, const char *vs, const char *ps)
+static void genattriblocs(Shader &s, const char *vs, const char *ps, Shader *reusevs, Shader *reuseps)
 {
     static int len = strlen("#pragma CUBE2_attrib");
     string name;
     int loc;
-    while((vs = strstr(vs, "#pragma CUBE2_attrib")))
+    if(reusevs) s.attriblocs = reusevs->attriblocs;
+    else while((vs = strstr(vs, "#pragma CUBE2_attrib")))
     {
         if(sscanf(vs, "#pragma CUBE2_attrib %100s %d", name, &loc) == 2)
             s.attriblocs.add(AttribLoc(getshaderparamname(name), loc));
@@ -700,12 +701,13 @@ static void genattriblocs(Shader &s, const char *vs, const char *ps)
     }
 }
 
-static void genuniformlocs(Shader &s, const char *vs, const char *ps)
+static void genuniformlocs(Shader &s, const char *vs, const char *ps, Shader *reusevs, Shader *reuseps)
 {
     static int len = strlen("#pragma CUBE2_uniform");
     string name, blockname;
     int binding, stride;
-    while((vs = strstr(vs, "#pragma CUBE2_uniform")))
+    if(reusevs) s.uniformlocs = reusevs->uniformlocs;
+    else while((vs = strstr(vs, "#pragma CUBE2_uniform")))
     {
         int numargs = sscanf(vs, "#pragma CUBE2_uniform %100s %100s %d %d", name, blockname, &binding, &stride);
         if(numargs >= 3) s.uniformlocs.add(UniformLoc(getshaderparamname(name), getshaderparamname(blockname), binding, numargs >= 4 ? stride : 0));
@@ -753,8 +755,8 @@ Shader *newshader(int type, const char *name, const char *vs, const char *ps, Sh
     else loopv(slotparams) s.defaultparams.add(slotparams[i]);
     s.attriblocs.setsize(0);
     s.uniformlocs.setsize(0);
-    genattriblocs(s, s.reusevs ? s.reusevs->vsstr : vs, s.reuseps ? s.reusevs->psstr : ps);
-    genuniformlocs(s, s.reusevs ? s.reusevs->vsstr : vs, s.reuseps ? s.reusevs->psstr : ps);
+    genattriblocs(s, vs, ps, s.reusevs, s.reuseps);
+    genuniformlocs(s, vs, ps, s.reusevs, s.reuseps);
     s.fragdatalocs.setsize(0);
     if(s.reuseps) s.fragdatalocs = s.reuseps->fragdatalocs;
     else findfragdatalocs(s, ps);
