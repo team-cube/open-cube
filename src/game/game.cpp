@@ -782,7 +782,7 @@ namespace game
 
         int crosshair = 0;
         if(lasthit && lastmillis - lasthit < hitcrosshair) crosshair = 2;
-        else if(teamcrosshair)
+        else if(teamcrosshair && m_teammode)
         {
             dynent *o = intersectclosest(d->o, worldpos, d);
             if(o && o->type==ENT_PLAYER && validteam(d->team) && ((gameent *)o)->team == d->team)
