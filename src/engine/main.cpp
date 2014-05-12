@@ -8,9 +8,9 @@ void cleanup()
 {
     recorder::stop();
     cleanupserver();
-    if(screen) SDL_SetWindowGrab(screen, SDL_FALSE);
-    SDL_SetRelativeMouseMode(SDL_FALSE);
     SDL_ShowCursor(SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+    if(screen) SDL_SetWindowGrab(screen, SDL_FALSE);
     cleargamma();
     freeocta(worldroot);
     UI::cleanup();
@@ -54,9 +54,9 @@ void fatal(const char *s, ...)    // failure exit
         {
             if(SDL_WasInit(SDL_INIT_VIDEO))
             {
-                if(screen) SDL_SetWindowGrab(screen, SDL_FALSE);
-                SDL_SetRelativeMouseMode(SDL_FALSE);
                 SDL_ShowCursor(SDL_TRUE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+                if(screen) SDL_SetWindowGrab(screen, SDL_FALSE);
                 cleargamma();
                 #ifdef __APPLE__
                     if(screen) SDL_SetWindowFullscreen(screen, 0);
