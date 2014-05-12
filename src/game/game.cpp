@@ -503,7 +503,7 @@ namespace game
         {
             if(specmode) nextfollow();
             else stopfollowing();
-        } 
+        }
     }
 
     void clearclients(bool notify)
