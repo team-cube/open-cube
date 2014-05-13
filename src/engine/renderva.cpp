@@ -1744,7 +1744,7 @@ void rendergeom()
         }
         if(geombatches.length()) renderbatches(cur, RENDERPASS_GBUFFER);
 
-        maskgbuffer("cn-d");
+        maskgbuffer("cnd");
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     }
@@ -2255,7 +2255,7 @@ void cleanupdecals(decalrenderer &cur)
     glDisable(GL_BLEND);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_TRUE);
-    maskgbuffer("cn-d");
+    maskgbuffer("cnd");
 
     gle::disablevertex();
     gle::disablenormal();

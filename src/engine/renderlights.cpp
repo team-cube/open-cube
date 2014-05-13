@@ -555,11 +555,9 @@ void maskgbuffer(const char *mask)
     {
         case 'c': drawbufs[numbufs++] = GL_COLOR_ATTACHMENT0; break;
         case 'n': drawbufs[numbufs++] = GL_COLOR_ATTACHMENT1; break;
+        case 'd': if(gdepthformat) drawbufs[numbufs++] = GL_COLOR_ATTACHMENT3; break;
         case 'g': drawbufs[numbufs++] = GL_COLOR_ATTACHMENT2; break;
-        case 'd': drawbufs[numbufs++] = gdepthformat ? GL_COLOR_ATTACHMENT3 : GL_NONE; break;
-        case '-': drawbufs[numbufs++] = GL_NONE; break;
     }
-    while(numbufs > 0 && drawbufs[numbufs-1] == GL_NONE) --numbufs;
     glDrawBuffers_(numbufs, drawbufs);
 }
 
@@ -673,7 +671,7 @@ void setupmsbuffer(int w, int h)
 
     glBindFramebuffer_(GL_FRAMEBUFFER, msfbo);
 
-    maskgbuffer("cngd");
+    maskgbuffer("cndg");
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mscolortex);
     texms(GL_RGBA8, w, h);
@@ -809,7 +807,7 @@ void setupgbuffer()
 
         glBindFramebuffer_(GL_FRAMEBUFFER, gfbo);
 
-        maskgbuffer("cngd");
+        maskgbuffer("cndg");
 
         static const GLenum depthformats[] = { GL_RGBA8, GL_R16F, GL_R32F };
         GLenum depthformat = gdepthformat ? depthformats[gdepthformat-1] : (ghasstencil > 1 ? stencilformat : GL_DEPTH_COMPONENT);
@@ -4153,7 +4151,7 @@ void rendertransparent()
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             if(scissor) glDisable(GL_SCISSOR_TEST);
         }
-        maskgbuffer("cngd");
+        maskgbuffer("cndg");
 
         if(wireframe && editmode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -4251,10 +4249,10 @@ void preparegbuffer(bool depthclear)
         glClear(GL_COLOR_BUFFER_BIT);
         maskgbuffer("cn");
     }
-    else maskgbuffer("cn-d");
+    else maskgbuffer("cnd");
     if(gcolorclear) glClearColor(0, 0, 0, 0);
     glClear((depthclear ? GL_DEPTH_BUFFER_BIT : 0)|(gcolorclear ? GL_COLOR_BUFFER_BIT : 0)|(depthclear && ghasstencil ? GL_STENCIL_BUFFER_BIT : 0));
-    if(gdepthformat && gdepthclear) maskgbuffer("cn-d");
+    if(gdepthformat && gdepthclear) maskgbuffer("cnd");
     if(drawtex && gdepthinit) glDisable(GL_SCISSOR_TEST);
     gdepthinit = true;
 

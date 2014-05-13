@@ -339,7 +339,7 @@ struct stainrenderer
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-        if(gbuf) maskgbuffer(sbuf ? "cngd" : "cn-d");
+        if(gbuf) maskgbuffer(sbuf ? "cndg" : "cnd");
         else resetfogcolor();
     }
 
