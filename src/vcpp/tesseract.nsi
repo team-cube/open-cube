@@ -43,14 +43,18 @@ SectionEnd
 Section "Start Menu Shortcuts"
 
   CreateDirectory "$SMPROGRAMS\Tesseract"
-  
+
+  CreateDirectory "$DOCUMENTS\My Games\Tesseract"
+ 
   SetOutPath "$INSTDIR"
   
   CreateShortCut "$INSTDIR\Tesseract.lnk"                "$INSTDIR\tesseract.bat" "" "$INSTDIR\bin\tesseract.exe" 0 SW_SHOWMINIMIZED
   CreateShortCut "$SMPROGRAMS\Tesseract\Tesseract.lnk"   "$INSTDIR\tesseract.bat" "" "$INSTDIR\bin\tesseract.exe" 0 SW_SHOWMINIMIZED
   CreateShortCut "$SMPROGRAMS\Tesseract\Uninstall.lnk"   "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
 ;  CreateShortCut "$SMPROGRAMS\Tesseract\README.lnk"      "$INSTDIR\README.html"   "" "$INSTDIR\README.html" 0
-  
+
+  CreateShortCut "$INSTDIR\User Data.lnk"                "$DOCUMENTS\My Games\Tesseract"
+  CreateShortCut "$SMPROGRAMS\Tesseract\User Data.lnk"   "$DOCUMENTS\My Games\Tesseract"  
 SectionEnd
 
 Section "Uninstall"
