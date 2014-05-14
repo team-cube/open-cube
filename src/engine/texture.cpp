@@ -1929,6 +1929,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     {
         tnum = TEX_DIFFUSE;
         defslot = &materialslots[matslot];
+        defslot->reset(); 
     }
     else if(!defslot) return;
     else if(tnum < 0) tnum = TEX_UNKNOWN;
