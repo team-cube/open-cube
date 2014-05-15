@@ -65,13 +65,13 @@ files are located before it runs the Tesseract client binaries. No silly symlink
 be at all necessary.
 
 When running the Tesseract client, one command-line switch should ALWAYS be supplied to
-the client binary. This is "-q${HOME}/.tesseract", which will instruct Tesseract to
+the client binary. This is "-u${HOME}/.tesseract", which will instruct Tesseract to
 write any user private files such as saved maps and configurations to a private ".tesseract" 
 directory within each user's home directory. Tesseract will automatically create this
 directory and any subdirectories for each user running it, so do not pre-create this directory 
 or install any symlinks within it - as some Linux distribution packages have erroneously done. 
 All command-line switches supplied to the Tesseract run script should be passed to the 
-Tesseract client after the "-q${HOME}/.tesseract" switch.
+Tesseract client after the "-u${HOME}/.tesseract" switch.
 
 A simple script such as the following (with directory/file names set as appropriate) would 
 ultimately suffice for the client:
@@ -79,7 +79,7 @@ ultimately suffice for the client:
 #!/bin/sh
 TESS_DATA=/usr/share/games/tesseract
 TESS_BIN=/usr/bin/tesseract_client
-TESS_OPTIONS="-q${HOME}/.tesseract"
+TESS_OPTIONS="-u${HOME}/.tesseract"
 
 cd ${TESS_DATA}
 exec ${TESS_BIN} ${TESS_OPTIONS} "$@"
@@ -90,7 +90,7 @@ but allows per-user overriding via the home directory, might be:
 #!/bin/sh
 TESS_DATA=/usr/share/games/tesseract
 TESS_SERV_BIN=/usr/bin/tesseract_server
-TESS_SERV_OPTIONS="-q${HOME}/.tesseract"
+TESS_SERV_OPTIONS="-u${HOME}/.tesseract"
 
 cd ${TESS_DATA}
 exec ${TESS_SERV_BIN} ${TESS_SERV_OPTIONS} "$@"
