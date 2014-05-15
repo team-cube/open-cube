@@ -606,7 +606,7 @@ struct vacollect : verthash
         if(grasstris.length())
         {
             va->grasstris.move(grasstris);
-            useshaderbyname("grass");
+            loadgrassshaders();
         }
 
         if(mapmodels.length()) va->mapmodels.put(mapmodels.getbuf(), mapmodels.length());

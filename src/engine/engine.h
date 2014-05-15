@@ -774,6 +774,7 @@ extern void closemumble();
 extern void updatemumble();
 
 // grass
+extern void loadgrassshaders();
 extern void generategrass();
 extern void rendergrass();
 extern void cleanupgrass();
