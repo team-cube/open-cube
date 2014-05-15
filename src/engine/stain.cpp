@@ -362,13 +362,13 @@ struct stainrenderer
             colorscale = ldrscale;
             if(flags&SF_SATURATE) colorscale *= 2;
             alphascale = 0;
-            SETVARIANTSWIZZLE(foggedstain, tex, sbuf);
+            SETSWIZZLE(foggedstain, tex);
         }
         else if(flags&SF_INVMOD)
         {
             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
             alphascale = 0;
-            SETVARIANTSWIZZLE(foggedstain, tex, sbuf);
+            SETSWIZZLE(foggedstain, tex);
         }
         else
         {
