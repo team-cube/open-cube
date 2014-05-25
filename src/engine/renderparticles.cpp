@@ -850,9 +850,6 @@ static partrenderer *parts[] =
     new quadrenderer("<grey>media/particle/smoke.png", PT_PART|PT_FLIP|PT_LERP),               // smoke
     new quadrenderer("<grey>media/particle/steam.png", PT_PART|PT_FLIP),                       // steam
     new quadrenderer("<grey>media/particle/flames.png", PT_PART|PT_HFLIP|PT_RND4|PT_BRIGHT),   // flame
-    new quadrenderer("media/particle/ball1.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball1
-    new quadrenderer("media/particle/ball2.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball2
-    new quadrenderer("media/particle/ball3.png", PT_PART|PT_FEW|PT_BRIGHT),                    // fireball3
     new taperenderer("media/particle/flare.png", PT_TAPE|PT_BRIGHT),                           // streak
     new taperenderer("media/particle/rail_trail.png", PT_TAPE|PT_FEW|PT_BRIGHT),               // rail trail
     new taperenderer("media/particle/pulse_side.png", PT_TAPE|PT_FEW|PT_BRIGHT),               // pulse side
@@ -1279,8 +1276,6 @@ static void makeparticles(entity &e)
     {
         case 0: //fire and smoke -  <radius> <height> <rgb> - 0 values default to compat for old maps
         {
-            //regularsplash(PART_FIREBALL1, 0xFFC8C8, 150, 1, 40, e.o, 4.8f);
-            //regularsplash(PART_SMOKE, 0x897661, 50, 1, 200,  vec(e.o.x, e.o.y, e.o.z+3.0f), 2.4f, -20, 3);
             float radius = e.attr2 ? float(e.attr2)/100.0f : 1.5f,
                   height = e.attr3 ? float(e.attr3)/100.0f : radius/3;
             regularflame(PART_FLAME, e.o, radius, height, e.attr4 ? colorfromattr(e.attr4) : 0x903020, 3, 2.0f);
