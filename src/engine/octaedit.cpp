@@ -1044,7 +1044,7 @@ COMMAND(pasteprefab, "s");
 
 struct prefabmesh
 {
-    struct vertex { vec pos; bvec norm; uchar reserved; };
+    struct vertex { vec pos; bvec4 norm; };
 
     static const int SIZE = 1<<9;
     int table[SIZE];
@@ -1073,7 +1073,6 @@ struct prefabmesh
         vertex vtx;
         vtx.pos = pos;
         vtx.norm = norm;
-        vtx.reserved = 0;
         return addvert(vtx);
    }
 
