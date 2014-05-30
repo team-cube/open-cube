@@ -3776,7 +3776,7 @@ ICOMMAND(loopfiles, "rsse", (ident *id, char *dir, char *ext, uint *body),
     if(files.length()) poparg(*id);
 });
 
-ICOMMAND(findfile, "s", (char *name),
+void findfile_(char *name)
 {
     string fname;
     copystring(fname, name);
@@ -3787,7 +3787,8 @@ ICOMMAND(findfile, "s", (char *name),
 #endif
         fileexists(fname, "e") || findfile(fname, "e") ? 1 : 0
     );
-});
+}
+COMMANDN(findfile, findfile_, "s");
 
 struct sortitem
 {
