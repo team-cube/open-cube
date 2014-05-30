@@ -602,7 +602,7 @@ namespace server
     int nextplayback = 0, demomillis = 0;
 
     VAR(maxdemos, 0, 5, 25);
-    VAR(maxdemosize, 0, 16, 32);
+    VAR(maxdemosize, 0, 16, 31);
     VAR(restrictdemos, 0, 1, 1);
 
     VAR(restrictpausegame, 0, 1, 1);
