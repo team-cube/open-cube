@@ -64,7 +64,7 @@ namespace gle
     #define GLE_ATTRIBPOINTER(name, index, defaultnormalized, defaultsize, defaulttype) \
         static inline void enable##name() { glEnableVertexAttribArray_(index); } \
         static inline void disable##name() { glDisableVertexAttribArray_(index); } \
-        static inline void name##pointer(int stride, const void *data, GLenum type = defaulttype, int size = defaultsize, GLenum normalized = defaultnormalized) { \
+        static inline void name##pointer(int stride, const void *data = NULL, GLenum type = defaulttype, int size = defaultsize, GLenum normalized = defaultnormalized) { \
             glVertexAttribPointer_(index, size, type, normalized, stride, data); \
         }
 

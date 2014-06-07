@@ -3150,7 +3150,7 @@ void collectlights()
             {
                 if(!queried)
                 {
-                    gle::defvertex();
+                    startbb(false);
                     queried = true;
                 }
                 startquery(l.query);
@@ -3163,7 +3163,7 @@ void collectlights()
     }
     if(queried)
     {
-        gle::disable();
+        endbb(false);
         glFlush();
     }
 

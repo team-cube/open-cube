@@ -539,10 +539,7 @@ VARP(maxmodelradiusdistance, 10, 200, 1000);
 
 static inline void enablecullmodelquery()
 {
-    nocolorshader->set();
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glDepthMask(GL_FALSE);
-    gle::defvertex();
+    startbb();
 }
 
 static inline void rendercullmodelquery(model *m, dynent *d, const vec &center, float radius)
@@ -564,9 +561,7 @@ static inline void rendercullmodelquery(model *m, dynent *d, const vec &center, 
 
 static inline void disablecullmodelquery()
 {
-    gle::disable();
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
+    endbb();
 }
 
 static inline int cullmodel(model *m, const vec &center, float radius, int flags, dynent *d = NULL)
