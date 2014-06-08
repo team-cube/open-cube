@@ -2441,11 +2441,8 @@ void gl_drawview()
 
     glFlush();
 
-    if(!rhinoq || !oqfrags || (wireframe && editmode))
-    {
-        renderradiancehints();
-        GLERROR;
-    }
+    renderradiancehints();
+    GLERROR;
 
     rendershadowatlas();
     GLERROR;

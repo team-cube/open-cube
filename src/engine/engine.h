@@ -302,8 +302,6 @@ extern float shadowradius, shadowbias;
 extern int shadowside, shadowspot;
 extern matrix4 shadowmatrix;
 
-extern int rhinoq;
-
 extern void resetlights();
 extern void collectlights();
 extern void loaddeferredlightshaders();
@@ -317,6 +315,7 @@ extern int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &s
 extern int dynamicshadowvabounds(int mask, vec &bbmin, vec &bbmax);
 extern void rendershadowmapworld();
 extern void batchshadowmapmodels(bool skipmesh = false);
+extern void rendercsmshadowmaps();
 extern void rendershadowatlas();
 extern void renderrsmgeom(bool dyntex = false);
 extern bool useradiancehints();

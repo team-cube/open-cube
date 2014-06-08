@@ -3053,6 +3053,10 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
+static bool inoq = false;
+VAR(csminoq, 0, 0, 1);
+VAR(rhinoq, 0, 1, 1);
+
 void collectlights()
 {
     // point lights processed here
@@ -3175,7 +3179,13 @@ void collectlights()
         glFlush();
     }
 
-    if(rhinoq && oqfrags && !drawtex && (!wireframe || !editmode)) renderradiancehints();
+    if(oqfrags && !drawtex && (!wireframe || !editmode))
+    {
+        inoq = true;
+        if(csminoq && !debugshadowatlas) rendercsmshadowmaps();
+        if(rhinoq) renderradiancehints();
+        inoq = false;
+    }
 }
 
 static inline void addlighttiles(const lightinfo &l, int idx)
@@ -3701,10 +3711,9 @@ void radiancehints::renderslices()
     if(rhrect) glDisable(GL_SCISSOR_TEST);
 }
 
-VAR(rhinoq, 0, 1, 1);
-
 void renderradiancehints()
 {
+    if(rhinoq && !inoq && oqfrags && !drawtex && (!wireframe || !editmode)) return;
     if(!useradiancehints()) return;
 
     timer *rhcputimer = begintimer("radiance hints", false);
@@ -3735,7 +3744,7 @@ void renderradiancehints()
 
     if(rhforce || rh.prevdynmin.z < rh.prevdynmax.z || rh.dynmin.z < rh.dynmax.z || !rh.allcached())
     {
-        if(rhinoq && oqfrags && !drawtex)
+        if(inoq)
         {
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             glDepthMask(GL_TRUE);
@@ -3756,7 +3765,7 @@ void renderradiancehints()
 
         rh.renderslices();
 
-        if(rhinoq && oqfrags && !drawtex)
+        if(inoq)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER, msaasamples ? msfbo : gfbo);
             glViewport(0, 0, vieww, viewh);
@@ -3775,6 +3784,17 @@ void renderradiancehints()
 
 void rendercsmshadowmaps()
 {
+    if(csminoq && !debugshadowatlas && !inoq && oqfrags && !drawtex && (!wireframe || !editmode)) return;
+    if(sunlight.iszero() || !csmshadowmap) return;
+
+    if(inoq)
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER, shadowatlasfbo);
+        glDepthMask(GL_TRUE);
+    }
+
+    csm.setup();
+
     shadowmapping = SM_CASCADE;
     shadoworigin = vec(0, 0, 0);
     shadowdir = csm.lightview;
@@ -3788,6 +3808,8 @@ void rendercsmshadowmaps()
         glPolygonOffset(polyfactor, polyoffset);
         glEnable(GL_POLYGON_OFFSET_FILL);
     }
+
+    glEnable(GL_SCISSOR_TEST);
 
     findshadowvas();
     findshadowmms();
@@ -3814,9 +3836,19 @@ void rendercsmshadowmaps()
 
     clearbatchedmapmodels();
 
+    glDisable(GL_SCISSOR_TEST);
+
     if(polyfactor || polyoffset) glDisable(GL_POLYGON_OFFSET_FILL);
 
     shadowmapping = 0;
+
+    if(inoq)
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER, msaasamples ? msfbo : gfbo);
+        glViewport(0, 0, vieww, viewh);
+
+        glFlush();
+    }
 }
 
 int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &spotloc, int &spotangle, float &bias)
@@ -3864,6 +3896,8 @@ void rendershadowmaps()
         glPolygonOffset(polyfactor, polyoffset);
         glEnable(GL_POLYGON_OFFSET_FILL);
     }
+
+    glEnable(GL_SCISSOR_TEST);
 
     const vector<extentity *> &ents = entities::getents();
     loopv(shadowmaps)
@@ -3982,6 +4016,9 @@ void rendershadowmaps()
         clearbatchedmapmodels();
     }
 
+    glCullFace(GL_BACK);
+    glDisable(GL_SCISSOR_TEST);
+
     if(polyfactor || polyoffset) glDisable(GL_POLYGON_OFFSET_FILL);
 
     shadowmapping = 0;
@@ -4002,22 +4039,14 @@ void rendershadowatlas()
         glClearDepth(1);
     }
 
-    glEnable(GL_SCISSOR_TEST);
-
     // sun light
-    if(!sunlight.iszero() && csmshadowmap)
-    {
-        csm.setup();
-        rendercsmshadowmaps();
-    }
+    rendercsmshadowmaps();
 
     packlights();
 
     // point lights
     rendershadowmaps();
 
-    glCullFace(GL_BACK);
-    glDisable(GL_SCISSOR_TEST);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     endtimer(smtimer);
