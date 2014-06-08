@@ -937,9 +937,17 @@ void copyhdr(int sw, int sh, GLuint fbo, int dw, int dh, bool flipx, bool flipy,
 
     glBindFramebuffer_(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, dw, dh);
-    SETSHADER(hdrnop);
+
+    SETSHADER(reorient);
+    vec reorientx(flipx ? -0.5f : 0.5f, 0, 0.5f), reorienty(0, flipy ? -0.5f : 0.5f, 0.5f);
+    if(swapxy) swap(reorientx, reorienty);
+    reorientx.mul(sw);
+    reorienty.mul(sh);
+    LOCALPARAM(reorientx, reorientx);
+    LOCALPARAM(reorienty, reorienty);
+
     glBindTexture(GL_TEXTURE_RECTANGLE, hdrtex);
-    screenquadreorient(sw, sh, flipx, flipy, swapxy);
+    screenquad();
     GLERROR;
 
     hdrclear = 3;
@@ -1127,7 +1135,7 @@ void processhdr(GLuint outfbo, int aa)
     {
         glBindBuffer_(GL_ARRAY_BUFFER, bloompbo);
         gle::enablecolor();
-        gle::colorpointer(hasTF ? sizeof(GLfloat) : sizeof(GLushort), (void *)0, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, 1);
+        gle::colorpointer(hasTF ? sizeof(GLfloat) : sizeof(GLushort), (const void *)0, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, 1);
         glBindBuffer_(GL_ARRAY_BUFFER, 0);
     }
 

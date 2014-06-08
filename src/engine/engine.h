@@ -163,7 +163,6 @@ extern bool calcspotscissor(const vec &origin, float radius, const vec &dir, int
 extern void screenquad();
 extern void screenquad(float sw, float sh);
 extern void screenquadflipped(float sw, float sh);
-extern void screenquadreorient(float sw, float sh, bool flipx, bool flipy, bool swapxy);
 extern void screenquad(float sw, float sh, float sw2, float sh2);
 extern void screenquadoffset(float x, float y, float w, float h);
 extern void screenquadoffset(float x, float y, float w, float h, float x2, float y2, float w2, float h2);

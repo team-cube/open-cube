@@ -1777,19 +1777,76 @@ bool calcspotscissor(const vec &origin, float radius, const vec &dir, int spot, 
     return true;
 }
 
-void screenquad()
+static GLuint screenquadvbo = 0;
+
+static void setupscreenquad()
 {
-    gle::defvertex(2);
-    gle::begin(GL_TRIANGLE_STRIP);
-    gle::attribf(1, -1);
-    gle::attribf(-1, -1);
-    gle::attribf(1, 1);
-    gle::attribf(-1, 1);
-    gle::end();
-    gle::disable();
+    if(!screenquadvbo)
+    {
+        glGenBuffers_(1, &screenquadvbo);
+        glBindBuffer_(GL_ARRAY_BUFFER, screenquadvbo);
+        vec2 verts[4] = { vec2(1, -1), vec2(-1, -1), vec2(1, 1), vec2(-1, 1) };
+        glBufferData_(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+        glBindBuffer_(GL_ARRAY_BUFFER, 0);
+    }
 }
 
-#define SCREENQUAD1(x1, y1, x2, y2, sx1, sy1, sx2, sy2) { \
+static void cleanupscreenquad()
+{
+    if(screenquadvbo) { glDeleteBuffers_(1, &screenquadvbo); screenquadvbo = 0; }
+}
+
+void screenquad()
+{
+    setupscreenquad();
+    glBindBuffer_(GL_ARRAY_BUFFER, screenquadvbo);
+    gle::enablevertex();
+    gle::vertexpointer(sizeof(vec2), (const vec2 *)0, GL_FLOAT, 2);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    gle::disablevertex();
+    glBindBuffer_(GL_ARRAY_BUFFER, 0);
+}
+
+static LocalShaderParam screentexcoord[2] = { LocalShaderParam("screentexcoord0"), LocalShaderParam("screentexcoord1") };
+
+static inline void setscreentexcoord(int i, float w, float h, float x = 0, float y = 0)
+{
+    screentexcoord[i].setf(w*0.5f, h*0.5f, x + w*0.5f, y + fabs(h)*0.5f);
+}
+
+void screenquad(float sw, float sh)
+{
+    setscreentexcoord(0, sw, sh);
+    screenquad();
+}
+
+void screenquadflipped(float sw, float sh)
+{
+    setscreentexcoord(0, sw, -sh);
+    screenquad();
+}
+
+void screenquad(float sw, float sh, float sw2, float sh2)
+{
+    setscreentexcoord(0, sw, sh);
+    setscreentexcoord(1, sw2, sh2);
+    screenquad();
+}
+
+void screenquadoffset(float x, float y, float w, float h)
+{
+    setscreentexcoord(0, w, h, x, y);
+    screenquad();
+}
+
+void screenquadoffset(float x, float y, float w, float h, float x2, float y2, float w2, float h2)
+{
+    setscreentexcoord(0, w, h, x, y);
+    setscreentexcoord(1, w2, h2, x2, y2);
+    screenquad();
+}
+
+#define HUDQUAD(x1, y1, x2, y2, sx1, sy1, sx2, sy2) { \
     gle::defvertex(2); \
     gle::deftexcoord0(); \
     gle::begin(GL_TRIANGLE_STRIP); \
@@ -1800,83 +1857,14 @@ void screenquad()
     gle::end(); \
 }
 
-void screenquad(float sw, float sh)
-{
-    SCREENQUAD1(-1, -1, 1, 1, 0, 0, sw, sh);
-    gle::disable();
-}
-
-void screenquadflipped(float sw, float sh)
-{
-    SCREENQUAD1(-1, -1, 1, 1, 0, sh, sw, 0);
-    gle::disable();
-}
-
-void screenquadreorient(float sw, float sh, bool flipx, bool flipy, bool swapxy)
-{
-    float sx1 = 0, sy1 = 0, sx2 = sw, sy2 = sh;
-    if(swapxy) swap(sx2, sy2);
-    if(flipx) swap(sx1, sx2);
-    if(flipy) swap(sy1, sy2);
-    gle::defvertex(2);
-    gle::deftexcoord0();
-    gle::begin(GL_TRIANGLE_STRIP);
-    if(swapxy)
-    {
-        gle::attribf( 1, -1); gle::attribf(sy1, sx2);
-        gle::attribf(-1, -1); gle::attribf(sy1, sx1);
-        gle::attribf( 1,  1); gle::attribf(sy2, sx2);
-        gle::attribf(-1,  1); gle::attribf(sy2, sx1);
-    }
-    else
-    {
-        gle::attribf( 1, -1); gle::attribf(sx2, sy1);
-        gle::attribf(-1, -1); gle::attribf(sx1, sy1);
-        gle::attribf( 1,  1); gle::attribf(sx2, sy2);
-        gle::attribf(-1,  1); gle::attribf(sx1, sy2);
-    }
-    gle::end();
-    gle::disable();
-}
-
-#define SCREENQUAD2(x1, y1, x2, y2, sx1, sy1, sx2, sy2, tx1, ty1, tx2, ty2) { \
-    gle::defvertex(2); \
-    gle::deftexcoord0(); \
-    gle::deftexcoord1(); \
-    gle::begin(GL_TRIANGLE_STRIP); \
-    gle::attribf(x2, y1); gle::attribf(sx2, sy1); gle::attribf(tx2, ty1); \
-    gle::attribf(x1, y1); gle::attribf(sx1, sy1); gle::attribf(tx1, ty1); \
-    gle::attribf(x2, y2); gle::attribf(sx2, sy2); gle::attribf(tx2, ty2); \
-    gle::attribf(x1, y2); gle::attribf(sx1, sy2); gle::attribf(tx1, ty2); \
-    gle::end(); \
-}
-
-void screenquad(float sw, float sh, float sw2, float sh2)
-{
-    SCREENQUAD2(-1, -1, 1, 1, 0, 0, sw, sh, 0, 0, sw2, sh2);
-    gle::disable();
-}
-
-void screenquadoffset(float x, float y, float w, float h)
-{
-    SCREENQUAD1(-1, -1, 1, 1, x, y, x+w, y+h);
-    gle::disable();
-}
-
-void screenquadoffset(float x, float y, float w, float h, float x2, float y2, float w2, float h2)
-{
-    SCREENQUAD2(-1, -1, 1, 1, x, y, x+w, y+h, x2, y2, x2+w2, y2+h2);
-    gle::disable();
-}
-
 void hudquad(float x, float y, float w, float h, float tx, float ty, float tw, float th)
 {
-    SCREENQUAD1(x, y, x+w, y+h, tx, ty, tx+tw, ty+th);
+    HUDQUAD(x, y, x+w, y+h, tx, ty, tx+tw, ty+th);
 }
 
 void debugquad(float x, float y, float w, float h, float tx, float ty, float tw, float th)
 {
-    SCREENQUAD1(x, y, x+w, y+h, tx, ty+th, tx+tw, ty);
+    HUDQUAD(x, y, x+w, y+h, tx, ty+th, tx+tw, ty);
     gle::disable();
 }
 
@@ -2879,6 +2867,7 @@ void cleanupgl()
 {
     clearminimap();
     cleanuptimers();
+    cleanupscreenquad();
     gle::cleanup();
     ovr::cleanup();
 }

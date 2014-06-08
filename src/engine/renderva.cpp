@@ -394,8 +394,8 @@ void startbb(bool mask)
     setupbb();
     glBindBuffer_(GL_ARRAY_BUFFER, bbvbo);
     glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, bbebo);
+    gle::vertexpointer(sizeof(vec), (const vec *)0);
     gle::enablevertex();
-    gle::vertexpointer(sizeof(vec));
     SETSHADER(bbquery);
     if(mask)
     {
