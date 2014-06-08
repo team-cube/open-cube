@@ -208,12 +208,14 @@ int smaasubsampleorder = -1;
 
 extern int smaaquality, smaagreenluma, smaacoloredge, smaadepthmask, smaastencil;
 
+extern int intel_texalpha_bug;
+
 int smaatype = -1;
 static Shader *smaalumaedgeshader = NULL, *smaacoloredgeshader = NULL, *smaablendweightshader = NULL, *smaaneighborhoodshader = NULL;
 
 void loadsmaashaders(bool split = false)
 {
-    smaatype = tqaatype >= 0 ? tqaatype : (!smaagreenluma && !smaacoloredge ? AA_LUMA : AA_UNUSED);
+    smaatype = tqaatype >= 0 ? tqaatype : (!smaagreenluma && !smaacoloredge && !intel_texalpha_bug ? AA_LUMA : AA_UNUSED);
     if(split) smaatype += AA_SPLIT;
     loadhdrshaders(smaatype);
 
@@ -222,7 +224,7 @@ void loadsmaashaders(bool split = false)
     if(!hasTRG) opts[optslen++] = 'a';
     if(smaadepthmask || smaastencil) opts[optslen++] = 'd';
     if(split) opts[optslen++] = 's';
-    if(smaagreenluma || tqaa) opts[optslen++] = 'g';
+    if(smaagreenluma || tqaa || intel_texalpha_bug) opts[optslen++] = 'g';
     if(tqaa) opts[optslen++] = 't';
     opts[optslen] = '\0';
 
@@ -537,7 +539,7 @@ void setupsmaa(int w, int h)
         GLenum format = GL_RGB;
         switch(i)
         {
-            case 0: format = tqaa || (!smaagreenluma && !smaacoloredge) ? GL_RGBA8 : GL_RGB; break;
+            case 0: format = tqaa || (!smaagreenluma && !smaacoloredge && !intel_texalpha_bug) ? GL_RGBA8 : GL_RGB; break;
             case 1: format = hasTRG ? GL_RG8 : GL_RGBA8; break;
             case 2: case 3: format = GL_RGBA8; break;
         }
