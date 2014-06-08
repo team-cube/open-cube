@@ -266,7 +266,7 @@ namespace game
     bool allowedittoggle()
     {
         if(editmode) return true;
-        if(connected && multiplayer(false) && !m_edit)
+        if(isconnected() && multiplayer(false) && !m_edit)
         {
             conoutf(CON_ERROR, "editing in multiplayer requires coop edit mode");
             return false;
@@ -616,7 +616,7 @@ namespace game
         if(!remote)
         {
             server::forcemap(name, mode);
-            if(!connected) localconnect();
+            if(!isconnected()) localconnect();
         }
         else if(player1->state!=CS_SPECTATOR || player1->privilege) addmsg(N_MAPVOTE, "rsi", name, mode);
     }
@@ -876,7 +876,6 @@ namespace game
 
     void gameconnect(bool _remote)
     {
-        connected = true;
         remote = _remote;
     }
 
@@ -1264,6 +1263,7 @@ namespace game
 
             case N_WELCOME:
             {
+                connected = true;
                 notifywelcome();
                 break;
             }
@@ -1866,7 +1866,12 @@ namespace game
                     vector<char> buf;
                     answerchallenge(a->key, text, buf);
                     //conoutf(CON_DEBUG, "answering %u, challenge %s with %s", id, text, buf.getbuf());
-                    addmsg(N_AUTHANS, "rsis", a->desc, id, buf.getbuf());
+                    packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+                    putint(p, N_AUTHANS);
+                    sendstring(a->desc, p);
+                    putint(p, id);
+                    sendstring(buf.getbuf(), p);
+                    sendclientpacket(p.finalize(), 1);
                 }
                 break;
             }
