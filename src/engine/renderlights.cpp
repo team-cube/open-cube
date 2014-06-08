@@ -3054,7 +3054,7 @@ static inline bool calclightscissor(lightinfo &l)
 }
 
 static bool inoq = false;
-VAR(csminoq, 0, 0, 1);
+VAR(csminoq, 0, 1, 1);
 VAR(rhinoq, 0, 1, 1);
 
 void collectlights()
