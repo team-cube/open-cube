@@ -480,7 +480,6 @@ struct batchedmodel
         int culled;
     };
     dynent *d;
-    occludequery *query;
     int next;
 };
 struct modelbatch
@@ -491,7 +490,6 @@ struct modelbatch
 static vector<batchedmodel> batchedmodels;
 static vector<modelbatch> batches;
 static vector<modelattach> modelattached;
-static occludequery *modelquery = NULL;
 
 void resetmodelbatches()
 {
@@ -695,28 +693,15 @@ void rendermapmodelbatches()
     {
         modelbatch &b = batches[i];
         if(!(b.flags&MDL_MAPMODEL)) continue;
-        bool rendered = false;
-        occludequery *query = NULL;
+        b.m->startrender();
+        setaamask(b.m->animated());
         for(int j = b.batched; j >= 0;)
         {
             batchedmodel &bm = batchedmodels[j];
-            j = bm.next;
-            if(bm.query!=query)
-            {
-                if(query) endquery(query);
-                query = bm.query;
-                if(query) startquery(query);
-            }
-            if(!rendered)
-            {
-                b.m->startrender();
-                rendered = true;
-                setaamask(b.m->animated());
-            }
             renderbatchedmodel(b.m, bm);
+            j = bm.next;
         }
-        if(query) endquery(query);
-        if(rendered) b.m->endrender();
+        b.m->endrender();
     }
     disableaamask();
 }
@@ -837,51 +822,49 @@ void rendertransparentmodelbatches(int stencil)
     disableaamask();
 }
 
+static occludequery *modelquery = NULL;
+static int modelquerybatches = -1, modelquerymodels = -1, modelqueryattached = -1;
+ 
 void startmodelquery(occludequery *query)
 {
     modelquery = query;
+    modelquerybatches = batches.length();
+    modelquerymodels = batchedmodels.length();
+    modelqueryattached = modelattached.length();
 }
 
 void endmodelquery()
 {
-    int querybatches = 0;
-    loopv(batches)
+    if(batchedmodels.length() == modelquerymodels)
     {
-        modelbatch &b = batches[i];
-        if(batchedmodels[b.batched].query != modelquery) continue;
-        querybatches++;
-    }
-    if(querybatches<=1)
-    {
-        if(!querybatches) modelquery->fragments = 0;
+        modelquery->fragments = 0;
         modelquery = NULL;
         return;
     }
     enableaamask();
-    int minattached = modelattached.length();
     startquery(modelquery);
     loopv(batches)
     {
         modelbatch &b = batches[i];
         int j = b.batched;
-        if(j < 0 || batchedmodels[j].query != modelquery) continue;
+        if(j < modelquerymodels) continue;
         b.m->startrender();
-        setaamask(b.m->animated());
+        setaamask(!(b.flags&MDL_MAPMODEL) || b.m->animated());
         do
         {
             batchedmodel &bm = batchedmodels[j];
-            if(bm.query != modelquery) break;
-            j = bm.next;
-            if(bm.attached>=0) minattached = min(minattached, bm.attached);
             renderbatchedmodel(b.m, bm);
+            j = bm.next;
         }
-        while(j >= 0);
+        while(j >= modelquerymodels);
         b.batched = j;
         b.m->endrender();
     }
     endquery(modelquery);
     modelquery = NULL;
-    modelattached.setsize(minattached);
+    batches.setsize(modelquerybatches);
+    batchedmodels.setsize(modelquerymodels);
+    modelattached.setsize(modelqueryattached);
     disableaamask();
 }
 
@@ -927,7 +910,6 @@ void rendermapmodel(int idx, int anim, const vec &o, float yaw, float pitch, flo
         return;
 
     batchedmodel &b = batchedmodels.add();
-    b.query = modelquery;
     b.pos = o;
     b.center = center;
     b.radius = radius;
@@ -1018,7 +1000,6 @@ hasboundbox:
     }
 
     batchedmodel &b = batchedmodels.add();
-    b.query = modelquery;
     b.pos = o;
     b.center = center;
     b.radius = radius;
