@@ -302,8 +302,6 @@ extern float shadowradius, shadowbias;
 extern int shadowside, shadowspot;
 extern matrix4 shadowmatrix;
 
-extern void resetlights();
-extern void collectlights();
 extern void loaddeferredlightshaders();
 extern void cleardeferredlightshaders();
 extern void clearshadowcache();
@@ -322,6 +320,7 @@ extern bool useradiancehints();
 extern void renderradiancehints();
 extern void clearradiancehintscache();
 extern void cleanuplights();
+extern void workinoq();
 
 extern int calcbbsidemask(const vec &bbmin, const vec &bbmax, const vec &lightpos, float lightradius, float bias);
 extern int calcspheresidemask(const vec &p, float radius, float bias);

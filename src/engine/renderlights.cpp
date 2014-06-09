@@ -3053,12 +3053,10 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
-static bool inoq = false;
-VAR(csminoq, 0, 1, 1);
-VAR(rhinoq, 0, 1, 1);
-
 void collectlights()
 {
+    if(lights.length()) return;
+
     // point lights processed here
     const vector<extentity *> &ents = entities::getents();
     if(!editmode || !fullbright) loopv(ents)
@@ -3178,18 +3176,33 @@ void collectlights()
         endbb(false);
         glFlush();
     }
+}
 
-    if(!drawtex)
-    {
-        game::rendergame();
-    }
+static bool inoq = false;
+VAR(csminoq, 0, 1, 1);
+VAR(rhinoq, 0, 1, 1);
 
-    if(oqfrags && !drawtex && (!wireframe || !editmode))
+static inline bool shouldworkinoq()
+{
+    return !drawtex && oqfrags && (!wireframe || !editmode);
+}
+
+void workinoq()
+{
+    collectlights();
+
+    if(drawtex) return;
+
+    game::rendergame();
+
+    if(shouldworkinoq())
     {
         inoq = true;
+
         if(csminoq && !debugshadowatlas) rendercsmshadowmaps();
         if(rhinoq) renderradiancehints();
-        inoq = false;
+
+        inoq = false;        
     }
 }
 
@@ -3718,7 +3731,7 @@ void radiancehints::renderslices()
 
 void renderradiancehints()
 {
-    if(rhinoq && !inoq && oqfrags && !drawtex && (!wireframe || !editmode)) return;
+    if(rhinoq && !inoq && shouldworkinoq()) return;
     if(!useradiancehints()) return;
 
     timer *rhcputimer = begintimer("radiance hints", false);
@@ -3789,7 +3802,7 @@ void renderradiancehints()
 
 void rendercsmshadowmaps()
 {
-    if(csminoq && !debugshadowatlas && !inoq && oqfrags && !drawtex && (!wireframe || !editmode)) return;
+    if(csminoq && !debugshadowatlas && !inoq && shouldworkinoq()) return;
     if(sunlight.iszero() || !csmshadowmap) return;
 
     if(inoq)
@@ -4344,6 +4357,8 @@ void preparegbuffer(bool depthclear)
 
     GLERROR;
 
+    if(depthclear) resetlights();
+
     resetmodelbatches();
 }
 
@@ -4368,7 +4383,9 @@ void rendergbuffer(bool depthclear)
 
     if(drawtex == DRAWTEX_MINIMAP)
     {
+        if(depthclear) findmaterials();
         renderminimapmaterials();
+        GLERROR;
     }
     else if(!drawtex)
     {

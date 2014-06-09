@@ -1748,7 +1748,7 @@ void rendergeom()
         glFlush();
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); }
         if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); }
-        collectlights();
+        workinoq();
         if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
         if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
 
@@ -1823,12 +1823,12 @@ void rendergeom()
 
     cleanupgeom(cur);
 
-    if((viewidx || !doOQ) && drawtex != DRAWTEX_MINIMAP)
+    if(viewidx || !doOQ)
     {
         glFlush();
         if(cur.colormask) { cur.colormask = false; glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); }
         if(cur.depthmask) { cur.depthmask = false; glDepthMask(GL_FALSE); }
-        collectlights();
+        workinoq();
         if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
         if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
     }

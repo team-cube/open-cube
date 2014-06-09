@@ -2127,8 +2127,6 @@ void drawminimap()
     projmatrix.ortho(-minimapradius.x, minimapradius.x, -minimapradius.y, minimapradius.y, 0, 2*zscale);
     setcamprojmatrix();
 
-    resetlights();
-
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
@@ -2139,8 +2137,6 @@ void drawminimap()
     ldrscaleb = ldrscale/255;
 
     visiblecubes(false);
-    collectlights();
-    findmaterials();
 
     rendergbuffer();
 
@@ -2226,8 +2222,6 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
     vieww = viewh = size;
     projmatrix.perspective(fovy, aspect, nearplane, farplane);
     setcamprojmatrix();
-
-    resetlights();
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -2411,8 +2405,6 @@ void gl_drawview()
     //setfog(fogmat, fogbelow, 1, abovemat);
 
     farplane = worldsize*2;
-
-    resetlights();
 
     projmatrix.perspective(fovy, aspect, nearplane, farplane);
     setcamprojmatrix();
