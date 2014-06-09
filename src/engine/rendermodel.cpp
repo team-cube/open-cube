@@ -503,15 +503,20 @@ void resetmodelbatches()
 void addbatchedmodel(model *m, batchedmodel &bm, int idx)
 {
     modelbatch *b = NULL;
-    if(batches.inrange(m->batch) && batches[m->batch].m == m) b = &batches[m->batch];
-    else
+    if(batches.inrange(m->batch))
     {
-        m->batch = batches.length();
-        b = &batches.add();
-        b->m = m;
-        b->flags = 0;
-        b->batched = -1;
+        b = &batches[m->batch];
+        if(b->m == m && (b->flags & MDL_MAPMODEL) == (bm.flags & MDL_MAPMODEL))
+            goto foundbatch;
     }
+    
+    m->batch = batches.length();
+    b = &batches.add();
+    b->m = m;
+    b->flags = 0;
+    b->batched = -1;
+
+foundbatch:
     b->flags |= bm.flags;
     bm.next = b->batched;
     b->batched = idx;
@@ -620,7 +625,7 @@ int batcheddynamicmodels()
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(!(b.flags&MDL_MAPMODEL) || b.batched < 0 || !b.m->animated()) continue;
+        if(!(b.flags&MDL_MAPMODEL) || !b.m->animated()) continue;
         for(int j = b.batched; j >= 0;)
         {
             batchedmodel &bm = batchedmodels[j];
@@ -648,7 +653,7 @@ int batcheddynamicmodelbounds(int mask, vec &bbmin, vec &bbmax)
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(!(b.flags&MDL_MAPMODEL) || b.batched < 0 || !b.m->animated()) continue;
+        if(!(b.flags&MDL_MAPMODEL) || !b.m->animated()) continue;
         for(int j = b.batched; j >= 0;)
         {
             batchedmodel &bm = batchedmodels[j];
@@ -669,7 +674,7 @@ void rendershadowmodelbatches(bool dynmodel)
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0 || !b.m->shadow || (!dynmodel && (!(b.flags&MDL_MAPMODEL) || b.m->animated()))) continue;
+        if(!b.m->shadow || (!dynmodel && (!(b.flags&MDL_MAPMODEL) || b.m->animated()))) continue;
         bool rendered = false;
         for(int j = b.batched; j >= 0;)
         {
@@ -689,7 +694,7 @@ void rendermapmodelbatches()
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0 || !(b.flags&MDL_MAPMODEL)) continue;
+        if(!(b.flags&MDL_MAPMODEL)) continue;
         bool rendered = false;
         occludequery *query = NULL;
         for(int j = b.batched; j >= 0;)
@@ -729,7 +734,7 @@ void rendermodelbatches()
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0 || b.flags&MDL_MAPMODEL) continue;
+        if(b.flags&MDL_MAPMODEL) continue;
         bool rendered = false;
         for(int j = b.batched; j >= 0;)
         {
@@ -800,7 +805,7 @@ void rendertransparentmodelbatches(int stencil)
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0 || b.flags&MDL_MAPMODEL) continue;
+        if(b.flags&MDL_MAPMODEL) continue;
         bool rendered = false;
         for(int j = b.batched; j >= 0;)
         {
@@ -843,7 +848,7 @@ void endmodelquery()
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0 || batchedmodels[b.batched].query != modelquery) continue;
+        if(batchedmodels[b.batched].query != modelquery) continue;
         querybatches++;
     }
     if(querybatches<=1)
@@ -882,23 +887,16 @@ void endmodelquery()
 
 void clearbatchedmapmodels()
 {
-    if(batchedmodels.empty()) return;
-    int len = 0;
-    loopvrev(batchedmodels) if(!(batchedmodels[i].flags&MDL_MAPMODEL))
-    {
-        len = i+1;
-        break;
-    }
-    if(len >= batchedmodels.length()) return;
     loopv(batches)
     {
         modelbatch &b = batches[i];
-        if(b.batched < 0) continue;
-        int j = b.batched;
-        while(j >= len) j = batchedmodels[j].next;
-        b.batched = j;
+        if(b.flags&MDL_MAPMODEL)
+        {
+            batchedmodels.setsize(b.batched);
+            batches.setsize(i);
+            break;
+        }
     }
-    batchedmodels.setsize(len);
 }
 
 void rendermapmodel(int idx, int anim, const vec &o, float yaw, float pitch, float roll, int flags, int basetime, float size)
