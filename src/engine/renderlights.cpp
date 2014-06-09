@@ -4343,6 +4343,8 @@ void preparegbuffer(bool depthclear)
     GLOBALPARAMF(millis, lastmillis/1000.0f);
 
     GLERROR;
+
+    resetmodelbatches();
 }
 
 void rendergbuffer(bool depthclear)
@@ -4351,8 +4353,6 @@ void rendergbuffer(bool depthclear)
     timer *gtimer = drawtex ? NULL : begintimer("g-buffer");
 
     preparegbuffer(depthclear);
-
-    resetmodelbatches();
 
     if(limitsky())
     {

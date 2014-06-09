@@ -2355,8 +2355,6 @@ namespace modelpreview
         glEnable(GL_DEPTH_TEST);
 
         preparegbuffer();
-
-        resetmodelbatches();
     }
 
     void end()

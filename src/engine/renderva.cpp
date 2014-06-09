@@ -519,7 +519,7 @@ void rendermapmodels()
         if(rendered && !viewidx && oe->query) endmodelquery();
     }
     rendermapmodelbatches();
-    resetmodelbatches();
+    clearbatchedmapmodels();
 
     if(viewidx) return;
 
