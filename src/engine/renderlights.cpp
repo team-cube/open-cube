@@ -3179,6 +3179,11 @@ void collectlights()
         glFlush();
     }
 
+    if(!drawtex)
+    {
+        game::rendergame();
+    }
+
     if(oqfrags && !drawtex && (!wireframe || !editmode))
     {
         inoq = true;
@@ -4347,6 +4352,8 @@ void rendergbuffer(bool depthclear)
 
     preparegbuffer(depthclear);
 
+    resetmodelbatches();
+
     if(limitsky())
     {
         renderexplicitsky();
@@ -4356,7 +4363,6 @@ void rendergbuffer(bool depthclear)
     GLERROR;
     renderdecals();
     GLERROR;
-    resetmodelbatches();
     rendermapmodels();
     GLERROR;
 
@@ -4366,7 +4372,6 @@ void rendergbuffer(bool depthclear)
     }
     else if(!drawtex)
     {
-        game::rendergame();
         rendermodelbatches();
         GLERROR;
         renderstains(STAINBUF_OPAQUE, true);
