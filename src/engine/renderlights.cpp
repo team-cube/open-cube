@@ -1575,11 +1575,8 @@ struct lightinfo
         dz2 = max(dz2, sz2);
     }
 
-    occludequery *validquery() const { return query && query->owner == this ? query : NULL; }
     bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
 };
-
-vector<lightinfo> lights;
 
 struct shadowcachekey
 {
@@ -1614,20 +1611,9 @@ struct shadowmapinfo
 struct shadowcacheval
 {
     ushort x, y, size, sidemask;
-    occludequery *query;
 
     shadowcacheval() {}
-    shadowcacheval(const shadowmapinfo &sm) : x(sm.x), y(sm.y), size(sm.size), sidemask(sm.sidemask)
-    {
-        if(lights.inrange(sm.light))
-        {
-            query = lights[sm.light].validquery();
-            if(query) query->owner = this;
-        }
-        else query = NULL;
-    }
-
-    bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
+    shadowcacheval(const shadowmapinfo &sm) : x(sm.x), y(sm.y), size(sm.size), sidemask(sm.sidemask) {}
 };
 
 struct shadowcache : hashtable<shadowcachekey, shadowcacheval>
@@ -1764,6 +1750,9 @@ VAR(smnoshadow, 0, 0, 1);
 VAR(smdynshadow, 0, 1, 1);
 VAR(lighttilesused, 1, 0, 0);
 VAR(lightpassesused, 1, 0, 0);
+VAR(lightsvisible, 1, 0, 0);
+VAR(lightsoccluded, 1, 0, 0);
+VARN(lightbatches, lightbatchesused, 1, 0, 0);
 
 int shadowmapping = 0;
 
@@ -1841,6 +1830,7 @@ static inline bool htcmp(const lighttileslice &x, const lighttileslice &y)
            (!x.numlights || !memcmp(&x.tile->lights[x.offset], &y.tile->lights[y.offset], x.numlights*sizeof(ushort)));
 }
 
+vector<lightinfo> lights;
 vector<int> lightorder;
 lighttile lighttiles[LIGHTTILE_MAXH][LIGHTTILE_MAXW];
 hashset<lightbatch> lightbatcher(128);
@@ -3068,17 +3058,6 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
-static inline void addlighttiles(const lightinfo &l, int idx)
-{
-    int tx1, ty1, tx2, ty2;
-    calctilebounds(l.sx1, l.sy1, l.sx2, l.sy2, tx1, ty1, tx2, ty2);
-    for(int y = ty1; y < ty2; y++) for(int x = tx1; x < tx2; x++) { lighttiles[y][x].lights.add(idx); lighttilesused++; }
-}
-
-VAR(lightsvisible, 1, 0, 0);
-VAR(lightsoccluded, 1, 0, 0);
-VARN(lightbatches, lightbatchesused, 1, 0, 0);
-
 void collectlights()
 {
     if(lights.length()) return;
@@ -3203,8 +3182,6 @@ void collectlights()
         glFlush();
     }
 
-    lightsvisible = lightsoccluded = 0;
-    lighttilesused = lightpassesused = 0;
     smused = 0;
 
     if(smcache && !smnoshadow && shadowcache.numelems) loop(mismatched, 2) loopv(lightorder)
@@ -3214,7 +3191,7 @@ void collectlights()
         if(l.noshadow()) continue;
 
         shadowcacheval *cached = shadowcache.access(l);
-        if(!cached || cached->checkquery()) continue;
+        if(!cached) continue;
 
         float prec = smprec, lod;
         int w, h;
@@ -3243,8 +3220,6 @@ void collectlights()
         }
 
         smused += w*h;
-
-        addlighttiles(l, idx);
     }
 }
 
@@ -3258,29 +3233,6 @@ static inline bool shouldworkinoq()
     return !drawtex && oqfrags && (!wireframe || !editmode);
 }
 
-extern void rendercsmshadowmaps();
-extern void rendershadowmaps(int offset = 0);
-
-void workinoq()
-{
-    collectlights();
-
-    if(drawtex) return;
-
-    game::rendergame();
-
-    if(shouldworkinoq())
-    {
-        inoq = true;
-
-        if(csminoq && !debugshadowatlas) rendercsmshadowmaps();
-        if(sminoq && !debugshadowatlas) rendershadowmaps();
-        if(rhinoq) renderradiancehints();
-
-        inoq = false;        
-    }
-}
-
 static inline bool sortlightbatches(const lightbatch *x, const lightbatch *y)
 {
     if(x->tile->band < y->tile->band) return true;
@@ -3290,15 +3242,33 @@ static inline bool sortlightbatches(const lightbatch *x, const lightbatch *y)
     return x->numlights > y->numlights;
 }
 
+static inline void addlighttiles(const lightinfo &l, int idx)
+{
+    int tx1, ty1, tx2, ty2;
+    calctilebounds(l.sx1, l.sy1, l.sx2, l.sy2, tx1, ty1, tx2, ty2);
+    for(int y = ty1; y < ty2; y++) for(int x = tx1; x < tx2; x++) { lighttiles[y][x].lights.add(idx); lighttilesused++; }
+}
+
 void packlights()
 {
+    lightsvisible = lightsoccluded = 0;
+    lighttilesused = lightpassesused = 0;
+
     loopv(lightorder)
     {
         int idx = lightorder[i];
         lightinfo &l = lights[idx];
-        if(l.shadowmap >= 0) continue;
-
-        if(!l.noshadow() && !smnoshadow)
+        if(l.shadowmap >= 0)
+        {
+            if(l.checkquery())
+            {
+                shadowmaps[l.shadowmap].light = -1;
+                l.shadowmap = -1;
+                lightsoccluded++;
+                continue;
+            }
+        }
+        else if(!l.noshadow() && !smnoshadow)
         {
             if(l.checkquery()) { lightsoccluded++; continue; }
             float prec = smprec, lod;
@@ -3930,7 +3900,7 @@ int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &spotloc,
 
 matrix4 shadowmatrix;
 
-void rendershadowmaps(int offset)
+void rendershadowmaps(int offset = 0)
 {
     if(!(sminoq && !debugshadowatlas && !inoq && shouldworkinoq())) offset = 0;
 
@@ -4115,6 +4085,26 @@ void rendershadowatlas()
 
     endtimer(smtimer);
     endtimer(smcputimer);
+}
+
+void workinoq()
+{
+    collectlights();
+
+    if(drawtex) return;
+
+    game::rendergame();
+
+    if(shouldworkinoq())
+    {
+        inoq = true;
+
+        if(csminoq && !debugshadowatlas) rendercsmshadowmaps();
+        if(sminoq && !debugshadowatlas) rendershadowmaps();
+        if(rhinoq) renderradiancehints();
+
+        inoq = false;
+    }
 }
 
 FVAR(refractmargin, 0, 0.1f, 1);
