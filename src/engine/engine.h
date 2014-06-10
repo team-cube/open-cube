@@ -313,7 +313,6 @@ extern int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &s
 extern int dynamicshadowvabounds(int mask, vec &bbmin, vec &bbmax);
 extern void rendershadowmapworld();
 extern void batchshadowmapmodels(bool skipmesh = false);
-extern void rendercsmshadowmaps();
 extern void rendershadowatlas();
 extern void renderrsmgeom(bool dyntex = false);
 extern bool useradiancehints();

@@ -1574,7 +1574,12 @@ struct lightinfo
         dz1 = min(dz1, sz1);
         dz2 = max(dz2, sz2);
     }
+
+    occludequery *validquery() const { return query && query->owner == this ? query : NULL; }
+    bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
 };
+
+vector<lightinfo> lights;
 
 struct shadowcachekey
 {
@@ -1609,9 +1614,20 @@ struct shadowmapinfo
 struct shadowcacheval
 {
     ushort x, y, size, sidemask;
+    occludequery *query;
 
     shadowcacheval() {}
-    shadowcacheval(const shadowmapinfo &sm) : x(sm.x), y(sm.y), size(sm.size), sidemask(sm.sidemask) {}
+    shadowcacheval(const shadowmapinfo &sm) : x(sm.x), y(sm.y), size(sm.size), sidemask(sm.sidemask)
+    {
+        if(lights.inrange(sm.light))
+        {
+            query = lights[sm.light].validquery();
+            if(query) query->owner = this;
+        }
+        else query = NULL;
+    }
+
+    bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
 };
 
 struct shadowcache : hashtable<shadowcachekey, shadowcacheval>
@@ -1825,7 +1841,6 @@ static inline bool htcmp(const lighttileslice &x, const lighttileslice &y)
            (!x.numlights || !memcmp(&x.tile->lights[x.offset], &y.tile->lights[y.offset], x.numlights*sizeof(ushort)));
 }
 
-vector<lightinfo> lights;
 vector<int> lightorder;
 lighttile lighttiles[LIGHTTILE_MAXH][LIGHTTILE_MAXW];
 hashset<lightbatch> lightbatcher(128);
@@ -1840,16 +1855,16 @@ void clearshadowcache()
     clearshadowmeshes();
 }
 
-static shadowmapinfo *addshadowmap(ushort x, ushort y, int size, int &idx)
+static shadowmapinfo *addshadowmap(ushort x, ushort y, int size, int &idx, int light = -1, shadowcacheval *cached = NULL)
 {
     idx = shadowmaps.length();
     shadowmapinfo *sm = &shadowmaps.add();
     sm->x = x;
     sm->y = y;
     sm->size = size;
-    sm->light = -1;
+    sm->light = light;
     sm->sidemask = 0;
-    sm->cached = NULL;
+    sm->cached = cached;
     return sm;
 }
 
@@ -3053,6 +3068,17 @@ static inline bool calclightscissor(lightinfo &l)
     return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
 }
 
+static inline void addlighttiles(const lightinfo &l, int idx)
+{
+    int tx1, ty1, tx2, ty2;
+    calctilebounds(l.sx1, l.sy1, l.sx2, l.sy2, tx1, ty1, tx2, ty2);
+    for(int y = ty1; y < ty2; y++) for(int x = tx1; x < tx2; x++) { lighttiles[y][x].lights.add(idx); lighttilesused++; }
+}
+
+VAR(lightsvisible, 1, 0, 0);
+VAR(lightsoccluded, 1, 0, 0);
+VARN(lightbatches, lightbatchesused, 1, 0, 0);
+
 void collectlights()
 {
     if(lights.length()) return;
@@ -3176,16 +3202,64 @@ void collectlights()
         endbb(false);
         glFlush();
     }
+
+    lightsvisible = lightsoccluded = 0;
+    lighttilesused = lightpassesused = 0;
+    smused = 0;
+
+    if(smcache && !smnoshadow && shadowcache.numelems) loop(mismatched, 2) loopv(lightorder)
+    {
+        int idx = lightorder[i];
+        lightinfo &l = lights[idx];
+        if(l.noshadow()) continue;
+
+        shadowcacheval *cached = shadowcache.access(l);
+        if(!cached || cached->checkquery()) continue;
+
+        float prec = smprec, lod;
+        int w, h;
+        if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
+        else { w = 3; h = 2; lod = smcubeprec; }
+        lod *= clamp(l.radius * prec / sqrtf(max(1.0f, l.dist/l.radius)), float(smminsize), float(smmaxsize));
+        int size = clamp(int(ceil((lod * shadowatlaspacker.w) / SHADOWATLAS_SIZE)), 1, shadowatlaspacker.w / w);
+        w *= size;
+        h *= size;
+
+        if(mismatched)
+        {
+            if(cached->size == size) continue;
+
+            ushort x = USHRT_MAX, y = USHRT_MAX;
+            if(!shadowatlaspacker.insert(x, y, w, h)) continue;
+            addshadowmap(x, y, size, l.shadowmap, idx);
+        }
+        else
+        {
+            if(cached->size != size) continue;
+
+            ushort x = cached->x, y = cached->y;
+            shadowatlaspacker.reserve(x, y, w, h);
+            addshadowmap(x, y, size, l.shadowmap, idx, cached);
+        }
+
+        smused += w*h;
+
+        addlighttiles(l, idx);
+    }
 }
 
 static bool inoq = false;
 VAR(csminoq, 0, 1, 1);
+VAR(sminoq, 0, 1, 1);
 VAR(rhinoq, 0, 1, 1);
 
 static inline bool shouldworkinoq()
 {
     return !drawtex && oqfrags && (!wireframe || !editmode);
 }
+
+extern void rendercsmshadowmaps();
+extern void rendershadowmaps(int offset = 0);
 
 void workinoq()
 {
@@ -3200,22 +3274,12 @@ void workinoq()
         inoq = true;
 
         if(csminoq && !debugshadowatlas) rendercsmshadowmaps();
+        if(sminoq && !debugshadowatlas) rendershadowmaps();
         if(rhinoq) renderradiancehints();
 
         inoq = false;        
     }
 }
-
-static inline void addlighttiles(const lightinfo &l, int idx)
-{
-    int tx1, ty1, tx2, ty2;
-    calctilebounds(l.sx1, l.sy1, l.sx2, l.sy2, tx1, ty1, tx2, ty2);
-    for(int y = ty1; y < ty2; y++) for(int x = tx1; x < tx2; x++) { lighttiles[y][x].lights.add(idx); lighttilesused++; }
-}
-
-VAR(lightsvisible, 1, 0, 0);
-VAR(lightsoccluded, 1, 0, 0);
-VARN(lightbatches, lightbatchesused, 1, 0, 0);
 
 static inline bool sortlightbatches(const lightbatch *x, const lightbatch *y)
 {
@@ -3228,41 +3292,6 @@ static inline bool sortlightbatches(const lightbatch *x, const lightbatch *y)
 
 void packlights()
 {
-    lightsvisible = lightsoccluded = 0;
-    lighttilesused = lightpassesused = 0;
-    smused = 0;
-
-    if(smcache && !smnoshadow && shadowcache.numelems) loopv(lightorder)
-    {
-        int idx = lightorder[i];
-        lightinfo &l = lights[idx];
-        if(l.noshadow()) continue;
-        if(l.query && l.query->owner == &l && checkquery(l.query)) continue;
-
-        float prec = smprec, lod;
-        int w, h;
-        if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
-        else { w = 3; h = 2; lod = smcubeprec; }
-        lod *= clamp(l.radius * prec / sqrtf(max(1.0f, l.dist/l.radius)), float(smminsize), float(smmaxsize));
-        int size = clamp(int(ceil((lod * shadowatlaspacker.w) / SHADOWATLAS_SIZE)), 1, shadowatlaspacker.w / w);
-        w *= size;
-        h *= size;
-        ushort x = USHRT_MAX, y = USHRT_MAX;
-        shadowmapinfo *sm = NULL;
-        int smidx = -1;
-        shadowcacheval *cached = shadowcache.access(l);
-        if(!cached || cached->size != size) continue;
-        x = cached->x;
-        y = cached->y;
-        shadowatlaspacker.reserve(x, y, w, h);
-        sm = addshadowmap(x, y, size, smidx);
-        sm->light = idx;
-        sm->cached = cached;
-        l.shadowmap = smidx;
-        smused += w*h;
-
-        addlighttiles(l, idx);
-    }
     loopv(lightorder)
     {
         int idx = lightorder[i];
@@ -3271,7 +3300,7 @@ void packlights()
 
         if(!l.noshadow() && !smnoshadow)
         {
-            if(l.query && l.query->owner == &l && checkquery(l.query)) { lightsoccluded++; continue; }
+            if(l.checkquery()) { lightsoccluded++; continue; }
             float prec = smprec, lod;
             int w, h;
             if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
@@ -3281,13 +3310,9 @@ void packlights()
             w *= size;
             h *= size;
             ushort x = USHRT_MAX, y = USHRT_MAX;
-            shadowmapinfo *sm = NULL;
-            int smidx = -1;
             if(shadowatlaspacker.insert(x, y, w, h))
             {
-                sm = addshadowmap(x, y, size, smidx);
-                sm->light = idx;
-                l.shadowmap = smidx;
+                addshadowmap(x, y, size, l.shadowmap, idx);
                 smused += w*h;
             }
             else if(smcache) shadowcachefull = true;
@@ -3905,8 +3930,19 @@ int calcshadowinfo(const extentity &e, vec &origin, float &radius, vec &spotloc,
 
 matrix4 shadowmatrix;
 
-void rendershadowmaps()
+void rendershadowmaps(int offset)
 {
+    if(!(sminoq && !debugshadowatlas && !inoq && shouldworkinoq())) offset = 0;
+
+    for(; offset < shadowmaps.length(); offset++) if(shadowmaps[offset].light >= 0) break;
+    if(offset >= shadowmaps.length()) return; 
+
+    if(inoq)
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER, shadowatlasfbo);
+        glDepthMask(GL_TRUE);
+    }
+
     float polyfactor = smpolyfactor, polyoffset = smpolyoffset;
     if(smfilter > 2) { polyfactor = smpolyfactor2; polyoffset = smpolyoffset2; }
     if(polyfactor || polyoffset)
@@ -3918,7 +3954,7 @@ void rendershadowmaps()
     glEnable(GL_SCISSOR_TEST);
 
     const vector<extentity *> &ents = entities::getents();
-    loopv(shadowmaps)
+    for(int i = offset; i < shadowmaps.length(); i++)
     {
         shadowmapinfo &sm = shadowmaps[i];
         if(sm.light < 0) continue;
@@ -4040,6 +4076,14 @@ void rendershadowmaps()
     if(polyfactor || polyoffset) glDisable(GL_POLYGON_OFFSET_FILL);
 
     shadowmapping = 0;
+
+    if(inoq)
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER, msaasamples ? msfbo : gfbo);
+        glViewport(0, 0, vieww, viewh);
+
+        glFlush();
+    }
 }
 
 void rendershadowatlas()
@@ -4060,10 +4104,12 @@ void rendershadowatlas()
     // sun light
     rendercsmshadowmaps();
 
+    int smoffset = shadowmaps.length();
+
     packlights();
 
     // point lights
-    rendershadowmaps();
+    rendershadowmaps(smoffset);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
