@@ -2032,7 +2032,7 @@ void vcolor(float *r, float *g, float *b)
     if(noedit() || (nompedit && multiplayer())) return;
     VSlot ds;
     ds.changed = 1<<VSLOT_COLOR;
-    ds.colorscale = vec(clamp(*r, 0.0f, 1.0f), clamp(*g, 0.0f, 1.0f), clamp(*b, 0.0f, 1.0f));
+    ds.colorscale = vec(clamp(*r, 0.0f, 2.0f), clamp(*g, 0.0f, 2.0f), clamp(*b, 0.0f, 2.0f));
     mpeditvslot(ds, allfaces, sel, true);
 }
 COMMAND(vcolor, "fff");

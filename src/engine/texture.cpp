@@ -2033,7 +2033,7 @@ void texcolor(float *r, float *g, float *b)
 {
     if(!defslot) return;
     Slot &s = *defslot;
-    s.variants->colorscale = vec(clamp(*r, 0.0f, 1.0f), clamp(*g, 0.0f, 1.0f), clamp(*b, 0.0f, 1.0f));
+    s.variants->colorscale = vec(clamp(*r, 0.0f, 2.0f), clamp(*g, 0.0f, 2.0f), clamp(*b, 0.0f, 2.0f));
     propagatevslot(s.variants, 1<<VSLOT_COLOR);
 }
 COMMAND(texcolor, "fff");
