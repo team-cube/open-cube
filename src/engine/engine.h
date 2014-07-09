@@ -293,7 +293,7 @@ static inline void masktiles(uint *tiles, float sx1, float sy1, float sx2, float
 
 enum { SM_NONE = 0, SM_REFLECT, SM_CUBEMAP, SM_CASCADE, SM_SPOT };
 
-enum { L_NOSHADOW = 1<<0, L_NODYNSHADOW = 1<<1 };
+enum { L_NOSHADOW = 1<<0, L_NODYNSHADOW = 1<<1, L_VOLUMETRIC = 1<<2 };
 
 extern int shadowmapping;
 
@@ -305,6 +305,9 @@ extern matrix4 shadowmatrix;
 extern void loaddeferredlightshaders();
 extern void cleardeferredlightshaders();
 extern void clearshadowcache();
+
+extern void rendervolumetric();
+extern void cleanupvolumetric();
 
 extern void findshadowvas();
 extern void findshadowmms();

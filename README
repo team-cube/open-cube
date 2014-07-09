@@ -17,6 +17,7 @@ It provides a bunch of new rendering features such as:
 * orthographic projection sunlight using cascaded shadowmaps
 * HDR rendering with tonemapping and bloom
 * real-time diffuse global illumination for sunlight (radiance hints)
+* volumetric lighting
 * screen-space ambient occlusion
 * screen-space reflections and refractions for water and glass (use as many water planes as you want now!)
 * screen-space refractive alpha cubes
@@ -74,4 +75,10 @@ setshader bumpspecmapdecal  // shaders work like for world shaders, but with the
 texture decal "diffuse.png" // all decal slots start with the "decal" sub-slot instead of "0", and this texture must have an alpha-channel
 texture n "normals.png"
 texture s "spec.png"
+
+To make volumetric lights:
+
+Set attribute 5 of a light entity to 4.
+
+The intensity of the volumetric lighting medium can be controlled by volscale and the color can by controlled by volcolour.
 

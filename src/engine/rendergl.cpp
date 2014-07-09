@@ -2457,6 +2457,9 @@ void gl_drawview()
 
     if(fogmat) setfog(fogmat, fogbelow, 1, abovemat);
 
+    rendervolumetric();
+    GLERROR;
+
     if(editmode)
     {
         extern int outline;
