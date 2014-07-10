@@ -2389,6 +2389,7 @@ VARFP(volreduce, 0, 1, 2, cleanupvolumetric());
 VARFP(volsteps, 1, 12, 64, cleanupvolumetric());
 FVARF(volminstep, 0, 0.0625f, 1e3f, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 FVAR(volprefilter, 0, 4, 1e3f);
+FVAR(voldistclamp, 0, 0.99f, 2);
 CVARR(volcolour, 0x808080);
 FVARR(volscale, 0, 1, 16);
 FVARR(volshadow, 0, 0.25f, 1);
@@ -3129,6 +3130,7 @@ void rendervolumetric()
     GLOBALPARAMF(shadowatlasscale, 1.0f/shadowatlaspacker.w, 1.0f/shadowatlaspacker.h);
     GLOBALPARAMF(volscale, float(vieww)/volw, float(viewh)/volh, float(volw)/vieww, float(volh)/viewh);
     GLOBALPARAMF(volprefilter, volprefilter);
+    GLOBALPARAMF(voldistclamp, farplane*voldistclamp);
     GLOBALPARAMF(volshadow, 1-volshadow, volshadow);
 
     glBlendFunc(GL_ONE, GL_ONE);
