@@ -656,7 +656,7 @@ namespace game
         needclipboard = -1;
     }
 
-    void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)
+    void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3, const VSlot *vs)
     {
         if(m_edit) switch(op)
         {
@@ -691,7 +691,6 @@ namespace game
             }
             case EDIT_MAT:
             case EDIT_FACE:
-            case EDIT_TEX:
             {
                 addmsg(N_EDITF + op, "ri9i6",
                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
@@ -699,18 +698,55 @@ namespace game
                    arg1, arg2);
                 break;
             }
+            case EDIT_TEX:
+            {
+                int tex1 = shouldpackvslot(arg1);
+                if(addmsg(N_EDITF + op, "ri9i6",
+                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                    tex1 ? tex1 : arg1, arg2))
+                {
+                    messages.pad(2);
+                    int offset = messages.length();
+                    if(tex1) packvslot(messages, arg1);
+                    *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
+                }
+                break;
+            }
             case EDIT_REPLACE:
             {
-                addmsg(N_EDITF + op, "ri9i7",
-                   sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
-                   sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
-                   arg1, arg2, arg3);
+                int tex1 = shouldpackvslot(arg1), tex2 = shouldpackvslot(arg2);
+                if(addmsg(N_EDITF + op, "ri9i7",
+                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                    tex1 ? tex1 : arg1, tex2 ? tex2 : arg2, arg3))
+                {
+                    messages.pad(2);
+                    int offset = messages.length();
+                    if(tex1) packvslot(messages, arg1);
+                    if(tex2) packvslot(messages, arg2);
+                    *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
+                }
                 break;
             }
             case EDIT_CALCLIGHT:
             case EDIT_REMIP:
             {
                 addmsg(N_EDITF + op, "r");
+                break;
+            }
+            case EDIT_VSLOT:
+            {
+                if(addmsg(N_EDITF + op, "ri9i6",
+                    sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
+                    sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
+                    arg1, arg2))
+                {
+                    messages.pad(2);
+                    int offset = messages.length();
+                    packvslot(messages, vs);
+                    *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
+                }
                 break;
             }
         }
@@ -801,9 +837,9 @@ namespace game
     vector<uchar> messages;
     int messagecn = -1, messagereliable = false;
 
-    void addmsg(int type, const char *fmt, ...)
+    bool addmsg(int type, const char *fmt, ...)
     {
-        if(!connected) return;
+        if(!connected) return false;
         static uchar buf[MAXTRANS];
         ucharbuf p(buf, sizeof(buf));
         putint(p, type);
@@ -862,6 +898,7 @@ namespace game
             messagecn = mcn;
         }
         messages.put(buf, p.length());
+        return true;
     }
 
     void connectattempt(const char *name, const char *password, const ENetAddress &address)
@@ -1627,6 +1664,7 @@ namespace game
             case N_ROTATE:
             case N_REPLACE:
             case N_DELCUBE:
+            case N_EDITVSLOT:
             {
                 if(!d) return;
                 selinfo sel;
@@ -1635,19 +1673,49 @@ namespace game
                 sel.grid = getint(p); sel.orient = getint(p);
                 sel.cx = getint(p); sel.cxs = getint(p); sel.cy = getint(p), sel.cys = getint(p);
                 sel.corner = getint(p);
-                int dir, mode, tex, newtex, mat, filter, allfaces, insel;
-                ivec moveo;
                 switch(type)
                 {
-                    case N_EDITF: dir = getint(p); mode = getint(p); if(sel.validate()) mpeditface(dir, mode, sel, false); break;
-                    case N_EDITT: tex = getint(p); allfaces = getint(p); if(sel.validate()) mpedittex(tex, allfaces, sel, false); break;
-                    case N_EDITM: mat = getint(p); filter = getint(p); if(sel.validate()) mpeditmat(mat, filter, sel, false); break;
+                    case N_EDITF: { int dir = getint(p), mode = getint(p); if(sel.validate()) mpeditface(dir, mode, sel, false); break; }
+                    case N_EDITT:
+                    {
+                        int tex = getint(p),
+                            allfaces = getint(p);
+                        if(p.remaining() < 2) return;
+                        int extra = lilswap(*(const ushort *)p.pad(2));
+                        if(p.remaining() < extra) return;
+                        ucharbuf ebuf = p.subbuf(extra);
+                        if(sel.validate()) mpedittex(tex, allfaces, sel, ebuf);
+                        break;
+                    }
+                    case N_EDITM: { int mat = getint(p), filter = getint(p); if(sel.validate()) mpeditmat(mat, filter, sel, false); break; }
                     case N_FLIP: if(sel.validate()) mpflip(sel, false); break;
                     case N_COPY: if(d && sel.validate()) mpcopy(d->edit, sel, false); break;
                     case N_PASTE: if(d && sel.validate()) mppaste(d->edit, sel, false); break;
-                    case N_ROTATE: dir = getint(p); if(sel.validate()) mprotate(dir, sel, false); break;
-                    case N_REPLACE: tex = getint(p); newtex = getint(p); insel = getint(p); if(sel.validate()) mpreplacetex(tex, newtex, insel>0, sel, false); break;
+                    case N_ROTATE: { int dir = getint(p); if(sel.validate()) mprotate(dir, sel, false); break; }
+                    case N_REPLACE:
+                    {
+                        int oldtex = getint(p),
+                            newtex = getint(p),
+                            insel = getint(p);
+                        if(p.remaining() < 2) return;
+                        int extra = lilswap(*(const ushort *)p.pad(2));
+                        if(p.remaining() < extra) return;
+                        ucharbuf ebuf = p.subbuf(extra);
+                        if(sel.validate()) mpreplacetex(oldtex, newtex, insel>0, sel, ebuf);
+                        break;
+                    }
                     case N_DELCUBE: if(sel.validate()) mpdelcube(sel, false); break;
+                    case N_EDITVSLOT:
+                    {
+                        int delta = getint(p),
+                            allfaces = getint(p);
+                        if(p.remaining() < 2) return;
+                        int extra = lilswap(*(const ushort *)p.pad(2));
+                        if(p.remaining() < extra) return;
+                        ucharbuf ebuf = p.subbuf(extra);
+                        if(sel.validate()) mpeditvslot(delta, allfaces, sel, ebuf);
+                        break;
+                    }
                 }
                 break;
             }
