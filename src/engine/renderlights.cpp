@@ -3296,6 +3296,12 @@ void rendervolumetric()
     glBindTexture(GL_TEXTURE_RECTANGLE, voltex[0]);
     screenquad(volw, volh);
 
+    if(volblur)
+    {
+        swap(volfbo[0], volfbo[1]);
+        swap(voltex[0], voltex[1]);
+    }
+ 
     if(avatar) glDisable(GL_STENCIL_TEST);
 
     glDisable(GL_SCISSOR_TEST);
