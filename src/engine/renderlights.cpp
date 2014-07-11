@@ -2398,7 +2398,7 @@ void cleanupvolumetric()
 VARFP(volumetric, 0, 1, 1, cleanupvolumetric());
 VARFP(volreduce, 0, 1, 2, cleanupvolumetric());
 VARFP(volblur, 0, 1, 2, cleanupvolumetric());
-FVARF(volblurthreshold, 0, 0.05f, 1, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
+FVARF(volblurthreshold, 0, 0.1f, 1, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 VARFP(volsteps, 1, 12, 64, cleanupvolumetric());
 FVARF(volminstep, 0, 0.0625f, 1e3f, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 FVAR(volprefilter, 0, 4, 1e3f);
