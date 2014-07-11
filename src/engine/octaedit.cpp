@@ -736,7 +736,7 @@ void addundo(undoblock *u)
 
 VARP(nompedit, 0, 1, 1);
 
-void makeundoex(selinfo &s)
+void makeundo(selinfo &s)
 {
     if(nompedit && multiplayer(false)) return;
     undoblock *u = newundocube(s);
@@ -747,7 +747,7 @@ void makeundo()                        // stores state of selected cubes before 
 {
     if(lastsel==sel || sel.s.iszero()) return;
     lastsel=sel;
-    makeundoex(sel);
+    makeundo(sel);
 }
 
 void swapundo(undolist &a, undolist &b, const char *s)
@@ -1378,7 +1378,7 @@ struct vslotref
     vslotref(int &index) { editingvslots.add(&index); }
     ~vslotref() { editingvslots.pop(); }
 };
-#define editingvslot(...) vslotref vlotrefs[] = { __VA_ARGS__ }
+#define editingvslot(...) UNUSED vslotref vslotrefs[] = { __VA_ARGS__ }
  
 void compacteditvslots()
 {
@@ -1517,7 +1517,7 @@ namespace hmap
         // selections may damage; must makeundo before
         hundo.o = t;
         hundo.o[D[d]] -= dcr*gridsize*2;
-        makeundoex(hundo);
+        makeundo(hundo);
 
         cube **c = cmap[x][y];
         loopk(4) c[k] = NULL;
