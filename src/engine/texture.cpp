@@ -1881,7 +1881,7 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
         if(vslots.inrange(src.layer) && !vslots[src.layer]->changed)
         {
             buf.put(VSLOT_LAYER);
-            putuint(buf, vslots[src.layer]->slot->index);
+            putuint(buf, src.layer);
         }
     }
     if(src.changed & (1<<VSLOT_ALPHA))
@@ -1910,7 +1910,7 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
         if(vslots.inrange(src.decal) && !vslots[src.decal]->changed)
         {
             buf.put(VSLOT_DECAL);
-            putuint(buf, vslots[src.decal]->slot->index);
+            putuint(buf, src.decal);
         }
     }
     buf.put(0);
@@ -1967,7 +1967,7 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
             case VSLOT_LAYER:
             {
                 int tex = getuint(buf);
-                dst.layer = slots.inrange(tex) ? slots[tex]->variants->index : 0;
+                dst.layer = vslots.inrange(tex) ? tex : 0;
                 break;
             }
             case VSLOT_ALPHA:
@@ -1988,7 +1988,7 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
             case VSLOT_DECAL:
             {
                 int tex = getuint(buf);
-                dst.decal = slots.inrange(tex) ? slots[tex]->variants->index : 0;
+                dst.decal = vslots.inrange(tex) ? tex : 0;
                 break;
             }
             default:
