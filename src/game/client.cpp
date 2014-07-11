@@ -749,6 +749,18 @@ namespace game
                 }
                 break;
             }
+            case EDIT_UNDO:
+            case EDIT_REDO:
+            {
+                uchar *outbuf = NULL;
+                int inlen = 0, outlen = 0;
+                if(packundo(op, inlen, outbuf, outlen))
+                {
+                    if(addmsg(N_EDITF + op, "ri2", inlen, outlen)) messages.put(outbuf, outlen);
+                    delete[] outbuf;
+                }
+                break;
+            }
         }
     }
 
@@ -1652,6 +1664,15 @@ namespace game
                 gameent *d = getclient(cn);
                 ucharbuf q = p.subbuf(max(packlen, 0));
                 if(d) unpackeditinfo(d->edit, q.buf, q.maxlen, unpacklen);
+                break;
+            }
+            case N_UNDO:
+            case N_REDO:
+            {
+                int cn = getint(p), unpacklen = getint(p), packlen = getint(p);
+                gameent *d = getclient(cn);
+                ucharbuf q = p.subbuf(max(packlen, 0));
+                if(d) unpackundo(q.buf, q.maxlen, unpacklen);
                 break;
             }
 

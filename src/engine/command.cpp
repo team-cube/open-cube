@@ -3955,8 +3955,8 @@ MATHICMD(|, 0, );
 MATHICMD(^~, 0, );
 MATHICMD(&~, 0, );
 MATHICMD(|~, 0, );
-MATHICMD(<<, 0, );
-MATHICMD(>>, 0, );
+MATHCMD("<<", i, int, val = val2 < 32 ? val << max(val2, 0) : 0, 0, );
+MATHCMD(">>", i, int, val = val2 < 32 ? val >> max(val2, 0) : 0, 0, );
 
 MATHFCMD(+, 0, );
 MATHFCMD(*, 1, );
@@ -4025,6 +4025,8 @@ MINMAXCMD(min, i, int, min);
 MINMAXCMD(max, i, int, max);
 MINMAXCMD(minf, f, float, min);
 MINMAXCMD(maxf, f, float, max);
+
+ICOMMAND(bitscan, "i", (int *n), intret(bitscan(*n)));
 
 ICOMMAND(abs, "i", (int *n), intret(abs(*n)));
 ICOMMAND(absf, "f", (float *n), floatret(fabs(*n)));

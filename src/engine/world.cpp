@@ -501,17 +501,19 @@ undoblock *copyundoents(undoblock *u)
     return c;
 }
 
+void pasteundoent(int idx, const entity &ue)
+{
+    if(idx < 0 || idx >= MAXENTS) return;
+    vector<extentity *> &ents = entities::getents();
+    while(ents.length() < idx) ents.add(entities::newentity())->type = ET_EMPTY;
+    int efocus = -1;
+    entedit(idx, (entity &)e = ue);
+}
+
 void pasteundoents(undoblock *u)
 {
-    vector<extentity *> &ents = entities::getents();
     undoent *ue = u->ents();
-    loopi(u->numents)
-    {
-        int idx = ue[i].i;
-        if(idx < 0 || idx >= MAXENTS) continue;
-        while(ents.length() < idx) ents.add(entities::newentity())->type = ET_EMPTY; 
-        entedit(idx, (entity &)e = ue[i].e);
-    }
+    loopi(u->numents) pasteundoent(ue[i].i, ue[i].e);
 }
 
 void entflip()
