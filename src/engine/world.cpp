@@ -503,9 +503,15 @@ undoblock *copyundoents(undoblock *u)
 
 void pasteundoents(undoblock *u)
 {
+    vector<extentity *> &ents = entities::getents();
     undoent *ue = u->ents();
     loopi(u->numents)
-        entedit(ue[i].i, (entity &)e = ue[i].e);
+    {
+        int idx = ue[i].i;
+        if(idx < 0 || idx >= MAXENTS) continue;
+        while(ents.length() < idx) ents.add(entities::newentity())->type = ET_EMPTY; 
+        entedit(idx, (entity &)e = ue[i].e);
+    }
 }
 
 void entflip()
