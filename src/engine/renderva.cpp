@@ -2370,7 +2370,6 @@ void renderdecals()
         maskgbuffer("c");
         for(vtxarray *va = decalva; va; va = va->next) if(va->decaltris && va->occluded < OCCLUDE_BB)
         {
-            vverts += 3*va->decaltris;
             mergedecals(cur, va);
             if(!batchdecals && decalbatches.length()) renderdecalbatches(cur, 0);
         }
@@ -2383,7 +2382,6 @@ void renderdecals()
         GLOBALPARAMF(colorparams, 1, 1, 1, 1);
         for(vtxarray *va = decalva; va; va = va->next) if(va->decaltris && va->occluded < OCCLUDE_BB)
         {
-            vverts += 3*va->decaltris;
             mergedecals(cur, va);
             if(!batchdecals && decalbatches.length()) renderdecalbatches(cur, 1);
         }
@@ -2396,7 +2394,6 @@ void renderdecals()
         maskgbuffer("cn");
         for(vtxarray *va = decalva; va; va = va->next) if(va->decaltris && va->occluded < OCCLUDE_BB)
         {
-            vverts += 3*va->decaltris;
             mergedecals(cur, va);
             if(!batchdecals && decalbatches.length()) renderdecalbatches(cur, 0);
         }
