@@ -2092,7 +2092,11 @@ void vlayer(int *n)
     if(noedit()) return;
     VSlot ds;
     ds.changed = 1<<VSLOT_LAYER;
-    ds.layer = vslots.inrange(*n) ? *n : 0;
+    if(vslots.inrange(*n))
+    {
+        ds.layer = *n;
+        if(vslots[ds.layer]->changed && nompedit && multiplayer()) return;
+    }
     editingvslot(ds.layer);
     mpeditvslot(usevdelta, ds, allfaces, sel, true);
 }
@@ -2103,7 +2107,11 @@ void vdecal(int *n)
     if(noedit()) return;
     VSlot ds;
     ds.changed = 1<<VSLOT_DECAL;
-    ds.decal = vslots.inrange(*n) ? *n : 0;
+    if(vslots.inrange(*n))
+    {
+        ds.decal = *n;
+        if(vslots[ds.decal]->changed && nompedit && multiplayer()) return;
+    }
     editingvslot(ds.decal);
     mpeditvslot(usevdelta, ds, allfaces, sel, true);
 }

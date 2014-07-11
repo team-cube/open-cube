@@ -1868,11 +1868,8 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
     }
     if(src.changed & (1<<VSLOT_LAYER))
     {
-        if(vslots.inrange(src.layer) && !vslots[src.layer]->changed)
-        {
-            buf.put(VSLOT_LAYER);
-            putuint(buf, src.layer);
-        }
+        buf.put(VSLOT_LAYER);
+        putuint(buf, vslots.inrange(src.layer) && !vslots[src.layer]->changed ? src.layer : 0);
     }
     if(src.changed & (1<<VSLOT_ALPHA))
     {
@@ -1897,11 +1894,8 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
     }
     if(src.changed & (1<<VSLOT_DECAL))
     {
-        if(vslots.inrange(src.decal) && !vslots[src.decal]->changed)
-        {
-            buf.put(VSLOT_DECAL);
-            putuint(buf, src.decal);
-        }
+        buf.put(VSLOT_DECAL);
+        putuint(buf, vslots.inrange(src.decal) && !vslots[src.decal]->changed ? src.decal : 0);
     }
     buf.put(0);
 }
