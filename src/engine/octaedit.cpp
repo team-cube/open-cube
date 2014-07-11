@@ -1486,7 +1486,7 @@ struct vslotref
     vslotref(int &index) { editingvslots.add(&index); }
     ~vslotref() { editingvslots.pop(); }
 };
-#define editingvslot(...) UNUSED vslotref vslotrefs[] = { __VA_ARGS__ }
+#define editingvslot(...) vslotref vslotrefs[] = { __VA_ARGS__ }; (void)vslotrefs;
  
 void compacteditvslots()
 {

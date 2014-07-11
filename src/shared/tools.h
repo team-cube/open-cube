@@ -88,18 +88,19 @@ static inline T clamp(T a, U b, U c)
 static inline int bitscan(uint mask)
 {
     ulong i = ulong(-1);
-    _BitScanFoward(&i, mask);
+    _BitScanForward(&i, mask);
     return int(i);
 }
 #else
 static inline int bitscan(uint mask)
-{
-    int i = -1;
+{   
+    if(!mask) return -1;
+    int i = 1;
     if(!(mask&0xFFFF)) { i += 16; mask >>= 16; }
     if(!(mask&0xFF)) { i += 8; mask >>= 8; }
     if(!(mask&0xF)) { i += 4; mask >>= 4; }
     if(!(mask&3)) { i += 2; mask >>= 2; }
-    return i + (mask&-int(mask));
+    return i - (mask&1);
 }
 #endif
 #endif
