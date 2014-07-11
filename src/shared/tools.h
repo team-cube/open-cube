@@ -87,9 +87,8 @@ static inline T clamp(T a, U b, U c)
 #pragma intrinsic(_BitScanForward)
 static inline int bitscan(uint mask)
 {
-    ulong i = ulong(-1);
-    _BitScanForward(&i, mask);
-    return int(i);
+    ulong i;
+    return _BitScanForward(&i, mask) ? i : -1;
 }
 #else
 static inline int bitscan(uint mask)
