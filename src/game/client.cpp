@@ -700,7 +700,7 @@ namespace game
             }
             case EDIT_TEX:
             {
-                int tex1 = shouldpackvslot(arg1);
+                int tex1 = shouldpacktex(arg1);
                 if(addmsg(N_EDITF + op, "ri9i6",
                     sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                     sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,
@@ -715,7 +715,7 @@ namespace game
             }
             case EDIT_REPLACE:
             {
-                int tex1 = shouldpackvslot(arg1), tex2 = shouldpackvslot(arg2);
+                int tex1 = shouldpacktex(arg1), tex2 = shouldpacktex(arg2);
                 if(addmsg(N_EDITF + op, "ri9i7",
                     sel.o.x, sel.o.y, sel.o.z, sel.s.x, sel.s.y, sel.s.z, sel.grid, sel.orient,
                     sel.cx, sel.cxs, sel.cy, sel.cys, sel.corner,

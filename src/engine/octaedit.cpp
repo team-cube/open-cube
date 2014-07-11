@@ -932,12 +932,11 @@ static void unpackvslots(block3 &b, ucharbuf &buf)
     {
         vslothdr &hdr = *(vslothdr *)buf.pad(sizeof(vslothdr));
         lilswap(&hdr.index, 2);
-        Slot &s = lookupslot(hdr.slot, false);
-        VSlot &vs = *s.variants;
+        VSlot &vs = *lookupslot(hdr.slot, false).variants;
         VSlot ds;
         if(!unpackvslot(buf, ds, false)) break;
         if(vs.index < 0 || vs.index == DEFAULT_SKY) continue;
-        VSlot *edit = editvslot(*s.variants, ds);
+        VSlot *edit = editvslot(vs, ds);
         unpackingvslots.add(vslotmap(hdr.index, edit ? edit : &vs));
     }
 
@@ -1373,15 +1372,17 @@ COMMAND(paste, "");
 COMMANDN(undo, editundo, "");
 COMMANDN(redo, editredo, "");
 
-static int *editingvslots[2] = { NULL, NULL };
-
+static vector<int *> editingvslots;
+struct vslotref
+{
+    vslotref(int &index) { editingvslots.add(&index); }
+    ~vslotref() { editingvslots.pop(); }
+};
+#define editingvslot(...) vslotref vlotrefs[] = { __VA_ARGS__ }
+ 
 void compacteditvslots()
 {
-    loopi(2)
-    {
-        if(!editingvslots[i]) break;
-        if(*editingvslots[i]) compactvslot(*editingvslots[i]);
-    }
+    loopv(editingvslots) if(*editingvslots[i]) compactvslot(*editingvslots[i]);
     loopv(unpackingvslots) compactvslot(*unpackingvslots[i].vslot);
     loopv(editinfos)
     {
@@ -2029,11 +2030,8 @@ bool mpeditvslot(int delta, int allfaces, selinfo &sel, ucharbuf &buf)
 {
     VSlot ds;
     if(!unpackvslot(buf, ds, delta != 0)) return false;
-    editingvslots[0] = &ds.layer;
-    editingvslots[1] = &ds.decal;
+    editingvslot(ds.layer, ds.decal);
     mpeditvslot(delta, ds, allfaces, sel, false);
-    editingvslots[0] = NULL;
-    editingvslots[1] = NULL;
     return true;
 }
  
@@ -2095,9 +2093,8 @@ void vlayer(int *n)
     VSlot ds;
     ds.changed = 1<<VSLOT_LAYER;
     ds.layer = vslots.inrange(*n) ? *n : 0;
-    editingvslots[0] = &ds.layer;
+    editingvslot(ds.layer);
     mpeditvslot(usevdelta, ds, allfaces, sel, true);
-    editingvslots[0] = NULL;
 }
 COMMAND(vlayer, "i");
 
@@ -2107,9 +2104,8 @@ void vdecal(int *n)
     VSlot ds;
     ds.changed = 1<<VSLOT_DECAL;
     ds.decal = vslots.inrange(*n) ? *n : 0;
-    editingvslots[0] = &ds.decal;
+    editingvslot(ds.decal);
     mpeditvslot(usevdelta, ds, allfaces, sel, true);
-    editingvslots[0] = NULL;
 }
 COMMAND(vdecal, "i");
 
@@ -2183,19 +2179,32 @@ void mpedittex(int tex, int allfaces, selinfo &sel, bool local)
     loopselxyz(edittexcube(c, tex, allfaces ? -1 : sel.orient, findrep));
 }
 
-bool mpedittex(int tex, int allfaces, selinfo &sel, ucharbuf &buf)
+static int unpacktex(int &tex, ucharbuf &buf, bool insert = true)
 {
-    if(tex < 0x10000)
-    {
-        mpedittex(tex, allfaces, sel, false);
-        return true;
-    }
+    if(tex < 0x10000) return true;
     VSlot ds;
     if(!unpackvslot(buf, ds, false)) return false;
     VSlot &vs = *lookupslot(tex & 0xFFFF, false).variants;
     if(vs.index < 0 || vs.index == DEFAULT_SKY) return false;
-    VSlot *edit = editvslot(vs, ds);
-    tex = edit ? edit->index : vs.index;
+    VSlot *edit = insert ? editvslot(vs, ds) : findvslot(*vs.slot, vs, ds);
+    if(!edit) return false;
+    tex = edit->index;
+    return true;
+}
+
+int shouldpacktex(int index)
+{
+    if(vslots.inrange(index))
+    {
+        VSlot &vs = *vslots[index];
+        if(vs.changed) return 0x10000 + vs.slot->index;
+    }
+    return 0;
+}
+        
+bool mpedittex(int tex, int allfaces, selinfo &sel, ucharbuf &buf)
+{
+    if(!unpacktex(tex, buf)) return false;
     mpedittex(tex, allfaces, sel, false);
     return true;
 }
@@ -2350,27 +2359,9 @@ void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local)
 
 bool mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, ucharbuf &buf)
 {
-    if(oldtex >= 0x10000)
-    {
-        VSlot ds;
-        if(!unpackvslot(buf, ds, false)) return false;
-        VSlot &vs = *lookupslot(oldtex & 0xFFFF, false).variants;
-        if(vs.index < 0 || vs.index == DEFAULT_SKY) return false;
-        VSlot *edit = findvslot(*vs.slot, vs, ds);
-        if(!edit) return false;
-        oldtex = edit->index;
-    }
-    if(newtex >= 0x10000)
-    {
-        VSlot ds;
-        if(!unpackvslot(buf, ds, false)) return false;
-        VSlot &vs = *lookupslot(newtex & 0xFFFF, false).variants;
-        if(vs.index < 0 || vs.index == DEFAULT_SKY) return false;
-        editingvslots[0] = &oldtex;
-        VSlot *edit = editvslot(vs, ds);
-        newtex = edit ? edit->index : vs.index;
-        editingvslots[0] = NULL;
-    }
+    if(!unpacktex(oldtex, buf, false)) return false;
+    editingvslot(oldtex);
+    if(!unpacktex(newtex, buf)) return false;
     mpreplacetex(oldtex, newtex, insel, sel, false);
     return true;
 }

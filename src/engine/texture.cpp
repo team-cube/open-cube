@@ -1832,16 +1832,6 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     return true;
 }
 
-int shouldpackvslot(int index)
-{
-    if(vslots.inrange(index))
-    {
-        VSlot &vs = *vslots[index];
-        if(vs.changed) return 0x10000 + vs.slot->index;
-    }
-    return 0;
-}
-
 void packvslot(vector<uchar> &buf, const VSlot &src)
 {
     if(src.changed & (1<<VSLOT_SHPARAM))

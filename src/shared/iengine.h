@@ -89,6 +89,7 @@ extern editinfo *localedit;
 
 extern bool editmode;
 
+extern int shouldpacktex(int index);
 extern bool packeditinfo(editinfo *e, int &inlen, uchar *&outbuf, int &outlen);
 extern bool unpackeditinfo(editinfo *&e, const uchar *inbuf, int inlen, int outlen);
 extern void freeeditinfo(editinfo *&e);
@@ -269,7 +270,6 @@ static inline void text_pos(const char *str, int cursor, int &cx, int &cy, int m
 
 struct VSlot;
 
-extern int shouldpackvslot(int index);
 extern void packvslot(vector<uchar> &buf, int index);
 extern void packvslot(vector<uchar> &buf, const VSlot *vs);
 
