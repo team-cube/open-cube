@@ -126,7 +126,7 @@ int finddynlights()
     return closedynlights.length();
 }
 
-bool getdynlight(int n, vec &o, float &radius, vec &color, vec &dir, int &spot)
+bool getdynlight(int n, vec &o, float &radius, vec &color, vec &dir, int &spot, int &flags)
 {
     if(!closedynlights.inrange(n)) return false;
     dynlight &d = *closedynlights[n];
@@ -135,6 +135,7 @@ bool getdynlight(int n, vec &o, float &radius, vec &color, vec &dir, int &spot)
     color = d.curcolor;
     spot = d.spot;
     dir = d.dir;
+    flags = d.flags & 0xFF;
     return true;
 }
 

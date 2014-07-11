@@ -3408,13 +3408,13 @@ void collectlights()
     {
         vec o, color, dir;
         float radius;
-        int spot;
-        if(!getdynlight(i, o, radius, color, dir, spot)) continue;
+        int spot, flags;
+        if(!getdynlight(i, o, radius, color, dir, spot, flags)) continue;
 
         lightinfo &l = lights.add();
         l.ent = -1;
         l.shadowmap = -1;
-        l.flags = 0;
+        l.flags = flags;
         l.query = NULL;
         l.o = o;
         l.color = vec(color).mul(255);
