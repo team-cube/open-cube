@@ -1540,7 +1540,7 @@ void clearslots()
 
 static void assignvslot(VSlot &vs);
 
-static void assignvslotlayer(VSlot &vs)
+static inline void assignvslotlayer(VSlot &vs)
 {
     if(vs.layer && vslots.inrange(vs.layer) && vslots[vs.layer]->index < 0) assignvslot(*vslots[vs.layer]);
     if(vs.decal && vslots.inrange(vs.decal) && vslots[vs.decal]->index < 0) assignvslot(*vslots[vs.decal]);
