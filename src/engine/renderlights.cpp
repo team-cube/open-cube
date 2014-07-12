@@ -127,11 +127,16 @@ void clearbilateralshaders()
     loopk(2) bilateralshader[k] = NULL;
 }
 
+void setbilateralparams(int radius, float depth)
+{
+    float sigma = blursigma*2*radius;
+    LOCALPARAMF(bilateralparams, 1.0f/(M_LN2*2*sigma*sigma), 1.0f/(M_LN2*depth*depth));
+}
+
 void setbilateralshader(int radius, int pass, float depth)
 {
     bilateralshader[pass]->set();
-    float sigma = blursigma*2*radius;
-    LOCALPARAMF(bilateralparams, 1.0f/(M_LN2*2*sigma*sigma), 1.0f/(M_LN2*depth*depth));
+    setbilateralparams(radius, depth);
 }
 
 static Shader *ambientobscuranceshader = NULL;
@@ -2317,16 +2322,16 @@ VAR(forcespotlights, 1, 0, 0);
 
 extern int spotlights;
 
-static Shader *volumetricshader = NULL, *volumetricblurshader[2] = { NULL, NULL };
+static Shader *volumetricshader = NULL, *volumetricbilateralshader[2] = { NULL, NULL };
 
 void clearvolumetricshaders()
 {
     volumetricshader = NULL;
 
-    loopi(2) volumetricblurshader[i] = NULL;
+    loopi(2) volumetricbilateralshader[i] = NULL;
 }
 
-extern int volsteps, volblur;
+extern int volsteps, volbilateral, volblur, volreduce;
 
 Shader *loadvolumetricshader()
 {
@@ -2349,14 +2354,12 @@ void loadvolumetricshaders()
 {
     volumetricshader = loadvolumetricshader();
 
-    if(volblur) loopi(2)
+    if(volbilateral) loopi(2)
     {
-        defformatstring(name, "volumetricblur%c%d", 'x' + i, volblur);
-        volumetricblurshader[i] = generateshader(name, "volumetricblurshader %d", volblur);
+        defformatstring(name, "volumetricbilateral%c%d%d", 'x' + i, volbilateral, volreduce);
+        volumetricbilateralshader[i] = generateshader(name, "volumetricbilateralshader %d %d", volbilateral, volreduce);
     }
 }
-
-extern int volreduce;
 
 static int volw = -1, volh = -1;
 static GLuint volfbo[2] = { 0, 0 }, voltex[2] = { 0, 0 };
@@ -2366,7 +2369,7 @@ void setupvolumetric(int w, int h)
     volw = w>>volreduce;
     volh = h>>volreduce;
 
-    loopi(volblur ? 2 : 1)
+    loopi(volbilateral || volblur ? 2 : 1)
     {
         if(!voltex[i]) glGenTextures(1, &voltex[i]);
         if(!volfbo[i]) glGenFramebuffers_(1, &volfbo[i]);
@@ -2397,10 +2400,11 @@ void cleanupvolumetric()
 
 VARFP(volumetric, 0, 1, 1, cleanupvolumetric());
 VARFP(volreduce, 0, 1, 2, cleanupvolumetric());
+VARFP(volbilateral, 0, 1, 3, cleanupvolumetric());
+FVAR(volbilateraldepth, 0, 4, 1e3f);
 VARFP(volblur, 0, 1, 3, cleanupvolumetric());
-FVARF(volblurthreshold, 0, 0.1f, 1, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 VARFP(volsteps, 1, 12, 64, cleanupvolumetric());
-FVARF(volminstep, 0, 0.0625f, 1e3f, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
+FVAR(volminstep, 0, 0.0625f, 1e3f);
 FVAR(volprefilter, 0, 4, 1e3f);
 FVAR(voldistclamp, 0, 0.99f, 2);
 CVAR1R(volcolour, 0x808080);
@@ -3141,6 +3145,7 @@ void rendervolumetric()
 
     GLOBALPARAMF(shadowatlasscale, 1.0f/shadowatlaspacker.w, 1.0f/shadowatlaspacker.h);
     GLOBALPARAMF(volscale, float(vieww)/volw, float(viewh)/volh, float(volw)/vieww, float(volh)/viewh);
+    GLOBALPARAMF(volminstep, volminstep);
     GLOBALPARAMF(volprefilter, volprefilter);
     GLOBALPARAMF(voldistclamp, farplane*voldistclamp);
 
@@ -3252,27 +3257,38 @@ void rendervolumetric()
         cy1 = int(floor((bsy1*0.5f+0.5f)*volh))&~1,
         cx2 = (int(ceil((bsx2*0.5f+0.5f)*volw))&~1) + 2,
         cy2 = (int(ceil((bsy2*0.5f+0.5f)*volh))&~1) + 2;
-    if(volblur)
+    if(volbilateral || volblur)
     {
-        cx1 = max(cx1 - volblur*2, 0);
-        cy1 = max(cy1 - volblur*2, 0);
-        cx2 = min(cx2 + volblur*2, volw);
-        cy2 = min(cy2 + volblur*2, volh);
+        int radius = (volbilateral ? volbilateral : volblur)*2;
+        cx1 = max(cx1 - radius, 0);
+        cy1 = max(cy1 - radius, 0);
+        cx2 = min(cx2 + radius, volw);
+        cy2 = min(cy2 + radius, volh);
         glScissor(cx1, cy1, cx2-cx1, cy2-cy1);
 
         glDisable(GL_BLEND);
 
-        float blurweights[MAXBLURRADIUS+1], bluroffsets[MAXBLURRADIUS+1];
-        setupblurkernel(volblur, blurweights, bluroffsets);
-        loopi(2)
+        if(volbilateral) loopi(2)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER, volfbo[(i+1)%2]);
             glViewport(0, 0, volw, volh);
-            volumetricblurshader[i]->set();
-            LOCALPARAMV(weights, blurweights, 4);
-            LOCALPARAMV(offsets, bluroffsets, 4);
+            volumetricbilateralshader[i]->set();
+            setbilateralparams(volbilateral, volbilateraldepth);
             glBindTexture(GL_TEXTURE_RECTANGLE, voltex[i%2]);
-            screenquad(volw, volh);
+            screenquadoffset(0.25f, 0.25f, vieww, viewh);
+        }
+        else
+        {
+            float blurweights[MAXBLURRADIUS+1], bluroffsets[MAXBLURRADIUS+1];
+            setupblurkernel(volblur, blurweights, bluroffsets);
+            loopi(2)
+            {
+                glBindFramebuffer_(GL_FRAMEBUFFER, volfbo[(i+1)%2]);
+                glViewport(0, 0, volw, volh);
+                setblurshader(i%2, 1, volblur, blurweights, bluroffsets, GL_TEXTURE_RECTANGLE);
+                glBindTexture(GL_TEXTURE_RECTANGLE, voltex[i%2]);
+                screenquad(volw, volh);
+            }
         }
 
         glEnable(GL_BLEND);
@@ -3300,7 +3316,7 @@ void rendervolumetric()
     glBindTexture(GL_TEXTURE_RECTANGLE, voltex[0]);
     screenquad(volw, volh);
 
-    if(volblur)
+    if(volbilateral || volblur)
     {
         swap(volfbo[0], volfbo[1]);
         swap(voltex[0], voltex[1]);
