@@ -2403,7 +2403,7 @@ VARFP(volsteps, 1, 12, 64, cleanupvolumetric());
 FVARF(volminstep, 0, 0.0625f, 1e3f, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 FVAR(volprefilter, 0, 4, 1e3f);
 FVAR(voldistclamp, 0, 0.99f, 2);
-CVARR(volcolour, 0x808080);
+CVAR1R(volcolour, 0x808080);
 FVARR(volscale, 0, 1, 16);
 
 static Shader *deferredlightshader = NULL, *deferredminimapshader = NULL, *deferredmsaapixelshader = NULL, *deferredmsaasampleshader = NULL;
