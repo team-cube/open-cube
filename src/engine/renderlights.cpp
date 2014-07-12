@@ -2397,7 +2397,7 @@ void cleanupvolumetric()
 
 VARFP(volumetric, 0, 1, 1, cleanupvolumetric());
 VARFP(volreduce, 0, 1, 2, cleanupvolumetric());
-VARFP(volblur, 0, 1, 2, cleanupvolumetric());
+VARFP(volblur, 0, 1, 3, cleanupvolumetric());
 FVARF(volblurthreshold, 0, 0.1f, 1, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
 VARFP(volsteps, 1, 12, 64, cleanupvolumetric());
 FVARF(volminstep, 0, 0.0625f, 1e3f, initwarning("volumetric setup", INIT_LOAD, CHANGE_SHADERS));
@@ -3262,11 +3262,15 @@ void rendervolumetric()
 
         glDisable(GL_BLEND);
 
+        float blurweights[MAXBLURRADIUS+1], bluroffsets[MAXBLURRADIUS+1];
+        setupblurkernel(volblur, blurweights, bluroffsets);
         loopi(2)
         {
             glBindFramebuffer_(GL_FRAMEBUFFER, volfbo[(i+1)%2]);
             glViewport(0, 0, volw, volh);
             volumetricblurshader[i]->set();
+            LOCALPARAMV(weights, blurweights, 4);
+            LOCALPARAMV(offsets, bluroffsets, 4);
             glBindTexture(GL_TEXTURE_RECTANGLE, voltex[i%2]);
             screenquad(volw, volh);
         }
