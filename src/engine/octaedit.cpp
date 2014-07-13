@@ -610,7 +610,7 @@ void freeblock(block3 *b, bool alloced = true)
     if(alloced) delete[] b;
 }
 
-void selgridmap(selinfo &sel, uchar *g)                           // generates a map of the cube sizes at each grid point
+void selgridmap(const selinfo &sel, uchar *g)                           // generates a map of the cube sizes at each grid point
 {
     loopxyz(sel, -sel.grid, (*g++ = bitscan(lusize), (void)c));
 }
@@ -623,9 +623,8 @@ void freeundo(undoblock *u)
 
 void pasteundoblock(block3 *b, uchar *g)
 {
-    uchar grid = bitscan(b->grid);
     cube *s = b->c();
-    loopxyz(*b, 1<<min(*g++, grid), pastecube(*s++, c));
+    loopxyz(*b, 1<<min(int(*g++), worldscale-1), pastecube(*s++, c));
 }
 
 void pasteundo(undoblock *u)
@@ -711,7 +710,7 @@ void clearundos() { pruneundos(0); }
 
 COMMAND(clearundos, "");
 
-undoblock *newundocube(selinfo &s)
+undoblock *newundocube(const selinfo &s)
 {
     int ssize = s.size(),
         selgridsize = ssize,
