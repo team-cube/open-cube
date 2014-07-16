@@ -355,6 +355,7 @@ enum { AA_UNUSED = 0, AA_LUMA, AA_VELOCITY, AA_VELOCITY_MASKED, AA_SPLIT, AA_SPL
 
 extern void cleanupgbuffer();
 extern void initgbuffer();
+extern bool usepacknorm();
 extern void maskgbuffer(const char *mask);
 extern void bindgdepth();
 extern void preparegbuffer(bool depthclear = true);

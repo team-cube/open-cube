@@ -2375,11 +2375,13 @@ void renderdecals()
         }
         if(decalbatches.length()) renderdecalbatches(cur, 0);
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+        if(usepacknorm())
+        {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+        }
         maskgbuffer("n");
         cur.vbuf = 0;
-        GLOBALPARAMF(colorparams, 1, 1, 1, 1);
         for(vtxarray *va = decalva; va; va = va->next) if(va->decaltris && va->occluded < OCCLUDE_BB)
         {
             mergedecals(cur, va);
