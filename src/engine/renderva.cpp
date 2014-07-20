@@ -2338,6 +2338,7 @@ void cleanupdecals(decalrenderer &cur)
 {
     disablepolygonoffset(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_TRUE);
     maskgbuffer("cnd");
