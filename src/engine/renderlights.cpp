@@ -3402,7 +3402,7 @@ void collectlights()
         l.flags = e->attr5;
         l.query = NULL;
         l.o = e->o;
-        l.color = vec(e->attr2, e->attr3, e->attr4);
+        l.color = vec(e->attr2, e->attr3, e->attr4).max(0);
         l.radius = e->attr1;
         if(e->attached && e->attached->type == ET_SPOTLIGHT)
         {
@@ -3437,7 +3437,7 @@ void collectlights()
         l.flags = flags;
         l.query = NULL;
         l.o = o;
-        l.color = vec(color).mul(255);
+        l.color = vec(color).mul(255).max(0);
         l.radius = radius;
         if(spot > 0)
         {

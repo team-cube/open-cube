@@ -677,7 +677,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, bool fast, extentity
         //    conoutf(CON_DEBUG, "%d - %f %f", i, intensity, mag);
         //}
 
-        vec lightcol = vec(e.attr2, e.attr3, e.attr4).mul(1.0f/255);
+        vec lightcol = vec(e.attr2, e.attr3, e.attr4).mul(1.0f/255).max(0);
         color.add(vec(lightcol).mul(intensity));
         dir.add(vec(ray).mul(-intensity*lightcol.x*lightcol.y*lightcol.z));
     }
