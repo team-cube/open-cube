@@ -268,7 +268,7 @@ namespace game
         if(editmode) return true;
         if(isconnected() && multiplayer(false) && !m_edit)
         {
-            conoutf(CON_ERROR, "editing in multiplayer requires coop edit mode");
+            conoutf(CON_ERROR, "editing in multiplayer requires edit mode");
             return false;
         }
         return execidentbool("allowedittoggle", true);
@@ -2047,7 +2047,7 @@ namespace game
 
     void getmap()
     {
-        if(!m_edit) { conoutf(CON_ERROR, "\"getmap\" only works in coop edit mode"); return; }
+        if(!m_edit) { conoutf(CON_ERROR, "\"getmap\" only works in edit mode"); return; }
         conoutf("getting map...");
         addmsg(N_GETMAP, "r");
     }
