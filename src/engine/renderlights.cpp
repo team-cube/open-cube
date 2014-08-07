@@ -1357,7 +1357,7 @@ void viewrefract()
 #define RH_MAXSPLITS 4
 #define RH_MAXGRID 64
 
-GLuint rhtex[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }, rhfbo = 0;
+GLuint rhtex[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }, rhrb[4] = { 0, 0, 0, 0 }, rhfbo = 0;
 uint rhclearmasks[2][RH_MAXSPLITS][(RH_MAXGRID+2+31)/32];
 GLuint rsmdepthtex = 0, rsmcolortex = 0, rsmnormaltex = 0, rsmfbo = 0;
 
@@ -1411,9 +1411,11 @@ void setupradiancehints()
 
     if(rhrect) loopi(4)
     {
-        if(!rhtex[4+i]) glGenTextures(1, &rhtex[4+i]);
-        createtexture(rhtex[4+i], (rhgrid + 2*rhborder)*(rhgrid + 2*rhborder), (rhgrid + 2*rhborder)*rhsplits, NULL, 3, 0, rhformat, GL_TEXTURE_RECTANGLE);
-        glFramebufferTexture2D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_RECTANGLE, rhtex[4+i], 0);
+        if(!rhrb[i]) glGenRenderbuffers_(1, &rhrb[i]);
+        glBindRenderbuffer_(GL_RENDERBUFFER, rhrb[i]);
+        glRenderbufferStorage_(GL_RENDERBUFFER, rhformat, (rhgrid + 2*rhborder)*(rhgrid + 2*rhborder), (rhgrid + 2*rhborder)*rhsplits);
+        glBindRenderbuffer_(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_RENDERBUFFER, rhrb[i]);
     }
     else loopi(4) glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_3D, rhtex[i], 0, 0);
 
@@ -1458,6 +1460,7 @@ void cleanupradiancehints()
     clearradiancehintscache();
 
     loopi(8) if(rhtex[i]) { glDeleteTextures(1, &rhtex[i]); rhtex[i] = 0; }
+    loopi(4) if(rhrb[i]) { glDeleteRenderbuffers_(1, &rhrb[i]); rhrb[i] = 0; }
     if(rhfbo) { glDeleteFramebuffers_(1, &rhfbo); rhfbo = 0; }
     if(rsmdepthtex) { glDeleteTextures(1, &rsmdepthtex); rsmdepthtex = 0; }
     if(rsmcolortex) { glDeleteTextures(1, &rsmcolortex); rsmcolortex = 0; }
@@ -3803,7 +3806,7 @@ void radiancehints::renderslices()
     gle::deftexcoord0(3);
 
     memset(rhclearmasks[0], 0xFF, sizeof(rhclearmasks[0]));
-
+    int cx = -1, cy = -1;
     loopirev(rhsplits)
     {
         splitinfo &split = splits[i];
@@ -3914,24 +3917,21 @@ void radiancehints::renderslices()
 
                 rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
             }
-            else
-            {
-            noborder:
-                if(rhborder) glClear(GL_COLOR_BUFFER_BIT);
-            }
 
-            if(j < rhborder || j >= rhgrid + rhborder) continue;
+        noborder:
+            if(j < rhborder || j >= rhgrid + rhborder)
+            {
+            skipped:
+                if(rhclearmasks[0][i][j/32] & (1 << (j%32)) && (!rhrect || (cx < 0 && !(rhclearmasks[1][i][j/32] & (1 << (j%32)))))) { glClear(GL_COLOR_BUFFER_BIT); cx = sx; cy = sy; }
+                continue;
+            }
 
             if(rhclipgrid)
             {
-                if(z < cmin.z || z > cmax.z)
-                {
-                    if(!rhborder) glClear(GL_COLOR_BUFFER_BIT);
-                    continue;
-                }
+                if(z < cmin.z || z > cmax.z) goto skipped;
                 if(x1 < cmin.x || x2 > cmax.x || y1 < cmin.y || y2 > cmax.y)
                 {
-                    if(!rhborder) glClear(GL_COLOR_BUFFER_BIT);
+                    if(rhclearmasks[0][i][j/32] & (1 << (j%32))) glClear(GL_COLOR_BUFFER_BIT);
                     tx1 = max(x1, cmin.x);
                     tx2 = min(x2, cmax.x);
                     ty1 = max(y1, cmin.y);
@@ -4030,7 +4030,11 @@ void radiancehints::renderslices()
             glBindTexture(GL_TEXTURE_3D, rhtex[k]);
             loopj(sh)
             {
-                if(rhclearmasks[0][i][j/32] & rhclearmasks[1][i][j/32] & (1 << (j%32))) continue;
+                if(rhclearmasks[0][i][j/32] & (1 << (j%32)))
+                {
+                    if(!(rhclearmasks[1][i][j/32] & (1 << (j%32)))) glCopyTexSubImage3D_(GL_TEXTURE_3D, 0, 0, 0, sy+j, cx, cy, sw, sh);
+                    continue;
+                }
                 glCopyTexSubImage3D_(GL_TEXTURE_3D, 0, 0, 0, sy+j, j*sw, sy, sw, sh);
             }
         }
