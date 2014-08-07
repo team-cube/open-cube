@@ -1985,9 +1985,6 @@ void cascadedshadowmap::getprojmatrix()
         split.proj.identity();
         split.proj.settranslation(2*split.offset.x/sm.size - 1, 2*split.offset.y/sm.size - 1, 2*split.offset.z - 1);
         split.proj.setscale(2*split.scale.x/sm.size, 2*split.scale.y/sm.size, 2*split.scale.z);
-
-        const float bias = (smfilter > 2 ? csmbias2 : csmbias) * (-512.0f / sm.size) * (split.farplane - split.nearplane) / (splits[0].farplane - splits[0].nearplane);
-        split.offset.add(vec(sm.x, sm.y, bias));
     }
 }
 
@@ -2008,21 +2005,23 @@ void cascadedshadowmap::gencullplanes()
 
 void cascadedshadowmap::bindparams()
 {
-    static GlobalShaderParam splitcenter("splitcenter"), splitbounds("splitbounds"), splitscale("splitscale"), splitoffset("splitoffset");
-    vec *splitcenterv = splitcenter.reserve<vec>(csmsplits),
-        *splitboundsv = splitbounds.reserve<vec>(csmsplits),
-        *splitscalev = splitscale.reserve<vec>(csmsplits),
-        *splitoffsetv = splitoffset.reserve<vec>(csmsplits);
+    GLOBALPARAM(csmmatrix, matrix3(model));
+
+    static GlobalShaderParam csmtc("csmtc"), csmoffset("csmoffset");
+    vec4 *csmtcv = csmtc.reserve<vec4>(csmsplits);
+    vec *csmoffsetv = csmoffset.reserve<vec>(csmsplits);
     loopi(csmsplits)
-    {
+    {   
         cascadedshadowmap::splitinfo &split = splits[i];
         if(split.idx < 0) continue;
-        splitcenterv[i] = split.center;
-        splitboundsv[i] = split.bounds;
-        splitscalev[i] = split.scale;
-        splitoffsetv[i] = split.offset;
+        const shadowmapinfo &sm = shadowmaps[split.idx];
+
+        csmtcv[i] = vec4(vec2(split.center).mul(-split.scale.x), split.scale.x, split.bounds.x*split.scale.x);
+
+        const float bias = (smfilter > 2 ? csmbias2 : csmbias) * (-512.0f / sm.size) * (split.farplane - split.nearplane) / (splits[0].farplane - splits[0].nearplane);
+        csmoffsetv[i] = vec(sm.x, sm.y, 0.5f + bias).add2(0.5f*sm.size);
     }
-    GLOBALPARAM(csmmatrix, matrix3(model));
+    GLOBALPARAMF(csmz, splits[0].center.z*-splits[0].scale.z, splits[0].scale.z);
 }
 
 cascadedshadowmap csm;
@@ -2270,19 +2269,17 @@ void radiancehints::setup()
 
 void radiancehints::bindparams()
 {
-    static GlobalShaderParam rhbb("rhbb"), rhscale("rhscale"), rhoffset("rhoffset");
-    vec4 *rhbbv = rhbb.reserve<vec4>(rhsplits);
-    vec *rhscalev = rhscale.reserve<vec>(rhsplits),
-        *rhoffsetv = rhoffset.reserve<vec>(rhsplits);
+    float step = 2*splits[0].bounds/rhgrid;
+    GLOBALPARAMF(rhnudge, rhnudge*step);
+
+    static GlobalShaderParam rhtc("rhtc");
+    vec4 *rhtcv = rhtc.reserve<vec4>(rhsplits);
     loopi(rhsplits)
     {
         splitinfo &split = splits[i];
-        rhbbv[i] = vec4(split.center, split.bounds*(1 + rhborder*2*0.5f/rhgrid));
-        rhscalev[i] = split.scale;
-        rhoffsetv[i] = split.offset;
+        rhtcv[i] = vec4(vec(split.center).mul(-split.scale.x), split.scale.x);//split.bounds*(1 + rhborder*2*0.5f/rhgrid));
     }
-    float step = 2*splits[0].bounds/rhgrid;
-    GLOBALPARAMF(rhnudge, rhnudge*step);
+    GLOBALPARAMF(rhbounds, 0.5f*(rhgrid + rhborder)/float(rhgrid + 2*rhborder));
 }
 
 bool useradiancehints()
