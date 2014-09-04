@@ -226,7 +226,8 @@ struct pingattempts
 
     int encodeping(int millis)
     {
-        return (millis ? millis : 1) + offset;
+        millis += offset;
+        return millis ? millis : 1;
     }
 
     int decodeping(int val)
