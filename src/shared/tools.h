@@ -1348,5 +1348,14 @@ template<size_t N> static inline void getstring(char (&t)[N], ucharbuf &p) { get
 extern void filtertext(char *dst, const char *src, bool whitespace, size_t len);
 template<size_t N> static inline void filtertext(char (&dst)[N], const char *src, bool whitespace = true) { filtertext(dst, src, whitespace, N-1); }
 
+struct ipmask
+{
+    enet_uint32 ip, mask;
+
+    void parse(const char *name);
+    int print(char *buf) const;
+    bool check(enet_uint32 host) const { return (host & mask) == ip; }
+};
+
 #endif
 
