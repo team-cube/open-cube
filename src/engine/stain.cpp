@@ -32,10 +32,10 @@ VAR(dbgstain, 0, 0, 1);
 struct stainbuffer
 {
     stainvert *verts;
-    int maxverts, startvert, endvert, availverts;
+    int maxverts, startvert, endvert, lastvert, availverts;
     GLuint vbo;
 
-    stainbuffer() : verts(NULL), maxverts(0), startvert(0), endvert(0), availverts(0), vbo(0)
+    stainbuffer() : verts(NULL), maxverts(0), startvert(0), endvert(0), lastvert(0), availverts(0), vbo(0)
     {}
 
     ~stainbuffer()
@@ -48,7 +48,7 @@ struct stainbuffer
         if(verts)
         {
             DELETEA(verts);
-            maxverts = startvert = endvert = availverts = 0;
+            maxverts = startvert = endvert = lastvert = availverts = 0;
         }
         if(tris)
         {
@@ -65,7 +65,7 @@ struct stainbuffer
 
     void clear()
     {
-        startvert = endvert = 0;
+        startvert = endvert = lastvert = 0;
         availverts = max(maxverts - 3, 0);
     }
 
@@ -73,7 +73,7 @@ struct stainbuffer
     {
         int removed = d.endvert < d.startvert ? maxverts - (d.startvert - d.endvert) : d.endvert - d.startvert;
         startvert = d.endvert;
-        if(startvert==endvert) startvert = endvert = 0;
+        if(startvert==endvert) startvert = endvert = lastvert = 0;
         availverts += removed;
         return removed;
     }
@@ -143,9 +143,9 @@ struct stainbuffer
 
     bool hasverts() const { return startvert != endvert; }
 
-    int usedverts(int dstart) const
+    int nextverts() const
     {
-        return endvert < dstart ? endvert + maxverts - dstart : endvert - dstart;
+        return endvert < lastvert ? endvert + maxverts - lastvert : endvert - lastvert;
     }
 
     int totalverts() const
@@ -423,18 +423,16 @@ struct stainrenderer
             stainv = 0.5f*((info>>1)&1);
         }
 
-        ushort startvert[NUMSTAINBUFS];
-        loopi(NUMSTAINBUFS) startvert[i] = verts[i].endvert;
+        loopi(NUMSTAINBUFS) verts[i].lastvert = verts[i].endvert;
         gentris(worldroot, ivec(0, 0, 0), worldsize>>1);
         loopi(NUMSTAINBUFS)
         {
             stainbuffer &buf = verts[i];
-            int dstart = startvert[i];
-            if(buf.endvert == dstart) continue;
+            if(buf.endvert == buf.lastvert) continue;
 
             if(dbgstain)
             {
-                int nverts = buf.usedverts(dstart);
+                int nverts = buf.nextverts();
                 static const char * const sbufname[NUMSTAINBUFS] = { "opaque", "transparent", "mapmodel" };
                 conoutf(CON_DEBUG, "tris = %d, verts = %d, total tris = %d, %s", nverts/3, nverts, buf.totaltris(), sbufname[i]);
             }
@@ -443,7 +441,7 @@ struct stainrenderer
             d.owner = i;
             d.color = color;
             d.millis = lastmillis;
-            d.startvert = dstart;
+            d.startvert = buf.lastvert;
             d.endvert = buf.endvert;
         }
     }
