@@ -807,7 +807,7 @@ void BIH::genstaintris(stainrenderer *s, const vec &staincenter, float stainradi
     loopi(nummeshes)
     {
         mesh &m = meshes[i];
-        if(!(m.flags&MESH_RENDER) || m.flags&(MESH_ALPHA|MESH_NOCLIP)) continue;
+        if(!(m.flags&MESH_RENDER) || m.flags&MESH_ALPHA) continue;
         matrix4x3 morient;
         morient.mul(orient, o, m.xform);
         genstaintris(s, m, m.invxform.transform(bo), radius, morient, m.nodes, icenter, iradius);

@@ -671,7 +671,6 @@ struct stainrenderer
         {
             extentity &e = *ents[oe.mapmodels[i]];
             model *m = loadmapmodel(e.attr1);
-            if(!m->collide || e.flags&EF_NOCOLLIDE) continue;
 
             vec center, radius;
             float rejectradius = m->collisionbox(center, radius), scale = e.attr5 > 0 ? e.attr5/100.0f : 1;
