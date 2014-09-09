@@ -4750,6 +4750,7 @@ void rendergbuffer(bool depthclear)
         rendermodelbatches();
         GLERROR;
         renderstains(STAINBUF_OPAQUE, true);
+        renderstains(STAINBUF_MAPMODEL, true);
         GLERROR;
         renderavatar();
         GLERROR;
@@ -4836,7 +4837,11 @@ void shadegbuffer()
     else renderlights();
     GLERROR;
 
-    if(!drawtex) renderstains(STAINBUF_OPAQUE, false);
+    if(!drawtex)
+    {
+        renderstains(STAINBUF_OPAQUE, false);
+        renderstains(STAINBUF_MAPMODEL, false);
+    }
 
     endtimer(shtimer);
     endtimer(shcputimer);

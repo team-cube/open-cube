@@ -722,12 +722,15 @@ extern bool printparticles(extentity &e, char *buf, int len);
 extern void cleanupparticles();
 
 // stain
-enum { STAINBUF_OPAQUE = 0, STAINBUF_TRANSPARENT, NUMSTAINBUFS };
+enum { STAINBUF_OPAQUE = 0, STAINBUF_TRANSPARENT, STAINBUF_MAPMODEL, NUMSTAINBUFS };
+
+struct stainrenderer;
 
 extern void initstains();
 extern void clearstains();
 extern void renderstains(int sbuf, bool gbuf);
 extern void cleanupstains();
+extern void genstainmmtri(stainrenderer *s, const vec v[3]);
 
 // rendersky
 extern int skytexture, skyshadow, explicitsky;
