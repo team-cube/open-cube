@@ -193,7 +193,7 @@ struct stainrenderer
         }
         stains = new staininfo[tris];
         maxstains = tris;
-        loopi(NUMSTAINBUFS) verts[i].init(i ? tris/2 : tris);
+        loopi(NUMSTAINBUFS) verts[i].init(i == STAINBUF_TRANSPARENT ? tris/2 : tris);
     }
 
     void preload()
