@@ -322,6 +322,24 @@ void texoffset(ImageData &s, int xoffset, int yoffset)
     s.replace(d);
 }
 
+void texcrop(ImageData &s, int x, int y, int w, int h)
+{
+    x = clamp(x, 0, s.w);
+    y = clamp(y, 0, s.h);
+    w = min(w < 0 ? s.w : w, s.w - x);
+    h = min(h < 0 ? s.h : h, s.h - y);
+    if(!w || !h) return;
+    ImageData d(w, h, s.bpp);
+    uchar *src = s.data + y*s.pitch + x*s.bpp, *dst = d.data;
+    loop(y, h)
+    {
+        memcpy(dst, src, w*s.bpp);
+        src += s.pitch;
+        dst += d.pitch;
+    }
+    s.replace(d);
+}
+
 void texmad(ImageData &s, const vec &mul, const vec &add)
 {
     int maxk = min(int(s.bpp), 3);
@@ -1380,6 +1398,7 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         else if(!strncmp(cmd, "offset", len)) texoffset(d, atoi(arg[0]), atoi(arg[1]));
         else if(!strncmp(cmd, "rotate", len)) texrotate(d, atoi(arg[0]), ttype);
         else if(!strncmp(cmd, "reorient", len)) texreorient(d, atoi(arg[0])>0, atoi(arg[1])>0, atoi(arg[2])>0, ttype);
+        else if(!strncmp(cmd, "crop", len)) texcrop(d, atoi(arg[0]), atoi(arg[1]), *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
         else if(!strncmp(cmd, "mix", len)) texmix(d, *arg[0] ? atoi(arg[0]) : -1, *arg[1] ? atoi(arg[1]) : -1, *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
         else if(!strncmp(cmd, "grey", len)) texgrey(d);
         else if(!strncmp(cmd, "blur", len))
