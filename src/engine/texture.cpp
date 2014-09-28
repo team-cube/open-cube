@@ -1359,9 +1359,9 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
                 else arg[i]++; \
             }
         PARSETEXCOMMANDS(pcmds);
-        if(!strncmp(cmd, "dds", len)) dds = true;
-        else if(!strncmp(cmd, "thumbnail", len)) raw = true;
-        else if(!strncmp(cmd, "stub", len)) return canloadsurface(file);
+        if(matchstring(cmd, len, "dds")) dds = true;
+        else if(matchstring(cmd, len, "thumbnail")) raw = true;
+        else if(matchstring(cmd, len, "stub")) return canloadsurface(file);
     }
 
     if(msg) renderprogress(loadprogress, file);
@@ -1386,47 +1386,47 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
     while(cmds)
     {
         PARSETEXCOMMANDS(cmds);
-        if(!strncmp(cmd, "mad", len)) texmad(d, parsevec(arg[0]), parsevec(arg[1]));
-        else if(!strncmp(cmd, "colorify", len)) texcolorify(d, parsevec(arg[0]), parsevec(arg[1]));
-        else if(!strncmp(cmd, "colormask", len)) texcolormask(d, parsevec(arg[0]), *arg[1] ? parsevec(arg[1]) : vec(1, 1, 1));
-        else if(!strncmp(cmd, "normal", len))
+        if(matchstring(cmd, len, "mad")) texmad(d, parsevec(arg[0]), parsevec(arg[1]));
+        else if(matchstring(cmd, len, "colorify")) texcolorify(d, parsevec(arg[0]), parsevec(arg[1]));
+        else if(matchstring(cmd, len, "colormask")) texcolormask(d, parsevec(arg[0]), *arg[1] ? parsevec(arg[1]) : vec(1, 1, 1));
+        else if(matchstring(cmd, len, "normal"))
         {
             int emphasis = atoi(arg[0]);
             texnormal(d, emphasis > 0 ? emphasis : 3);
         }
-        else if(!strncmp(cmd, "dup", len)) texdup(d, atoi(arg[0]), atoi(arg[1]));
-        else if(!strncmp(cmd, "offset", len)) texoffset(d, atoi(arg[0]), atoi(arg[1]));
-        else if(!strncmp(cmd, "rotate", len)) texrotate(d, atoi(arg[0]), ttype);
-        else if(!strncmp(cmd, "reorient", len)) texreorient(d, atoi(arg[0])>0, atoi(arg[1])>0, atoi(arg[2])>0, ttype);
-        else if(!strncmp(cmd, "crop", len)) texcrop(d, atoi(arg[0]), atoi(arg[1]), *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
-        else if(!strncmp(cmd, "mix", len)) texmix(d, *arg[0] ? atoi(arg[0]) : -1, *arg[1] ? atoi(arg[1]) : -1, *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
-        else if(!strncmp(cmd, "grey", len)) texgrey(d);
-        else if(!strncmp(cmd, "blur", len))
+        else if(matchstring(cmd, len, "dup")) texdup(d, atoi(arg[0]), atoi(arg[1]));
+        else if(matchstring(cmd, len, "offset")) texoffset(d, atoi(arg[0]), atoi(arg[1]));
+        else if(matchstring(cmd, len, "rotate")) texrotate(d, atoi(arg[0]), ttype);
+        else if(matchstring(cmd, len, "reorient")) texreorient(d, atoi(arg[0])>0, atoi(arg[1])>0, atoi(arg[2])>0, ttype);
+        else if(matchstring(cmd, len, "crop")) texcrop(d, atoi(arg[0]), atoi(arg[1]), *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
+        else if(matchstring(cmd, len, "mix")) texmix(d, *arg[0] ? atoi(arg[0]) : -1, *arg[1] ? atoi(arg[1]) : -1, *arg[2] ? atoi(arg[2]) : -1, *arg[3] ? atoi(arg[3]) : -1);
+        else if(matchstring(cmd, len, "grey")) texgrey(d);
+        else if(matchstring(cmd, len, "blur"))
         {
             int emphasis = atoi(arg[0]), repeat = atoi(arg[1]);
             texblur(d, emphasis > 0 ? clamp(emphasis, 1, 2) : 1, repeat > 0 ? repeat : 1);
         }
-        else if(!strncmp(cmd, "premul", len)) texpremul(d);
-        else if(!strncmp(cmd, "agrad", len)) texagrad(d, atof(arg[0]), atof(arg[1]), atof(arg[2]), atof(arg[3]));
-        else if(!strncmp(cmd, "compress", len) || !strncmp(cmd, "dds", len))
+        else if(matchstring(cmd, len, "premul")) texpremul(d);
+        else if(matchstring(cmd, len, "agrad")) texagrad(d, atof(arg[0]), atof(arg[1]), atof(arg[2]), atof(arg[3]));
+        else if(matchstring(cmd, len, "compress") || matchstring(cmd, len, "dds"))
         {
             int scale = atoi(arg[0]);
             if(scale <= 0) scale = 2;
             if(compress) *compress = scale;
         }
-        else if(!strncmp(cmd, "nocompress", len))
+        else if(matchstring(cmd, len, "nocompress"))
         {
             if(compress) *compress = -1;
         }
-        else if(!strncmp(cmd, "mirror", len))
+        else if(matchstring(cmd, len, "mirror"))
         {
             if(wrap) *wrap |= 0x300;
         }
-        else if(!strncmp(cmd, "noswizzle", len))
+        else if(matchstring(cmd, len, "noswizzle"))
         {
             if(wrap) *wrap |= 0x10000;
         }
-        else if(!strncmp(cmd, "thumbnail", len))
+        else if(matchstring(cmd, len, "thumbnail"))
         {
             int w = atoi(arg[0]), h = atoi(arg[1]);
             if(w <= 0 || w > (1<<12)) w = 64;
