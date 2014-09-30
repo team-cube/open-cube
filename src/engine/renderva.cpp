@@ -1934,9 +1934,9 @@ int findalphavas()
         if(va->occluded >= OCCLUDE_BB) continue;
         if(va->occluded >= OCCLUDE_GEOM && pvsoccluded(va->alphamin, va->alphamax)) continue;
         if(va->curvfc==VFC_FOGGED) continue;
-        alphavas.add(va);
         float sx1 = -1, sx2 = 1, sy1 = -1, sy2 = 1;
-        if(!calcbbscissor(va->alphamin, va->alphamax, sx1, sy1, sx2, sy2)) { sx1 = sy1 = -1; sx2 = sy2 = 1; }
+        if(!calcbbscissor(va->alphamin, va->alphamax, sx1, sy1, sx2, sy2)) continue;
+        alphavas.add(va);
         masktiles(alphatiles, sx1, sy1, sx2, sy2);
         alphafrontsx1 = min(alphafrontsx1, sx1);
         alphafrontsy1 = min(alphafrontsy1, sy1);
@@ -1952,8 +1952,8 @@ int findalphavas()
         }
         if(va->refracttris)
         {
+            if(!calcbbscissor(va->refractmin, va->refractmax, sx1, sy1, sx2, sy2)) continue;
             alpharefractvas++;
-            if(!calcbbscissor(va->refractmin, va->refractmax, sx1, sy1, sx2, sy2)) { sx1 = sy1 = -1; sx2 = sy2 = 1; }
             alpharefractsx1 = min(alpharefractsx1, sx1);
             alpharefractsy1 = min(alpharefractsy1, sy1);
             alpharefractsx2 = max(alpharefractsx2, sx2);
