@@ -950,8 +950,6 @@ void loadhdrshaders(int aa)
     }
 }
 
-VAR(foo, 0, 0, 1);
-
 void processhdr(GLuint outfbo, int aa)
 {
     timer *hdrtimer = begintimer("hdr processing");
