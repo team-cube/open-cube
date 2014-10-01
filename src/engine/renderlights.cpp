@@ -927,18 +927,13 @@ void loadhdrshaders(int aa)
             useshaderbyname("hdrnopluma");
             if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapluma");
             break;
-        case AA_VELOCITY:
-            useshaderbyname("hdrtonemapvelocity");
-            useshaderbyname("hdrnopvelocity");
-            if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapvelocity");
-            break;
-        case AA_VELOCITY_MASKED:
-            if(!msaasamples && ghasstencil) useshaderbyname("hdrtonemapvelocity");
+        case AA_MASKED:
+            if(!msaasamples && ghasstencil) useshaderbyname("hdrtonemapstencil");
             else
             {
-                useshaderbyname("hdrtonemapvelocitymasked");
-                useshaderbyname("hdrnopvelocitymasked");
-                if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapvelocitymasked");
+                useshaderbyname("hdrtonemapmasked");
+                useshaderbyname("hdrnopmasked");
+                if(msaasamples && (hasMSS || msaasamples==2) && msaatonemap) useshaderbyname("msaatonemapmasked");
             }
             break;
         case AA_SPLIT:
@@ -947,16 +942,15 @@ void loadhdrshaders(int aa)
         case AA_SPLIT_LUMA:
             useshaderbyname("msaatonemapsplitluma");
             break;
-        case AA_SPLIT_VELOCITY:
-            useshaderbyname("msaatonemapsplitvelocity");
-            break;
-        case AA_SPLIT_VELOCITY_MASKED:
-            useshaderbyname("msaatonemapsplitvelocitymasked");
+        case AA_SPLIT_MASKED:
+            useshaderbyname("msaatonemapsplitmasked");
             break;
         default:
             break;
     }
 }
+
+VAR(foo, 0, 0, 1);
 
 void processhdr(GLuint outfbo, int aa)
 {
@@ -1150,12 +1144,8 @@ void processhdr(GLuint outfbo, int aa)
         switch(aa)
         {
             case AA_SPLIT_LUMA: SETSHADER(msaatonemapsplitluma); break;
-            case AA_SPLIT_VELOCITY:
-                SETSHADER(msaatonemapsplitvelocity);
-                setaavelocityparams(GL_TEXTURE3);
-                break;
-            case AA_SPLIT_VELOCITY_MASKED:
-                SETSHADER(msaatonemapsplitvelocitymasked);
+            case AA_SPLIT_MASKED:
+                SETSHADER(msaatonemapsplitmasked);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
             default: SETSHADER(msaatonemapsplit); break;
@@ -1173,26 +1163,22 @@ void processhdr(GLuint outfbo, int aa)
         switch(aa)
         {
             case AA_LUMA: SETSHADER(hdrtonemapluma); break;
-            case AA_VELOCITY:
-                SETSHADER(hdrtonemapvelocity);
-                setaavelocityparams(GL_TEXTURE3);
-                break;
-            case AA_VELOCITY_MASKED:
+            case AA_MASKED:
                 if(!msaasamples && ghasstencil)
                 {
+                    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
                     glStencilFunc(GL_EQUAL, 0, 0x80);
                     glEnable(GL_STENCIL_TEST);
-                    SETSHADER(hdrtonemapvelocity);
-                    setaavelocityparams(GL_TEXTURE3);
+                    SETSHADER(hdrtonemap);
                     screenquad(vieww, viewh, b0w, b0h);
 
                     glStencilFunc(GL_EQUAL, 0x80, 0x80);
-                    SETSHADER(hdrtonemap);
+                    SETSHADER(hdrtonemapstencil);
                     screenquad(vieww, viewh, b0w, b0h);
                     glDisable(GL_STENCIL_TEST);
                     goto done;
                 }
-                SETSHADER(hdrtonemapvelocitymasked);
+                SETSHADER(hdrtonemapmasked);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
             default: SETSHADER(hdrtonemap); break;
@@ -1214,12 +1200,8 @@ void processhdr(GLuint outfbo, int aa)
         else switch(aa)
         {
             case AA_LUMA: SETSHADER(msaatonemapluma); break;
-            case AA_VELOCITY:
-                SETSHADER(msaatonemapvelocity);
-                setaavelocityparams(GL_TEXTURE3);
-                break;
-            case AA_VELOCITY_MASKED:
-                SETSHADER(msaatonemapvelocitymasked);
+            case AA_MASKED:
+                SETSHADER(msaatonemapmasked);
                 setaavelocityparams(GL_TEXTURE3);
                 break;
             default: SETSHADER(msaatonemap); break;
@@ -1240,12 +1222,8 @@ void processhdr(GLuint outfbo, int aa)
                 else switch(aa)
                 {
                     case AA_LUMA: SETSHADER(hdrnopluma); break;
-                    case AA_VELOCITY:
-                        SETSHADER(hdrnopvelocity);
-                        setaavelocityparams(GL_TEXTURE3);
-                        break;
-                    case AA_VELOCITY_MASKED:
-                        SETSHADER(hdrnopvelocitymasked);
+                    case AA_MASKED:
+                        SETSHADER(hdrnopmasked);
                         setaavelocityparams(GL_TEXTURE3);
                         break;
                     default: SETSHADER(hdrnop); break;
