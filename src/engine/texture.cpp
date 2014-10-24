@@ -1562,7 +1562,7 @@ static void assignvslot(VSlot &vs);
 static inline void assignvslotlayer(VSlot &vs)
 {
     if(vs.layer && vslots.inrange(vs.layer) && vslots[vs.layer]->index < 0) assignvslot(*vslots[vs.layer]);
-    if(vs.decal && vslots.inrange(vs.decal) && vslots[vs.decal]->index < 0) assignvslot(*vslots[vs.decal]);
+    if(vs.detail && vslots.inrange(vs.detail) && vslots[vs.detail]->index < 0) assignvslot(*vslots[vs.detail]);
 }
 
 static void assignvslot(VSlot &vs)
@@ -1669,7 +1669,7 @@ int compactvslots(bool cull)
         if(vs.index >= 0)
         {
             if(vs.layer && vslots.inrange(vs.layer)) vs.layer = vslots[vs.layer]->index;
-            if(vs.decal && vslots.inrange(vs.decal)) vs.decal = vslots[vs.decal]->index;
+            if(vs.detail && vslots.inrange(vs.detail)) vs.detail = vslots[vs.detail]->index;
         }
     }
     if(cull)
@@ -1736,7 +1736,7 @@ static void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = f
         dst.refractscale = src.refractscale;
         dst.refractcolor = src.refractcolor;
     }
-    if(diff & (1<<VSLOT_DECAL)) dst.decal = src.decal;
+    if(diff & (1<<VSLOT_DETAIL)) dst.detail = src.detail;
 }
 
 static void propagatevslot(VSlot *root, int changed)
@@ -1792,7 +1792,7 @@ static void mergevslot(VSlot &dst, const VSlot &src, int diff, Slot *slot = NULL
         dst.refractscale *= src.refractscale;
         dst.refractcolor.mul(src.refractcolor);
     }
-    if(diff & (1<<VSLOT_DECAL)) dst.decal = src.decal;
+    if(diff & (1<<VSLOT_DETAIL)) dst.detail = src.detail;
 }
 
 void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta)
@@ -1847,7 +1847,7 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     if(diff & (1<<VSLOT_ALPHA) && (dst.alphafront != src.alphafront || dst.alphaback != src.alphaback)) return false;
     if(diff & (1<<VSLOT_COLOR) && dst.colorscale != src.colorscale) return false;
     if(diff & (1<<VSLOT_REFRACT) && (dst.refractscale != src.refractscale || dst.refractcolor != src.refractcolor)) return false;
-    if(diff & (1<<VSLOT_DECAL) && dst.decal != src.decal) return false;
+    if(diff & (1<<VSLOT_DETAIL) && dst.detail != src.detail) return false;
     return true;
 }
 
@@ -1911,10 +1911,10 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
         putfloat(buf, src.refractcolor.g);
         putfloat(buf, src.refractcolor.b);
     }
-    if(src.changed & (1<<VSLOT_DECAL))
+    if(src.changed & (1<<VSLOT_DETAIL))
     {
-        buf.put(VSLOT_DECAL);
-        putuint(buf, vslots.inrange(src.decal) && !vslots[src.decal]->changed ? src.decal : 0);
+        buf.put(VSLOT_DETAIL);
+        putuint(buf, vslots.inrange(src.detail) && !vslots[src.detail]->changed ? src.detail : 0);
     }
     buf.put(0);
 }
@@ -1988,10 +1988,10 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
                 dst.refractcolor.g = clamp(getfloat(buf), 0.0f, 1.0f);
                 dst.refractcolor.b = clamp(getfloat(buf), 0.0f, 1.0f);
                 break;
-            case VSLOT_DECAL:
+            case VSLOT_DETAIL:
             {
                 int tex = getuint(buf);
-                dst.decal = vslots.inrange(tex) ? tex : 0;
+                dst.detail = vslots.inrange(tex) ? tex : 0;
                 break;
             }
             default:
@@ -2187,14 +2187,14 @@ void texlayer(int *layer)
 }
 COMMAND(texlayer, "i");
 
-void texdecal(int *decal)
+void texdetail(int *detail)
 {
     if(!defslot) return;
     Slot &s = *defslot;
-    s.variants->decal = *decal < 0 ? max(slots.length()-1+*decal, 0) : *decal;
-    propagatevslot(s.variants, 1<<VSLOT_DECAL);
+    s.variants->detail = *detail < 0 ? max(slots.length()-1+*detail, 0) : *detail;
+    propagatevslot(s.variants, 1<<VSLOT_DETAIL);
 }
-COMMAND(texdecal, "i");
+COMMAND(texdetail, "i");
 
 void texalpha(float *front, float *back)
 {
@@ -2517,8 +2517,8 @@ Texture *Slot::loadthumbnail()
             addname(name, *layer->slot, layer->slot->sts[0], true, prefix);
         }
     }
-    VSlot *decal = vslot.decal ? &lookupvslot(vslot.decal, false) : NULL;
-    if(decal) addname(name, *decal->slot, decal->slot->sts[0], true, "<decal>");
+    VSlot *detail = vslot.detail ? &lookupvslot(vslot.detail, false) : NULL;
+    if(detail) addname(name, *detail->slot, detail->slot->sts[0], true, "<detail>");
     name.add('\0');
     Texture *t = textures.access(path(name.getbuf()));
     if(t) thumbnail = t;
@@ -2528,7 +2528,7 @@ Texture *Slot::loadthumbnail()
         texturedata(s, *this, sts[0], false);
         if(glow >= 0) texturedata(g, *this, sts[glow], false);
         if(layer) texturedata(l, *layer->slot, layer->slot->sts[0], false);
-        if(decal) texturedata(d, *decal->slot, decal->slot->sts[0], false);
+        if(detail) texturedata(d, *detail->slot, detail->slot->sts[0], false);
         if(!s.data) t = thumbnail = notexture;
         else
         {

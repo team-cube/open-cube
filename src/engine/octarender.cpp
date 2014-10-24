@@ -1693,7 +1693,7 @@ void precachetextures()
 
                 VSlot &vslot = lookupvslot(tex, false);
                 if(vslot.layer && texs.find(vslot.layer) < 0) texs.add(vslot.layer);
-                if(vslot.decal && texs.find(vslot.decal) < 0) texs.add(vslot.decal);
+                if(vslot.detail && texs.find(vslot.detail) < 0) texs.add(vslot.detail);
             }
         }
     }

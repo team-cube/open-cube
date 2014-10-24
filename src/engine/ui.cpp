@@ -2905,8 +2905,8 @@ namespace UI
         void previewslot(Slot &slot, VSlot &vslot, float x, float y)
         {
             if(slot.sts.empty()) return;
-            VSlot *layer = NULL, *decal = NULL;
-            Texture *t = NULL, *glowtex = NULL, *layertex = NULL, *decaltex = NULL;
+            VSlot *layer = NULL, *detail = NULL;
+            Texture *t = NULL, *glowtex = NULL, *layertex = NULL, *detailtex = NULL;
             if(slot.loaded)
             {
                 t = slot.sts[0].t;
@@ -2918,10 +2918,10 @@ namespace UI
                     layer = &lookupvslot(vslot.layer);
                     if(!layer->slot->sts.empty()) layertex = layer->slot->sts[0].t;
                 }
-                if(vslot.decal)
+                if(vslot.detail)
                 {
-                    decal = &lookupvslot(vslot.decal);
-                    if(!decal->slot->sts.empty()) decaltex = decal->slot->sts[0].t;
+                    detail = &lookupvslot(vslot.detail);
+                    if(!detail->slot->sts.empty()) detailtex = detail->slot->sts[0].t;
                 }
             }
             else
@@ -2949,9 +2949,9 @@ namespace UI
             glBindTexture(GL_TEXTURE_2D, t->id);
             if(slot.loaded) gle::color(vslot.colorscale);
             quad(x, y, w, h, tc);
-            if(decaltex)
+            if(detailtex)
             {
-                glBindTexture(GL_TEXTURE_2D, decaltex->id);
+                glBindTexture(GL_TEXTURE_2D, detailtex->id);
                 quad(x + w/2, y + h/2, w/2, h/2, tc);
             }
             if(glowtex)

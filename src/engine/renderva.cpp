@@ -1417,23 +1417,23 @@ static void changeslottmus(renderstate &cur, int pass, Slot &slot, VSlot &vslot)
         }
     }
 
-    if(pass == RENDERPASS_GBUFFER && vslot.decal)
+    if(pass == RENDERPASS_GBUFFER && vslot.detail)
     {
-        VSlot &decal = lookupvslot(vslot.decal);
-        loopvj(decal.slot->sts)
+        VSlot &detail = lookupvslot(vslot.detail);
+        loopvj(detail.slot->sts)
         {
-            Slot::Tex &t = decal.slot->sts[j];
+            Slot::Tex &t = detail.slot->sts[j];
             switch(t.type)
             {
                 case TEX_DIFFUSE:
                     if(slot.shader->type&SHADER_TRIPLANAR)
                     {
-                        float scale = TEX_SCALE/decal.scale;
-                        GLOBALPARAMF(decalscale, scale/t.t->xs, scale/t.t->ys);
+                        float scale = TEX_SCALE/detail.scale;
+                        GLOBALPARAMF(detailscale, scale/t.t->xs, scale/t.t->ys);
                     }
                     // fall-through
                 case TEX_NORMAL:
-                    bindslottex(cur, TEX_DECAL + t.type, t.t);
+                    bindslottex(cur, TEX_DETAIL + t.type, t.t);
                     break;
             }
         }
