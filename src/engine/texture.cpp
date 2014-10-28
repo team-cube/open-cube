@@ -103,7 +103,7 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
         {
             if(format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
             {
-                ullong salpha = lilswap(*(ullong *)src), dalpha = 0;
+                ullong salpha = lilswap(*(const ullong *)src), dalpha = 0;
                 uint xmask = flipx ? 15 : 0, ymask = flipy ? 15 : 0, xshift = 2, yshift = 4;
                 if(swapxy) swap(xshift, yshift);
                 for(int y = by1; y < by2; y++) for(int x = bx1; x < bx2; x++)
@@ -118,7 +118,7 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
             else if(format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
             {
                 uchar alpha1 = src[0], alpha2 = src[1];
-                ullong salpha = lilswap(*(ushort *)&src[2]) + ((ullong)lilswap(*(ushort *)&src[4])<<16) + ((ullong)lilswap(*(ushort *)&src[6])<<32), dalpha = 0;
+                ullong salpha = lilswap(*(const ushort *)&src[2]) + ((ullong)lilswap(*(const uint *)&src[4]) << 16), dalpha = 0;
                 uint xmask = flipx ? 7 : 0, ymask = flipy ? 7 : 0, xshift = 0, yshift = 2;
                 if(swapxy) swap(xshift, yshift);
                 for(int y = by1; y < by2; y++) for(int x = bx1; x < bx2; x++)
@@ -135,8 +135,8 @@ static void reorients3tc(GLenum format, int blocksize, int w, int h, uchar *src,
                 curdst += 8;
             }
 
-            ushort color1 = lilswap(*(ushort *)src), color2 = lilswap(*(ushort *)&src[2]);
-            uint sbits = lilswap(*(uint *)&src[4]);
+            ushort color1 = lilswap(*(const ushort *)src), color2 = lilswap(*(const ushort *)&src[2]);
+            uint sbits = lilswap(*(const uint *)&src[4]);
             if(normals)
             {
                 ushort ncolor1 = color1, ncolor2 = color2;
@@ -189,7 +189,7 @@ static void reorientrgtc(GLenum format, int blocksize, int w, int h, uchar *src,
             loopj(blocksize/8)
             {
                 uchar val1 = src[0], val2 = src[1];
-                ullong sval = lilswap(*(ushort *)&src[2]) + ((ullong)lilswap(*(ushort *)&src[4])<<16) + ((ullong)lilswap(*(ushort *)&src[6])<<32), dval = 0;
+                ullong sval = lilswap(*(const ushort *)&src[2]) + ((ullong)lilswap(*(const uint *)&src[4] )<< 16), dval = 0;
                 uint xmask = flipx ? 7 : 0, ymask = flipy ? 7 : 0, xshift = 0, yshift = 2;
                 if(swapxy) swap(xshift, yshift);
                 for(int y = by1; y < by2; y++) for(int x = bx1; x < bx2; x++)
@@ -1367,25 +1367,32 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
     if(msg) renderprogress(loadprogress, file);
 
     int flen = strlen(file);
-    if(flen >= 4 && (!strcasecmp(file + flen - 4, ".dds") || dds))
+    if(flen >= 4 && (!strcasecmp(file + flen - 4, ".dds") || (dds && !raw)))
     {
         string dfile;
         copystring(dfile, file);
         memcpy(dfile + flen - 4, ".dds", 4);
-        if(!raw && hasS3TC && loaddds(dfile, d)) return true;
-        if(!dds || dbgdds) { if(msg) conoutf(CON_ERROR, "could not load texture %s", dfile); return false; }
+        if(!loaddds(dfile, d, raw ? 1 : (dds ? 0 : -1)) && (!dds || raw))
+        {
+            if(msg) conoutf(CON_ERROR, "could not load texture %s", dfile);
+            return false;
+        }
     }
 
-    SDL_Surface *s = loadsurface(file);
-    if(!s) { if(msg) conoutf(CON_ERROR, "could not load texture %s", file); return false; }
-    int bpp = s->format->BitsPerPixel;
-    if(bpp%8 || !texformat(bpp/8)) { SDL_FreeSurface(s); conoutf(CON_ERROR, "texture must be 8, 16, 24, or 32 bpp: %s", file); return false; }
-    if(max(s->w, s->h) > (1<<12)) { SDL_FreeSurface(s); conoutf(CON_ERROR, "texture size exceeded %dx%d pixels: %s", 1<<12, 1<<12, file); return false; }
-    d.wrap(s);
+    if(!d.data)
+    {
+        SDL_Surface *s = loadsurface(file);
+        if(!s) { if(msg) conoutf(CON_ERROR, "could not load texture %s", file); return false; }
+        int bpp = s->format->BitsPerPixel;
+        if(bpp%8 || !texformat(bpp/8)) { SDL_FreeSurface(s); conoutf(CON_ERROR, "texture must be 8, 16, 24, or 32 bpp: %s", file); return false; }
+        if(max(s->w, s->h) > (1<<12)) { SDL_FreeSurface(s); conoutf(CON_ERROR, "texture size exceeded %dx%d pixels: %s", 1<<12, 1<<12, file); return false; }
+        d.wrap(s);
+    }
 
     while(cmds)
     {
         PARSETEXCOMMANDS(cmds);
+        if(d.compressed) goto compressed;
         if(matchstring(cmd, len, "mad")) texmad(d, parsevec(arg[0]), parsevec(arg[1]));
         else if(matchstring(cmd, len, "colorify")) texcolorify(d, parsevec(arg[0]), parsevec(arg[1]));
         else if(matchstring(cmd, len, "colormask")) texcolormask(d, parsevec(arg[0]), *arg[1] ? parsevec(arg[1]) : vec(1, 1, 1));
@@ -1408,13 +1415,22 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         }
         else if(matchstring(cmd, len, "premul")) texpremul(d);
         else if(matchstring(cmd, len, "agrad")) texagrad(d, atof(arg[0]), atof(arg[1]), atof(arg[2]), atof(arg[3]));
+        else if(matchstring(cmd, len, "thumbnail"))
+        {
+            int w = atoi(arg[0]), h = atoi(arg[1]);
+            if(w <= 0 || w > (1<<12)) w = 64;
+            if(h <= 0 || h > (1<<12)) h = w;
+            if(d.w > w || d.h > h) scaleimage(d, w, h);
+        }
         else if(matchstring(cmd, len, "compress") || matchstring(cmd, len, "dds"))
         {
             int scale = atoi(arg[0]);
             if(scale <= 0) scale = 2;
             if(compress) *compress = scale;
         }
-        else if(matchstring(cmd, len, "nocompress"))
+        else
+    compressed:
+        if(matchstring(cmd, len, "nocompress"))
         {
             if(compress) *compress = -1;
         }
@@ -1425,13 +1441,6 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         else if(matchstring(cmd, len, "noswizzle"))
         {
             if(wrap) *wrap |= 0x10000;
-        }
-        else if(matchstring(cmd, len, "thumbnail"))
-        {
-            int w = atoi(arg[0]), h = atoi(arg[1]);
-            if(w <= 0 || w > (1<<12)) w = 64;
-            if(h <= 0 || h > (1<<12)) h = w;
-            if(d.w > w || d.h > h) scaleimage(d, w, h);
         }
     }
 
@@ -1446,7 +1455,7 @@ static inline bool texturedata(ImageData &d, Slot &slot, Slot::Tex &tex, bool ms
 uchar *loadalphamask(Texture *t)
 {
     if(t->alphamask) return t->alphamask;
-    if((t->type&(Texture::ALPHA|Texture::COMPRESSED)) != Texture::ALPHA) return NULL;
+    if(!(t->type&Texture::ALPHA)) return NULL;
     ImageData s;
     if(!texturedata(s, t->name, false) || !s.data || s.compressed) return NULL;
     t->alphamask = new uchar[s.h * ((s.w+7)/8)];
@@ -3061,7 +3070,148 @@ struct DDSURFACEDESC2
     uint dwTextureStage;
 };
 
-bool loaddds(const char *filename, ImageData &image)
+#define DECODEDDS(name, dbpp, initblock, writeval, nextval) \
+static void name(ImageData &s) \
+{ \
+    ImageData d(s.w, s.h, dbpp); \
+    uchar *dst = d.data; \
+    const uchar *src = s.data; \
+    for(int by = 0; by < s.h; by += s.align) \
+    { \
+        for(int bx = 0; bx < s.w; bx += s.align, src += s.bpp) \
+        { \
+            int maxy = min(d.h - by, s.align), maxx = min(d.w - bx, s.align); \
+            initblock; \
+            loop(y, maxy) \
+            { \
+                int x; \
+                for(x = 0; x < maxx; ++x) \
+                { \
+                    writeval; \
+                    nextval; \
+                    dst += d.bpp; \
+                }  \
+                for(; x < s.align; ++x) { nextval; } \
+                dst += d.pitch - maxx*d.bpp; \
+            } \
+            dst += maxx*d.bpp - maxy*d.pitch; \
+        } \
+        dst += (s.align-1)*d.pitch; \
+    } \
+    s.replace(d); \
+}
+
+DECODEDDS(decodedxt1, s.compressed == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 4 : 3,
+    ushort color0 = lilswap(*(const ushort *)src);
+    ushort color1 = lilswap(*(const ushort *)&src[2]);
+    uint bits = lilswap(*(const uint *)&src[4]);
+    bvec4 rgba[4];
+    rgba[0] = bvec4(bvec::from565(color0), 0xFF);
+    rgba[1] = bvec4(bvec::from565(color1), 0xFF);
+    if(color0 > color1)
+    {
+        rgba[2].lerp(rgba[0], rgba[1], 2, 1, 3);
+        rgba[3].lerp(rgba[0], rgba[1], 1, 2, 3);
+    }
+    else
+    {
+        rgba[2].lerp(rgba[0], rgba[1], 1, 1, 2);
+        rgba[3] = bvec4(0, 0, 0, 0);
+    }
+,
+    memcpy(dst, rgba[bits&3].v, d.bpp);
+,
+    bits >>= 2;
+);
+
+DECODEDDS(decodedxt3, 4,
+    ullong alpha = lilswap(*(const ullong *)src);
+    ushort color0 = lilswap(*(const ushort *)&src[8]);
+    ushort color1 = lilswap(*(const ushort *)&src[10]);
+    uint bits = lilswap(*(const uint *)&src[12]);
+    bvec rgb[4];
+    rgb[0] = bvec::from565(color0);
+    rgb[1] = bvec::from565(color1);
+    rgb[2].lerp(rgb[0], rgb[1], 2, 1, 3);
+    rgb[3].lerp(rgb[0], rgb[1], 1, 2, 3);
+,
+    memcpy(dst, rgb[bits&3].v, 3);
+    dst[3] = ((alpha&0xF)*1088 + 32) >> 6;
+,
+    bits >>= 2;
+    alpha >>= 4;
+);
+
+static inline void decodealpha(uchar alpha0, uchar alpha1, uchar alpha[8])
+{
+    alpha[0] = alpha0;
+    alpha[1] = alpha1;
+    if(alpha0 > alpha1)
+    {
+        alpha[2] = (6*alpha0 + alpha1)/7;
+        alpha[3] = (5*alpha0 + 2*alpha1)/7;
+        alpha[4] = (4*alpha0 + 3*alpha1)/7;
+        alpha[5] = (3*alpha0 + 4*alpha1)/7;
+        alpha[6] = (2*alpha0 + 5*alpha1)/7;
+        alpha[7] = (alpha0 + 6*alpha1)/7;
+    }
+    else
+    {
+        alpha[2] = (4*alpha0 + alpha1)/5;
+        alpha[3] = (3*alpha0 + 2*alpha1)/5;
+        alpha[4] = (2*alpha0 + 3*alpha1)/5;
+        alpha[5] = (alpha0 + 4*alpha1)/5;
+        alpha[6] = 0;
+        alpha[7] = 0xFF;
+    }
+}
+
+DECODEDDS(decodedxt5, 4,
+    uchar alpha[8];
+    decodealpha(src[0], src[1], alpha);
+    ullong alphabits = lilswap(*(const ushort *)&src[2]) + ((ullong)lilswap(*(const uint *)&src[4]) << 16);
+    ushort color0 = lilswap(*(const ushort *)&src[8]);
+    ushort color1 = lilswap(*(const ushort *)&src[10]);
+    uint bits = lilswap(*(const uint *)&src[12]);
+    bvec rgb[4];
+    rgb[0] = bvec::from565(color0);
+    rgb[1] = bvec::from565(color1);
+    rgb[2].lerp(rgb[0], rgb[1], 2, 1, 3);
+    rgb[3].lerp(rgb[0], rgb[1], 1, 2, 3);
+,
+    memcpy(dst, rgb[bits&3].v, 3);
+    dst[3] = alpha[alphabits&7];
+,
+    bits >>= 2;
+    alphabits >>= 3;
+);
+
+DECODEDDS(decodergtc1, 1,
+    uchar red[8];
+    decodealpha(src[0], src[1], red);
+    ullong redbits = lilswap(*(const ushort *)&src[2]) + ((ullong)lilswap(*(const uint *)&src[4]) << 16);
+,
+    dst[0] = red[redbits&7];
+,
+    redbits >>= 3;
+);
+
+DECODEDDS(decodergtc2, 2,
+    uchar red[8];
+    decodealpha(src[0], src[1], red);
+    ullong redbits = lilswap(*(const ushort *)&src[2]) + ((ullong)lilswap(*(const uint *)&src[4]) << 16);
+    uchar green[8];
+    decodealpha(src[8], src[9], green);
+    ullong greenbits = lilswap(*(const ushort *)&src[10]) + ((ullong)lilswap(*(const uint *)&src[12]) << 16);
+,
+    dst[0] = red[redbits&7];
+    dst[1] = green[greenbits&7];
+,
+    redbits >>= 3;
+    greenbits >>= 3;
+);
+
+bool loaddds(const char *filename, ImageData &image, int force)
 {
     stream *f = openfile(filename, "rb");
     if(!f) return false;
@@ -3072,26 +3222,33 @@ bool loaddds(const char *filename, ImageData &image)
     if(f->read(&d, sizeof(d)) != sizeof(d)) { delete f; return false; }
     lilswap((uint *)&d, sizeof(d)/sizeof(uint));
     if(d.dwSize != sizeof(DDSURFACEDESC2) || d.ddpfPixelFormat.dwSize != sizeof(DDPIXELFORMAT)) { delete f; return false; }
+    bool supported = false;
     if(d.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
     {
         switch(d.ddpfPixelFormat.dwFourCC)
         {
-            case FOURCC_DXT1: if(hasS3TC) format = d.ddpfPixelFormat.dwFlags & DDPF_ALPHAPIXELS ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
+            case FOURCC_DXT1:
+                if((supported = hasS3TC) || force) format = d.ddpfPixelFormat.dwFlags & DDPF_ALPHAPIXELS ? GL_COMPRESSED_RGBA_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+                break;
             case FOURCC_DXT2:
-            case FOURCC_DXT3: if(hasS3TC) format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+            case FOURCC_DXT3:
+                if((supported = hasS3TC) || force) format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+                break;
             case FOURCC_DXT4:
-            case FOURCC_DXT5: if(hasS3TC) format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+            case FOURCC_DXT5:
+                if((supported = hasS3TC) || force) format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+                break;
             case FOURCC_ATI1:
-                if(hasRGTC) format = GL_COMPRESSED_RED_RGTC1;
-                else if(hasLATC) format = GL_COMPRESSED_LUMINANCE_LATC1_EXT;
+                if((supported = hasRGTC) || force) format = GL_COMPRESSED_RED_RGTC1;
+                else if((supported = hasLATC)) format = GL_COMPRESSED_LUMINANCE_LATC1_EXT;
                 break;
             case FOURCC_ATI2:
-                if(hasRGTC) format = GL_COMPRESSED_RG_RGTC2;
-                else if(hasLATC) format = GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
+                if((supported = hasRGTC) || force) format = GL_COMPRESSED_RG_RGTC2;
+                else if((supported = hasLATC)) format = GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
                 break;
         }
     }
-    if(!format) { delete f; return false; }
+    if(!format || (!supported && !force)) { delete f; return false; }
     if(dbgdds) conoutf(CON_DEBUG, "%s: format 0x%X, %d x %d, %d mipmaps", filename, format, d.dwWidth, d.dwHeight, d.dwMipMapCount);
     int bpp = 0;
     switch(format)
@@ -3106,10 +3263,31 @@ bool loaddds(const char *filename, ImageData &image)
         case GL_COMPRESSED_RG_RGTC2: bpp = 16; break;
 
     }
-    image.setdata(NULL, d.dwWidth, d.dwHeight, bpp, d.dwMipMapCount, 4, format);
+    image.setdata(NULL, d.dwWidth, d.dwHeight, bpp, !supported || force > 0 ? 1 : d.dwMipMapCount, 4, format);
     size_t size = image.calcsize();
     if(f->read(image.data, size) != size) { delete f; image.cleanup(); return false; }
     delete f;
+    if(!supported || force > 0) switch(format)
+    {
+        case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+        case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+            decodedxt1(image);
+            break;
+        case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+            decodedxt3(image);
+            break;
+        case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+            decodedxt5(image);
+            break;
+        case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+        case GL_COMPRESSED_RED_RGTC1:
+            decodergtc1(image);
+            break;
+        case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+        case GL_COMPRESSED_RG_RGTC2:
+            decodergtc2(image);
+            break;
+    }
     return true;
 }
 
