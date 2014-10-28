@@ -1428,13 +1428,13 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
             if(scale <= 0) scale = 2;
             if(compress) *compress = scale;
         }
-        else
-    compressed:
-        if(matchstring(cmd, len, "nocompress"))
+        else if(matchstring(cmd, len, "nocompress"))
         {
             if(compress) *compress = -1;
         }
-        else if(matchstring(cmd, len, "mirror"))
+        else
+    compressed:
+        if(matchstring(cmd, len, "mirror"))
         {
             if(wrap) *wrap |= 0x300;
         }
