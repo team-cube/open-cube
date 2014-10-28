@@ -1324,6 +1324,7 @@ static vec parsevec(const char *arg)
 
 VAR(usedds, 0, 1, 1);
 VAR(dbgdds, 0, 0, 1);
+VAR(scaledds, 0, 2, 4);
 
 static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *compress = NULL, int *wrap = NULL, const char *tdir = NULL, int ttype = TEX_DIFFUSE)
 {
@@ -1377,6 +1378,7 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
             if(msg) conoutf(CON_ERROR, "could not load texture %s", dfile);
             return false;
         }
+        if(d.data && !d.compressed && !dds && compress) *compress = scaledds;
     }
 
     if(!d.data)
@@ -1425,7 +1427,7 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         else if(matchstring(cmd, len, "compress") || matchstring(cmd, len, "dds"))
         {
             int scale = atoi(arg[0]);
-            if(scale <= 0) scale = 2;
+            if(scale <= 0) scale = scaledds;
             if(compress) *compress = scale;
         }
         else if(matchstring(cmd, len, "nocompress"))
