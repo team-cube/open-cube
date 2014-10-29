@@ -54,9 +54,14 @@ struct tqaaview
 
     void setaavelocityparams(GLuint tmu)
     {
-        if(tmu!=GL_TEXTURE0) glActiveTexture_(tmu);
+        glActiveTexture_(tmu);
         if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msdepthtex);
         else glBindTexture(GL_TEXTURE_RECTANGLE, gdepthtex);
+        glActiveTexture_(++tmu);
+        if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msnormaltex);
+        else glBindTexture(GL_TEXTURE_RECTANGLE, gnormaltex);
+        glActiveTexture_(GL_TEXTURE0);
+
         matrix4 reproject;
         reproject.muld(frame ? prevscreenmatrix : screenmatrix, worldmatrix);
         vec2 jitter = frame&1 ? vec2(0.5f, 0.5f) : vec2(-0.5f, -0.5f);
@@ -65,13 +70,6 @@ struct tqaaview
         LOCALPARAM(reprojectmatrix, reproject);
         float maxvel = sqrtf(vieww*vieww + viewh*viewh)/tqaareproject;
         LOCALPARAMF(maxvelocity, maxvel, 1/maxvel);
-        if(tqaamovemask)
-        {
-            glActiveTexture_(++tmu);
-            if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msnormaltex);
-            else glBindTexture(GL_TEXTURE_RECTANGLE, gnormaltex);
-        }
-        if(tmu!=GL_TEXTURE0) glActiveTexture_(GL_TEXTURE0);
     }
 
     void resolve(GLuint outfbo)

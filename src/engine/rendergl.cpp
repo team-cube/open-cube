@@ -2401,6 +2401,10 @@ void gl_drawview()
     renderao();
     GLERROR;
 
+    // render avatar after AO to avoid weird contact shadows
+    renderavatar();
+    GLERROR;
+ 
     // render grass after AO to avoid disturbing shimmering patterns
     generategrass();
     rendergrass();

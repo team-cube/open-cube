@@ -525,7 +525,7 @@ void initgbuffer()
 
 VARF(forcepacknorm, 0, 0, 1, initwarning("g-buffer setup", INIT_LOAD, CHANGE_SHADERS));
 
-bool usepacknorm() { return forcepacknorm || msaasamples || (!useavatarmask() && gdepthformat!=1); }
+bool usepacknorm() { return forcepacknorm || msaasamples || !useavatarmask(); }
 ICOMMAND(usepacknorm, "", (), intret(usepacknorm() ? 1 : 0));
 
 void maskgbuffer(const char *mask)
@@ -4687,8 +4687,8 @@ void rendergbuffer(bool depthclear)
         renderstains(STAINBUF_OPAQUE, true);
         renderstains(STAINBUF_MAPMODEL, true);
         GLERROR;
-        renderavatar();
-        GLERROR;
+        //renderavatar();
+        //GLERROR;
     }
 
     endtimer(gtimer);
