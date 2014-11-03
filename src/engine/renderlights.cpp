@@ -3877,7 +3877,9 @@ void radiancehints::renderslices()
                     vy1 += 2*rhgrid/float(sh)*(ty1 - y1)/(y2 - y1);
                     vy2 += 2*rhgrid/float(sh)*(ty2 - y2)/(y2 - y1);
                 }
+                else if(rhborder && i + 1 >= rhsplits) glClear(GL_COLOR_BUFFER_BIT);
             }
+            else if(rhborder && i + 1 >= rhsplits) glClear(GL_COLOR_BUFFER_BIT);
 
             rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
 
