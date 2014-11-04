@@ -3756,6 +3756,7 @@ void radiancehints::renderslices()
     gle::defvertex(2);
     gle::deftexcoord0(3);
 
+    bool prevcached = true;
     int cx = -1, cy = -1;
     loopirev(rhsplits)
     {
@@ -3778,20 +3779,17 @@ void radiancehints::renderslices()
             dmax[k] = max(dmax[k], (float)ceil((dynmax[k] + gidist + cellradius - (split.center[k] - split.bounds))/step)*step + split.center[k] - split.bounds);
         }
 
-        if((rhrect || !rhcache || hasCI) && split.cached == split.center && !rhforce &&
+        if((rhrect || !rhcache || hasCI) && split.cached == split.center && (!rhborder || prevcached) && !rhforce &&
            (dmin.x > split.center.x + split.bounds || dmax.x < split.center.x - split.bounds ||
             dmin.y > split.center.y + split.bounds || dmax.y < split.center.y - split.bounds ||
             dmin.z > split.center.z + split.bounds || dmax.z < split.center.z - split.bounds))
         {
-            bool bordercached = true;
-            if(rhborder) for(int k = i+1; k < rhsplits; k++) if(splits[k].cached != splits[k].center) { bordercached = false; break; }
-            if(bordercached)
-            {
-                if(rhrect || !rhcache || split.age > 1) continue;
-                loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
-                continue;
-            }
+            if(rhrect || !rhcache || split.age > 1) continue;
+            loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
+            continue;
         }
+
+        prevcached = false;
 
         GLOBALPARAM(rhcenter, split.center);
         GLOBALPARAMF(rhbounds, split.bounds);
