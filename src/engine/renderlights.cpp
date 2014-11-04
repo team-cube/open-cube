@@ -2138,9 +2138,9 @@ struct radiancehints
         float nearplane, farplane;
         vec offset, scale;
         vec center; float bounds;
-        vec cached;
+        vec cached; int age;
 
-        splitinfo() : center(-1e16f, -1e16f, -1e16f), bounds(-1e16f), cached(-1e16f, -1e16f, -1e16f) {}
+        splitinfo() : center(-1e16f, -1e16f, -1e16f), bounds(-1e16f), cached(-1e16f, -1e16f, -1e16f), age(0) {}
 
         void clearcache() { bounds = -1e16f; }
     } splits[RH_MAXSPLITS];
@@ -2194,7 +2194,16 @@ void radiancehints::setup()
         offset.x = floor(offset.x);
         offset.y = floor(offset.y);
         offset.z = floor(offset.z);
-        split.cached = split.bounds == pradius ? split.center : vec(-1e16f, -1e16f, -1e16f);
+        if(split.bounds == pradius)
+        {
+            split.age = split.cached == split.center ? 2 : 1;
+            split.cached = split.center;
+        }
+        else
+        {
+            split.age = 0;
+            split.cached = vec(-1e16f, -1e16f, -1e16f);
+        }
         split.center = vec(offset).mul(step).add(pradius);
         split.bounds = pradius;
 
@@ -3697,7 +3706,14 @@ void radiancehints::renderslices()
     if(!rhrect)
     {
         glViewport(0, 0, sw, sh);
-        if(rhcache) loopi(4) swap(rhtex[i], rhtex[i+4]);
+        if(rhcache)
+        {
+            loopi(4) swap(rhtex[i], rhtex[i+4]);
+            uint clearmasks[RH_MAXSPLITS][(RH_MAXGRID+2+31)/32]; 
+            memcpy(clearmasks, rhclearmasks[0], sizeof(clearmasks));
+            memcpy(rhclearmasks[0], rhclearmasks[1], sizeof(clearmasks));
+            memcpy(rhclearmasks[1], clearmasks, sizeof(clearmasks));
+        }
     }
 
     GLOBALPARAMF(rhatten, 1.0f/(gidist*gidist));
@@ -3740,29 +3756,12 @@ void radiancehints::renderslices()
     gle::defvertex(2);
     gle::deftexcoord0(3);
 
-    memset(rhclearmasks[0], 0xFF, sizeof(rhclearmasks[0]));
     int cx = -1, cy = -1;
     loopirev(rhsplits)
     {
         splitinfo &split = splits[i];
-        if((rhrect || !rhcache || hasCI) && split.cached == split.center && !rhforce)
-        {
-            bool bordercached = true;
-            if(rhborder) for(int k = i+1; k < rhsplits; k++) if(splits[k].cached != splits[k].center) { bordercached = false; break; }
-            if(bordercached)
-            {
-                if(rhrect || !rhcache) continue;
-                loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
-                continue;
-            }
-        }
-
         float cellradius = split.bounds/rhgrid, step = 2*cellradius, nudge = rhnudge*2*splits[0].bounds/rhgrid + rhworldbias*step;
-        GLOBALPARAM(rhcenter, split.center);
-        GLOBALPARAMF(rhbounds, split.bounds);
-        GLOBALPARAMF(rhspread, cellradius);
-
-        vec cmin, cmax, bmin(1e16f, 1e16f, 1e16f), bmax(-1e16f, -1e16f, -1e16f), dmin(1e16f, 1e16f, 1e16f), dmax(-1e16f, -1e16f, -1e16f);
+        vec cmin, cmax, dmin(1e16f, 1e16f, 1e16f), dmax(-1e16f, -1e16f, -1e16f), bmin(1e16f, 1e16f, 1e16f), bmax(-1e16f, -1e16f, -1e16f);
         loopk(3)
         {
             cmin[k] = floor((worldmin[k] - nudge - (split.center[k] - split.bounds))/step)*step + split.center[k] - split.bounds;
@@ -3779,11 +3778,31 @@ void radiancehints::renderslices()
             dmax[k] = max(dmax[k], (float)ceil((dynmax[k] + gidist + cellradius - (split.center[k] - split.bounds))/step)*step + split.center[k] - split.bounds);
         }
 
+        if((rhrect || !rhcache || hasCI) && split.cached == split.center && !rhforce &&
+           (dmin.x > split.center.x + split.bounds || dmax.x < split.center.x - split.bounds ||
+            dmin.y > split.center.y + split.bounds || dmax.y < split.center.y - split.bounds ||
+            dmin.z > split.center.z + split.bounds || dmax.z < split.center.z - split.bounds))
+        {
+            bool bordercached = true;
+            if(rhborder) for(int k = i+1; k < rhsplits; k++) if(splits[k].cached != splits[k].center) { bordercached = false; break; }
+            if(bordercached)
+            {
+                if(rhrect || !rhcache || split.age > 1) continue;
+                loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
+                continue;
+            }
+        }
+
+        GLOBALPARAM(rhcenter, split.center);
+        GLOBALPARAMF(rhbounds, split.bounds);
+        GLOBALPARAMF(rhspread, cellradius);
+
         if(rhborder && i + 1 < rhsplits)
         {
             GLOBALPARAMF(bordercenter, 0.5f, 0.5f, float(i+1 + 0.5f)/rhsplits);
             GLOBALPARAMF(borderrange, 0.5f - 0.5f/(rhgrid+2), 0.5f - 0.5f/(rhgrid+2), (0.5f - 0.5f/(rhgrid+2))/rhsplits);
             GLOBALPARAMF(borderscale, rhgrid+2, rhgrid+2, (rhgrid+2)*rhsplits);
+
             splitinfo &next = splits[i+1];
             loopk(3)
             {
@@ -3792,28 +3811,35 @@ void radiancehints::renderslices()
             }
         }
 
+        uint clearmasks[(RH_MAXGRID+2+31)/32];
+        memset(clearmasks, 0xFF, sizeof(clearmasks));
+
         int sy = rhrect ? i*sh : 0;
         loopjrev(sh)
         {
             int sx = rhrect ? j*sw : 0;
-            if(rhrect)
-            {
-                glViewport(sx, sy, sw, sh);
-                glScissor(sx, sy, sw, sh);
-            }
-            else
-            {
-                glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, rhtex[0], 0, i*sh + j);
-                glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_3D, rhtex[1], 0, i*sh + j);
-                glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_3D, rhtex[2], 0, i*sh + j);
-                glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_3D, rhtex[3], 0, i*sh + j);
-            }
+
+            #define BIND_SLICE do { \
+                if(rhrect) \
+                { \
+                    glViewport(sx, sy, sw, sh); \
+                    glScissor(sx, sy, sw, sh); \
+                } \
+                else \
+                { \
+                    glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, rhtex[0], 0, i*sh + j); \
+                    glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_3D, rhtex[1], 0, i*sh + j); \
+                    glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_3D, rhtex[2], 0, i*sh + j); \
+                    glFramebufferTexture3D_(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_3D, rhtex[3], 0, i*sh + j); \
+                } \
+            } while(0)
 
             float x1 = split.center.x - split.bounds, x2 = split.center.x + split.bounds,
                   y1 = split.center.y - split.bounds, y2 = split.center.y + split.bounds,
                   z = split.center.z - split.bounds + (j-rhborder+0.5f)*step,
                   vx1 = -1 + rhborder*2.0f/(rhgrid+2), vx2 = 1 - rhborder*2.0f/(rhgrid+2), vy1 = -1 + rhborder*2.0f/(rhgrid+2), vy2 = 1 - rhborder*2.0f/(rhgrid+2),
                   tx1 = x1, tx2 = x2, ty1 = y1, ty2 = y2;
+            bool clipped = false;
 
             if(rhborder && i + 1 < rhsplits)
             {
@@ -3836,8 +3862,7 @@ void radiancehints::renderslices()
                         bvx2 += 2*(btx2 - bx2)/(bx2 - bx1);
                         bvy1 += 2*(bty1 - by1)/(by2 - by1);
                         bvy2 += 2*(bty2 - by2)/(by2 - by1);
-
-                        glClear(GL_COLOR_BUFFER_BIT);
+                        clipped = true;
                     }
                 }
 
@@ -3847,17 +3872,26 @@ void radiancehints::renderslices()
                 bty2 = bty2*next.scale.y + next.offset.y;
                 bz = bz*next.scale.z + next.offset.z;
 
+                BIND_SLICE;
+                if(clipped) glClear(GL_COLOR_BUFFER_BIT);
+
                 SETSHADER(radiancehintsborder);
                 rhquad(bvx1, bvy1, bvx2, bvy2, btx1, bty1, btx2, bty2, bz);
 
-                rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
+                clearmasks[j/32] &= ~(1 << (j%32));
             }
 
         noborder:
             if(j < rhborder || j >= rhgrid + rhborder)
             {
             skipped:
-                if(rhclearmasks[0][i][j/32] & (1 << (j%32)) && (!rhrect || (cx < 0 && !(rhclearmasks[1][i][j/32] & (1 << (j%32)))))) { glClear(GL_COLOR_BUFFER_BIT); cx = sx; cy = sy; }
+                if(clearmasks[j/32] & (1 << (j%32)) && (!rhrect || cx < 0) && !(rhclearmasks[0][i][j/32] & (1 << (j%32))))
+                {
+                    BIND_SLICE;
+                    glClear(GL_COLOR_BUFFER_BIT);
+                    cx = sx;
+                    cy = sy;
+                }
                 continue;
             }
 
@@ -3866,22 +3900,25 @@ void radiancehints::renderslices()
                 if(z < cmin.z || z > cmax.z) goto skipped;
                 if(x1 < cmin.x || x2 > cmax.x || y1 < cmin.y || y2 > cmax.y)
                 {
-                    if(rhclearmasks[0][i][j/32] & (1 << (j%32))) glClear(GL_COLOR_BUFFER_BIT);
                     tx1 = max(x1, cmin.x);
                     tx2 = min(x2, cmax.x);
                     ty1 = max(y1, cmin.y);
                     ty2 = min(y2, cmax.y);
-                    if(tx1 > tx2 || ty1 > ty2) continue;
+                    if(tx1 > tx2 || ty1 > ty2) goto skipped;
                     vx1 += 2*rhgrid/float(sw)*(tx1 - x1)/(x2 - x1);
                     vx2 += 2*rhgrid/float(sw)*(tx2 - x2)/(x2 - x1);
                     vy1 += 2*rhgrid/float(sh)*(ty1 - y1)/(y2 - y1);
                     vy2 += 2*rhgrid/float(sh)*(ty2 - y2)/(y2 - y1);
+                    clipped = true;
                 }
-                else if(rhborder && i + 1 >= rhsplits) glClear(GL_COLOR_BUFFER_BIT);
             }
-            else if(rhborder && i + 1 >= rhsplits) glClear(GL_COLOR_BUFFER_BIT);
 
-            rhclearmasks[0][i][j/32] &= ~(1 << (j%32));
+            if(clearmasks[j/32] & (1 << (j%32)))
+            {
+                BIND_SLICE;
+                if(clipped || (rhborder && i + 1 >= rhsplits)) glClear(GL_COLOR_BUFFER_BIT); 
+                clearmasks[j/32] &= ~(1 << (j%32));
+            }
 
             if(rhcache && z > split.cached.z - split.bounds && z < split.cached.z + split.bounds)
             {
@@ -3967,15 +4004,15 @@ void radiancehints::renderslices()
             glBindTexture(GL_TEXTURE_3D, rhtex[k]);
             loopj(sh)
             {
-                if(rhclearmasks[0][i][j/32] & (1 << (j%32)))
+                if(clearmasks[j/32] & (1 << (j%32)))
                 {
-                    if(!(rhclearmasks[1][i][j/32] & (1 << (j%32)))) glCopyTexSubImage3D_(GL_TEXTURE_3D, 0, 0, 0, sy+j, cx, cy, sw, sh);
+                    if(!(rhclearmasks[0][i][j/32] & (1 << (j%32)))) glCopyTexSubImage3D_(GL_TEXTURE_3D, 0, 0, 0, sy+j, cx, cy, sw, sh);
                     continue;
                 }
                 glCopyTexSubImage3D_(GL_TEXTURE_3D, 0, 0, 0, sy+j, j*sw, sy, sw, sh);
             }
         }
-        memcpy(rhclearmasks[1][i], rhclearmasks[0][i], sizeof(rhclearmasks[0][i]));
+        memcpy(rhclearmasks[0][i], clearmasks, sizeof(clearmasks));
     }
 
     gle::disable();
