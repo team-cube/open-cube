@@ -2138,9 +2138,9 @@ struct radiancehints
         float nearplane, farplane;
         vec offset, scale;
         vec center; float bounds;
-        vec cached; int age;
+        vec cached; bool copied;
 
-        splitinfo() : center(-1e16f, -1e16f, -1e16f), bounds(-1e16f), cached(-1e16f, -1e16f, -1e16f), age(0) {}
+        splitinfo() : center(-1e16f, -1e16f, -1e16f), bounds(-1e16f), cached(-1e16f, -1e16f, -1e16f), copied(false) {}
 
         void clearcache() { bounds = -1e16f; }
     } splits[RH_MAXSPLITS];
@@ -2194,16 +2194,7 @@ void radiancehints::setup()
         offset.x = floor(offset.x);
         offset.y = floor(offset.y);
         offset.z = floor(offset.z);
-        if(split.bounds == pradius)
-        {
-            split.age = split.cached == split.center ? 2 : 1;
-            split.cached = split.center;
-        }
-        else
-        {
-            split.age = 0;
-            split.cached = vec(-1e16f, -1e16f, -1e16f);
-        }
+        split.cached = split.bounds == pradius ? split.center : vec(-1e16f, -1e16f, -1e16f);
         split.center = vec(offset).mul(step).add(pradius);
         split.bounds = pradius;
 
@@ -3784,12 +3775,14 @@ void radiancehints::renderslices()
             dmin.y > split.center.y + split.bounds || dmax.y < split.center.y - split.bounds ||
             dmin.z > split.center.z + split.bounds || dmax.z < split.center.z - split.bounds))
         {
-            if(rhrect || !rhcache || split.age > 1) continue;
+            if(rhrect || !rhcache || split.copied) continue;
+            split.copied = true;
             loopk(4) glCopyImageSubData_(rhtex[4+k], GL_TEXTURE_3D, 0, 0, 0, i*sh, rhtex[k], GL_TEXTURE_3D, 0, 0, 0, i*sh, sw, sh, sh);
             continue;
         }
 
         prevcached = false;
+        split.copied = false;
 
         GLOBALPARAM(rhcenter, split.center);
         GLOBALPARAMF(rhbounds, split.bounds);
