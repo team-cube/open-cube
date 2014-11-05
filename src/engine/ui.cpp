@@ -633,10 +633,10 @@ namespace UI
         {
             vec2 s1 = vec2(x1, y2).mul(sscale).add(soffset),
                  s2 = vec2(x2, y1).mul(sscale).add(soffset);
-            sx1 = int(floor(s1.x*hudw));
-            sy1 = int(floor(s1.y*hudh));
-            sx2 = int(ceil(s2.x*hudw));
-            sy2 = int(ceil(s2.y*hudh));
+            sx1 = int(floor(s1.x*hudw + 0.5f));
+            sy1 = int(floor(s1.y*hudh + 0.5f));
+            sx2 = int(floor(s2.x*hudw + 0.5f));
+            sy2 = int(floor(s2.y*hudh + 0.5f));
             if(clip)
             {
                 sx1 = clamp(sx1, 0, hudw);
