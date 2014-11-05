@@ -629,14 +629,21 @@ namespace UI
             soffset = vec2(hudmatrix.d.x, hudmatrix.d.y).mul(0.5f).add(0.5f);
         }
 
-        void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2)
+        void calcscissor(float x1, float y1, float x2, float y2, int &sx1, int &sy1, int &sx2, int &sy2, bool clip = true)
         {
             vec2 s1 = vec2(x1, y2).mul(sscale).add(soffset),
                  s2 = vec2(x2, y1).mul(sscale).add(soffset);
-            sx1 = clamp(int(floor(s1.x*hudw)), 0, hudw);
-            sy1 = clamp(int(floor(s1.y*hudh)), 0, hudh);
-            sx2 = clamp(int(ceil(s2.x*hudw)), 0, hudw);
-            sy2 = clamp(int(ceil(s2.y*hudh)), 0, hudh);
+            sx1 = int(floor(s1.x*hudw));
+            sy1 = int(floor(s1.y*hudh));
+            sx2 = int(ceil(s2.x*hudw));
+            sy2 = int(ceil(s2.y*hudh));
+            if(clip)
+            {
+                sx1 = clamp(sx1, 0, hudw);
+                sy1 = clamp(sy1, 0, hudh);
+                sx2 = clamp(sx2, 0, hudw);
+                sy2 = clamp(sy2, 0, hudh);
+            }
         }
 
         float calcabovehud()
@@ -2775,7 +2782,7 @@ namespace UI
 
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
-            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
@@ -2824,7 +2831,7 @@ namespace UI
 
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
-            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
@@ -2867,7 +2874,7 @@ namespace UI
 
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
             int sx1, sy1, sx2, sy2;
-            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2);
+            window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
             glDisable(GL_BLEND);
             gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);

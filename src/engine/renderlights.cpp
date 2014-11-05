@@ -4747,7 +4747,7 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
     GLERROR;
 
     glBindFramebuffer_(GL_FRAMEBUFFER, ovr::lensfbo[viewidx]);
-    glViewport(x, y, w, h);
+    glViewport(0, 0, hudw, hudh);
 
     if(msaasamples) glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mscolortex);
     else glBindTexture(GL_TEXTURE_RECTANGLE, gcolortex);
@@ -4769,12 +4769,15 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
     LOCALPARAMF(cutout, background ? 0 : 1);
 
     if(scissor) glEnable(GL_SCISSOR_TEST);
-    screenquad(vieww, viewh);
+
+    int sx = clamp(x, 0, hudw), sy = clamp(y, 0, hudh), 
+        sw = clamp(x + w, 0, hudw) - sx, sh = clamp(y + h, 0, hudh) - sy;
+    float sxk = 2.0f/hudw, syk = 2.0f/hudh, txk = vieww/float(w), tyk = viewh/float(h);
+    hudquad(sx*sxk - 1, sy*syk - 1, sw*sxk, sh*syk, (sx-x)*txk, (sy-y)*tyk, sw*txk, sh*tyk);
+
     if(scissor) glDisable(GL_SCISSOR_TEST);
 
     GLERROR;
-
-    glViewport(0, 0, hudw, hudh);
 }
 
 void shadesky()
