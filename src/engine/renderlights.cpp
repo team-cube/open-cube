@@ -4766,7 +4766,7 @@ void shademodelpreview(int x, int y, int w, int h, bool background, bool scissor
 
     SETSHADER(modelpreview);
 
-    LOCALPARAMF(cutout, background ? 0 : 1);
+    LOCALPARAMF(cutout, background ? -1 : 0);
 
     if(scissor) glEnable(GL_SCISSOR_TEST);
 
