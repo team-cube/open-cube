@@ -1269,15 +1269,23 @@ void linkvslotshader(VSlot &s, bool load)
     }
 }
 
-bool shouldreuseparams(Shader &s, VSlot &p)
+bool shouldreuseparams(Slot &s, VSlot &p)
 {
-    loopv(s.defaultparams)
+    if(!s.shader) return false;
+    
+    Shader &sh = *s.shader;
+    loopv(sh.defaultparams)
     {
-        SlotShaderParamState &param = s.defaultparams[i];
+        SlotShaderParamState &param = sh.defaultparams[i];
         if(param.flags & SlotShaderParam::REUSE)
         {
             const float *val = findslotparam(p, param.name);
-            if(val && memcmp(param.val, val, sizeof(param.val))) return true;
+            if(val && memcmp(param.val, val, sizeof(param.val)))
+            {
+                loopvj(s.params) if(s.params[j].name == param.name) goto notreused; 
+                return true;
+            notreused:;
+            }
         }
     }
     return false;

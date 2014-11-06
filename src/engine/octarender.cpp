@@ -355,7 +355,7 @@ struct vacollect : verthash
             const sortval &t = indices[k];
             if(t.tris.empty()) continue;
             decalkey tkey(key);
-            if(shouldreuseparams(*s.shader, lookupvslot(k.tex, false))) tkey.reuse = k.tex;
+            if(shouldreuseparams(s, lookupvslot(k.tex, false))) tkey.reuse = k.tex;
             for(int j = 0; j < t.tris.length(); j += 3)
             {
                 const vertex &t0 = verts[t.tris[j]], &t1 = verts[t.tris[j+1]], &t2 = verts[t.tris[j+2]];
