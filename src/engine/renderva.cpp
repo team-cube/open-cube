@@ -2107,6 +2107,8 @@ struct decalbatch
         if(es.envmap > b.es.envmap) return 1;
         if(slot.Slot::params.length() < b.slot.Slot::params.length()) return -1;
         if(slot.Slot::params.length() > b.slot.Slot::params.length()) return 1;
+        if(es.reuse < b.es.reuse) return -1;
+        if(es.reuse > b.es.reuse) return 1;
         return 0;
     }
 };
@@ -2271,7 +2273,13 @@ static void changeslottmus(decalrenderer &cur, int pass, DecalSlot &slot)
 static inline void changeshader(decalrenderer &cur, int pass, decalbatch &b)
 {
     DecalSlot &slot = b.slot;
-    if(pass) slot.shader->setvariant(0, 0, slot);
+    if(b.es.reuse)
+    {
+        VSlot &reuse = lookupvslot(b.es.reuse);
+        if(pass) slot.shader->setvariant(0, 0, slot, reuse);
+        else slot.shader->set(slot, reuse);
+    }
+    else if(pass) slot.shader->setvariant(0, 0, slot);
     else slot.shader->set(slot);
     cur.globals = GlobalShaderParamState::nextversion;
 }
