@@ -2107,8 +2107,6 @@ struct decalbatch
         if(es.envmap > b.es.envmap) return 1;
         if(slot.Slot::params.length() < b.slot.Slot::params.length()) return -1;
         if(slot.Slot::params.length() > b.slot.Slot::params.length()) return 1;
-        if(es.orient < b.es.orient) return -1;
-        if(es.orient > b.es.orient) return 1;
         return 0;
     }
 };
