@@ -2692,7 +2692,7 @@ static inline void setlightparams(int i, const lightinfo &l)
 {
     lightposv[i] = vec4(l.o, 1).div(l.radius);
     lightcolorv[i] = vec(l.color).mul(2*ldrscaleb);
-    if(l.spot > 0) spotparamsv[i] = vec4(l.dir, 1/(1 - cos360(l.spot)));
+    if(l.spot > 0) spotparamsv[i] = vec4(vec(l.dir).neg(), 1/(1 - cos360(l.spot)));
     if(l.shadowmap >= 0)
     {
         shadowmapinfo &sm = shadowmaps[l.shadowmap];
@@ -2702,7 +2702,7 @@ static inline void setlightparams(int i, const lightinfo &l)
         if(l.spot > 0)
         {
             shadowparamsv[i] = vec4(
-                0.5f * sm.size * cotan360(l.spot),
+                -0.5f * sm.size * cotan360(l.spot),
                 (-smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias),
                 1 / (1 + fabs(l.dir.z)),
                 0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
@@ -2710,7 +2710,7 @@ static inline void setlightparams(int i, const lightinfo &l)
         else
         {
             shadowparamsv[i] = vec4(
-                0.5f * (sm.size - border),
+                -0.5f * (sm.size - border),
                 -smnearclip * smfarclip / (smfarclip - smnearclip) - 0.5f*bias,
                 sm.size,
                 0.5f + 0.5f * (smfarclip + smnearclip) / (smfarclip - smnearclip));
