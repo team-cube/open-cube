@@ -1382,18 +1382,24 @@ static void changeslottmus(renderstate &cur, int pass, Slot &slot, VSlot &vslot)
     if(cur.alphaing)
     {
         float alpha = cur.alphaing > 1 ? vslot.alphafront : vslot.alphaback;
-        if(cur.alphaing > 1 && vslot.refractscale > 0 && (cur.refractscale != vslot.refractscale || cur.refractcolor != vslot.refractcolor || cur.alphascale != alpha))
+        if(cur.alphascale != alpha)
+        {
+            cur.alphascale = alpha;
+            cur.refractscale = 0;
+            goto changecolorparams;
+        }
+        if(cur.colorscale != vslot.colorscale)
+        {
+        changecolorparams:
+            cur.colorscale = vslot.colorscale;
+            GLOBALPARAMF(colorparams, alpha*vslot.colorscale.x, alpha*vslot.colorscale.y, alpha*vslot.colorscale.z, alpha);
+        }
+        if(cur.alphaing > 1 && vslot.refractscale > 0 && (cur.refractscale != vslot.refractscale || cur.refractcolor != vslot.refractcolor))
         {
             cur.refractscale = vslot.refractscale;
             cur.refractcolor = vslot.refractcolor;
             float refractscale = 0.5f/ldrscale*(1-alpha);
             GLOBALPARAMF(refractparams, vslot.refractcolor.x*refractscale, vslot.refractcolor.y*refractscale, vslot.refractcolor.z*refractscale, vslot.refractscale*viewh);
-        }
-        if(cur.colorscale != vslot.colorscale || cur.alphascale != alpha)
-        {
-            cur.colorscale = vslot.colorscale;
-            cur.alphascale = alpha;
-            GLOBALPARAMF(colorparams, alpha*vslot.colorscale.x, alpha*vslot.colorscale.y, alpha*vslot.colorscale.z, alpha);
         }
     }
     else if(cur.colorscale != vslot.colorscale)
