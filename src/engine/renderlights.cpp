@@ -4544,7 +4544,7 @@ void rendertransparent()
         case 2:
             if(hasalphavas&2) renderalphageom(2);
             if(hasmats&2) rendersolidmaterials();
-            renderstains(STAINBUF_TRANSPARENT, true);
+            renderstains(STAINBUF_TRANSPARENT, true, layer+1);
             break;
         case 3:
             rendertransparentmodelbatches(layer+1);
@@ -4568,12 +4568,7 @@ void rendertransparent()
         switch(layer)
         {
         case 2:
-            if(ghasstencil)
-            {
-                glStencilFunc(GL_EQUAL, layer+1, 0x07);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-            }
-            renderstains(STAINBUF_TRANSPARENT, false);
+            renderstains(STAINBUF_TRANSPARENT, false, layer+1);
             break;
         }
     }

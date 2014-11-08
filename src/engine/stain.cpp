@@ -307,10 +307,16 @@ struct stainrenderer
         }
     }
 
-    static void setuprenderstate(int sbuf, bool gbuf)
+    static void setuprenderstate(int sbuf, bool gbuf, int layer)
     {
         if(gbuf) maskgbuffer(sbuf == STAINBUF_TRANSPARENT ? "cg" : "c");
         else zerofogcolor();
+
+        if(layer && ghasstencil)
+        {
+            glStencilFunc(GL_EQUAL, layer, 0x07);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
@@ -324,7 +330,7 @@ struct stainrenderer
         gle::enablecolor();
     }
 
-    static void cleanuprenderstate(int sbuf, bool gbuf)
+    static void cleanuprenderstate(int sbuf, bool gbuf, int layer)
     {
         glBindBuffer_(GL_ARRAY_BUFFER, 0);
 
@@ -750,7 +756,7 @@ void clearstains()
 
 VARNP(stains, showstains, 0, 1, 1);
 
-void renderstains(int sbuf, bool gbuf)
+bool renderstains(int sbuf, bool gbuf, int layer)
 {
     bool rendered = false;
     loopi(sizeof(stains)/sizeof(stains[0]))
@@ -767,12 +773,13 @@ void renderstains(int sbuf, bool gbuf)
         if(!rendered)
         {
             rendered = true;
-            stainrenderer::setuprenderstate(sbuf, gbuf);
+            stainrenderer::setuprenderstate(sbuf, gbuf, layer);
         }
         d.render(sbuf);
     }
-    if(!rendered) return;
-    stainrenderer::cleanuprenderstate(sbuf, gbuf);
+    if(!rendered) return false;
+    stainrenderer::cleanuprenderstate(sbuf, gbuf, layer);
+    return true;
 }
 
 void cleanupstains()
