@@ -233,13 +233,6 @@ void visiblecubes(bool cull)
     }
 }
 
-static inline bool insideva(const vtxarray *va, const vec &v, int margin = 2)
-{
-    int size = va->size + margin;
-    return v.x>=va->o.x-margin && v.y>=va->o.y-margin && v.z>=va->o.z-margin &&
-           v.x<=va->o.x+size && v.y<=va->o.y+size && v.z<=va->o.z+size;
-}
-
 ///////// occlusion queries /////////////
 
 #define MAXQUERY 2048
@@ -428,12 +421,6 @@ extern int octaentsize;
 
 static octaentities *visiblemms, **lastvisiblemms;
 
-static inline bool insideoe(const octaentities *oe, const vec &v, int margin = 1)
-{
-    return v.x>=oe->bbmin.x-margin && v.y>=oe->bbmin.y-margin && v.z>=oe->bbmin.z-margin &&
-           v.x<=oe->bbmax.x+margin && v.y<=oe->bbmax.y+margin && v.z<=oe->bbmax.z+margin;
-}
-
 void findvisiblemms(const vector<extentity *> &ents)
 {
     visiblemms = NULL;
@@ -526,7 +513,7 @@ void rendermapmodels()
     bool queried = false;
     for(octaentities *oe = visiblemms; oe; oe = oe->next) if(oe->distance<0)
     {
-        oe->query = doquery && !insideoe(oe, camera1->o) ? newquery(oe) : NULL;
+        oe->query = doquery && !camera1->o.insidebb(oe->bbmin, oe->bbmax, 1) ? newquery(oe) : NULL;
         if(!oe->query) continue;
         if(!queried)
         {
@@ -1714,7 +1701,7 @@ void rendergeom()
     {
         for(vtxarray *va = visibleva; va; va = va->next) if(va->texs)
         {
-            if(!insideva(va, camera1->o))
+            if(!camera1->o.insidebb(va->o, va->size, 2))
             {
                 if(va->parent && va->parent->occluded >= OCCLUDE_BB)
                 {

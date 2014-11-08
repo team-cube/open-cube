@@ -215,16 +215,25 @@ struct vec
         t.project(*this).project(s);
     }
 
-    template<class T>
-    bool insidebb(const T &bbmin, const T &bbmax) const
+    template<class T> bool insidebb(const T &bbmin, const T &bbmax) const
     {
         return x >= bbmin.x && x <= bbmax.x && y >= bbmin.y && y <= bbmax.y && z >= bbmin.z && z <= bbmax.z;
     }
 
-    template<class T, class U>
-    bool insidebb(const T &o, U size) const
+    template<class T, class U> bool insidebb(const T &bbmin, const T &bbmax, U margin) const
+    {
+        return x >= bbmin.x-margin && x <= bbmax.x+margin && y >= bbmin.y-margin && y <= bbmax.y+margin && z >= bbmin.z-margin && z <= bbmax.z+margin;
+    }
+
+    template<class T, class U> bool insidebb(const T &o, U size) const
     {
         return x >= o.x && x <= o.x + size && y >= o.y && y <= o.y + size && z >= o.z && z <= o.z + size;
+    }
+
+    template<class T, class U> bool insidebb(const T &o, U size, U margin) const
+    {
+        size += margin;
+        return x >= o.x-margin && x <= o.x + size && y >= o.y-margin && y <= o.y + size && z >= o.z-margin && z <= o.z + size;
     }
 
     template<class T> float dist_to_bb(const T &min, const T &max) const

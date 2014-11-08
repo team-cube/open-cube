@@ -1489,19 +1489,46 @@ extern int smminradius;
 
 struct lightinfo
 {
-    float sx1, sy1, sx2, sy2, sz1, sz2;
     int ent, shadowmap, flags;
     vec o, color;
     float radius;
     vec dir, spotx, spoty;
     int spot;
     float dist;
+    float sx1, sy1, sx2, sy2, sz1, sz2;
     occludequery *query;
-
-    void calcspot(const vec &spotdir, int spotangle)
+    
+    lightinfo() {}
+    lightinfo(const vec &o, const vec &color, float radius, int flags, const vec &dir, int spot)
+      : ent(-1), shadowmap(-1), flags(flags),
+        o(o), color(color), radius(radius),
+        dir(dir), spot(spot), 
+        dist(camera1->o.dist(o)),
+        sx1(-1), sy1(-1), sx2(1), sy2(1), sz1(-1), sz2(1),
+        query(NULL)
     {
-        dir = spotdir;
-        spot = spotangle;
+        if(spot > 0) calcspot();
+        calcscissor();
+    }
+    lightinfo(int i, const extentity *e)
+      : ent(i), shadowmap(-1), flags(e->attr5),
+        o(e->o), color(vec(e->attr2, e->attr3, e->attr4).max(0)), radius(e->attr1),
+        dir(0, 0, 0), spot(0),
+        dist(camera1->o.dist(e->o)),
+        sx1(-1), sy1(-1), sx2(1), sy2(1), sz1(-1), sz2(1),
+        query(NULL)
+    {
+        if(e->attached && e->attached->type == ET_SPOTLIGHT)
+        {
+            dir = vec(e->attached->o).sub(e->o).normalize();
+            spot = clamp(int(e->attached->attr1), 1, 89);
+            calcspot();
+        }
+        calcscissor();
+    }
+        
+    void calcspot()
+    {
         quat orient(dir, vec(0, 0, dir.z < 0 ? -1 : 1));
         spotx = orient.invertedrotate(vec(1, 0, 0));
         spoty = orient.invertedrotate(vec(0, 1, 0));
@@ -1509,17 +1536,50 @@ struct lightinfo
 
     bool noshadow() const { return flags&L_NOSHADOW || radius <= smminradius; }
 
-    void addscissor(float &dx1, float &dy1, float &dx2, float &dy2, float &dz1, float &dz2) const
+    void addscissor(float &dx1, float &dy1, float &dx2, float &dy2) const
     {
         dx1 = min(dx1, sx1);
         dy1 = min(dy1, sy1);
         dx2 = max(dx2, sx2);
         dy2 = max(dy2, sy2);
+    }
+
+    void addscissor(float &dx1, float &dy1, float &dx2, float &dy2, float &dz1, float &dz2) const
+    {
+        addscissor(dx1, dy1, dx2, dy2);
         dz1 = min(dz1, sz1);
         dz2 = max(dz2, sz2);
     }
 
+    bool validscissor() const { return sx1 < sx2 && sy1 < sy2 && sz1 < sz2; }
+
+    bool calcscissor()
+    {
+        if(spot > 0) calcspotscissor(o, radius, dir, spot, spotx, spoty, sx1, sy1, sx2, sy2, sz1, sz2);
+        else calcspherescissor(o, radius, sx1, sy1, sx2, sy2, sz1, sz2);
+        return validscissor();
+    }
+
     bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
+
+    void calcbb(vec &bbmin, vec &bbmax)
+    {
+        if(spot > 0)
+        {
+            float spotscale = radius * tan360(spot);
+            vec up = vec(spotx).mul(spotscale).abs(), right = vec(spoty).mul(spotscale).abs(), center = vec(dir).mul(radius).add(o);
+            bbmin = bbmax = center;
+            bbmin.sub(up).sub(right);
+            bbmax.add(up).add(right);
+            bbmin.min(o);
+            bbmax.max(o);
+        }
+        else
+        {
+            bbmin = vec(o).sub(radius);
+            bbmax = vec(o).add(radius);
+        }
+    }
 };
 
 struct shadowcachekey
@@ -3053,12 +3113,9 @@ void rendervolumetric()
     loopv(lightorder)
     {
         const lightinfo &l = lights[lightorder[i]];
-        if(!(l.flags&L_VOLUMETRIC) || l.sx1 >= l.sx2 || l.sy1 >= l.sy2 || l.sz1 >= l.sz2 || l.checkquery()) continue;
+        if(!(l.flags&L_VOLUMETRIC) || l.checkquery()) continue;
         
-        bsx1 = min(bsx1, l.sx1);
-        bsx2 = max(bsx2, l.sx2);
-        bsy1 = min(bsy1, l.sy1);
-        bsy2 = max(bsy2, l.sy2);
+        l.addscissor(bsx1, bsy1, bsx2, bsy2);
     }
     if(bsx1 >= bsx2 || bsy1 >= bsy2) return;
 
@@ -3102,7 +3159,7 @@ void rendervolumetric()
     loopv(lightorder)
     {
         const lightinfo &l = lights[lightorder[i]];
-        if(!(l.flags&L_VOLUMETRIC) || l.sx1 >= l.sx2 || l.sy1 >= l.sy2 || l.sz1 >= l.sz2 || l.checkquery()) continue;
+        if(!(l.flags&L_VOLUMETRIC) || l.checkquery()) continue;
 
         matrix4 lightmatrix = camprojmatrix;
         lightmatrix.translate(l.o);
@@ -3285,7 +3342,7 @@ void viewlightscissor()
             loopvj(lights) if(lights[j].o == e.o)
             {
                 lightinfo &l = lights[j];
-                if(l.sx1 >= l.sx2 || l.sy1 >= l.sy2 || l.sz1 >= l.sz2) break;
+                if(!l.validscissor()) break;
                 gle::colorf(l.color.x/255, l.color.y/255, l.color.z/255);
                 float x1 = (l.sx1+1)/2*hudw, x2 = (l.sx2+1)/2*hudw,
                       y1 = (1-l.sy1)/2*hudh, y2 = (1-l.sy2)/2*hudh;
@@ -3301,20 +3358,6 @@ void viewlightscissor()
     gle::disable();
 }
 
-static inline bool calclightscissor(lightinfo &l)
-{
-    float sx1 = -1, sy1 = -1, sx2 = 1, sy2 = 1, sz1 = -1, sz2 = 1;
-    if(l.spot > 0) calcspotscissor(l.o, l.radius, l.dir, l.spot, l.spotx, l.spoty, sx1, sy1, sx2, sy2, sz1, sz2);
-    else calcspherescissor(l.o, l.radius, sx1, sy1, sx2, sy2, sz1, sz2);
-    l.sx1 = sx1;
-    l.sx2 = sx2;
-    l.sy1 = sy1;
-    l.sy2 = sy2;
-    l.sz1 = sz1;
-    l.sz2 = sz2;
-    return sx1 < sx2 && sy1 < sy2 && sz1 < sz2;
-}
-
 void collectlights()
 {
     if(lights.length()) return;
@@ -3323,7 +3366,7 @@ void collectlights()
     const vector<extentity *> &ents = entities::getents();
     if(!editmode || !fullbright) loopv(ents)
     {
-        extentity *e = ents[i];
+        const extentity *e = ents[i];
         if(e->type != ET_LIGHT || e->attr1 <= 0) continue;
 
         if(smviscull)
@@ -3332,26 +3375,8 @@ void collectlights()
             if(pvsoccludedsphere(e->o, e->attr1)) continue;
         }
 
-        lightinfo &l = lights.add();
-        l.ent = i;
-        l.shadowmap = -1;
-        l.flags = e->attr5;
-        l.query = NULL;
-        l.o = e->o;
-        l.color = vec(e->attr2, e->attr3, e->attr4).max(0);
-        l.radius = e->attr1;
-        if(e->attached && e->attached->type == ET_SPOTLIGHT)
-        {
-            l.calcspot(vec(e->attached->o).sub(e->o).normalize(), clamp(int(e->attached->attr1), 1, 89));
-        }
-        else
-        {
-            l.dir = vec(0, 0, 0);
-            l.spot = 0;
-        }
-        l.dist = camera1->o.dist(e->o);
-
-        if(calclightscissor(l)) lightorder.add(lights.length()-1);
+        lightinfo &l = lights.add(lightinfo(i, e));
+        if(l.validscissor()) lightorder.add(lights.length()-1);
     }
 
     int numdynlights = 0;
@@ -3367,26 +3392,8 @@ void collectlights()
         int spot, flags;
         if(!getdynlight(i, o, radius, color, dir, spot, flags)) continue;
 
-        lightinfo &l = lights.add();
-        l.ent = -1;
-        l.shadowmap = -1;
-        l.flags = flags;
-        l.query = NULL;
-        l.o = o;
-        l.color = vec(color).mul(255).max(0);
-        l.radius = radius;
-        if(spot > 0)
-        {
-            l.calcspot(dir, spot);
-        }
-        else
-        {
-            l.dir = vec(0, 0, 0);
-            l.spot = 0;
-        }
-        l.dist = camera1->o.dist(o);
-
-        if(calclightscissor(l)) lightorder.add(lights.length()-1);
+        lightinfo &l = lights.add(lightinfo(o, vec(color).mul(255).max(0), radius, flags, dir, spot));
+        if(l.validscissor()) lightorder.add(lights.length()-1);
     }
 
     lightorder.sort(sortlights);
@@ -3398,24 +3405,8 @@ void collectlights()
         lightinfo &l = lights[idx];
         if((l.noshadow() && (!oqvol || !(l.flags&L_VOLUMETRIC))) || l.radius >= worldsize) continue;
         vec bbmin, bbmax;
-        if(l.spot > 0)
-        {
-            float spotscale = l.radius * tan360(l.spot);
-            vec up = vec(l.spotx).mul(spotscale).abs(), right = vec(l.spoty).mul(spotscale).abs(), center = vec(l.dir).mul(l.radius).add(l.o);
-            bbmin = bbmax = center;
-            bbmin.sub(up).sub(right);
-            bbmax.add(up).add(right);
-            bbmin.min(l.o);
-            bbmax.max(l.o);
-        }
-        else
-        {
-            bbmin = vec(l.o).sub(l.radius);
-            bbmax = vec(l.o).add(l.radius);
-        }
-        if(camera1->o.x < bbmin.x - 2 || camera1->o.x > bbmax.x + 2 ||
-           camera1->o.y < bbmin.y - 2 || camera1->o.y > bbmax.y + 2 ||
-           camera1->o.z < bbmin.z - 2 || camera1->o.z > bbmax.z + 2)
+        l.calcbb(bbmin, bbmax);
+        if(!camera1->o.insidebb(bbmin, bbmax, 2))
         {
             l.query = newquery(&l);
             if(l.query)
