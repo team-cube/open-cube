@@ -1491,37 +1491,30 @@ struct lightinfo
 {
     int ent, shadowmap, flags;
     vec o, color;
-    float radius;
+    float radius, dist;
     vec dir, spotx, spoty;
     int spot;
-    float dist;
     float sx1, sy1, sx2, sy2, sz1, sz2;
     occludequery *query;
     
     lightinfo() {}
-    lightinfo(const vec &o, const vec &color, float radius, int flags, const vec &dir, int spot)
+    lightinfo(const vec &o, const vec &color, float radius, int flags = 0, const vec &dir = vec(0, 0, 0), int spot = 0)
       : ent(-1), shadowmap(-1), flags(flags),
-        o(o), color(color), radius(radius),
-        dir(dir), spot(spot), 
-        dist(camera1->o.dist(o)),
-        sx1(-1), sy1(-1), sx2(1), sy2(1), sz1(-1), sz2(1),
-        query(NULL)
+        o(o), color(color), radius(radius), dist(camera1->o.dist(o)),
+        dir(dir), spot(spot), query(NULL)
     {
         if(spot > 0) calcspot();
         calcscissor();
     }
-    lightinfo(int i, const extentity *e)
-      : ent(i), shadowmap(-1), flags(e->attr5),
-        o(e->o), color(vec(e->attr2, e->attr3, e->attr4).max(0)), radius(e->attr1),
-        dir(0, 0, 0), spot(0),
-        dist(camera1->o.dist(e->o)),
-        sx1(-1), sy1(-1), sx2(1), sy2(1), sz1(-1), sz2(1),
-        query(NULL)
+    lightinfo(int i, const extentity &e)
+      : ent(i), shadowmap(-1), flags(e.attr5),
+        o(e.o), color(vec(e.attr2, e.attr3, e.attr4).max(0)), radius(e.attr1), dist(camera1->o.dist(e.o)),
+        dir(0, 0, 0), spot(0), query(NULL)
     {
-        if(e->attached && e->attached->type == ET_SPOTLIGHT)
+        if(e.attached && e.attached->type == ET_SPOTLIGHT)
         {
-            dir = vec(e->attached->o).sub(e->o).normalize();
-            spot = clamp(int(e->attached->attr1), 1, 89);
+            dir = vec(e.attached->o).sub(e.o).normalize();
+            spot = clamp(int(e.attached->attr1), 1, 89);
             calcspot();
         }
         calcscissor();
@@ -1553,11 +1546,12 @@ struct lightinfo
 
     bool validscissor() const { return sx1 < sx2 && sy1 < sy2 && sz1 < sz2; }
 
-    bool calcscissor()
+    void calcscissor()
     {
+        sx1 = sy1 = sz1 = -1;
+        sx2 = sy2 = sz2 = 1;
         if(spot > 0) calcspotscissor(o, radius, dir, spot, spotx, spoty, sx1, sy1, sx2, sy2, sz1, sz2);
         else calcspherescissor(o, radius, sx1, sy1, sx2, sy2, sz1, sz2);
-        return validscissor();
     }
 
     bool checkquery() const { return query && query->owner == this && ::checkquery(query); }
@@ -3375,7 +3369,7 @@ void collectlights()
             if(pvsoccludedsphere(e->o, e->attr1)) continue;
         }
 
-        lightinfo &l = lights.add(lightinfo(i, e));
+        lightinfo &l = lights.add(lightinfo(i, *e));
         if(l.validscissor()) lightorder.add(lights.length()-1);
     }
 
