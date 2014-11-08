@@ -3053,7 +3053,7 @@ void rendervolumetric()
     loopv(lightorder)
     {
         const lightinfo &l = lights[lightorder[i]];
-        if(!(l.flags&L_VOLUMETRIC) || l.sx1 >= l.sx2 || l.sy1 >= l.sy2 || l.sz1 >= l.sz2) continue;
+        if(!(l.flags&L_VOLUMETRIC) || l.sx1 >= l.sx2 || l.sy1 >= l.sy2 || l.sz1 >= l.sz2 || l.checkquery()) continue;
         
         bsx1 = min(bsx1, l.sx1);
         bsx2 = max(bsx2, l.sx2);
@@ -3268,6 +3268,7 @@ void rendervolumetric()
     endtimer(voltimer);
 }
 
+VAR(oqvol, 0, 1, 1);
 VAR(oqlights, 0, 1, 1);
 VAR(debuglightscissor, 0, 0, 1);
 
@@ -3395,7 +3396,7 @@ void collectlights()
     {
         int idx = lightorder[i];
         lightinfo &l = lights[idx];
-        if(l.noshadow() || l.radius >= worldsize) continue;
+        if((l.noshadow() && (!oqvol || !(l.flags&L_VOLUMETRIC))) || l.radius >= worldsize) continue;
         vec bbmin, bbmax;
         if(l.spot > 0)
         {
@@ -3514,19 +3515,19 @@ void packlights()
     {
         int idx = lightorder[i];
         lightinfo &l = lights[idx];
-        if(l.shadowmap >= 0)
+        if(l.checkquery())
         {
-            if(l.checkquery())
+            if(l.shadowmap >= 0)
             {
                 shadowmaps[l.shadowmap].light = -1;
                 l.shadowmap = -1;
-                lightsoccluded++;
-                continue;
             }
+            lightsoccluded++;
+            continue;
         }
-        else if(!l.noshadow() && !smnoshadow)
+
+        if(!l.noshadow() && !smnoshadow && l.shadowmap < 0)
         {
-            if(l.checkquery()) { lightsoccluded++; continue; }
             float prec = smprec, lod;
             int w, h;
             if(l.spot) { w = 1; h = 1; prec *= tan360(l.spot); lod = smspotprec; }
