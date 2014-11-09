@@ -2029,6 +2029,11 @@ bool renderexplicitsky(bool outline)
                     enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 }
+                else if(editmode)
+                {
+                    maskgbuffer("d");
+                    SETSHADER(depth);
+                }
                 else
                 {
                     nocolorshader->set();
@@ -2050,6 +2055,10 @@ bool renderexplicitsky(bool outline)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         disablepolygonoffset(GL_POLYGON_OFFSET_LINE);
         glDepthMask(GL_TRUE);
+    }
+    else if(editmode)
+    {
+        maskgbuffer("cnd");
     }
     else
     {
