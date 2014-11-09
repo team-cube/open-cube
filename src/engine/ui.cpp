@@ -2333,7 +2333,10 @@ namespace UI
 
         void arrowscroll(double dir)
         {
-            double newval = clamp(val + dir*vstep, min(vmin, vmax), max(vmin, vmax));
+            double newval = val + dir*vstep;
+            newval += vstep * (newval < 0 ? -0.5 : 0.5);
+            newval -= fmod(newval, vstep);
+            newval = clamp(newval, min(vmin, vmax), max(vmin, vmax));
             if(val != newval) changeval(newval);
         }
 
