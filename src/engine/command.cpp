@@ -4036,7 +4036,7 @@ ICOMMAND(floor, "f", (float *n), floatret(floor(*n)));
 ICOMMAND(ceil, "f", (float *n), floatret(ceil(*n)));
 ICOMMAND(round, "ff", (float *n, float *k),
 {
-    float step = *k;
+    double step = *k;
     double r = *n;
     if(step > 0)
     {
