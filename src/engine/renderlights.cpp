@@ -2544,62 +2544,88 @@ void resetlights()
     calctilesize();
 }
 
-static vec *lightsphereverts = NULL;
-static GLushort *lightsphereindices = NULL;
-static int lightspherenumverts = 0, lightspherenumindices = 0;
-static GLuint lightspherevbuf = 0, lightsphereebuf = 0;
-
-static void initlightsphere(int slices, int stacks)
+namespace lightsphere
 {
-    lightspherenumverts = (stacks+1)*(slices+1);
-    lightsphereverts = new vec[lightspherenumverts];
-    float ds = 1.0f/slices, dt = 1.0f/stacks, t = 1.0f;
-    loopi(stacks+1)
+    vec *verts = NULL;
+    GLushort *indices = NULL;
+    int numverts = 0, numindices = 0;
+    GLuint vbuf = 0, ebuf = 0;
+
+    void init(int slices, int stacks)
     {
-        float rho = M_PI*(1-t), s = 0.0f;
-        loopj(slices+1)
+        numverts = (stacks+1)*(slices+1);
+        verts = new vec[numverts];
+        float ds = 1.0f/slices, dt = 1.0f/stacks, t = 1.0f;
+        loopi(stacks+1)
         {
-            float theta = j==slices ? 0 : 2*M_PI*s;
-            lightsphereverts[i*(slices+1) + j] = vec(-sin(theta)*sin(rho), -cos(theta)*sin(rho), cos(rho));
-            s += ds;
+            float rho = M_PI*(1-t), s = 0.0f;
+            loopj(slices+1)
+            {
+                float theta = j==slices ? 0 : 2*M_PI*s;
+                verts[i*(slices+1) + j] = vec(-sin(theta)*sin(rho), -cos(theta)*sin(rho), cos(rho));
+                s += ds;
+            }
+            t -= dt;
         }
-        t -= dt;
+
+        numindices = stacks*slices*3*2;
+        indices = new ushort[numindices];
+        GLushort *curindex = indices;
+        loopi(stacks)
+        {
+            loopk(slices)
+            {
+                int j = i%2 ? slices-k-1 : k;
+
+                *curindex++ = i*(slices+1)+j;
+                *curindex++ = i*(slices+1)+j+1;
+                *curindex++ = (i+1)*(slices+1)+j;
+
+                *curindex++ = i*(slices+1)+j+1;
+                *curindex++ = (i+1)*(slices+1)+j+1;
+                *curindex++ = (i+1)*(slices+1)+j;
+            }
+        }
+
+        if(!vbuf) glGenBuffers_(1, &vbuf);
+        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
+        glBufferData_(GL_ARRAY_BUFFER, numverts*sizeof(vec), verts, GL_STATIC_DRAW);
+        DELETEA(verts);
+
+        if(!ebuf) glGenBuffers_(1, &ebuf);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
+        glBufferData_(GL_ELEMENT_ARRAY_BUFFER, numindices*sizeof(GLushort), indices, GL_STATIC_DRAW);
+        DELETEA(indices);
     }
 
-    lightspherenumindices = stacks*slices*3*2;
-    lightsphereindices = new ushort[lightspherenumindices];
-    GLushort *curindex = lightsphereindices;
-    loopi(stacks)
+    void cleanup()
     {
-        loopk(slices)
-        {
-            int j = i%2 ? slices-k-1 : k;
-
-            *curindex++ = i*(slices+1)+j;
-            *curindex++ = i*(slices+1)+j+1;
-            *curindex++ = (i+1)*(slices+1)+j;
-
-            *curindex++ = i*(slices+1)+j+1;
-            *curindex++ = (i+1)*(slices+1)+j+1;
-            *curindex++ = (i+1)*(slices+1)+j;
-        }
+        if(vbuf) { glDeleteBuffers_(1, &vbuf); vbuf = 0; }
+        if(ebuf) { glDeleteBuffers_(1, &ebuf); ebuf = 0; }
     }
 
-    if(!lightspherevbuf) glGenBuffers_(1, &lightspherevbuf);
-    glBindBuffer_(GL_ARRAY_BUFFER, lightspherevbuf);
-    glBufferData_(GL_ARRAY_BUFFER, lightspherenumverts*sizeof(vec), lightsphereverts, GL_STATIC_DRAW);
-    DELETEA(lightsphereverts);
+    void enable()
+    {
+        if(!vbuf) init(8, 4);
+        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
+        gle::vertexpointer(sizeof(vec), verts);
+        gle::enablevertex();
+    }
 
-    if(!lightsphereebuf) glGenBuffers_(1, &lightsphereebuf);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, lightsphereebuf);
-    glBufferData_(GL_ELEMENT_ARRAY_BUFFER, lightspherenumindices*sizeof(GLushort), lightsphereindices, GL_STATIC_DRAW);
-    DELETEA(lightsphereindices);
-}
-
-void cleanuplightsphere()
-{
-    if(lightspherevbuf) { glDeleteBuffers_(1, &lightspherevbuf); lightspherevbuf = 0; }
-    if(lightsphereebuf) { glDeleteBuffers_(1, &lightsphereebuf); lightsphereebuf = 0; }
+    void draw()
+    {
+        glDrawRangeElements_(GL_TRIANGLES, 0, numverts-1, numindices, GL_UNSIGNED_SHORT, indices);
+        xtraverts += numindices;
+        glde++;
+    }
+    
+    void disable()
+    {
+        gle::disablevertex();
+        glBindBuffer_(GL_ARRAY_BUFFER, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 }
 
 VAR(depthtestlights, 0, 2, 2);
@@ -2815,11 +2841,7 @@ static void rendersunpass(Shader *s, int stencilref, bool transparent, float bsx
 
 static void renderlightsnobatch(Shader *s, int stencilref, bool transparent, float bsx1, float bsy1, float bsx2, float bsy2)
 {
-    if(!lightspherevbuf) initlightsphere(8, 4);
-    glBindBuffer_(GL_ARRAY_BUFFER, lightspherevbuf);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, lightsphereebuf);
-    gle::vertexpointer(sizeof(vec), lightsphereverts);
-    gle::enablevertex();
+    lightsphere::enable();
 
     glEnable(GL_SCISSOR_TEST);
 
@@ -2865,9 +2887,7 @@ static void renderlightsnobatch(Shader *s, int stencilref, bool transparent, flo
                 glCullFace(GL_BACK);
             }
 
-            glDrawRangeElements_(GL_TRIANGLES, 0, lightspherenumverts-1, lightspherenumindices, GL_UNSIGNED_SHORT, lightsphereindices);
-            xtraverts += lightspherenumindices;
-            glde++;
+            lightsphere::draw();
 
             lightpassesused++;
         }
@@ -2884,9 +2904,7 @@ static void renderlightsnobatch(Shader *s, int stencilref, bool transparent, flo
 
     glDisable(GL_SCISSOR_TEST);
 
-    gle::disablevertex();
-    glBindBuffer_(GL_ARRAY_BUFFER, 0);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
+    lightsphere::disable();
 }
 
 static void renderlightbatches(Shader *s, int stencilref, bool transparent, float bsx1, float bsy1, float bsx2, float bsy2, const uint *tilemask)
@@ -3141,11 +3159,7 @@ void rendervolumetric()
     if(!depthtestlights) glDisable(GL_DEPTH_TEST);
     else glDepthMask(GL_FALSE);
 
-    if(!lightspherevbuf) initlightsphere(8, 4);
-    glBindBuffer_(GL_ARRAY_BUFFER, lightspherevbuf);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, lightsphereebuf);
-    gle::vertexpointer(sizeof(vec), lightsphereverts);
-    gle::enablevertex();
+    lightsphere::enable();
 
     glEnable(GL_SCISSOR_TEST);
 
@@ -3217,9 +3231,7 @@ void rendervolumetric()
             glCullFace(GL_BACK);
         }
 
-        glDrawRangeElements_(GL_TRIANGLES, 0, lightspherenumverts-1, lightspherenumindices, GL_UNSIGNED_SHORT, lightsphereindices);
-        xtraverts += lightspherenumindices;
-        glde++;
+        lightsphere::draw();
     }
     
     if(!outside)
@@ -3228,9 +3240,7 @@ void rendervolumetric()
         glCullFace(GL_BACK);
     }
 
-    gle::disablevertex();
-    glBindBuffer_(GL_ARRAY_BUFFER, 0);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
+    lightsphere::disable();
 
     if(depthtestlights)
     {
@@ -4833,7 +4843,7 @@ void cleanuplights()
     cleanupvolumetric();
     cleanupshadowatlas();
     cleanupradiancehints();
-    cleanuplightsphere();
+    lightsphere::cleanup();
     cleanupaa();
 }
 
