@@ -200,6 +200,8 @@ struct Shader
 
     static inline bool isnull(const Shader *s) { return !s; }
 
+    bool isnull() const { return isnull(this); }
+
     int numvariants(int row) const
     {
         if(row < 0 || row >= MAXVARIANTROWS || !variantrows) return 0;
@@ -234,14 +236,14 @@ struct Shader
 
     void setvariant(int col, int row)
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         setvariant_(col, row);
         lastshader->flushparams();
     }
 
     void setvariant(int col, int row, Slot &slot)
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         setvariant_(col, row);
         lastshader->flushparams(&slot);
         lastshader->setslotparams(slot);
@@ -249,7 +251,7 @@ struct Shader
 
     void setvariant(int col, int row, Slot &slot, VSlot &vslot)
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         setvariant_(col, row);
         lastshader->flushparams(&slot);
         lastshader->setslotparams(slot, vslot);
@@ -262,14 +264,14 @@ struct Shader
 
     void set()
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         set_();
         lastshader->flushparams();
     }
 
     void set(Slot &slot)
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         set_();
         lastshader->flushparams(&slot);
         lastshader->setslotparams(slot);
@@ -277,7 +279,7 @@ struct Shader
 
     void set(Slot &slot, VSlot &vslot)
     {
-        if(isnull(this) || !loaded()) return;
+        if(isnull() || !loaded()) return;
         set_();
         lastshader->flushparams(&slot);
         lastshader->setslotparams(slot, vslot);
