@@ -223,11 +223,11 @@ struct fireballrenderer : listrenderer
         LOCALPARAMF(texgenT, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
 
         m.rotate(rotangle*RAD, vec(-rotdir.x, rotdir.y, -rotdir.z));
-        m.scale(-psize, psize, -psize);
+        m.scale(-psize, psize, inside ? psize : -psize);
         m.mul(camprojmatrix, m);
         LOCALPARAM(explosionmatrix, m);
 
-        LOCALPARAMF(center, o.x, o.y, o.z, inside ? -1 : 1);
+        LOCALPARAM(center, o);
         if(2*(p->size + pmax)*WOBBLE >= softexplosionblend)
         {
             LOCALPARAMF(softparams, -1.0f/softexplosionblend, 0, inside ? blend/(2*255.0f) : 0);
