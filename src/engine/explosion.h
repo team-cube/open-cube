@@ -1,95 +1,6 @@
 VARP(softexplosion, 0, 1, 1);
 VARP(softexplosionblend, 1, 16, 64);
 
-//cache our unit hemisphere
-namespace hemisphere
-{
-    GLushort *indices = NULL;
-    vec *verts = NULL;
-    int numverts = 0, numindices = 0;
-    GLuint vbuf = 0, ebuf = 0;
-
-    void subdivide(int depth, int face);
-
-    void genface(int depth, int i1, int i2, int i3)
-    {
-        int face = numindices; numindices += 3;
-        indices[face]   = i1;
-        indices[face+1] = i2;
-        indices[face+2] = i3;
-        subdivide(depth, face);
-    }
-
-    void subdivide(int depth, int face)
-    {
-        if(depth-- <= 0) return;
-        int idx[6];
-        loopi(3) idx[i] = indices[face+i];
-        loopi(3)
-        {
-            int curvert = numverts++;
-            verts[curvert] = vec(verts[idx[i]]).add(verts[idx[(i+1)%3]]).normalize(); //push on to unit sphere
-            idx[3+i] = curvert;
-            indices[face+i] = curvert;
-        }
-        subdivide(depth, face);
-        loopi(3) genface(depth, idx[i], idx[3+i], idx[3+(i+2)%3]);
-    }
-
-    //subdiv version wobble much more nicely than a lat/longitude version
-    void init(int hres, int depth)
-    {
-        const int tris = hres << (2*depth);
-        numverts = numindices = 0;
-        verts = new vec[tris+1];
-        indices = new GLushort[tris*3];
-        verts[numverts++] = vec(0.0f, 0.0f, 1.0f); //build initial 'hres' sided pyramid
-        loopi(hres) verts[numverts++] = vec(sincos360[(360*i)/hres], 0.0f);
-        loopi(hres) genface(depth, 0, i+1, 1+(i+1)%hres);
-
-        if(!vbuf) glGenBuffers_(1, &vbuf);
-        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
-        glBufferData_(GL_ARRAY_BUFFER, numverts*sizeof(vec), verts, GL_STATIC_DRAW);
-        DELETEA(verts);
-
-        if(!ebuf) glGenBuffers_(1, &ebuf);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
-        glBufferData_(GL_ELEMENT_ARRAY_BUFFER, numindices*sizeof(GLushort), indices, GL_STATIC_DRAW);
-        DELETEA(indices);
-    }
-
-    void cleanup()
-    {
-        if(vbuf) { glDeleteBuffers_(1, &vbuf); vbuf = 0; }
-        if(ebuf) { glDeleteBuffers_(1, &ebuf); ebuf = 0; }
-    }
-
-    void enable()
-    {
-        if(!vbuf) init(5, 2);
-        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
-
-        gle::vertexpointer(sizeof(vec), verts);
-        gle::enablevertex();
-    }
-
-    void draw()
-    {
-        glDrawRangeElements_(GL_TRIANGLES, 0, numverts-1, numindices, GL_UNSIGNED_SHORT, indices);
-        xtraverts += numindices;
-        glde++;
-    }
-
-    void disable()
-    {
-        gle::disablevertex();
-
-        glBindBuffer_(GL_ARRAY_BUFFER, 0);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-}
-
 static GLuint expmodtex[2] = {0, 0};
 static GLuint lastexpmodtex = 0;
 
@@ -208,22 +119,16 @@ namespace sphere
     }
 }
 
-VARP(explosion2d, 0, 0, 1);
-
 static void setupexplosion()
 {
     if(!expmodtex[0]) expmodtex[0] = createexpmodtex(64, 0);
     if(!expmodtex[1]) expmodtex[1] = createexpmodtex(64, 0.25f);
     lastexpmodtex = 0;
 
-    if(softparticles && softexplosion)
-    {
-        if(explosion2d) SETSHADER(explosion2dsoft); else SETSHADER(explosion3dsoft);
-    }
-    else if(explosion2d) SETSHADER(explosion2d); else SETSHADER(explosion3d);
+    if(softparticles && softexplosion) SETSHADER(explosionsoft);
+    else SETSHADER(explosion);
 
-    if(explosion2d) hemisphere::enable();
-    else sphere::enable();
+    sphere::enable();
 }
 
 static void drawexplosion(bool inside, float r, float g, float b, float a)
@@ -235,45 +140,23 @@ static void drawexplosion(bool inside, float r, float g, float b, float a)
         glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
         glActiveTexture_(GL_TEXTURE0);
     }
-    if(!explosion2d)
-    {
-        LOCALPARAMF(side, inside ? -1 : 1);
-        loopi(inside ? 2 : 1)
-        {
-            gle::colorf(r, g, b, i ? a/2 : a);
-            if(i) glDepthFunc(GL_GEQUAL);
-            sphere::draw();
-            if(i) glDepthFunc(GL_LESS);
-        }
-        return;
-    }
     loopi(inside ? 2 : 1)
     {
         gle::colorf(r, g, b, i ? a/2 : a);
-        LOCALPARAMF(side, 1);
         if(i) glDepthFunc(GL_GEQUAL);
-        if(inside)
-        {
-            glCullFace(GL_FRONT);
-            hemisphere::draw();
-            glCullFace(GL_BACK);
-            LOCALPARAMF(side, -1);
-        }
-        hemisphere::draw();
+        sphere::draw();
         if(i) glDepthFunc(GL_LESS);
     }
 }
 
 static void cleanupexplosion()
 {
-    if(explosion2d) hemisphere::disable();
-    else sphere::disable();
+    sphere::disable();
 }
 
 static void deleteexplosions()
 {
     loopi(2) if(expmodtex[i]) { glDeleteTextures(1, &expmodtex[i]); expmodtex[i] = 0; }
-    hemisphere::cleanup();
     sphere::cleanup();
 }
 
@@ -324,37 +207,27 @@ struct fireballrenderer : listrenderer
 
         float yaw = inside ? camera1->yaw : atan2(oc.y, oc.x)/RAD - 90,
         pitch = (inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90;
-        vec rotdir;
+
+        vec s(1, 0, 0), t(0, 1, 0);
+        s.rotate_around_x(pitch*-RAD);
+        s.rotate_around_z(yaw*-RAD);
+        t.rotate_around_x(pitch*-RAD);
+        t.rotate_around_z(yaw*-RAD);
+
+        vec rotdir = vec(-1, 1, -1).normalize();
         float rotangle = lastmillis/1000.0f*143;
-        if(explosion2d)
-        {
-            m.rotate_around_z(yaw*RAD);
-            m.rotate_around_x(pitch*RAD);
-            rotdir = vec(0, 0, 1);
-        }
-        else
-        {
-            vec s(1, 0, 0), t(0, 1, 0);
-            s.rotate_around_x(pitch*-RAD);
-            s.rotate_around_z(yaw*-RAD);
-            t.rotate_around_x(pitch*-RAD);
-            t.rotate_around_z(yaw*-RAD);
+        s.rotate(rotangle*-RAD, rotdir);
+        t.rotate(rotangle*-RAD, rotdir);
 
-            rotdir = vec(-1, 1, -1).normalize();
-            s.rotate(rotangle*-RAD, rotdir);
-            t.rotate(rotangle*-RAD, rotdir);
-
-            LOCALPARAMF(texgenS, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
-            LOCALPARAMF(texgenT, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
-        }
+        LOCALPARAMF(texgenS, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
+        LOCALPARAMF(texgenT, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
 
         m.rotate(rotangle*RAD, vec(-rotdir.x, rotdir.y, -rotdir.z));
         m.scale(-psize, psize, -psize);
         m.mul(camprojmatrix, m);
         LOCALPARAM(explosionmatrix, m);
 
-        LOCALPARAM(center, o);
-        LOCALPARAMF(animstate, size, psize, pmax, lastmillis/1000.0f);
+        LOCALPARAMF(center, o.x, o.y, o.z, inside ? -1 : 1);
         if(2*(p->size + pmax)*WOBBLE >= softexplosionblend)
         {
             LOCALPARAMF(softparams, -1.0f/softexplosionblend, 0, inside ? blend/(2*255.0f) : 0);
