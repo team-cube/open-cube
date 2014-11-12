@@ -155,12 +155,10 @@ struct fireballrenderer : listrenderer
             s = vec(dir.y, -dir.x, 0);
             t = vec(dir.x*dir.z, dir.y*dir.z, -mag2/dist);
         }
-        float rotangle = lastmillis/1000.0f*143*RAD;
-        matrix3 rot(rotangle, vec(1/SQRT3, 1/SQRT3, 1/SQRT3));
-        s = rot.transposedtransform(s);
-        t = rot.transposedtransform(t);
-        LOCALPARAM(texgenS, s);
-        LOCALPARAM(texgenT, t);
+
+        matrix3 rot(lastmillis/1000.0f*143*RAD, vec(1/SQRT3, 1/SQRT3, 1/SQRT3));
+        LOCALPARAM(texgenS, rot.transposedtransform(s));
+        LOCALPARAM(texgenT, rot.transposedtransform(t));
 
         matrix4 m(rot, o);
         m.scale(psize, psize, inside ? -psize : psize);
