@@ -1,27 +1,6 @@
 VARP(softexplosion, 0, 1, 1);
 VARP(softexplosionblend, 1, 16, 64);
 
-static GLuint expmodtex[2] = {0, 0};
-static GLuint lastexpmodtex = 0;
-
-static GLuint createexpmodtex(int size, float minval)
-{
-    uchar *data = new uchar[size*size], *dst = data;
-    loop(y, size) loop(x, size)
-    {
-        float dx = 2*float(x)/(size-1) - 1, dy = 2*float(y)/(size-1) - 1;
-        float z = max(0.0f, 1.0f - dx*dx - dy*dy);
-        if(minval) z = sqrtf(z);
-        else loopk(2) z *= z;
-        *dst++ = uchar(max(z, minval)*255);
-    }
-    GLuint tex = 0;
-    glGenTextures(1, &tex);
-    createtexture(tex, size, size, data, 3, 2, hasTRG ? GL_R8 : GL_LUMINANCE8);
-    delete[] data;
-    return tex;
-}
-
 namespace sphere
 {
     struct vert
@@ -119,47 +98,6 @@ namespace sphere
     }
 }
 
-static void setupexplosion()
-{
-    if(!expmodtex[0]) expmodtex[0] = createexpmodtex(64, 0);
-    if(!expmodtex[1]) expmodtex[1] = createexpmodtex(64, 0.25f);
-    lastexpmodtex = 0;
-
-    if(softparticles && softexplosion) SETSHADER(explosionsoft);
-    else SETSHADER(explosion);
-
-    sphere::enable();
-}
-
-static void drawexplosion(bool inside, float r, float g, float b, float a)
-{
-    if(lastexpmodtex != expmodtex[inside ? 1 : 0])
-    {
-        glActiveTexture_(GL_TEXTURE1);
-        lastexpmodtex = expmodtex[inside ? 1 :0];
-        glBindTexture(GL_TEXTURE_2D, lastexpmodtex);
-        glActiveTexture_(GL_TEXTURE0);
-    }
-    loopi(inside ? 2 : 1)
-    {
-        gle::colorf(r, g, b, i ? a/2 : a);
-        if(i) glDepthFunc(GL_GEQUAL);
-        sphere::draw();
-        if(i) glDepthFunc(GL_LESS);
-    }
-}
-
-static void cleanupexplosion()
-{
-    sphere::disable();
-}
-
-static void deleteexplosions()
-{
-    loopi(2) if(expmodtex[i]) { glDeleteTextures(1, &expmodtex[i]); expmodtex[i] = 0; }
-    sphere::cleanup();
-}
-
 static const float WOBBLE = 1.25f;
 
 struct fireballrenderer : listrenderer
@@ -170,17 +108,20 @@ struct fireballrenderer : listrenderer
 
     void startrender()
     {
-        setupexplosion();
+        if(softparticles && softexplosion) SETSHADER(explosionsoft);
+        else SETSHADER(explosion);
+
+        sphere::enable();
     }
 
     void endrender()
     {
-        cleanupexplosion();
+        sphere::disable();
     }
 
     void cleanup()
     {
-        deleteexplosions();
+        sphere::cleanup();
     }
 
     void seedemitter(particleemitter &pe, const vec &o, const vec &d, int fade, float size, int gravity)
@@ -219,8 +160,8 @@ struct fireballrenderer : listrenderer
         s.rotate(rotangle*-RAD, rotdir);
         t.rotate(rotangle*-RAD, rotdir);
 
-        LOCALPARAMF(texgenS, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
-        LOCALPARAMF(texgenT, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
+        LOCALPARAM(texgenS, s);
+        LOCALPARAM(texgenT, t);
 
         m.rotate(rotangle*RAD, vec(-rotdir.x, rotdir.y, -rotdir.z));
         m.scale(-psize, psize, inside ? psize : -psize);
@@ -228,6 +169,7 @@ struct fireballrenderer : listrenderer
         LOCALPARAM(explosionmatrix, m);
 
         LOCALPARAM(center, o);
+        LOCALPARAMF(blendparams, inside ? 0.5f : 4, inside ? 0.25f : 0);
         if(2*(p->size + pmax)*WOBBLE >= softexplosionblend)
         {
             LOCALPARAMF(softparams, -1.0f/softexplosionblend, 0, inside ? blend/(2*255.0f) : 0);
@@ -237,7 +179,16 @@ struct fireballrenderer : listrenderer
             LOCALPARAMF(softparams, 0, -1, inside ? blend/(2*255.0f) : 0);
         }
 
-        drawexplosion(inside, p->color.r*ldrscaleb, p->color.g*ldrscaleb, p->color.b*ldrscaleb, blend/255.0f);
+        vec color = p->color.tocolor().mul(ldrscale);
+        float alpha = blend/255.0f;
+
+        loopi(inside ? 2 : 1)
+        {
+            gle::color(color, i ? alpha/2 : alpha);
+            if(i) glDepthFunc(GL_GEQUAL);
+            sphere::draw();
+            if(i) glDepthFunc(GL_LESS);
+        }
     }
 };
 static fireballrenderer fireballs("media/particle/explosion.png"), pulsebursts("media/particle/pulse_burst.png");
