@@ -138,32 +138,31 @@ struct fireballrenderer : listrenderer
 
         if(isfoggedsphere(psize*WOBBLE, p->o)) return;
 
-        matrix4 m;
-        m.identity();
-        m.translate(o);
+        vec dir = vec(o).sub(camera1->o), s, t;
+        float dist = dir.magnitude();
+        bool inside = dist <= psize*WOBBLE;
+        if(inside)
+        {
+            s = camright;
+            t = camup;
+        }
+        else
+        {
+            float mag2 = dir.magnitude2();
+            dir.x /= mag2;
+            dir.y /= mag2;
+            dir.z /= dist;
+            s = vec(dir.y, -dir.x, 0);
+            t = vec(dir.x*dir.z, dir.y*dir.z, -mag2/dist);
+        }
+        float rotangle = lastmillis/1000.0f*143*RAD;
+        matrix3 rot(rotangle, vec(1/SQRT3, 1/SQRT3, 1/SQRT3));
+        s = rot.transposedtransform(s);
+        t = rot.transposedtransform(t);
+        LOCALPARAMF(texgenS, -s.x, s.y, -s.z);
+        LOCALPARAMF(texgenT, t.x, -t.y, t.z);
 
-        bool inside = o.dist(camera1->o) <= psize*WOBBLE;
-        vec oc(o);
-        oc.sub(camera1->o);
-
-        float yaw = inside ? camera1->yaw : atan2(oc.y, oc.x)/RAD - 90,
-        pitch = (inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90;
-
-        vec s(1, 0, 0), t(0, 1, 0);
-        s.rotate_around_x(pitch*-RAD);
-        s.rotate_around_z(yaw*-RAD);
-        t.rotate_around_x(pitch*-RAD);
-        t.rotate_around_z(yaw*-RAD);
-
-        vec rotdir = vec(-1, 1, -1).normalize();
-        float rotangle = lastmillis/1000.0f*143;
-        s.rotate(rotangle*-RAD, rotdir);
-        t.rotate(rotangle*-RAD, rotdir);
-
-        LOCALPARAM(texgenS, s);
-        LOCALPARAM(texgenT, t);
-
-        m.rotate(rotangle*RAD, vec(-rotdir.x, rotdir.y, -rotdir.z));
+        matrix4 m(rot, o);
         m.scale(-psize, psize, inside ? psize : -psize);
         m.mul(camprojmatrix, m);
         LOCALPARAM(explosionmatrix, m);
