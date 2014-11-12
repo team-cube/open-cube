@@ -24,7 +24,7 @@ namespace sphere
             {
                 float theta = j==slices ? 0 : 2*M_PI*s;
                 vert &v = verts[i*(slices+1) + j];
-                v.pos = vec(-sin(theta)*sin(rho), cos(theta)*sin(rho), cos(rho));
+                v.pos = vec(sin(theta)*sin(rho), cos(theta)*sin(rho), -cos(rho));
                 v.s = ushort(s*0xFFFF);
                 v.t = ushort(t*0xFFFF);
                 s += ds;
@@ -159,11 +159,11 @@ struct fireballrenderer : listrenderer
         matrix3 rot(rotangle, vec(1/SQRT3, 1/SQRT3, 1/SQRT3));
         s = rot.transposedtransform(s);
         t = rot.transposedtransform(t);
-        LOCALPARAMF(texgenS, -s.x, s.y, -s.z);
-        LOCALPARAMF(texgenT, t.x, -t.y, t.z);
+        LOCALPARAM(texgenS, s);
+        LOCALPARAM(texgenT, t);
 
         matrix4 m(rot, o);
-        m.scale(-psize, psize, inside ? psize : -psize);
+        m.scale(psize, psize, inside ? -psize : psize);
         m.mul(camprojmatrix, m);
         LOCALPARAM(explosionmatrix, m);
 
