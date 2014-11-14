@@ -2781,7 +2781,7 @@ static inline void setlightparams(int i, const lightinfo &l)
     {
         shadowmapinfo &sm = shadowmaps[l.shadowmap];
         float smnearclip = SQRT3 / l.radius, smfarclip = SQRT3,
-              bias = (smfilter > 2 || smsize > 12 ? smbias2 : smbias) * (smcullside ? 1 : -1) * smnearclip * (1024.0f / sm.size);
+              bias = (smfilter > 2 || shadowatlaspacker.w > SHADOWATLAS_SIZE ? smbias2 : smbias) * (smcullside ? 1 : -1) * smnearclip * (1024.0f / sm.size);
         int border = smfilter > 2 ? smborder2 : smborder;
         if(l.spot > 0)
         {
