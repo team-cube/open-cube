@@ -2558,17 +2558,17 @@ namespace lightsphere
         float ds = 1.0f/slices, dt = 1.0f/stacks, t = 1.0f;
         loopi(stacks+1)
         {
-            float rho = M_PI*(1-t), s = 0.0f;
+            float rho = M_PI*(1-t), s = 0.0f, sinrho = i && i < stacks ? sin(rho) : 0, cosrho = !i ? 1 : (i < stacks ? cos(rho) : -1);
             loopj(slices+1)
             {
                 float theta = j==slices ? 0 : 2*M_PI*s;
-                verts[i*(slices+1) + j] = vec(-sin(theta)*sin(rho), -cos(theta)*sin(rho), cos(rho));
+                verts[i*(slices+1) + j] = vec(-sin(theta)*sinrho, -cos(theta)*sinrho, cosrho);
                 s += ds;
             }
             t -= dt;
         }
 
-        numindices = stacks*slices*3*2;
+        numindices = (stacks-1)*slices*3*2;
         indices = new ushort[numindices];
         GLushort *curindex = indices;
         loopi(stacks)
@@ -2576,14 +2576,18 @@ namespace lightsphere
             loopk(slices)
             {
                 int j = i%2 ? slices-k-1 : k;
-
-                *curindex++ = i*(slices+1)+j;
-                *curindex++ = i*(slices+1)+j+1;
-                *curindex++ = (i+1)*(slices+1)+j;
-
-                *curindex++ = i*(slices+1)+j+1;
-                *curindex++ = (i+1)*(slices+1)+j+1;
-                *curindex++ = (i+1)*(slices+1)+j;
+                if(i)
+                {
+                    *curindex++ = i*(slices+1)+j;
+                    *curindex++ = i*(slices+1)+j+1;
+                    *curindex++ = (i+1)*(slices+1)+j;
+                }
+                if(i+1 < stacks)
+                {
+                    *curindex++ = i*(slices+1)+j+1;
+                    *curindex++ = (i+1)*(slices+1)+j+1;
+                    *curindex++ = (i+1)*(slices+1)+j;
+                }
             }
         }
 

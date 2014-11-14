@@ -125,6 +125,7 @@ static inline int bitscan(uint mask)
 #define PI (3.14159265358979f)
 #define SQRT2 (1.4142135623731f)
 #define SQRT3 (1.73205080756888f)
+#define SQRT5 (2.23606797749979f)
 #define RAD (PI / 180.0f)
 
 #ifdef WIN32
