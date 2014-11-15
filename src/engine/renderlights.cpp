@@ -2424,23 +2424,25 @@ Shader *loaddeferredlightshader(const char *type = NULL)
         copystring(common, type);
         commonlen = strlen(common);
     }
-    if(lighttilebatch)
+    if(!minimap)
     {
-        common[commonlen++] = 'n';
-        common[commonlen++] = '0' + lighttilebatch;
+        common[commonlen++] = 't';
+        if(useavatarmask()) common[commonlen++] = 'd';
+        if(lighttilebatch)
+        {
+            common[commonlen++] = 'n';
+            common[commonlen++] = '0' + lighttilebatch;
+        }
     }
     if(usegatherforsm()) common[commonlen++] = smfilter > 2 ? 'G' : 'g';
     else if(smfilter) common[commonlen++] = smfilter > 2 ? 'E' : (smfilter > 1 ? 'F' : 'f');
     if(spotlights || forcespotlights) common[commonlen++] = 's';
-    if(!minimap) common[commonlen++] = 't';
-    if(useavatarmask()) common[commonlen++] = 'd';
     common[commonlen] = '\0';
 
     shadow[shadowlen++] = 'p';
     shadow[shadowlen] = '\0';
 
     int usecsm = 0, userh = 0;
-    if(!minimap && ao) sun[sunlen++] = 'a';
     if(!sunlight.iszero() && csmshadowmap)
     {
         usecsm = csmsplits;
@@ -2457,11 +2459,15 @@ Shader *loaddeferredlightshader(const char *type = NULL)
             }
         }
     }
-    if(lighttilebatch && (!usecsm || batchsunlight > (userh ? 1 : 0))) sun[sunlen++] = 'b';
+    if(!minimap) 
+    { 
+        if(ao) sun[sunlen++] = 'a';
+        if(lighttilebatch && (!usecsm || batchsunlight > (userh ? 1 : 0))) sun[sunlen++] = 'b';
+    }
     sun[sunlen] = '\0';
 
     defformatstring(name, "deferredlight%s%s%s", common, shadow, sun);
-    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d", common, shadow, sun, usecsm, userh, lighttilebatch);
+    return generateshader(name, "deferredlightshader \"%s\" \"%s\" \"%s\" %d %d %d", common, shadow, sun, usecsm, userh, !minimap ? lighttilebatch : 0);
 }
 
 void loaddeferredlightshaders()
@@ -3078,7 +3084,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
     if(hasDBT && depthtestlights > 1) glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
 
-    bool sunpass = !lighttilebatch || (!sunlight.iszero() && csmshadowmap && batchsunlight <= (gi && giscale && gidist ? 1 : 0));
+    bool sunpass = !lighttilebatch || drawtex == DRAWTEX_MINIMAP || (!sunlight.iszero() && csmshadowmap && batchsunlight <= (gi && giscale && gidist ? 1 : 0));
     if(sunpass)
     {
         if(depthtestlights && depth) { glDisable(GL_DEPTH_TEST); depth = false; }
@@ -3087,7 +3093,7 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
     if(depthtestlights && !depth) { glEnable(GL_DEPTH_TEST); depth = true; }
 
-    if(!lighttilebatch)
+    if(!lighttilebatch || drawtex == DRAWTEX_MINIMAP)
     {
         gle::disable();
         renderlightsnobatch(s, stencilref, transparent, bsx1, bsy1, bsx2, bsy2);
@@ -3551,7 +3557,7 @@ void packlights()
 
     lightbatcher.recycle();
     lightbatches.setsize(0);
-    if(lighttilebatch) loop(y, lighttileh)
+    if(lighttilebatch && drawtex != DRAWTEX_MINIMAP) loop(y, lighttileh)
     {
         int band = lighttilebands && lighttilebands < lighttileh ? (y * lighttilebands) / lighttileh : y;
         bool sunpass = !sunlight.iszero() && csmshadowmap && batchsunlight < (gi && giscale && gidist ? 1 : 0);
