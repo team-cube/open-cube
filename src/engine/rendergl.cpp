@@ -231,10 +231,10 @@ PFNGLDEPTHBOUNDSEXTPROC glDepthBounds_ = NULL;
 PFNGLCLAMPCOLORPROC glClampColor_ = NULL;
 
 // GL_ARB_debug_output
-PFNGLDEBUGMESSAGECONTROLARBPROC  glDebugMessageControl_  = NULL;
-PFNGLDEBUGMESSAGEINSERTARBPROC   glDebugMessageInsert_   = NULL;
-PFNGLDEBUGMESSAGECALLBACKARBPROC glDebugMessageCallback_ = NULL;
-PFNGLGETDEBUGMESSAGELOGARBPROC   glGetDebugMessageLog_   = NULL;
+PFNGLDEBUGMESSAGECONTROLPROC  glDebugMessageControl_  = NULL;
+PFNGLDEBUGMESSAGEINSERTPROC   glDebugMessageInsert_   = NULL;
+PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback_ = NULL;
+PFNGLGETDEBUGMESSAGELOGPROC   glGetDebugMessageLog_   = NULL;
 
 // GL_ARB_map_buffer_range
 PFNGLMAPBUFFERRANGEPROC         glMapBufferRange_         = NULL;
@@ -837,21 +837,19 @@ void gl_checkextensions()
         if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_framebuffer_multisample_blit_scaled extension.");
     }
 
-    if(hasext("GL_EXT_timer_query") || hasext("GL_ARB_timer_query"))
+    if(hasext("GL_EXT_timer_query"))
     {
-        if(hasext("GL_EXT_timer_query"))
-        {
-            glGetQueryObjecti64v_ =  (PFNGLGETQUERYOBJECTI64VEXTPROC)  getprocaddress("glGetQueryObjecti64vEXT");
-            glGetQueryObjectui64v_ = (PFNGLGETQUERYOBJECTUI64VEXTPROC) getprocaddress("glGetQueryObjectui64vEXT");
-            if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_timer_query extension.");
-        }
-        else
-        {
-            glGetQueryObjecti64v_ =  (PFNGLGETQUERYOBJECTI64VEXTPROC)  getprocaddress("glGetQueryObjecti64v");
-            glGetQueryObjectui64v_ = (PFNGLGETQUERYOBJECTUI64VEXTPROC) getprocaddress("glGetQueryObjectui64v");
-            if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_timer_query extension.");
-        }
+        glGetQueryObjecti64v_ =  (PFNGLGETQUERYOBJECTI64VEXTPROC)  getprocaddress("glGetQueryObjecti64vEXT");
+        glGetQueryObjectui64v_ = (PFNGLGETQUERYOBJECTUI64VEXTPROC) getprocaddress("glGetQueryObjectui64vEXT");
         hasTQ = true;
+        if(dbgexts) conoutf(CON_INIT, "Using GL_EXT_timer_query extension.");
+    }
+    else if(glversion >= 330 || hasext("GL_ARB_timer_query"))
+    {
+        glGetQueryObjecti64v_ =  (PFNGLGETQUERYOBJECTI64VEXTPROC)  getprocaddress("glGetQueryObjecti64v");
+        glGetQueryObjectui64v_ = (PFNGLGETQUERYOBJECTUI64VEXTPROC) getprocaddress("glGetQueryObjectui64v");
+        hasTQ = true;
+        if(glversion < 330 && dbgexts) conoutf(CON_INIT, "Using GL_ARB_timer_query extension.");
     }
 
     if(hasext("GL_EXT_texture_compression_s3tc"))
@@ -986,23 +984,33 @@ void gl_checkextensions()
     }
     if(hasTG) usetexgather = hasGPU5 && !intel && !nvidia ? 2 : 1;
 
-    if(hasext("GL_ARB_debug_output"))
+    if(glversion >= 430)
     {
-        glDebugMessageControl_ =  (PFNGLDEBUGMESSAGECONTROLARBPROC) getprocaddress("glDebugMessageControlARB");
-        glDebugMessageInsert_ =   (PFNGLDEBUGMESSAGEINSERTARBPROC)  getprocaddress("glDebugMessageInsertARB");
-        glDebugMessageCallback_ = (PFNGLDEBUGMESSAGECALLBACKARBPROC)getprocaddress("glDebugMessageCallbackARB");
-        glGetDebugMessageLog_ =   (PFNGLGETDEBUGMESSAGELOGARBPROC)  getprocaddress("glGetDebugMessageLogARB");
-
+        glDebugMessageControl_ =  (PFNGLDEBUGMESSAGECONTROLPROC) getprocaddress("glDebugMessageControl");
+        glDebugMessageInsert_ =   (PFNGLDEBUGMESSAGEINSERTPROC)  getprocaddress("glDebugMessageInsert");
+        glDebugMessageCallback_ = (PFNGLDEBUGMESSAGECALLBACKPROC)getprocaddress("glDebugMessageCallback");
+        glGetDebugMessageLog_ =   (PFNGLGETDEBUGMESSAGELOGPROC)  getprocaddress("glGetDebugMessageLog");
         hasDBGO = true;
-        if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_debug_output extension.");
+    }
+    else
+    {
+        if(hasext("GL_ARB_debug_output"))
+        {
+            glDebugMessageControl_ =  (PFNGLDEBUGMESSAGECONTROLPROC) getprocaddress("glDebugMessageControlARB");
+            glDebugMessageInsert_ =   (PFNGLDEBUGMESSAGEINSERTPROC)  getprocaddress("glDebugMessageInsertARB");
+            glDebugMessageCallback_ = (PFNGLDEBUGMESSAGECALLBACKPROC)getprocaddress("glDebugMessageCallbackARB");
+            glGetDebugMessageLog_ =   (PFNGLGETDEBUGMESSAGELOGPROC)  getprocaddress("glGetDebugMessageLogARB");
+            hasDBGO = true;
+            if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_debug_output extension.");
+        }
     }
 
-    if(hasext("GL_ARB_copy_image"))
+    if(glversion >= 430 || hasext("GL_ARB_copy_image"))
     {
         glCopyImageSubData_ = (PFNGLCOPYIMAGESUBDATAPROC)getprocaddress("glCopyImageSubData");
 
         hasCI = true;
-        if(dbgexts) conoutf(CON_INIT, "Using GL_ARB_copy_image extension.");
+        if(glversion < 430 && dbgexts) conoutf(CON_INIT, "Using GL_ARB_copy_image extension.");
     }
     else if(hasext("GL_NV_copy_image"))
     {
