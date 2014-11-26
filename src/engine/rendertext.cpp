@@ -401,7 +401,6 @@ void draw_text(const char *str, float left, float top, int r, int g, int b, int 
     bool usecolor = true;
     if(a < 0) { usecolor = false; a = -a; }
     Texture *tex = curfont->texs[0];
-    Shader *oldshader = Shader::lastshader;
     (textshader ? textshader : hudtextshader)->set();
     LOCALPARAMF(textparams, curfont->bordermin, curfont->bordermax, curfont->outlinemin, curfont->outlinemax);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -419,12 +418,6 @@ void draw_text(const char *str, float left, float top, int r, int g, int b, int 
         if(maxwidth >= 0 && cx >= maxwidth && cx > 0) { cx = 0; cy += FONTH; }
         draw_char(tex, '_', left+cx, top+cy, scale);
         xtraverts += gle::end();
-    }
-    gle::disable();
-    if(oldshader == hudshader)
-    {
-        oldshader->bindprograms();
-        gle::colorf(1, 1, 1);
     }
     #undef TEXTINDEX
     #undef TEXTWHITE

@@ -312,6 +312,7 @@ extern void resethudmatrix();
 extern void pushhudmatrix();
 extern void flushhudmatrix(bool flushparams = true);
 extern void pophudmatrix(bool flush = true, bool flushparams = true);
+extern void resethudshader();
 
 // renderparticles
 enum

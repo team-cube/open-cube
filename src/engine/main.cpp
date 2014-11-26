@@ -162,12 +162,11 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
 
     hudmatrix.ortho(0, w, h, 0, -1, 1);
     resethudmatrix();
-    hudshader->set();
+    resethudshader();
 
     gle::defvertex(2);
     gle::deftexcoord0();
 
-    gle::colorf(1, 1, 1);
     settexture("media/interface/background.png", 0);
     float bu = w*0.67f/256.0f, bv = h*0.67f/256.0f;
     bgquad(0, 0, w, h, backgroundu, backgroundv, bu, bv);
@@ -215,6 +214,7 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
         if(mapshot && mapshot!=notexture)
         {
             x -= 0.5f*sz;
+            resethudshader();
             glBindTexture(GL_TEXTURE_2D, mapshot->id);
             bgquad(x, y, sz, sz);
         }
@@ -309,12 +309,10 @@ void renderprogressview(int w, int h, float bar, const char *text)   // also use
 {
     hudmatrix.ortho(0, w, h, 0, -1, 1);
     resethudmatrix();
-    hudshader->set();
+    resethudshader();
 
     gle::defvertex(2);
     gle::deftexcoord0();
-
-    gle::colorf(1, 1, 1);
 
     float fh = 0.060f*min(w, h), fw = fh*15,
           fx = renderedframe ? w - fw - fh/4 : 0.5f*(w - fw),

@@ -707,6 +707,7 @@ namespace game
         }
 
         pophudmatrix();
+        resethudshader();
 
         drawicon(HICON_HEALTH, HICON_X, HICON_Y);
         if(d->state!=CS_DEAD)
@@ -742,6 +743,7 @@ namespace game
                 }
                 draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh, (color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
             }
+            resethudshader();
         }
 
         gameent *d = hudplayer();

@@ -648,8 +648,6 @@ struct editor
                     gle::attribf(x+pex, y+pey);
                 }
                 gle::end();
-                hudshader->set();
-                gle::colorf(1, 1, 1);
             }
         }
 
@@ -672,8 +670,6 @@ struct editor
                 gle::attribf(x-FONTW/2, y+h+FONTH);
                 gle::attribf(x-FONTW/2, y+h+height);
                 gle::end();
-                hudshader->set();
-                gle::colorf(1, 1, 1);
             }
             h+=height;
         }

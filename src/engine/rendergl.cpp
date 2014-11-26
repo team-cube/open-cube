@@ -2668,6 +2668,7 @@ void drawcrosshair(int w, int h)
     }
     if(crosshair->type&Texture::ALPHA) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     else glBlendFunc(GL_ONE, GL_ONE);
+    hudshader->set();
     gle::color(color);
     float x = cx*w - (windowhit ? 0 : chsize/2.0f);
     float y = cy*h - (windowhit ? 0 : chsize/2.0f);
@@ -2688,6 +2689,12 @@ VAR(statrate, 1, 200, 1000);
 
 FVARP(conscale, 1e-3f, 0.33f, 1e3f);
 
+void resethudshader()
+{
+    hudshader->set();
+    gle::colorf(1, 1, 1);
+}
+
 void gl_drawhud()
 {
     int w = hudw, h = hudh;
@@ -2697,12 +2704,10 @@ void gl_drawhud()
 
     hudmatrix.ortho(0, w, h, 0, -1, 1);
     resethudmatrix();
-    hudshader->set();
+    resethudshader();
 
     pushfont();
     setfont("default_outline");
-
-    gle::colorf(1, 1, 1);
 
     debuglights();
 
@@ -2715,8 +2720,6 @@ void gl_drawhud()
         drawdamagescreen(w, h);
         drawdamagecompass(w, h);
     }
-
-    hudshader->set();
 
     float conw = w/conscale, conh = h/conscale, abovehud = conh - FONTH;
     if(!hidehud && !mainmenu)
@@ -2770,6 +2773,7 @@ void gl_drawhud()
 
         if(!editmode)
         {
+            resethudshader();
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             game::gameplayhud(w, h);
             abovehud = min(abovehud, conh*game::abovegameplayhud(w, h));

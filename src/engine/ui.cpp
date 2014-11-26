@@ -13,6 +13,7 @@ namespace UI
         gle::attribf(x,   y+h); gle::attribf(tx,    ty+th);
     }
 
+#if 0
     static void quad(float x, float y, float w, float h, float tx = 0, float ty = 0, float tw = 1, float th = 1)
     {
         gle::defvertex(2);
@@ -24,6 +25,7 @@ namespace UI
         gle::attribf(x,   y+h); gle::attribf(tx,    ty+th);
         gle::end();
     }
+#endif
 
     static void quad(float x, float y, float w, float h, const vec2 tc[4])
     {
@@ -77,7 +79,7 @@ namespace UI
         else clipstack.last().scissor();
     }
 
-    static bool isfullyclipped(float x, float y, float w, float h)
+    static inline bool isfullyclipped(float x, float y, float w, float h)
     {
         if(clipstack.empty()) return false;
         return clipstack.last().isfullyclipped(x, y, w, h);
@@ -142,6 +144,31 @@ namespace UI
             o->buildchildren(contents); \
         } \
     } while(0)
+
+    enum
+    {
+        CHANGE_SHADER = 1<<0,
+        CHANGE_COLOR  = 1<<1,
+        CHANGE_BLEND  = 1<<2
+    };
+    static int changed = 0;
+
+    static Object *drawing = NULL;
+
+    enum { BLEND_ALPHA, BLEND_MOD };
+    static int blendtype = BLEND_ALPHA;
+
+    static inline void changeblend(int type, GLenum src, GLenum dst)
+    {
+        if(blendtype != type)
+        {
+            blendtype = type;
+            glBlendFunc(src, dst);
+        }
+    }
+
+    void resetblend() { changeblend(BLEND_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); }
+    void modblend() { changeblend(BLEND_MOD, GL_ZERO, GL_SRC_COLOR); }
 
     struct Object
     {
@@ -332,6 +359,38 @@ namespace UI
             return false;
         }
 
+        virtual void startdraw() {}
+        virtual void enddraw() {}
+
+        void enddraw(int change)
+        {
+            enddraw();
+
+            changed &= ~change;
+            if(changed)
+            {
+                if(changed&CHANGE_SHADER) hudshader->set();
+                if(changed&CHANGE_COLOR) gle::colorf(1, 1, 1);
+                if(changed&CHANGE_BLEND) resetblend();
+            }
+        }
+
+        void changedraw(int change = 0)
+        {
+            if(!drawing)
+            {
+                startdraw();
+                changed = change;
+            }
+            else if(drawing->gettype() != gettype())
+            {
+                drawing->enddraw(change);
+                startdraw();
+                changed = change;
+            }
+            drawing = this;
+        }
+
         virtual void draw(float sx, float sy)
         {
             loopchildren(o,
@@ -503,6 +562,15 @@ namespace UI
         virtual int childcolumns() const { return children.length(); }
     };
 
+    static inline void stopdrawing()
+    {
+        if(drawing)
+        {
+            drawing->enddraw(0);
+            drawing = NULL;
+        }
+    }
+
     struct Window;
 
     static Window *window = NULL;
@@ -576,10 +644,16 @@ namespace UI
             hudshader->set();
 
             glEnable(GL_BLEND);
+            blendtype = BLEND_ALPHA;
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             gle::colorf(1, 1, 1);
 
+            changed = 0;
+            drawing = NULL;
+
             Object::draw(sx, sy);
+
+            stopdrawing();
 
             glDisable(GL_BLEND);
 
@@ -1220,7 +1294,7 @@ namespace UI
         static void def() { gle::defcolor(4, GL_UNSIGNED_BYTE); }
     };
 
-    struct FillColor : Filler
+    struct FillColor : Target
     {
         enum { SOLID = 0, MODULATE };
 
@@ -1237,26 +1311,24 @@ namespace UI
         static const char *typestr() { return "#FillColor"; }
         const char *gettype() const { return typestr(); }
 
-        bool target(float cx, float cy)
+        void startdraw()
         {
-            return true;
+            hudnotextureshader->set();
+            gle::defvertex(2);
         }
 
         void draw(float sx, float sy)
         {
-            if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-            hudnotextureshader->set();
+            changedraw(CHANGE_SHADER | CHANGE_COLOR | CHANGE_BLEND);
+            if(type==MODULATE) modblend(); else resetblend();
+                
             color.init();
-            gle::defvertex(2);
             gle::begin(GL_TRIANGLE_STRIP);
             gle::attribf(sx+w, sy);
             gle::attribf(sx,   sy);
             gle::attribf(sx+w, sy+h);
             gle::attribf(sx,   sy+h);
             gle::end();
-            gle::colorf(1, 1, 1);
-            hudshader->set();
-            if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             Object::draw(sx, sy);
         }
@@ -1279,20 +1351,24 @@ namespace UI
         static const char *typestr() { return "#Gradient"; }
         const char *gettype() const { return typestr(); }
 
-        void draw(float sx, float sy)
+        void startdraw()
         {
-            if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
             hudnotextureshader->set();
             gle::defvertex(2);
             Color::def();
+        }
+
+        void draw(float sx, float sy)
+        {
+            changedraw(CHANGE_SHADER | CHANGE_COLOR | CHANGE_BLEND);
+            if(type==MODULATE) modblend(); else resetblend();
+
             gle::begin(GL_TRIANGLE_STRIP);
             gle::attribf(sx+w, sy);   (dir == HORIZONTAL ? color2 : color).attrib();
             gle::attribf(sx,   sy);   color.attrib();
             gle::attribf(sx+w, sy+h); color2.attrib();
             gle::attribf(sx,   sy+h); (dir == HORIZONTAL ? color : color2).attrib();
             gle::end();
-            hudshader->set();
-            if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             Object::draw(sx, sy);
         }
@@ -1311,17 +1387,21 @@ namespace UI
         static const char *typestr() { return "#Line"; }
         const char *gettype() const { return typestr(); }
 
-        void draw(float sx, float sy)
+        void startdraw()
         {
             hudnotextureshader->set();
-            color.init();
             gle::defvertex(2);
+        }
+
+        void draw(float sx, float sy)
+        {
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
+
+            color.init();
             gle::begin(GL_LINES);
             gle::attribf(sx,   sy);
             gle::attribf(sx+w, sy+h);
             gle::end();
-            gle::colorf(1, 1, 1);
-            hudshader->set();
 
             Object::draw(sx, sy);
         }
@@ -1340,19 +1420,23 @@ namespace UI
         static const char *typestr() { return "#Outline"; }
         const char *gettype() const { return typestr(); }
 
-        void draw(float sx, float sy)
+        void startdraw()
         {
             hudnotextureshader->set();
-            color.init();
             gle::defvertex(2);
+        }
+
+        void draw(float sx, float sy)
+        {
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
+
+            color.init();
             gle::begin(GL_LINE_LOOP);
             gle::attribf(sx,   sy);
             gle::attribf(sx+w, sy);
             gle::attribf(sx+w, sy+h);
             gle::attribf(sx,   sy+h);
             gle::end();
-            gle::colorf(1, 1, 1);
-            hudshader->set();
 
             Object::draw(sx, sy);
         }
@@ -1373,6 +1457,8 @@ namespace UI
 
     struct Image : Filler
     {
+        static Texture *lasttex;
+
         Texture *tex;
 
         void setup(Texture *tex_, float minw_ = 0, float minh_ = 0)
@@ -1389,18 +1475,35 @@ namespace UI
             return !(tex->type&Texture::ALPHA) || checkalphamask(tex, cx/w, cy/h);
         }
 
+        void startdraw()
+        {
+            lasttex = NULL;
+
+            gle::defvertex(2);
+            gle::deftexcoord0();
+            gle::begin(GL_QUADS);
+        }
+
+        void enddraw()
+        {
+            gle::end();
+        }
+
         void draw(float sx, float sy)
         {
             if(tex != notexture)
             {
-                glBindTexture(GL_TEXTURE_2D, tex->id);
+                changedraw();
+                if(lasttex != tex) { if(lasttex) gle::end(); lasttex = tex; glBindTexture(GL_TEXTURE_2D, tex->id); }
 
-                quad(sx, sy, w, h);
+                quads(sx, sy, w, h);
             }
 
             Object::draw(sx, sy);
         }
     };
+
+    Texture *Image::lasttex = NULL;
 
     struct CroppedImage : Image
     {
@@ -1427,9 +1530,10 @@ namespace UI
         {
             if(tex == notexture) { Object::draw(sx, sy); return; }
 
-            glBindTexture(GL_TEXTURE_2D, tex->id);
+            changedraw();
+            if(lasttex != tex) { if(lasttex) gle::end(); lasttex = tex; glBindTexture(GL_TEXTURE_2D, tex->id); }
 
-            quad(sx, sy, w, h, cropx, cropy, cropw, croph);
+            quads(sx, sy, w, h, cropx, cropy, cropw, croph);
 
             Object::draw(sx, sy);
         }
@@ -1461,11 +1565,9 @@ namespace UI
         {
             if(tex == notexture) { Object::draw(sx, sy); return; }
 
-            glBindTexture(GL_TEXTURE_2D, tex->id);
+            changedraw();
+            if(lasttex != tex) { if(lasttex) gle::end(); lasttex = tex; glBindTexture(GL_TEXTURE_2D, tex->id); }
 
-            gle::defvertex(2);
-            gle::deftexcoord0();
-            gle::begin(GL_QUADS);
             float splitw = (minw ? min(minw, w) : w) / 2,
                   splith = (minh ? min(minh, h) : h) / 2,
                   vy = sy, ty = 0;
@@ -1497,7 +1599,6 @@ namespace UI
                 ty += th;
                 if(ty >= 1) break;
             }
-            gle::end();
 
             Object::draw(sx, sy);
         }
@@ -1536,11 +1637,9 @@ namespace UI
         {
             if(tex == notexture) { Object::draw(sx, sy); return; }
 
-            glBindTexture(GL_TEXTURE_2D, tex->id);
+            changedraw();
+            if(lasttex != tex) { if(lasttex) gle::end(); lasttex = tex; glBindTexture(GL_TEXTURE_2D, tex->id); }
 
-            gle::defvertex(2);
-            gle::deftexcoord0();
-            gle::begin(GL_QUADS);
             float vy = sy, ty = 0;
             loopi(3)
             {
@@ -1568,7 +1667,6 @@ namespace UI
                 vy += vh;
                 ty += th;
             }
-            gle::end();
 
             Object::draw(sx, sy);
         }
@@ -1599,13 +1697,11 @@ namespace UI
         {
             if(tex == notexture) { Object::draw(sx, sy); return; }
 
-            glBindTexture(GL_TEXTURE_2D, tex->id);
+            changedraw();
+            if(lasttex != tex) { if(lasttex) gle::end(); lasttex = tex; glBindTexture(GL_TEXTURE_2D, tex->id); }
 
             if(tex->clamp)
             {
-                gle::defvertex(2);
-                gle::deftexcoord0();
-                gle::begin(GL_QUADS);
                 for(float dy = 0; dy < h; dy += tileh)
                 {
                     float dh = min(tileh, h - dy);
@@ -1615,9 +1711,8 @@ namespace UI
                         quads(sx + dx, sy + dy, dw, dh, 0, 0, dw / tilew, dh / tileh);
                     }
                 }
-                gle::end();
             }
-            else quad(sx, sy, w, h, 0, 0, w/tilew, h/tileh);
+            else quads(sx, sy, w, h, 0, 0, w/tilew, h/tileh);
 
             Object::draw(sx, sy);
         }
@@ -1636,6 +1731,12 @@ namespace UI
 
             color = color_;
             type = type_;
+        }
+
+        void startdraw()
+        {
+            hudnotextureshader->set();
+            gle::defvertex(2);
         }
     };
 
@@ -1679,18 +1780,15 @@ namespace UI
         {
             Object::draw(sx, sy);
 
-            if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-            hudnotextureshader->set();
+            changedraw(CHANGE_SHADER | CHANGE_COLOR | CHANGE_BLEND);
+            if(type==MODULATE) modblend(); else resetblend();
+
             color.init();
-            gle::defvertex(2);
             gle::begin(type == OUTLINE ? GL_LINE_LOOP : GL_TRIANGLES);
             gle::attrib(vec2(sx, sy).add(a));
             gle::attrib(vec2(sx, sy).add(b));
             gle::attrib(vec2(sx, sy).add(c));
             gle::end();
-            gle::colorf(1, 1, 1);
-            hudshader->set();
-            if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
     };
 
@@ -1719,10 +1817,11 @@ namespace UI
         {
             Object::draw(sx, sy);
 
+            changedraw(CHANGE_SHADER | CHANGE_COLOR | CHANGE_BLEND);
+            if(type==MODULATE) modblend(); else resetblend();
+
             float r = radius <= 0 ? min(w, h)/2 : radius;
-            hudnotextureshader->set();
             color.init();
-            gle::defvertex(2);
             vec2 center(sx + r, sy + r);
             if(type == OUTLINE)
             {
@@ -1733,7 +1832,6 @@ namespace UI
             }
             else
             {
-                if(type==MODULATE) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
                 gle::begin(GL_TRIANGLE_FAN);
                 gle::attrib(center);
                 gle::attribf(center.x + r, center.y);
@@ -1745,10 +1843,7 @@ namespace UI
                 }
                 gle::attribf(center.x + r, center.y);
                 gle::end();
-                if(type==MODULATE) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }
-            gle::colorf(1, 1, 1);
-            hudshader->set();
         }
     };
 
@@ -1785,6 +1880,8 @@ namespace UI
         void draw(float sx, float sy)
         {
             Object::draw(sx, sy);
+
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
 
             float oldscale = textscale;
             textscale = drawscale();
@@ -1958,6 +2055,8 @@ namespace UI
         {
             Object::draw(sx, sy);
 
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
+
             float k = drawscale();
             pushhudmatrix();
             hudmatrix.translate(sx, sy, 0);
@@ -2002,8 +2101,10 @@ namespace UI
         {
             if((clipw && virtw > clipw) || (cliph && virth > cliph))
             {
+                stopdrawing();
                 pushclip(sx, sy, w, h);
                 Object::draw(sx, sy);
+                stopdrawing();
                 popclip();
             }
             else Object::draw(sx, sy);
@@ -2045,8 +2146,10 @@ namespace UI
         {
             if((clipw && virtw > clipw) || (cliph && virth > cliph))
             {
+                stopdrawing();
                 pushclip(sx, sy, w, h);
                 Object::draw(sx - offsetx, sy - offsety);
+                stopdrawing();
                 popclip();
             }
             else Object::draw(sx, sy);
@@ -2524,6 +2627,8 @@ namespace UI
 
         void draw(float sx, float sy)
         {
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
+
             edit->rendered = true;
 
             float k = drawscale();
@@ -2739,7 +2844,30 @@ namespace UI
         bool allowtextinput() const { return false; }
     };
 
-    struct ModelPreview : Filler
+    struct Preview : Filler
+    {
+        bool target(float cx, float cy)
+        {
+            return true;
+        }
+
+        void startdraw()
+        {
+            glDisable(GL_BLEND);
+            gle::disable();
+
+            if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
+        }
+
+        void enddraw()
+        {
+            glEnable(GL_BLEND);
+
+            if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
+        }
+    };
+
+    struct ModelPreview : Preview
     {
         char *name;
         int anim;
@@ -2774,20 +2902,14 @@ namespace UI
         static const char *typestr() { return "#ModelPreview"; }
         const char *gettype() const { return typestr(); }
 
-        bool target(float cx, float cy)
-        {
-            return true;
-        }
-
         void draw(float sx, float sy)
         {
             Object::draw(sx, sy);
 
-            if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
+            changedraw(CHANGE_SHADER);
+
             int sx1, sy1, sx2, sy2;
             window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
-            glDisable(GL_BLEND);
-            gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
             model *m = loadmodel(name);
             if(m)
@@ -2800,14 +2922,10 @@ namespace UI
             }
             if(clipstack.length()) clipstack.last().scissor();
             modelpreview::end();
-            hudshader->set();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
         }
     };
 
-    struct PlayerPreview : Filler
+    struct PlayerPreview : Preview
     {
         int model, color, team, weapon;
 
@@ -2823,32 +2941,22 @@ namespace UI
         static const char *typestr() { return "#PlayerPreview"; }
         const char *gettype() const { return typestr(); }
 
-        bool target(float cx, float cy)
-        {
-            return true;
-        }
-
         void draw(float sx, float sy)
         {
             Object::draw(sx, sy);
 
-            if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
+            changedraw(CHANGE_SHADER);
+
             int sx1, sy1, sx2, sy2;
             window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
-            glDisable(GL_BLEND);
-            gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
             game::renderplayerpreview(model, color, team, weapon);
             if(clipstack.length()) clipstack.last().scissor();
             modelpreview::end();
-            hudshader->set();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
         }
     };
 
-    struct PrefabPreview : Filler
+    struct PrefabPreview : Preview
     {
         char *name;
         vec color;
@@ -2866,28 +2974,18 @@ namespace UI
         static const char *typestr() { return "#PrefabPreview"; }
         const char *gettype() const { return typestr(); }
 
-        bool target(float cx, float cy)
-        {
-            return true;
-        }
-
         void draw(float sx, float sy)
         {
             Object::draw(sx, sy);
 
-            if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
+            changedraw(CHANGE_SHADER);
+
             int sx1, sy1, sx2, sy2;
             window->calcscissor(sx, sy, sx+w, sy+h, sx1, sy1, sx2, sy2, false);
-            glDisable(GL_BLEND);
-            gle::disable();
             modelpreview::start(sx1, sy1, sx2-sx1, sy2-sy1, false, clipstack.length() > 0);
             previewprefab(name, color);
             if(clipstack.length()) clipstack.last().scissor();
             modelpreview::end();
-            hudshader->set();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            if(clipstack.length()) glEnable(GL_SCISSOR_TEST);
         }
     };
 
@@ -2945,6 +3043,9 @@ namespace UI
                 if(slot.thumbnail != notexture) t = slot.thumbnail;
                 else return;
             }
+
+            changedraw(CHANGE_SHADER | CHANGE_COLOR);
+
             SETSHADER(hudrgb);
             vec2 tc[4] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1) };
             int xoff = vslot.offset.x, yoff = vslot.offset.y;
@@ -2978,14 +3079,13 @@ namespace UI
                 gle::color(layer->colorscale);
                 quad(x, y, w/2, h/2, tc);
             }
-            gle::colorf(1, 1, 1);
-            hudshader->set();
         }
 
         void draw(float sx, float sy)
         {
             Slot &slot = lookupslot(index, false);
             previewslot(slot, *slot.variants, sx, sy);
+
             Object::draw(sx, sy);
         }
     };
@@ -2999,6 +3099,7 @@ namespace UI
         {
             VSlot &vslot = lookupvslot(index, false);
             previewslot(*vslot.slot, vslot, sx, sy);
+
             Object::draw(sx, sy);
         }
     };
