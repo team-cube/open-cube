@@ -1303,7 +1303,7 @@ namespace UI
 
         void setup(int type_, const Color &color_, float minw_ = 0, float minh_ = 0)
         {
-            Filler::setup(minw_, minh_);
+            Target::setup(minw_, minh_);
             type = type_;
             color = color_;
         }
@@ -2844,13 +2844,8 @@ namespace UI
         bool allowtextinput() const { return false; }
     };
 
-    struct Preview : Filler
+    struct Preview : Target
     {
-        bool target(float cx, float cy)
-        {
-            return true;
-        }
-
         void startdraw()
         {
             glDisable(GL_BLEND);
@@ -2877,7 +2872,7 @@ namespace UI
 
         void setup(const char *name_, const char *animspec, float minw_, float minh_)
         {
-            Filler::setup(minw_, minh_);
+            Preview::setup(minw_, minh_);
             SETSTR(name, name_);
 
             anim = ANIM_ALL;
@@ -2931,7 +2926,7 @@ namespace UI
 
         void setup(int model_, int color_, int team_, int weapon_, float minw_, float minh_)
         {
-            Filler::setup(minw_, minh_);
+            Preview::setup(minw_, minh_);
             model = model_;
             color = color_;
             team = team_;
@@ -2966,7 +2961,7 @@ namespace UI
 
         void setup(const char *name_, int color_, float minw_, float minh_)
         {
-            Filler::setup(minw_, minh_);
+            Preview::setup(minw_, minh_);
             SETSTR(name, name_);
             color = vec::hexcolor(color_);
         }
@@ -2992,23 +2987,18 @@ namespace UI
     VARP(uislotviewtime, 0, 25, 1000);
     static int lastthumbnail = 0;
 
-    struct SlotViewer : Filler
+    struct SlotViewer : Target
     {
         int index;
 
         void setup(int index_, float minw_ = 0, float minh_ = 0)
         {
-            Filler::setup(minw_, minh_);
+            Target::setup(minw_, minh_);
             index = index_;
         }
 
         static const char *typestr() { return "#SlotViewer"; }
         const char *gettype() const { return typestr(); }
-
-        bool target(float cx, float cy)
-        {
-            return true;
-        }
 
         void previewslot(Slot &slot, VSlot &vslot, float x, float y)
         {
