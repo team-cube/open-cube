@@ -484,6 +484,8 @@ struct textrenderer : listrenderer
 
     void endrender()
     {
+        gle::disable();
+
         textshader = NULL;
 
         popfont();
