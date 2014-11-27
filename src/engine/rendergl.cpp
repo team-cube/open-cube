@@ -7,7 +7,6 @@ bool mesa = false, intel = false, amd = false, nvidia = false;
 
 int hasstencil = 0;
 
-VAR(renderpath, 1, 0, 0);
 VAR(glversion, 1, 0, 0);
 VAR(glslversion, 1, 0, 0);
 
@@ -1211,8 +1210,6 @@ void gl_init()
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);
 
-    renderpath = R_GLSLANG;
-
     gle::setup();
     setupshaders();
     setuptexcompress();
@@ -1220,9 +1217,6 @@ void gl_init()
     GLERROR;
 
     gl_resize();
-
-    //static const char * const rpnames[1] = { "GLSL shader" };
-    //conoutf(CON_INIT, "Rendering using the OpenGL %s path.", rpnames[renderpath]);
 }
 
 VAR(wireframe, 0, 0, 1);
