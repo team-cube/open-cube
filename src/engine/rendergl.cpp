@@ -1221,8 +1221,8 @@ void gl_init()
 
     gl_resize();
 
-    static const char * const rpnames[1] = { "GLSL shader" };
-    conoutf(CON_INIT, "Rendering using the OpenGL %s path.", rpnames[renderpath]);
+    //static const char * const rpnames[1] = { "GLSL shader" };
+    //conoutf(CON_INIT, "Rendering using the OpenGL %s path.", rpnames[renderpath]);
 }
 
 VAR(wireframe, 0, 0, 1);
