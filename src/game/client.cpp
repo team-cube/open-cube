@@ -144,7 +144,7 @@ namespace game
 
     void switchname(const char *name)
     {
-        filtertext(player1->name, name, false, MAXNAMELEN);
+        filtertext(player1->name, name, false, false, MAXNAMELEN);
         if(!player1->name[0]) copystring(player1->name, "unnamed");
         addmsg(N_SWITCHNAME, "rs", player1->name);
     }
@@ -1359,7 +1359,7 @@ namespace game
             {
                 if(!d) return;
                 getstring(text, p);
-                filtertext(text, text);
+                filtertext(text, text, true, true);
                 if(isignored(d->clientnum)) break;
                 if(d->state!=CS_DEAD && d->state!=CS_SPECTATOR)
                     particle_textcopy(d->abovehead(), text, PART_TEXT, 2000, 0x32FF64, 4.0f, -8);
@@ -1372,7 +1372,7 @@ namespace game
                 int tcn = getint(p);
                 gameent *t = getclient(tcn);
                 getstring(text, p);
-                filtertext(text, text);
+                filtertext(text, text, true, true);
                 if(!t || isignored(t->clientnum)) break;
                 int team = validteam(t->team) ? t->team : 0;
                 if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
@@ -1429,7 +1429,7 @@ namespace game
                     break;
                 }
                 getstring(text, p);
-                filtertext(text, text, false, MAXNAMELEN);
+                filtertext(text, text, false, false, MAXNAMELEN);
                 if(!text[0]) copystring(text, "unnamed");
                 if(d->name[0])          // already connected
                 {
@@ -1453,7 +1453,7 @@ namespace game
                 getstring(text, p);
                 if(d)
                 {
-                    filtertext(text, text, false, MAXNAMELEN);
+                    filtertext(text, text, false, false, MAXNAMELEN);
                     if(!text[0]) copystring(text, "unnamed");
                     if(strcmp(text, d->name))
                     {
@@ -1767,7 +1767,7 @@ namespace game
                 int type = getint(p);
                 getstring(text, p);
                 string name;
-                filtertext(name, text, false, MAXSTRLEN-1);
+                filtertext(name, text, false);
                 ident *id = getident(name);
                 switch(type)
                 {
@@ -1970,7 +1970,7 @@ namespace game
                 int bn = getint(p), on = getint(p), at = getint(p), sk = clamp(getint(p), 1, 101), pm = getint(p), col = getint(p), team = getint(p);
                 string name;
                 getstring(text, p);
-                filtertext(name, text, false, MAXNAMELEN);
+                filtertext(name, text, false, false, MAXNAMELEN);
                 gameent *b = newclient(bn);
                 if(!b) break;
                 ai::init(b, at, on, sk, bn, pm, col, name, team);
