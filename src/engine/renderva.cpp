@@ -2310,6 +2310,8 @@ static void renderdecalbatches(decalrenderer &cur, int pass)
         decalbatch &b = decalbatches[curbatch];
         curbatch = b.next;
 
+        if(pass && !b.slot.shader->numvariants(0)) continue;
+
         if(cur.vbuf != b.va->vbuf) changevbuf(cur, pass, b.va);
         changebatchtmus(cur, pass, b);
         if(cur.slot != &b.slot)
