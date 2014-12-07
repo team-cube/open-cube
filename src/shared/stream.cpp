@@ -378,8 +378,8 @@ bool subhomedir(char *dst, int len, const char *src)
         if(!home || !home[0]) return false;
 #endif
         dst[sub-src] = '\0';
-        concatstring(dst, home);
-        concatstring(dst, sub+(*sub == '~' ? 1 : strlen("$HOME")));
+        concatstring(dst, home, len);
+        concatstring(dst, sub+(*sub == '~' ? 1 : strlen("$HOME")), len);
     }
     return true;
 }

@@ -177,10 +177,10 @@ inline char *copystring(char *d, const char *s, size_t len)
 }
 template<size_t N> inline char *copystring(char (&d)[N], const char *s) { return copystring(d, s, N); }
 
-inline char *concatstring(char *d, const char *s, size_t len = MAXSTRLEN) { size_t used = strlen(d); return used < len ? copystring(d+used, s, len-used) : d; }
+inline char *concatstring(char *d, const char *s, size_t len) { size_t used = strlen(d); return used < len ? copystring(d+used, s, len-used) : d; }
 template<size_t N> inline char *concatstring(char (&d)[N], const char *s) { return concatstring(d, s, N); }
 
-inline char *prependstring(char *d, const char *s, size_t len = MAXSTRLEN)
+inline char *prependstring(char *d, const char *s, size_t len)
 {
     size_t slen = min(strlen(s), len);
     memmove(&d[slen], d, min(len - slen, strlen(d) + 1));
