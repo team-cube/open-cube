@@ -252,6 +252,69 @@ static void reorientrgtc(GLenum format, int blocksize, int w, int h, uchar *src,
         } \
     } while(0)
 
+#define readwritergbtex(t, s, body) \
+    { \
+        if(t.bpp >= 3) readwritetex(t, s, body); \
+        else \
+        { \
+            ImageData rgb(t.w, t.h, 3); \
+            read2writetex(rgb, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
+            t.replace(rgb); \
+        } \
+    }
+
+void forcergbimage(ImageData &s)
+{
+    if(s.bpp >= 3) return;
+    ImageData d(s.w, s.h, 3);
+    readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
+    s.replace(d);
+}
+
+#define readwritergbatex(t, s, body) \
+    { \
+        if(t.bpp >= 4) { readwritetex(t, s, body); } \
+        else \
+        { \
+            ImageData rgba(t.w, t.h, 4); \
+            if(t.bpp==3) read2writetex(rgba, t, orig, s, src, { dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[2]; body; }); \
+            else read2writetex(rgba, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
+            t.replace(rgba); \
+        } \
+    }
+
+void forcergbaimage(ImageData &s)
+{
+    if(s.bpp >= 4) return;
+    ImageData d(s.w, s.h, 4);
+    if(s.bpp==3) readwritetex(d, s, { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; });
+    else readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
+    s.replace(d);
+}
+
+void swizzleimage(ImageData &s)
+{
+    if(s.bpp==2)
+    {
+        ImageData d(s.w, s.h, 4);
+        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; dst[3] = src[1]; });
+        s.replace(d);
+    }
+    else if(s.bpp==1)
+    {
+        ImageData d(s.w, s.h, 3);
+        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
+        s.replace(d);
+    }
+}
+
+void scaleimage(ImageData &s, int w, int h)
+{
+    ImageData d(w, h, s.bpp);
+    scaletexture(s.data, s.w, s.h, s.bpp, s.pitch, d.data, w, h);
+    s.replace(d);
+}
+
 void texreorient(ImageData &s, bool flipx, bool flipy, bool swapxy, int type = TEX_DIFFUSE)
 {
     ImageData d(swapxy ? s.h : s.w, swapxy ? s.w : s.h, s.bpp, s.levels, s.align, s.compressed);
@@ -342,6 +405,8 @@ void texcrop(ImageData &s, int x, int y, int w, int h)
 
 void texmad(ImageData &s, const vec &mul, const vec &add)
 {
+    if(s.bpp < 3 && (mul.x != mul.y || mul.y != mul.z || add.x != add.y || add.y != add.z))
+        swizzleimage(s);
     int maxk = min(int(s.bpp), 3);
     writetex(s,
         loopk(maxk) dst[k] = uchar(clamp(dst[k]*mul[k] + 255*add[k], 0.0f, 255.0f));
@@ -459,6 +524,48 @@ void texagrad(ImageData &s, float x2, float y2, float x1, float y1)
             curx += dx;
         }
         cury += dy;
+    }
+}
+
+void texblend(ImageData &d, ImageData &s, ImageData &m)
+{
+    if(s.w != d.w || s.h != d.h) scaleimage(s, d.w, d.h);
+    if(m.w != d.w || m.h != d.h) scaleimage(m, d.w, d.h);
+    if(&s == &m)
+    {
+        if(s.bpp == 2)
+        {
+            if(d.bpp >= 3) swizzleimage(s);
+        }
+        else if(s.bpp == 4)
+        {
+            if(d.bpp < 3) swizzleimage(d);
+        }
+        else return;
+        if(d.bpp < 3) readwritetex(d, s,
+            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * src[1])/255);
+        );
+        else readwritetex(d, s,
+            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * src[3])/255);
+            dst[1] = uchar((int(dst[1]) + (int(src[1]) - int(dst[1])) * src[3])/255);
+            dst[2] = uchar((int(dst[2]) + (int(src[2]) - int(dst[2])) * src[3])/255);
+        ); 
+    }
+    else
+    {
+        if(s.bpp < 3)
+        {
+            if(d.bpp >= 3) swizzleimage(s);
+        }
+        else if(d.bpp < 3) swizzleimage(d);
+        if(d.bpp < 3) read2writetex(d, s, src, m, mask,
+            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * mask[0])/255);
+        );
+        else read2writetex(d, s, src, m, mask, 
+            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * mask[0])/255);
+            dst[1] = uchar((int(dst[1]) + (int(src[1]) - int(dst[1])) * mask[0])/255);
+            dst[2] = uchar((int(dst[2]) + (int(src[2]) - int(dst[2])) * mask[0])/255);
+        ); 
     }
 }
 
@@ -1218,69 +1325,6 @@ void texblur(ImageData &s, int n, int r)
     }
 }
 
-void scaleimage(ImageData &s, int w, int h)
-{
-    ImageData d(w, h, s.bpp);
-    scaletexture(s.data, s.w, s.h, s.bpp, s.pitch, d.data, w, h);
-    s.replace(d);
-}
-
-#define readwritergbtex(t, s, body) \
-    { \
-        if(t.bpp >= 3) readwritetex(t, s, body); \
-        else \
-        { \
-            ImageData rgb(t.w, t.h, 3); \
-            read2writetex(rgb, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
-            t.replace(rgb); \
-        } \
-    }
-
-void forcergbimage(ImageData &s)
-{
-    if(s.bpp >= 3) return;
-    ImageData d(s.w, s.h, 3);
-    readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
-    s.replace(d);
-}
-
-#define readwritergbatex(t, s, body) \
-    { \
-        if(t.bpp >= 4) { readwritetex(t, s, body); } \
-        else \
-        { \
-            ImageData rgba(t.w, t.h, 4); \
-            if(t.bpp==3) read2writetex(rgba, t, orig, s, src, { dst[0] = orig[0]; dst[1] = orig[1]; dst[2] = orig[2]; body; }); \
-            else read2writetex(rgba, t, orig, s, src, { dst[0] = dst[1] = dst[2] = orig[0]; body; }); \
-            t.replace(rgba); \
-        } \
-    }
-
-void forcergbaimage(ImageData &s)
-{
-    if(s.bpp >= 4) return;
-    ImageData d(s.w, s.h, 4);
-    if(s.bpp==3) readwritetex(d, s, { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; });
-    else readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
-    s.replace(d);
-}
-
-void swizzleimage(ImageData &s)
-{
-    if(s.bpp==2)
-    {
-        ImageData d(s.w, s.h, 4);
-        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; dst[3] = src[1]; });
-        s.replace(d);
-    }
-    else if(s.bpp==1)
-    {
-        ImageData d(s.w, s.h, 3);
-        readwritetex(d, s, { dst[0] = dst[1] = dst[2] = src[0]; });
-        s.replace(d);
-    }
-}
-
 bool canloadsurface(const char *name)
 {
     stream *f = openfile(name, "rb");
@@ -1336,9 +1380,9 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         if(!file) { if(msg) conoutf(CON_ERROR, "could not load texture %s", tname); return false; }
         file++;
     }
+    string pname;
     if(tdir)
     {
-        static string pname;
         formatstring(pname, "%s/%s", tdir, file);
         file = path(pname);
     }
@@ -1359,6 +1403,11 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
                 if(!arg[i] || arg[i] >= end) arg[i] = ""; \
                 else arg[i]++; \
             }
+        #define COPYTEXARG(dst, src) do { \
+            size_t len = min(strcspn(src, ":,><"), sizeof(dst)-1); \
+            memcpy(dst, src, len); \
+            dst[len] = '\0'; \
+        } while(0)
         PARSETEXCOMMANDS(pcmds);
         if(matchstring(cmd, len, "dds")) dds = true;
         else if(matchstring(cmd, len, "thumbnail")) raw = true;
@@ -1417,6 +1466,15 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
         }
         else if(matchstring(cmd, len, "premul")) texpremul(d);
         else if(matchstring(cmd, len, "agrad")) texagrad(d, atof(arg[0]), atof(arg[1]), atof(arg[2]), atof(arg[3]));
+        else if(matchstring(cmd, len, "blend"))
+        {
+            ImageData src, mask;
+            string srcname, maskname;
+            COPYTEXARG(srcname, arg[0]);
+            COPYTEXARG(maskname, arg[1]);
+            if(srcname[0] && texturedata(src, srcname, false, NULL, NULL, tdir, ttype) && (!maskname[0] || texturedata(mask, maskname, false, NULL, NULL, tdir, ttype)))
+                texblend(d, src, maskname[0] ? mask : src);
+        }
         else if(matchstring(cmd, len, "thumbnail"))
         {
             int w = atoi(arg[0]), h = atoi(arg[1]);
