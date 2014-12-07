@@ -168,9 +168,9 @@ typedef char string[MAXSTRLEN];
 inline void vformatstring(char *d, const char *fmt, va_list v, int len = MAXSTRLEN) { _vsnprintf(d, len, fmt, v); d[len-1] = 0; }
 inline char *copystring(char *d, const char *s, size_t len = MAXSTRLEN)
 {
-    size_t slen = min(strlen(s)+1, len);
+    size_t slen = min(strlen(s), len-1);
     memcpy(d, s, slen);
-    d[slen-1] = 0;
+    d[slen] = 0;
     return d;
 }
 inline char *concatstring(char *d, const char *s, size_t len = MAXSTRLEN) { size_t used = strlen(d); return used < len ? copystring(d+used, s, len-used) : d; }
@@ -543,6 +543,14 @@ inline const char *stringptr(const char *s) { return s; }
 inline const char *stringptr(const stringslice &s) { return s.str; }
 inline int stringlen(const char *s) { return int(strlen(s)); }
 inline int stringlen(const stringslice &s) { return s.len; }
+
+inline char *copystring(char *d, const stringslice &s, size_t len = MAXSTRLEN)
+{
+    size_t slen = min(size_t(s.len), len-1);
+    memcpy(d, s.str, slen);
+    d[slen] = 0;
+    return d;
+}
 
 static inline uint memhash(const void *ptr, int len)
 {

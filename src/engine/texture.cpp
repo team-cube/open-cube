@@ -1411,11 +1411,7 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
                 if(!arg[i] || arg[i] >= end) arg[i] = ""; \
                 else arg[i]++; \
             }
-        #define COPYTEXARG(dst, src) do { \
-            size_t len = min(strcspn(src, ":,><"), sizeof(dst)-1); \
-            memcpy(dst, src, len); \
-            dst[len] = '\0'; \
-        } while(0)
+        #define COPYTEXARG(dst, src) copystring(dst, stringslice(src, strcspn(src, ":,><")), sizeof(dst))
         PARSETEXCOMMANDS(pcmds);
         if(matchstring(cmd, len, "dds")) dds = true;
         else if(matchstring(cmd, len, "thumbnail")) raw = true;
