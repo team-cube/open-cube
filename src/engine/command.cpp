@@ -3414,7 +3414,7 @@ static inline char *listelem(const char *start = liststart, const char *end = li
     size_t len = end-start;
     char *s = newstring(len);
     if(*quotestart == '"') unescapestring(s, start, end);
-    else copystring(s, start, len+1);
+    else { memcpy(s, start, len); s[len] = '\0'; }
     return s;
 }
 

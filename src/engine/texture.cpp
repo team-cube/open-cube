@@ -1411,7 +1411,7 @@ static bool texturedata(ImageData &d, const char *tname, bool msg = true, int *c
                 if(!arg[i] || arg[i] >= end) arg[i] = ""; \
                 else arg[i]++; \
             }
-        #define COPYTEXARG(dst, src) copystring(dst, stringslice(src, strcspn(src, ":,><")), sizeof(dst))
+        #define COPYTEXARG(dst, src) copystring(dst, stringslice(src, strcspn(src, ":,><")))
         PARSETEXCOMMANDS(pcmds);
         if(matchstring(cmd, len, "dds")) dds = true;
         else if(matchstring(cmd, len, "thumbnail")) raw = true;
@@ -2671,7 +2671,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
     {
         if(wildcard)
         {
-            copystring(sname, tname, wildcard-tname+1);
+            copystring(sname, stringslice(tname, wildcard));
             concatstring(sname, cubemapsides[i].name);
             concatstring(sname, wildcard+1);
         }

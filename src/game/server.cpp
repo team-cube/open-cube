@@ -1278,8 +1278,7 @@ namespace server
     void hashpassword(int cn, int sessionid, const char *pwd, char *result, int maxlen)
     {
         char buf[2*sizeof(string)];
-        formatstring(buf, "%d %d ", cn, sessionid);
-        copystring(&buf[strlen(buf)], pwd);
+        formatstring(buf, "%d %d %s", cn, sessionid, pwd);
         if(!hashstring(buf, result, maxlen)) *result = '\0';
     }
 
