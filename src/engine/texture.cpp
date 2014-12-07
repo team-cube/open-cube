@@ -543,12 +543,16 @@ void texblend(ImageData &d, ImageData &s, ImageData &m)
         }
         else return;
         if(d.bpp < 3) readwritetex(d, s,
-            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * src[1])/255);
+            int srcblend = src[1];
+            int dstblend = 255 - srcblend;
+            dst[0] = uchar((dst[0]*dstblend + src[0]*srcblend)/255);
         );
         else readwritetex(d, s,
-            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * src[3])/255);
-            dst[1] = uchar((int(dst[1]) + (int(src[1]) - int(dst[1])) * src[3])/255);
-            dst[2] = uchar((int(dst[2]) + (int(src[2]) - int(dst[2])) * src[3])/255);
+            int srcblend = src[3];
+            int dstblend = 255 - srcblend;
+            dst[0] = uchar((dst[0]*dstblend + src[0]*srcblend)/255);
+            dst[1] = uchar((dst[1]*dstblend + src[1]*srcblend)/255);
+            dst[2] = uchar((dst[2]*dstblend + src[2]*srcblend)/255);
         ); 
     }
     else
@@ -559,12 +563,16 @@ void texblend(ImageData &d, ImageData &s, ImageData &m)
         }
         else if(d.bpp < 3) swizzleimage(d);
         if(d.bpp < 3) read2writetex(d, s, src, m, mask,
-            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * mask[0])/255);
+            int srcblend = mask[0];
+            int dstblend = 255 - srcblend;
+            dst[0] = uchar((dst[0]*dstblend + src[0]*srcblend)/255);
         );
         else read2writetex(d, s, src, m, mask, 
-            dst[0] = uchar((int(dst[0]) + (int(src[0]) - int(dst[0])) * mask[0])/255);
-            dst[1] = uchar((int(dst[1]) + (int(src[1]) - int(dst[1])) * mask[0])/255);
-            dst[2] = uchar((int(dst[2]) + (int(src[2]) - int(dst[2])) * mask[0])/255);
+            int srcblend = mask[0];
+            int dstblend = 255 - srcblend;
+            dst[0] = uchar((dst[0]*dstblend + src[0]*srcblend)/255);
+            dst[1] = uchar((dst[1]*dstblend + src[1]*srcblend)/255);
+            dst[2] = uchar((dst[2]*dstblend + src[2]*srcblend)/255);
         ); 
     }
 }
