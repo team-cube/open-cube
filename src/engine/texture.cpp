@@ -1063,6 +1063,7 @@ static Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clam
     t->mipmap = mipit;
     t->type = Texture::IMAGE;
     if(transient) t->type |= Texture::TRANSIENT;
+    if(clamp&0x300) t->type |= Texture::MIRROR;
     if(!s.data)
     {
         t->type |= Texture::STUB;
@@ -1774,7 +1775,9 @@ static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
     if(slot && slot->sts.inrange(0))
     {
         if(!slot->loaded) slot->load();
-        int xs = slot->sts[0].t->xs, ys = slot->sts[0].t->ys;
+        Texture *t = slot->sts[0].t;
+        int xs = t->xs, ys = t->ys;
+        if(t->type & Texture::MIRROR) { xs *= 2; ys *= 2; }
         if((dst.rotation&5)==1) swap(xs, ys);
         dst.offset.x %= xs; if(dst.offset.x < 0) dst.offset.x += xs;
         dst.offset.y %= ys; if(dst.offset.y < 0) dst.offset.y += ys;
