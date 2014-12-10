@@ -1976,6 +1976,8 @@ void renderrefractmask()
 
         drawvatris(va, 3*va->refracttris, 3*(va->tris + va->blendtris + va->alphabacktris + va->alphafronttris));
         xtravertsva += 3*va->refracttris;
+
+        prev = va;
     }
 
     glBindBuffer_(GL_ARRAY_BUFFER, 0);
