@@ -1992,19 +1992,19 @@ void packvslot(vector<uchar> &buf, const VSlot &src)
         buf.put(VSLOT_DETAIL);
         putuint(buf, vslots.inrange(src.detail) && !vslots[src.detail]->changed ? src.detail : 0);
     }
-    buf.put(0);
+    buf.put(0xFF);
 }
 
 void packvslot(vector<uchar> &buf, int index)
 {
     if(vslots.inrange(index)) packvslot(buf, *vslots[index]);
-    else buf.put(0);
+    else buf.put(0xFF);
 }
 
 void packvslot(vector<uchar> &buf, const VSlot *vs)
 {
     if(vs) packvslot(buf, *vs);
-    else buf.put(0);
+    else buf.put(0xFF);
 }
 
 bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
@@ -2012,7 +2012,7 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
     while(buf.remaining())
     {
         int changed = buf.get();
-        if(!changed) break;
+        if(changed >= 0x80) break;
         switch(changed)
         {
             case VSLOT_SHPARAM:
