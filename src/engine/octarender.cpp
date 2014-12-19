@@ -359,7 +359,7 @@ struct vacollect : verthash
             for(int j = 0; j < t.tris.length(); j += 3)
             {
                 const vertex &t0 = verts[t.tris[j]], &t1 = verts[t.tris[j+1]], &t2 = verts[t.tris[j+2]];
-                const vec &v0 = t0.pos, &v1 = t1.pos, &v2 = t2.pos;
+                vec v0 = t0.pos, v1 = t1.pos, v2 = t2.pos;
                 vec tmin = vec(v0).min(v1).min(v2), tmax = vec(v0).max(v1).max(v2);
                 if(tmin.x >= bbmax.x || tmin.y >= bbmax.y || tmin.z >= bbmax.z ||
                    tmax.x <= bbmin.x || tmax.y <= bbmin.y || tmax.z <= bbmin.z)
@@ -373,6 +373,8 @@ struct vacollect : verthash
                 nump = polyclip(p1, nump, orient.c, clipoffset.z, clipoffset.z + size.z, p2);
                 if(nump < 3) continue;
 
+                bvec4 n0 = t0.norm, n1 = t1.norm, n2 = t2.norm,
+                      x0 = t0.tangent, x1 = t1.tangent, x2 = t2.tangent;
                 vec e1 = vec(v1).sub(v0), e2 = vec(v2).sub(v0);
                 float d11 = e1.dot(e1), d12 = e1.dot(e2), d22 = e2.dot(e2);
                 int idx[9];
@@ -385,10 +387,10 @@ struct vacollect : verthash
                           b1 = (d22*dp1 - d12*dp2) / denom,
                           b2 = (d11*dp2 - d12*dp1) / denom,
                           b0 = 1 - b1 - b2;
-                    v.norm.lerp(t0.norm, t1.norm, t2.norm, b0, b1, b2);
+                    v.norm.lerp(n0, n1, n2, b0, b1, b2);
                     vec tc = orient.transposedtransform(vec(center).sub(v.pos)).div(size).add(0.5f);
                     v.tc = vec(tc.x, tc.z, s.fade ? tc.y * s.depth / s.fade : s.fade);
-                    v.tangent.lerp(t0.tangent, t1.tangent, t2.tangent, b0, b1, b2);
+                    v.tangent.lerp(x0, x1, x2, b0, b1, b2);
                     idx[k] = addvert(v);
                 }
                 vector<ushort> &tris = decalindices[tkey].tris;
