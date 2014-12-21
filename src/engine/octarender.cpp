@@ -344,8 +344,7 @@ struct vacollect : verthash
             if(t->xs < t->ys) size.x *= t->xs / float(t->ys);
             else if(t->xs > t->ys) size.z *= t->ys / float(t->xs);
         }
-        vec center = orient.transform(vec(0, size.y*0.5f, 0)), radius = orient.abstransform(vec(size).mul(0.5f));
-        center.add(e.o);
+        vec center = orient.transform(vec(0, size.y*0.5f, 0)).add(e.o), radius = orient.abstransform(vec(size).mul(0.5f));
         vec bbmin = vec(center).sub(radius), bbmax = vec(center).add(radius);
         vec clipoffset = orient.transposedtransform(center).msub(size, 0.5f);
         loopv(texs)
@@ -364,6 +363,8 @@ struct vacollect : verthash
                 if(tmin.x >= bbmax.x || tmin.y >= bbmax.y || tmin.z >= bbmax.z ||
                    tmax.x <= bbmin.x || tmax.y <= bbmin.y || tmax.z <= bbmin.z)
                     continue;
+                float f0 = t0.norm.tonormal().dot(orient.b), f1 = t1.norm.tonormal().dot(orient.b), f2 = t2.norm.tonormal().dot(orient.b);
+                if(f0 >= 0 && f1 >= 0 && f2 >= 0) continue; 
                 vec p1[9], p2[9];
                 p1[0] = v0; p1[1] = v1; p1[2] = v2;
                 int nump = polyclip(p1, 3, orient.b, clipoffset.y, clipoffset.y + size.y, p2);
@@ -389,7 +390,7 @@ struct vacollect : verthash
                           b0 = 1 - b1 - b2;
                     v.norm.lerp(n0, n1, n2, b0, b1, b2);
                     vec tc = orient.transposedtransform(vec(center).sub(v.pos)).div(size).add(0.5f);
-                    v.tc = vec(tc.x, tc.z, s.fade ? tc.y * s.depth / s.fade : s.fade);
+                    v.tc = vec(tc.x, tc.z, s.fade ? tc.y * s.depth / s.fade * clamp(-4*(f0*b0 + f1*b1 + f2*b2), 0.0f, 1.0f) : s.fade);
                     v.tangent.lerp(x0, x1, x2, b0, b1, b2);
                     idx[k] = addvert(v);
                 }
