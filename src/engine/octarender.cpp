@@ -389,8 +389,9 @@ struct vacollect : verthash
                           b2 = (d11*dp2 - d12*dp1) / denom,
                           b0 = 1 - b1 - b2;
                     v.norm.lerp(n0, n1, n2, b0, b1, b2);
+                    v.norm.w = uchar(127.5f - 127.5f*(f0*b0 + f1*b1 + f2*b2));
                     vec tc = orient.transposedtransform(vec(center).sub(v.pos)).div(size).add(0.5f);
-                    v.tc = vec(tc.x, tc.z, s.fade ? tc.y * s.depth / s.fade * clamp(-4*(f0*b0 + f1*b1 + f2*b2), 0.0f, 1.0f) : s.fade);
+                    v.tc = vec(tc.x, tc.z, s.fade ? tc.y * s.depth / s.fade : 1.0f);
                     v.tangent.lerp(x0, x1, x2, b0, b1, b2);
                     idx[k] = addvert(v);
                 }
