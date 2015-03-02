@@ -48,15 +48,15 @@ namespace game
 
     static const int playercolors[] =
     {
-        0xAC2C2A,
-        0xAD6932,
-        0xBFAA56,
-        0x4C7A3D,
+        0xA12020,
+        0xA15B28,
+        0xB39D52,
+        0x3E752F,
         0x3F748C,
-        0x27508A,
-        0xB8658C,
-        0x5A3B80,
-        0xB8B1A5
+        0x214C85,
+        0xB3668C,
+        0x523678,
+        0xB3ADA3
     };
 
     static const int playercolorsazul[] =
