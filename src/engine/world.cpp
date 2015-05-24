@@ -1355,7 +1355,6 @@ void findplayerspawn(dynent *d, int forceent, int tag) // place at random spawn
         d->o.z += 1;
         entinmap(d);
     }
-    if(d == player) ovr::reset();
 }
 
 void splitocta(cube *c, int size)
@@ -1392,7 +1391,6 @@ void resetmap()
 void startmap(const char *name)
 {
     game::startmap(name);
-    ovr::reset();
 }
 
 bool emptymap(int scale, bool force, const char *mname, bool usecfg)    // main empty world creation routine

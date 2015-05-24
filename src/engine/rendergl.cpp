@@ -1098,7 +1098,7 @@ timer *findtimer(const char *name, bool gpu)
 
 timer *begintimer(const char *name, bool gpu)
 {
-    if(!usetimers || viewidx || inbetweenframes || (gpu && (!hasTQ || deferquery))) return NULL;
+    if(!usetimers || inbetweenframes || (gpu && (!hasTQ || deferquery))) return NULL;
     timer *t = findtimer(name, gpu);
     if(t->gpu)
     {
@@ -1220,7 +1220,7 @@ VAR(wireframe, 0, 0, 1);
 
 ICOMMAND(getcamyaw, "", (), floatret(camera1->yaw));
 ICOMMAND(getcampitch, "", (), floatret(camera1->pitch));
-ICOMMAND(getcamroll, "", (), floatret(ovr::modifyroll(camera1->roll)));
+ICOMMAND(getcamroll, "", (), floatret(camera1->roll));
 ICOMMAND(getcampos, "", (),
 {
     defformatstring(pos, "%s %s %s", floatstr(camera1->o.x), floatstr(camera1->o.y), floatstr(camera1->o.z));
@@ -1233,13 +1233,10 @@ void setcammatrix()
 {
     // move from RH to Z-up LH quake style worldspace
     cammatrix = viewmatrix;
-    cammatrix.rotate_around_y((!drawtex ? ovr::modifyroll(camera1->roll) : camera1->roll)*RAD);
+    cammatrix.rotate_around_y(camera1->roll*RAD);
     cammatrix.rotate_around_x(camera1->pitch*-RAD);
     cammatrix.rotate_around_z(camera1->yaw*-RAD);
     cammatrix.translate(vec(camera1->o).neg());
-
-    if(!drawtex && ovr::enabled)
-        cammatrix.jitter((viewidx ? -1 : 1) * ovr::viewoffset, 0);
 
     cammatrix.transposedtransformnormal(vec(viewmatrix.b), camdir);
     cammatrix.transposedtransformnormal(vec(viewmatrix.a).neg(), camright);
@@ -1257,9 +1254,6 @@ void setcamprojmatrix(bool init = true, bool flush = false)
     if(init)
     {
         setcammatrix();
-
-        if(ovr::enabled && !drawtex)
-            projmatrix.jitter((viewidx ? -1 : 1) * ovr::distortoffset, 0);
     }
 
     jitteraa();
@@ -1285,7 +1279,6 @@ int hudmatrixpos = 0;
 void resethudmatrix()
 {
     hudmatrixpos = 0;
-    if(ovr::enabled) ovr::ortho(hudmatrix);
     GLOBALPARAM(hudmatrix, hudmatrix);
 }
 
@@ -1311,7 +1304,7 @@ void pophudmatrix(bool flush, bool flushparams)
     }
 }
 
-int vieww = -1, viewh = -1, viewidx = 0;
+int vieww = -1, viewh = -1;
 float curfov, curavatarfov, fovy, aspect;
 int farplane;
 VARP(zoominvel, 0, 40, 500);
@@ -1434,7 +1427,7 @@ void recomputecamera()
         orient.identity();
         orient.rotate_around_z(camera1->yaw*RAD);
         orient.rotate_around_x(camera1->pitch*RAD);
-        orient.rotate_around_y(ovr::modifyroll(camera1->roll)*-RAD);
+        orient.rotate_around_y(camera1->roll*-RAD);
         vec dir = vec(orient.b).neg(), side = vec(orient.a).neg(), up = orient.c;
 
         if(game::collidecamera())
@@ -1518,9 +1511,7 @@ void renderavatar()
     if(isthirdperson()) return;
 
     matrix4 oldprojmatrix = nojittermatrix;
-    float avatarfovy = curavatarfov;
-    if(ovr::enabled && ovr::fov) avatarfovy *= ovr::fov/fov;
-    projmatrix.perspective(avatarfovy, aspect, nearplane, farplane);
+    projmatrix.perspective(curavatarfov, aspect, nearplane, farplane);
     projmatrix.scalez(avatardepth);
     setcamprojmatrix(false);
 
@@ -1606,12 +1597,6 @@ bool calcspherescissor(const vec &center, float size, float &sx1, float &sy1, fl
         float cz = e.x/e.z, drt = sqrtf(dx)/size;
         CHECKPLANE(x, -, focaldist/aspect, sx1, sx2);
         CHECKPLANE(x, +, focaldist/aspect, sx1, sx2);
-        if(ovr::enabled)
-        {
-            float offset = (viewidx ? -1 : 1) * ovr::distortoffset;
-            if(sx1 > -1) sx1 += offset;
-            if(sx2 < 1) sx2 += offset;
-        }
     }
     if(dy > 0)
     {
@@ -2462,20 +2447,13 @@ void gl_drawview()
 
     if(fogoverlay && fogmat != MAT_AIR) drawfogoverlay(fogmat, fogbelow, clamp(fogbelow, 0.0f, 1.0f), abovemat);
 
-    GLuint outfbo = scalefbo ? scalefbo : ovr::lensfbo[viewidx];
-    doaa(setuppostfx(vieww, viewh, outfbo), processhdr);
-    renderpostfx(outfbo);
-    if(scalefbo) doscale(ovr::lensfbo[viewidx]);
+    doaa(setuppostfx(vieww, viewh, scalefbo), processhdr);
+    renderpostfx(scalefbo);
+    if(scalefbo) doscale();
 }
 
 void gl_drawmainmenu()
 {
-    if(ovr::enabled)
-    {
-        glBindFramebuffer_(GL_FRAMEBUFFER, ovr::lensfbo[viewidx]);
-        glViewport(0, 0, hudw, hudh);
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
     renderbackground(NULL, NULL, NULL, NULL, true);
 }
 
@@ -2797,7 +2775,7 @@ void gl_drawhud()
     }
 }
 
-int renderw = 0, renderh = 0, hudx = 0, hudy = 0, hudw = 0, hudh = 0;
+int renderw = 0, renderh = 0, hudw = 0, hudh = 0;
 
 void gl_setupframe(bool force)
 {
@@ -2806,7 +2784,6 @@ void gl_setupframe(bool force)
     renderh = min(scr_h, screenh);
     hudw = screenw;
     hudh = screenh;
-    ovr::setup();
     if(!force) return;
     setuplights();
 }
@@ -2817,24 +2794,13 @@ void gl_drawframe()
     xtravertsva = xtraverts = glde = gbatches = vtris = vverts = 0;
     flipqueries();
     aspect = forceaspect ? forceaspect : hudw/float(hudh);
-    float fovx = curfov;
-    if(ovr::enabled && ovr::fov) fovx *= ovr::fov/fov;
-    fovy = 2*atan2(tan(fovx/2*RAD), aspect)/RAD;
+    fovy = 2*atan2(tan(curfov/2*RAD), aspect)/RAD;
     vieww = hudw;
     viewh = hudh;
-    loopi(2)
-    {
-        if(mainmenu) gl_drawmainmenu();
-        else gl_drawview();
-        UI::render();
-        gl_drawhud();
-        if(!ovr::enabled) break;
-        ovr::warp();
-        ++viewidx;
-        hudx += hudw;
-    }
-    viewidx = 0;
-    hudx = 0;
+    if(mainmenu) gl_drawmainmenu();
+    else gl_drawview();
+    UI::render();
+    gl_drawhud();
 }
 
 void cleanupgl()
@@ -2843,6 +2809,5 @@ void cleanupgl()
     cleanuptimers();
     cleanupscreenquad();
     gle::cleanup();
-    ovr::cleanup();
 }
 

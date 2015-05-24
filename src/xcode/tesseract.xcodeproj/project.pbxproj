@@ -41,7 +41,6 @@
 		D1FCB15718832B7500AFC227 /* octa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10618832B7500AFC227 /* octa.cpp */; };
 		D1FCB15818832B7500AFC227 /* octaedit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10818832B7500AFC227 /* octaedit.cpp */; };
 		D1FCB15918832B7500AFC227 /* octarender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10918832B7500AFC227 /* octarender.cpp */; };
-		D1FCB15A18832B7500AFC227 /* ovr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10A18832B7500AFC227 /* ovr.cpp */; };
 		D1FCB15B18832B7500AFC227 /* pch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10B18832B7500AFC227 /* pch.cpp */; };
 		D1FCB15C18832B7500AFC227 /* physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10C18832B7500AFC227 /* physics.cpp */; };
 		D1FCB15D18832B7500AFC227 /* pvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1FCB10D18832B7500AFC227 /* pvs.cpp */; };
@@ -166,7 +165,6 @@
 		D1FCB10718832B7500AFC227 /* octa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = octa.h; sourceTree = "<group>"; };
 		D1FCB10818832B7500AFC227 /* octaedit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octaedit.cpp; sourceTree = "<group>"; };
 		D1FCB10918832B7500AFC227 /* octarender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = octarender.cpp; sourceTree = "<group>"; };
-		D1FCB10A18832B7500AFC227 /* ovr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ovr.cpp; sourceTree = "<group>"; };
 		D1FCB10B18832B7500AFC227 /* pch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pch.cpp; sourceTree = "<group>"; };
 		D1FCB10C18832B7500AFC227 /* physics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = physics.cpp; sourceTree = "<group>"; };
 		D1FCB10D18832B7500AFC227 /* pvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pvs.cpp; sourceTree = "<group>"; };
@@ -405,7 +403,6 @@
 				D1FCB10718832B7500AFC227 /* octa.h */,
 				D1FCB10818832B7500AFC227 /* octaedit.cpp */,
 				D1FCB10918832B7500AFC227 /* octarender.cpp */,
-				D1FCB10A18832B7500AFC227 /* ovr.cpp */,
 				D1FCB10B18832B7500AFC227 /* pch.cpp */,
 				D1FCB10C18832B7500AFC227 /* physics.cpp */,
 				D1FCB10D18832B7500AFC227 /* pvs.cpp */,
@@ -599,7 +596,6 @@
 				D1FCB15718832B7500AFC227 /* octa.cpp in Sources */,
 				D1FCB15818832B7500AFC227 /* octaedit.cpp in Sources */,
 				D1FCB15918832B7500AFC227 /* octarender.cpp in Sources */,
-				D1FCB15A18832B7500AFC227 /* ovr.cpp in Sources */,
 				D1FCB15B18832B7500AFC227 /* pch.cpp in Sources */,
 				D1FCB15C18832B7500AFC227 /* physics.cpp in Sources */,
 				D1FCB15D18832B7500AFC227 /* pvs.cpp in Sources */,

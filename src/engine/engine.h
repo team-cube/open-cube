@@ -28,7 +28,7 @@ extern const uchar faceedgesidx[6][4];
 extern bool inbetweenframes, renderedframe;
 
 extern SDL_Window *screen;
-extern int screenw, screenh, renderw, renderh, hudx, hudy, hudw, hudh;
+extern int screenw, screenh, renderw, renderh, hudw, hudh;
 
 extern vector<int> entgroup;
 
@@ -126,7 +126,7 @@ extern int maxdrawbufs, maxdualdrawbufs;
 
 enum { DRAWTEX_NONE = 0, DRAWTEX_ENVMAP, DRAWTEX_MINIMAP, DRAWTEX_MODELPREVIEW };
 
-extern int vieww, viewh, viewidx;
+extern int vieww, viewh;
 extern int fov;
 extern float curfov, fovy, aspect, forceaspect;
 extern float nearplane;
@@ -188,27 +188,6 @@ namespace modelpreview
 struct timer;
 extern timer *begintimer(const char *name, bool gpu = true);
 extern void endtimer(timer *t);
-
-namespace ovr
-{
-    extern int enabled;
-    extern int lensw, lensh;
-    extern GLuint lensfbo[2], lenstex[2];
-    extern float viewoffset, distortoffset, distortscale, fov;
-    extern float yaw, pitch, roll;
-
-    extern void init();
-    extern void destroy();
-    extern bool enable();
-    extern void disable();
-    extern void setup();
-    extern void cleanup();
-    extern void update();
-    extern void warp();
-    extern void ortho(matrix4 &m, float dist = 0, float fov = 0);
-
-    static inline float modifyroll(float r) { return ovr::enabled ? r + roll : r; }
-}
 
 // renderextras
 extern void render3dbox(vec &o, float tofloor, float toceil, float xradius, float yradius = 0);
