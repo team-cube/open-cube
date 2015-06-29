@@ -45,7 +45,7 @@ MODELTYPE(MDL_IQM, iqm);
 void mdlcullface(int *cullface)
 {
     checkmdl;
-    loadingmodel->setcullface(*cullface!=0);
+    loadingmodel->setcullface(*cullface);
 }
 COMMAND(mdlcullface, "i");
 
