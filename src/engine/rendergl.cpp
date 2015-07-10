@@ -543,7 +543,7 @@ void gl_checkextensions()
 
     parseglexts();
 
-    GLint texsize = 0, texunits = 0, vtexunits = 0, cubetexsize = 0, oqbits = 0, drawbufs = 0;
+    GLint texsize = 0, texunits = 0, vtexunits = 0, cubetexsize = 0, drawbufs = 0;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
     hwtexsize = texsize;
     if(hwtexsize < 2048)
@@ -561,14 +561,6 @@ void gl_checkextensions()
     glGetIntegerv(GL_MAX_DRAW_BUFFERS, &drawbufs);
     maxdrawbufs = drawbufs;
     if(maxdrawbufs < 4) fatal("Hardware does not support at least 4 draw buffers.");
-    glGetQueryiv_(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &oqbits);
-    if(!oqbits)
-    {
-        conoutf(CON_WARN, "WARNING: No occlusion query support!");
-        extern int vacubesize, oqfrags;
-        vacubesize = 64;
-        oqfrags = 0;
-    }
 
     if(glversion >= 300 || hasext("GL_ARB_vertex_array_object"))
     {
