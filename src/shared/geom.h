@@ -1762,7 +1762,7 @@ struct matrix4
     template<class T, class U> T transformnormal(const U &in) const
     {
         T v;
-        transform(in, v);
+        transformnormal(in, v);
         return v;
     }
 
