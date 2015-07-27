@@ -250,8 +250,8 @@ struct partrenderer
         info[len-1] = info[len-1] == ',' ? ')' : '\0';
         if(texname)
         {
-            const char *title = strrchr(texname, '/')+1;
-            if(title) concformatstring(info, ": %s", title);
+            const char *title = strrchr(texname, '/');
+            if(title) concformatstring(info, ": %s", title+1);
         }
     }
 };
