@@ -418,9 +418,7 @@ struct ctfclientmode : clientmode
             int wait = respawnwait(d);
             if(wait>=0)
             {
-                pushhudmatrix();
-                hudmatrix.scale(2, 2, 1);
-                flushhudmatrix();
+                pushhudscale(2);
                 bool flash = wait>0 && d==player1 && lastspawnattempt>=d->lastpain && lastmillis < lastspawnattempt+100;
                 draw_textf("%s%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, flash ? "\f3" : "", wait);
                 pophudmatrix();

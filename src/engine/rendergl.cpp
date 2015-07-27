@@ -1296,6 +1296,23 @@ void pophudmatrix(bool flush, bool flushparams)
     }
 }
 
+void pushhudscale(float sx, float sy)
+{
+    if(!sy) sy = sx;
+    pushhudmatrix();
+    hudmatrix.scale(sx, sy, 1);
+    flushhudmatrix();
+}
+
+void pushhudtranslate(float tx, float ty, float sx, float sy)
+{
+    if(!sy) sy = sx;
+    pushhudmatrix();
+    hudmatrix.translate(tx, ty, 0);
+    if(sy) hudmatrix.scale(sx, sy, 1);
+    flushhudmatrix();
+}
+
 int vieww = -1, viewh = -1;
 float curfov, curavatarfov, fovy, aspect;
 int farplane;
@@ -2687,9 +2704,7 @@ void gl_drawhud()
     {
         if(!hidestats)
         {
-            pushhudmatrix();
-            hudmatrix.scale(conscale, conscale, 1);
-            flushhudmatrix();
+            pushhudscale(conscale);
 
             int roffset = 0;
             if(showfps)
@@ -2745,9 +2760,7 @@ void gl_drawhud()
 
     abovehud = min(abovehud, conh*UI::abovehud());
 
-    pushhudmatrix();
-    hudmatrix.scale(conscale, conscale, 1);
-    flushhudmatrix();
+    pushhudscale(conscale);
     abovehud -= rendercommand(FONTH/2, abovehud - FONTH/2, conw-FONTH);
     if(!hidehud && !UI::uivisible("fullconsole")) renderconsole(conw, conh, abovehud - FONTH/2);
     pophudmatrix();

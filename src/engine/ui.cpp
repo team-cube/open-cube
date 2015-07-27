@@ -2058,10 +2058,7 @@ namespace UI
             changedraw(CHANGE_SHADER | CHANGE_COLOR);
 
             float k = drawscale();
-            pushhudmatrix();
-            hudmatrix.translate(sx, sy, 0);
-            hudmatrix.scale(k, k, 1);
-            flushhudmatrix();
+            pushhudtranslate(sx, sy, k);
             renderfullconsole(w/k, h/k);
             pophudmatrix();
         }
@@ -2632,10 +2629,7 @@ namespace UI
             edit->rendered = true;
 
             float k = drawscale();
-            pushhudmatrix();
-            hudmatrix.translate(sx, sy, 0);
-            hudmatrix.scale(k, k, 1);
-            flushhudmatrix();
+            pushhudtranslate(sx, sy, k);
 
             edit->draw(FONTW/2, 0, 0xFFFFFF, isfocus());
 

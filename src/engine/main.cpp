@@ -190,10 +190,7 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
         int tw = text_width(caption);
         float tsz = 0.04f*min(w, h)/FONTH,
               tx = 0.5f*(w - tw*tsz), ty = h - 0.075f*1.5f*min(w, h) - FONTH*tsz;
-        pushhudmatrix();
-        hudmatrix.translate(tx, ty, 0);
-        hudmatrix.scale(tsz, tsz, 1);
-        flushhudmatrix();
+        pushhudtranslate(tx, ty, tsz);
         draw_text(caption, 0, 0);
         pophudmatrix();
     }
@@ -220,20 +217,14 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
         if(mapname)
         {
             float tw = text_widthf(mapname), tsz = sz/(8*FONTH), tx = max(0.5f*(mw*msz - tw*tsz), 0.0f);
-            pushhudmatrix();
-            hudmatrix.translate(x+mx+tx, y, 0);
-            hudmatrix.scale(tsz, tsz, 1);
-            flushhudmatrix();
+            pushhudtranslate(x+mx+tx, y, tsz);
             draw_text(mapname, 0, 0);
             pophudmatrix();
             my = 1.5f*FONTH*tsz;
         }
         if(mapinfo)
         {
-            pushhudmatrix();
-            hudmatrix.translate(x+mx, y+my, 0);
-            hudmatrix.scale(msz, msz, 1);
-            flushhudmatrix();
+            pushhudtranslate(x+mx, y+my, msz);
             draw_text(mapinfo, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF, -1, infowidth);
             pophudmatrix();
         }
@@ -325,10 +316,8 @@ void renderprogressview(int w, int h, float bar, const char *text)   // also use
         int tw = text_width(text);
         float tsz = bh*0.6f/FONTH;
         if(tw*tsz > mw) tsz = mw/tw;
-        pushhudmatrix();
-        hudmatrix.translate(bx+sw, by + (bh - FONTH*tsz)/2, 0);
-        hudmatrix.scale(tsz, tsz, 1);
-        flushhudmatrix();
+    
+        pushhudtranslate(bx+sw, by + (bh - FONTH*tsz)/2, tsz);
         draw_text(text, 0, 0);
         pophudmatrix();
     }

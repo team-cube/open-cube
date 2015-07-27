@@ -701,9 +701,7 @@ namespace game
     void drawhudicons(gameent *d)
     {
 #if 0
-        pushhudmatrix();
-        hudmatrix.scale(2, 2, 1);
-        flushhudmatrix();
+        pushhudscale(2);
 
         draw_textf("%d", (HICON_X + HICON_SIZE + HICON_SPACE)/2, HICON_TEXTY/2, d->state==CS_DEAD ? 0 : d->health);
         if(d->state!=CS_DEAD)
@@ -724,9 +722,7 @@ namespace game
 
     void gameplayhud(int w, int h)
     {
-        pushhudmatrix();
-        hudmatrix.scale(h/1800.0f, h/1800.0f, 1);
-        flushhudmatrix();
+        pushhudscale(h/1800.0f);
 
         if(player1->state==CS_SPECTATOR)
         {
