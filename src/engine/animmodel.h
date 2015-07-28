@@ -320,6 +320,7 @@ struct animmodel : model
             if(cancollide) m.flags |= BIH::MESH_COLLIDE;
             if(s.alphatested()) m.flags |= BIH::MESH_ALPHA;
             if(noclip) m.flags |= BIH::MESH_NOCLIP;
+            if(s.cullface > 0) m.flags |= BIH::MESH_CULLFACE;
             genBIH(m);
         }
 

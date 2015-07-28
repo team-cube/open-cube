@@ -6,14 +6,28 @@ bool BIH::triintersect(const mesh &m, int tidx, const vec &mo, const vec &mray, 
 {
     const tri &t = m.tris[tidx];
     vec a = m.getpos(t.vert[0]), b = m.getpos(t.vert[1]).sub(a), c = m.getpos(t.vert[2]).sub(a),
-        n = vec().cross(b, c), r = vec(mo).sub(a), e = vec().cross(r, mray);
-    float det = mray.dot(n), adet = fabs(det), v = e.dot(c);
-    if(v < 0 || v > adet) return false;
-    float w = -e.dot(b);
-    if(w < 0 || v + w > adet) return false;
-    float f = r.dot(n)*m.scale;
-    if(f < 0 || f > maxdist*adet || !adet) return false;
-    float invdet = 1/adet;
+        n = vec().cross(b, c), r = vec(a).sub(mo), e = vec().cross(r, mray);
+    float det = mray.dot(n), v, w, f;
+    if(det >= 0)
+    {
+        if(!(mode&RAY_SHADOW) && m.flags&MESH_CULLFACE) return false;
+        v = e.dot(c);
+        if(v < 0 || v > det) return false;
+        w = -e.dot(b);
+        if(w < 0 || v + w > det) return false;
+        f = r.dot(n)*m.scale;
+        if(f < 0 || f > maxdist*det || !det) return false;
+    }
+    else
+    {
+        v = e.dot(c);
+        if(v > 0 || v < det) return false;
+        w = -e.dot(b);
+        if(w > 0 || v + w < det) return false;
+        f = r.dot(n)*m.scale;
+        if(f > 0 || f < maxdist*det) return false;
+    }
+    float invdet = 1/det;
     if(m.flags&MESH_ALPHA && (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY && (m.tex->alphamask || loadalphamask(m.tex)))
     {
         vec2 at = m.gettc(t.vert[0]), bt = m.gettc(t.vert[1]).sub(at).mul(v*invdet), ct = m.gettc(t.vert[2]).sub(at).mul(w*invdet);
@@ -22,11 +36,7 @@ bool BIH::triintersect(const mesh &m, int tidx, const vec &mo, const vec &mray, 
             ti = clamp(int(m.tex->ys * at.y), 0, m.tex->ys-1);
         if(!(m.tex->alphamask[ti*((m.tex->xs+7)/8) + si/8] & (1<<(si%8)))) return false;
     }
-    if(!(mode&RAY_SHADOW))
-    {
-        hitsurface = m.xformnorm.transform(n).normalize();
-        if(det > 0) hitsurface.neg();
-    }
+    if(!(mode&RAY_SHADOW)) hitsurface = m.xformnorm.transform(n).normalize();
     dist = f*invdet;
     return true;
 }
