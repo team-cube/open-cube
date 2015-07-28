@@ -302,9 +302,8 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
     }
     else if((mode&RAY_ENTS)!=RAY_ENTS && (!m->collide || e.flags&EF_NOCOLLIDE)) return false;
     if(!m->bih && !m->setBIH()) return false;
-    vec mo = vec(o).sub(e.o), mray(ray);
-    int scale = e.attr5;
-    if(scale > 0) mo.mul(100.0f/scale);
+    float scale = e.attr5 ? 100.0f/e.attr5 : 1.0f;
+    vec mo = vec(o).sub(e.o).mul(scale), mray(ray);
     float v = mo.dot(mray), inside = m->bih->entradius - mo.squaredlen();
     if((inside < 0 && v > 0) || inside + v*v < 0) return false;
     int yaw = e.attr2, pitch = e.attr3, roll = e.attr4;
@@ -326,9 +325,9 @@ bool mmintersect(const extentity &e, const vec &o, const vec &ray, float maxdist
         mo.rotate_around_y(rot);
         mray.rotate_around_y(rot);
     }
-    if(m->bih->traverse(mo, mray, maxdist ? maxdist : 1e16f, dist, mode))
+    if(m->bih->traverse(mo, mray, maxdist ? maxdist*scale : 1e16f, dist, mode))
     {
-        if(scale > 0) dist *= scale/100.0f;
+        dist /= scale;
         if(!(mode&RAY_SHADOW))
         {
             if(roll != 0) hitsurface.rotate_around_y(sincosmod360(-roll));
