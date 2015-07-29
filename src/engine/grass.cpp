@@ -30,7 +30,7 @@ struct grassvert
 {
     vec pos;
     bvec4 color;
-    float u, v;
+    vec2 tc;
 };
 
 static vector<grassvert> grassverts;
@@ -177,12 +177,12 @@ static void gengrassquads(grassgroup *&group, const grasswedge &w, const grasstr
             grassvert &gv = grassverts.add(); \
             gv.pos = p##n; \
             gv.color = color; \
-            gv.u = tc##n; gv.v = tcv; \
+            gv.tc = vec2(tc##n, tcv); \
             modify; \
         }
 
-        GRASSVERT(2, 0, { gv.pos.z += height; gv.u += animoffset; });
-        GRASSVERT(1, 0, { gv.pos.z += height; gv.u += animoffset; });
+        GRASSVERT(2, 0, { gv.pos.z += height; gv.tc.x += animoffset; });
+        GRASSVERT(1, 0, { gv.pos.z += height; gv.tc.x += animoffset; });
         GRASSVERT(1, 1, );
         GRASSVERT(2, 1, );
     }
@@ -284,7 +284,7 @@ void rendergrass()
     const grassvert *ptr = 0;
     gle::vertexpointer(sizeof(grassvert), ptr->pos.v);
     gle::colorpointer(sizeof(grassvert), ptr->color.v);
-    gle::texcoord0pointer(sizeof(grassvert), &ptr->u);
+    gle::texcoord0pointer(sizeof(grassvert), ptr->tc.v);
     gle::enablevertex();
     gle::enablecolor();
     gle::enabletexcoord0();

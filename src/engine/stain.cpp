@@ -4,7 +4,7 @@ struct stainvert
 {
     vec pos;
     bvec4 color;
-    float u, v;
+    vec2 tc;
 };
 
 struct staininfo
@@ -124,9 +124,9 @@ struct stainbuffer
         }
 
         const stainvert *ptr = 0;
-        gle::vertexpointer(sizeof(stainvert), &ptr->pos);
-        gle::texcoord0pointer(sizeof(stainvert), &ptr->u);
-        gle::colorpointer(sizeof(stainvert), &ptr->color);
+        gle::vertexpointer(sizeof(stainvert), ptr->pos.v);
+        gle::texcoord0pointer(sizeof(stainvert), ptr->tc.v);
+        gle::colorpointer(sizeof(stainvert), ptr->color.v);
 
         glDrawArrays(GL_TRIANGLES, 0, count);
         xtravertsva += count;
@@ -546,8 +546,8 @@ struct stainrenderer
             float tsz = flags&SF_RND4 ? 0.5f : 1.0f, scale = tsz*0.5f/stainradius,
                   tu = stainu + tsz*0.5f - ptc*scale, tv = stainv + tsz*0.5f - pbc*scale;
             pt.mul(scale); pb.mul(scale);
-            stainvert dv1 = { v2[0], staincolor, pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv },
-                      dv2 = { v2[1], staincolor, pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv };
+            stainvert dv1 = { v2[0], staincolor, vec2(pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv) },
+                      dv2 = { v2[1], staincolor, vec2(pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv) };
             int totalverts = 3*(numv-2);
             if(totalverts > buf.maxverts-3) return;
             while(buf.availverts < totalverts)
@@ -560,8 +560,7 @@ struct stainrenderer
                 tri[0] = dv1;
                 tri[1] = dv2;
                 dv2.pos = v2[k+2];
-                dv2.u = pt.dot(v2[k+2]) + tu;
-                dv2.v = pb.dot(v2[k+2]) + tv;
+                dv2.tc = vec2(pt.dot(v2[k+2]) + tu, pb.dot(v2[k+2]) + tv);
                 tri[2] = dv2;
             }
         }
@@ -647,8 +646,8 @@ struct stainrenderer
         float tsz = flags&SF_RND4 ? 0.5f : 1.0f, scale = tsz*0.5f/stainradius,
               tu = stainu + tsz*0.5f - ptc*scale, tv = stainv + tsz*0.5f - pbc*scale;
         pt.mul(scale); pb.mul(scale);
-        stainvert dv1 = { v2[0], staincolor, pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv },
-                  dv2 = { v2[1], staincolor, pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv };
+        stainvert dv1 = { v2[0], staincolor, vec2(pt.dot(v2[0]) + tu, pb.dot(v2[0]) + tv) },
+                  dv2 = { v2[1], staincolor, vec2(pt.dot(v2[1]) + tu, pb.dot(v2[1]) + tv) };
         int totalverts = 3*(numv-2);
         stainbuffer &buf = verts[STAINBUF_MAPMODEL];
         if(totalverts > buf.maxverts-3) return;
@@ -662,8 +661,7 @@ struct stainrenderer
             tri[0] = dv1;
             tri[1] = dv2;
             dv2.pos = v2[k+2];
-            dv2.u = pt.dot(v2[k+2]) + tu;
-            dv2.v = pb.dot(v2[k+2]) + tv;
+            dv2.tc = vec2(pt.dot(v2[k+2]) + tu, pb.dot(v2[k+2]) + tv);
             tri[2] = dv2;
         }
     }

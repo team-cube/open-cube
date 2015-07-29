@@ -149,7 +149,7 @@ struct partvert
 {
     vec pos;
     bvec4 color;
-    float u, v;
+    vec2 tc;
 };
 
 #define COLLIDERADIUS 8.0f
@@ -728,14 +728,10 @@ struct varenderer : partrenderer
             { \
                 float u1 = u1c, u2 = u2c, v1 = v1c, v2 = v2c; \
                 body; \
-                vs[0].u = u1; \
-                vs[0].v = v1; \
-                vs[1].u = u2; \
-                vs[1].v = v1; \
-                vs[2].u = u2; \
-                vs[2].v = v2; \
-                vs[3].u = u1; \
-                vs[3].v = v2; \
+                vs[0].tc = vec2(u1, v1); \
+                vs[1].tc = vec2(u2, v1); \
+                vs[2].tc = vec2(u2, v2); \
+                vs[3].tc = vec2(u1, v2); \
             }
             if(type&PT_RND4)
             {
@@ -812,9 +808,9 @@ struct varenderer : partrenderer
 
         glBindBuffer_(GL_ARRAY_BUFFER, vbo);
         const partvert *ptr = 0;
-        gle::vertexpointer(sizeof(partvert), &ptr->pos);
-        gle::texcoord0pointer(sizeof(partvert), &ptr->u);
-        gle::colorpointer(sizeof(partvert), &ptr->color);
+        gle::vertexpointer(sizeof(partvert), ptr->pos.v);
+        gle::texcoord0pointer(sizeof(partvert), ptr->tc.v);
+        gle::colorpointer(sizeof(partvert), ptr->color.v);
         gle::enablevertex();
         gle::enabletexcoord0();
         gle::enablecolor();
