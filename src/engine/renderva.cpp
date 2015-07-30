@@ -1710,7 +1710,7 @@ void rendergeom()
                 {
                     if(va->query)
                     {
-                        if(cur.vattribs) disablevattribs(cur, !doOQ);
+                        if(cur.vattribs) disablevattribs(cur, false);
                         if(cur.vbuf) disablevbuf(cur);
                         renderquery(cur, va->query, va);
                     }
