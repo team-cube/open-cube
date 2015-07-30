@@ -64,9 +64,7 @@ struct flarerenderer : partrenderer
         f.o = o;
         f.center = center;
         f.size = size;
-        f.color.x = uchar(r*mod);
-        f.color.y = uchar(g*mod);
-        f.color.z = uchar(b*mod);
+        f.color = bvec(uchar(r*mod), uchar(g*mod), uchar(b*mod));
         f.sparkle = sparkle;
     }
 
