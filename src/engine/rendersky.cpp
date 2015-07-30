@@ -172,10 +172,10 @@ void drawenvoverlay(Texture *overlay = NULL, float tx = 0, float ty = 0)
         p.rotate_around_z((-2.0f*M_PI*i)/cloudsubdiv);
         gle::attribf(p.x*psz, p.y*psz, z);
             gle::attribf(tx - p.x*tsz, ty + p.y*tsz);
-            gle::attribf(color.r, color.g, color.b, cloudalpha);
+            gle::attrib(color, cloudalpha);
         gle::attribf(p.x*w, p.y*w, z);
             gle::attribf(tx - p.x*tsz2, ty + p.y*tsz2);
-            gle::attribf(color.r, color.g, color.b, 0);
+            gle::attrib(color, 0);
     }
     xtraverts += gle::end();
     gle::disable();
