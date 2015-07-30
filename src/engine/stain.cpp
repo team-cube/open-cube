@@ -34,8 +34,9 @@ struct stainbuffer
     stainvert *verts;
     int maxverts, startvert, endvert, lastvert, availverts;
     GLuint vbo;
+    bool dirty;
 
-    stainbuffer() : verts(NULL), maxverts(0), startvert(0), endvert(0), lastvert(0), availverts(0), vbo(0)
+    stainbuffer() : verts(NULL), maxverts(0), startvert(0), endvert(0), lastvert(0), availverts(0), vbo(0), dirty(false)
     {}
 
     ~stainbuffer()
@@ -67,6 +68,7 @@ struct stainbuffer
     {
         startvert = endvert = lastvert = 0;
         availverts = max(maxverts - 3, 0);
+        dirty = true;
     }
 
     int freestain(const staininfo &d)
@@ -82,6 +84,7 @@ struct stainbuffer
     {
         startvert = d.endvert;
         availverts = endvert < startvert ? startvert - endvert - 3 : maxverts - 3 - (endvert - startvert);
+        dirty = true;
     }
 
     bool faded(const staininfo &d) const { return verts[d.startvert].color.a < 255; }
@@ -105,23 +108,29 @@ struct stainbuffer
                 vert++;
             }
         }
+        dirty = true;
     }
 
     void render()
     {
         if(startvert == endvert) return;
 
-        if(!vbo) glGenBuffers_(1, &vbo);
+        if(!vbo) { glGenBuffers_(1, &vbo); dirty = true; }
         glBindBuffer_(GL_ARRAY_BUFFER, vbo);
 
         int count = endvert < startvert ? maxverts - startvert : endvert - startvert;
-        glBufferData_(GL_ARRAY_BUFFER, maxverts*sizeof(stainvert), NULL, GL_STREAM_DRAW);
-        glBufferSubData_(GL_ARRAY_BUFFER, 0, count*sizeof(stainvert), &verts[startvert]);
-        if(endvert < startvert)
+        if(dirty)
         {
-            glBufferSubData_(GL_ARRAY_BUFFER, count*sizeof(stainvert), endvert*sizeof(stainvert), verts);
-            count += endvert;
+            glBufferData_(GL_ARRAY_BUFFER, maxverts*sizeof(stainvert), NULL, GL_STREAM_DRAW);
+            glBufferSubData_(GL_ARRAY_BUFFER, 0, count*sizeof(stainvert), &verts[startvert]);
+            if(endvert < startvert)
+            {
+                glBufferSubData_(GL_ARRAY_BUFFER, count*sizeof(stainvert), endvert*sizeof(stainvert), verts);
+                count += endvert;
+            }
+            dirty = false;
         }
+        else if(endvert < startvert) count += endvert;
 
         const stainvert *ptr = 0;
         gle::vertexpointer(sizeof(stainvert), ptr->pos.v);
@@ -139,6 +148,11 @@ struct stainbuffer
         endvert += 3;
         if(endvert >= maxverts) endvert = 0;
         return tri;
+    }
+
+    void addstain(staininfo &d)
+    {
+        dirty = true;
     }
 
     bool hasverts() const { return startvert != endvert; }
@@ -449,6 +463,7 @@ struct stainrenderer
             d.millis = lastmillis;
             d.startvert = buf.lastvert;
             d.endvert = buf.endvert;
+            buf.addstain(d);
         }
     }
 
