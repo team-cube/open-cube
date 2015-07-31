@@ -2528,7 +2528,7 @@ static inline void addshadowmeshtri(shadowmesh &m, int sides, shadowdrawinfo dra
     int sidemask = 0;
     switch(m.type)
     {
-        case SM_SPOT: sidemask = bbinsidespot(shadoworigin, shadowdir, shadowspot, vec(v0).min(v1).min(v2), vec(v0).max(v1).max(v2).add(1)) ? 1 : 0; break;
+        case SM_SPOT: sidemask = bbinsidespot(shadoworigin, shadowdir, shadowspot, ivec(vec(v0).min(v1).min(v2)), ivec(vec(v0).max(v1).max(v2).add(1))) ? 1 : 0; break;
         case SM_CUBEMAP: sidemask = calctrisidemask(l0.div(shadowradius), l1.div(shadowradius), l2.div(shadowradius), shadowbias); break;
     }
     if(!sidemask) return;

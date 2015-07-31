@@ -50,8 +50,8 @@ bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
                 decalboundbox(e, s, center, radius);
                 center.add(e.o);
                 radius.max(entselradius);
-                o = vec(center).sub(radius);
-                r = vec(center).add(radius).add(1);
+                o = ivec(vec(center).sub(radius));
+                r = ivec(vec(center).add(radius).add(1));
                 break;
             }
         case ET_MAPMODEL:
@@ -61,14 +61,14 @@ bool getentboundingbox(const extentity &e, ivec &o, ivec &r)
                 mmboundbox(e, m, center, radius);
                 center.add(e.o);
                 radius.max(entselradius);
-                o = vec(center).sub(radius);
-                r = vec(center).add(radius).add(1);
+                o = ivec(vec(center).sub(radius));
+                r = ivec(vec(center).add(radius).add(1));
                 break;
             }
         // invisible mapmodels use entselradius
         default:
-            o = vec(e.o).sub(entselradius);
-            r = vec(e.o).add(entselradius+1);
+            o = ivec(vec(e.o).sub(entselradius));
+            r = ivec(vec(e.o).add(entselradius+1));
             break;
     }
     return true;
@@ -295,8 +295,8 @@ static inline void findents(cube *c, const ivec &o, int size, const ivec &bo, co
 void findents(int low, int high, bool notspawned, const vec &pos, const vec &radius, vector<int> &found)
 {
     vec invradius(1/radius.x, 1/radius.y, 1/radius.z);
-    ivec bo = vec(pos).sub(radius).sub(1),
-         br = vec(pos).add(radius).add(1);
+    ivec bo(vec(pos).sub(radius).sub(1)),
+         br(vec(pos).add(radius).add(1));
     int diff = (bo.x^br.x) | (bo.y^br.y) | (bo.z^br.z) | octaentsize,
         scale = worldscale-1;
     if(diff&~((1<<scale)-1) || uint(bo.x|bo.y|bo.z|br.x|br.y|br.z) >= uint(worldsize))
@@ -599,7 +599,7 @@ void entdrag(const vec &ray)
         if(!editmoveplane(e.o, ray, d, eo[d] + (dc ? es[d] : 0), handle, dest, entmoving==1))
             return;
 
-        ivec g = dest;
+        ivec g(dest);
         int z = g[d]&(~(sel.grid-1));
         g.add(sel.grid/2).mask(~(sel.grid-1));
         g[d] = z;

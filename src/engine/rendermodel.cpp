@@ -471,7 +471,7 @@ COMMAND(clearmodel, "s");
 
 bool modeloccluded(const vec &center, float radius)
 {
-    ivec bbmin = vec(center).sub(radius), bbmax = vec(center).add(radius+1);
+    ivec bbmin(vec(center).sub(radius)), bbmax(vec(center).add(radius+1));
     return pvsoccluded(bbmin, bbmax) || bboccluded(bbmin, bbmax);
 }
 
@@ -737,7 +737,8 @@ void rendermodelbatches()
             if(bm.colorscale.a < 1)
             {
                 float sx1, sy1, sx2, sy2;
-                if(calcbbscissor(vec(bm.center).sub(bm.radius), vec(bm.center).add(bm.radius+1), sx1, sy1, sx2, sy2))
+                ivec bbmin(vec(bm.center).sub(bm.radius)), bbmax(vec(bm.center).add(bm.radius+1));
+                if(calcbbscissor(bbmin, bbmax, sx1, sy1, sx2, sy2))
                 {
                     transmdlsx1 = min(transmdlsx1, sx1);
                     transmdlsy1 = min(transmdlsy1, sy1);

@@ -400,13 +400,13 @@ void rendereditcursor()
                     loopi(3) w[i] = clamp(player->o[i], 0.0f, float(worldsize));
                 }
             }
-            cube *c = &lookupcube(w);
+            cube *c = &lookupcube(ivec(w));
             if(gridlookup && !dragging && !moving && !havesel && hmapedit!=1) gridsize = lusize;
             int mag = lusize / gridsize;
-            normalizelookupcube(w);
+            normalizelookupcube(ivec(w));
             if(sdist == 0 || sdist > wdist) rayboxintersect(vec(lu), vec(gridsize), player->o, camdir, t=0, orient); // just getting orient
             cur = lu;
-            cor = vec(w).mul(2).div(gridsize);
+            cor = ivec(w).mul(2).div(gridsize);
             od = dimension(orient);
             d = dimension(sel.orient);
 
@@ -1348,7 +1348,7 @@ static void genprefabmesh(prefabmesh &r, cube &c, const ivec &co, int size)
             if(vis&2) pos[numverts++] = vec(v[(order+3)&3]).mul(size/8.0f).add(vo);
             guessnormals(pos, numverts, norm);
             int index[4];
-            loopj(numverts) index[j] = r.addvert(pos[j], norm[j]);
+            loopj(numverts) index[j] = r.addvert(pos[j], bvec(norm[j]));
             loopj(numverts-2) if(index[0]!=index[j+1] && index[j+1]!=index[j+2] && index[j+2]!=index[0])
             {
                 r.tris.add(index[0]);
