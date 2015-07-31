@@ -672,7 +672,7 @@ static inline int undosize(undoblock *u)
     {
         block3 *b = u->block();
         cube *q = b->c();
-        int size = b->size(), total = size*sizeof(int);
+        int size = b->size(), total = size;
         loopj(size) total += familysize(*q++)*sizeof(cube);
         return total;
     }
