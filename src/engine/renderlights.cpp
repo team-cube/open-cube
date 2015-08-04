@@ -1092,10 +1092,10 @@ void processhdr(GLuint outfbo, int aa)
 
     if(bloompbo)
     {
-        glBindBuffer_(GL_ARRAY_BUFFER, bloompbo);
+        gle::bindvbo(bloompbo);
         gle::enablecolor();
         gle::colorpointer(hasTF ? sizeof(GLfloat) : sizeof(GLushort), (const void *)0, hasTF ? GL_FLOAT : GL_UNSIGNED_SHORT, 1);
-        glBindBuffer_(GL_ARRAY_BUFFER, 0);
+        gle::clearvbo();
     }
 
     b0fbo = bloomfbo[3];
@@ -2618,12 +2618,12 @@ namespace lightsphere
         }
 
         if(!vbuf) glGenBuffers_(1, &vbuf);
-        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
+        gle::bindvbo(vbuf);
         glBufferData_(GL_ARRAY_BUFFER, numverts*sizeof(vec), verts, GL_STATIC_DRAW);
         DELETEA(verts);
 
         if(!ebuf) glGenBuffers_(1, &ebuf);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
+        gle::bindebo(ebuf);
         glBufferData_(GL_ELEMENT_ARRAY_BUFFER, numindices*sizeof(GLushort), indices, GL_STATIC_DRAW);
         DELETEA(indices);
     }
@@ -2637,8 +2637,8 @@ namespace lightsphere
     void enable()
     {
         if(!vbuf) init(8, 4);
-        glBindBuffer_(GL_ARRAY_BUFFER, vbuf);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, ebuf);
+        gle::bindvbo(vbuf);
+        gle::bindebo(ebuf);
         gle::vertexpointer(sizeof(vec), verts);
         gle::enablevertex();
     }
@@ -2653,8 +2653,8 @@ namespace lightsphere
     void disable()
     {
         gle::disablevertex();
-        glBindBuffer_(GL_ARRAY_BUFFER, 0);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
+        gle::clearvbo();
+        gle::clearebo();
     }
 }
 

@@ -116,7 +116,7 @@ struct stainbuffer
         if(startvert == endvert) return;
 
         if(!vbo) { glGenBuffers_(1, &vbo); dirty = true; }
-        glBindBuffer_(GL_ARRAY_BUFFER, vbo);
+        gle::bindvbo(vbo);
 
         int count = endvert < startvert ? maxverts - startvert : endvert - startvert;
         if(dirty)
@@ -346,7 +346,7 @@ struct stainrenderer
 
     static void cleanuprenderstate(int sbuf, bool gbuf, int layer)
     {
-        glBindBuffer_(GL_ARRAY_BUFFER, 0);
+        gle::clearvbo();
 
         gle::disablevertex();
         gle::disabletexcoord0();

@@ -1305,15 +1305,15 @@ struct prefabmesh
 
         loopv(verts) verts[i].norm.flip();
         if(!p.vbo) glGenBuffers_(1, &p.vbo);
-        glBindBuffer_(GL_ARRAY_BUFFER, p.vbo);
+        gle::bindvbo(p.vbo);
         glBufferData_(GL_ARRAY_BUFFER, verts.length()*sizeof(vertex), verts.getbuf(), GL_STATIC_DRAW);
-        glBindBuffer_(GL_ARRAY_BUFFER, 0);
+        gle::clearvbo();
         p.numverts = verts.length();
 
         if(!p.ebo) glGenBuffers_(1, &p.ebo);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, p.ebo);
+        gle::bindebo(p.ebo);
         glBufferData_(GL_ELEMENT_ARRAY_BUFFER, tris.length()*sizeof(ushort), tris.getbuf(), GL_STATIC_DRAW);
-        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
+        gle::clearebo();
         p.numtris = tris.length()/3;
     }
 
@@ -1416,8 +1416,8 @@ static void renderprefab(prefab &p, const vec &o, float yaw, float pitch, float 
     if(size > 0 && size != 1) m.scale(size);
     m.translate(vec(b.s).mul(-b.grid*0.5f));
 
-    glBindBuffer_(GL_ARRAY_BUFFER, p.vbo);
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, p.ebo);
+    gle::bindvbo(p.vbo);
+    gle::bindebo(p.ebo);
     gle::enablevertex();
     gle::enablenormal();
     prefabmesh::vertex *v = (prefabmesh::vertex *)0;
@@ -1446,8 +1446,8 @@ static void renderprefab(prefab &p, const vec &o, float yaw, float pitch, float 
 
     gle::disablevertex();
     gle::disablenormal();
-    glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindBuffer_(GL_ARRAY_BUFFER, 0);
+    gle::clearebo();
+    gle::clearvbo();
 }
 
 void renderprefab(const char *name, const vec &o, float yaw, float pitch, float roll, float size, const vec &color)
