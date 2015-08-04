@@ -804,6 +804,7 @@ void checkinput()
 void swapbuffers(bool overlay)
 {
     recorder::capture(overlay);
+    gle::disable();
     SDL_GL_SwapWindow(screen);
 }
 
