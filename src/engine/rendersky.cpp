@@ -139,8 +139,6 @@ void drawenvbox(Texture **sky = NULL, float z1clip = 0.0f, float z2clip = 1.0f, 
                        1.0f, 0.0f, -w,  w, w,
                        0.0f, 0.0f, -w, -w, w,
                        0.0f, 1.0f,  w, -w, w, sky[5]);
-
-    gle::disable();
 }
 
 void drawenvoverlay(Texture *overlay = NULL, float tx = 0, float ty = 0)
@@ -178,7 +176,6 @@ void drawenvoverlay(Texture *overlay = NULL, float tx = 0, float ty = 0)
             gle::attrib(color, 0.0f);
     }
     xtraverts += gle::end();
-    gle::disable();
 }
 
 FVARR(fogdomeheight, -1, -0.5f, 1);
@@ -431,7 +428,6 @@ static void drawatmosphere()
     gle::attribf(-1, -1, 1);
     gle::attribf(1, -1, 1);
     xtraverts += gle::end();
-    gle::disable();
 }
 
 VAR(showsky, 0, 1, 1);

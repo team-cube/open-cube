@@ -838,8 +838,6 @@ namespace UI
             if(children.empty()) return;
 
             loopwindows(w, w->draw());
-
-            gle::disable();
         }
 
         float abovehud()
@@ -2843,7 +2841,6 @@ namespace UI
         void startdraw()
         {
             glDisable(GL_BLEND);
-            gle::disable();
 
             if(clipstack.length()) glDisable(GL_SCISSOR_TEST);
         }

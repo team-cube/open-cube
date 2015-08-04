@@ -1825,7 +1825,6 @@ void screenquadoffset(float x, float y, float w, float h, float x2, float y2, fl
     gle::attribf(x2, y2); gle::attribf(sx2, sy2); \
     gle::attribf(x1, y2); gle::attribf(sx1, sy2); \
     gle::end(); \
-    gle::disable(); \
 }
 
 void hudquad(float x, float y, float w, float h, float tx, float ty, float tw, float th)
@@ -2766,8 +2765,6 @@ void gl_drawhud()
     pophudmatrix();
 
     drawcrosshair(w, h);
-
-    gle::disable();
 
     glDisable(GL_BLEND);
 

@@ -231,8 +231,6 @@ void renderbackgroundview(int w, int h, const char *caption, Texture *mapshot, c
     }
 
     glDisable(GL_BLEND);
-
-    gle::disable();
 }
 
 VAR(menumute, 0, 1, 1);
@@ -323,8 +321,6 @@ void renderprogressview(int w, int h, float bar, const char *text)   // also use
     }
 
     glDisable(GL_BLEND);
-
-    gle::disable();
 }
 
 void renderprogress(float bar, const char *text, bool background)   // also used during loading

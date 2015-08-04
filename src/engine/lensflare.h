@@ -152,7 +152,6 @@ struct flarerenderer : partrenderer
             }
         }
         gle::end();
-        gle::disable();
         glEnable(GL_DEPTH_TEST);
     }
 

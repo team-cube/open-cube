@@ -1480,7 +1480,6 @@ void viewrh()
         gle::attribf(x+w, y+h); gle::attribf(1, 1, z);
         gle::end();
     }
-    gle::disable();
 }
 
 #define SHADOWATLAS_SIZE 4096
@@ -3102,13 +3101,11 @@ void renderlights(float bsx1 = -1, float bsy1 = -1, float bsx2 = 1, float bsy2 =
 
     if(!lighttilebatch || drawtex == DRAWTEX_MINIMAP)
     {
-        gle::disable();
         renderlightsnobatch(s, stencilref, transparent, bsx1, bsy1, bsx2, bsy2);
     }
     else
     {
         renderlightbatches(s, stencilref, transparent, bsx1, bsy1, bsx2, bsy2, tilemask);
-        gle::disable();
     }
 
     if(msaapass == 1 && ghasstencil)
@@ -3376,7 +3373,6 @@ void viewlightscissor()
             }
         }
     }
-    gle::disable();
 }
 
 void collectlights()
@@ -4081,8 +4077,6 @@ void radiancehints::renderslices()
         }
         memcpy(rhclearmasks[0][i], clearmasks, sizeof(clearmasks));
     }
-
-    gle::disable();
 
     if(rhrect) glDisable(GL_SCISSOR_TEST);
 }

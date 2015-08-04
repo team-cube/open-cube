@@ -403,7 +403,6 @@ struct meterrenderer : listrenderer
 
     void endrender()
     {
-         gle::disable();
          glEnable(GL_BLEND);
     }
 
@@ -484,8 +483,6 @@ struct textrenderer : listrenderer
 
     void endrender()
     {
-        gle::disable();
-
         textshader = NULL;
 
         popfont();

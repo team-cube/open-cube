@@ -517,8 +517,6 @@ void rendereditcursor()
 
     boxoutline = false;
 
-    gle::disable();
-
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
 }
@@ -2814,7 +2812,6 @@ void rendertexturepanel(int w, int h)
             y += s+gap;
         }
 
-        gle::disable();
         pophudmatrix(true, false);
         resethudshader();
     }

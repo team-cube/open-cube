@@ -668,7 +668,6 @@ void rendermaterialmask()
     loopk(4) { vector<materialsurface> &surfs = watersurfs[k]; loopv(surfs) drawmaterial(surfs[i], WATER_OFFSET); }
     loopk(4) { vector<materialsurface> &surfs = waterfallsurfs[k]; loopv(surfs) drawmaterial(surfs[i], 0.1f); }
     xtraverts += gle::end();
-    gle::disable();
     glEnable(GL_CULL_FACE);
 }
 
@@ -749,7 +748,6 @@ void renderliquidmaterials()
     renderwater();
     renderwaterfalls();
 
-    gle::disable();
     glEnable(GL_CULL_FACE);
 }
 
@@ -759,7 +757,6 @@ void rendersolidmaterials()
 
     renderglass();
 
-    gle::disable();
     glEnable(GL_CULL_FACE);
 }
 
@@ -813,7 +810,6 @@ void rendereditmaterials()
 
     rendermatgrid();
 
-    gle::disable();
     glEnable(GL_CULL_FACE);
 }
 
@@ -824,7 +820,6 @@ void renderminimapmaterials()
     renderlava();
     renderwater();
 
-    gle::disable();
     glEnable(GL_CULL_FACE);
 }
 
