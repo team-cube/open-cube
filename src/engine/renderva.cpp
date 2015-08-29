@@ -1343,7 +1343,7 @@ static void changebatchtmus(renderstate &cur, int pass, geombatch &b)
     }
 }
 
-static inline void bindslottex(renderstate &cur, int type, Texture *tex)
+static inline void bindslottex(renderstate &cur, int type, Texture *tex, GLenum target = GL_TEXTURE_2D)
 {
     if(cur.textures[type] != tex->id)
     {
@@ -1352,7 +1352,7 @@ static inline void bindslottex(renderstate &cur, int type, Texture *tex)
             cur.tmu = type;
             glActiveTexture_(GL_TEXTURE0 + type);
         }
-        glBindTexture(GL_TEXTURE_2D, cur.textures[type] = tex->id);
+        glBindTexture(target, cur.textures[type] = tex->id);
     }
 }
 
@@ -1410,8 +1410,8 @@ static void changeslottmus(renderstate &cur, int pass, Slot &slot, VSlot &vslot)
         switch(t.type)
         {
             case TEX_ENVMAP:
-                if(!t.t) break;
-                // fall-through
+                if(t.t) bindslottex(cur, t.type, t.t, GL_TEXTURE_CUBE_MAP);
+                break;
             case TEX_NORMAL:
             case TEX_GLOW:
                 bindslottex(cur, t.type, t.t);
@@ -2217,7 +2217,7 @@ static void changebatchtmus(decalrenderer &cur, int pass, decalbatch &b)
     }
 }
 
-static inline void bindslottex(decalrenderer &cur, int type, Texture *tex)
+static inline void bindslottex(decalrenderer &cur, int type, Texture *tex, GLenum target = GL_TEXTURE_2D)
 {
     if(cur.textures[type] != tex->id)
     {
@@ -2226,7 +2226,7 @@ static inline void bindslottex(decalrenderer &cur, int type, Texture *tex)
             cur.tmu = type;
             glActiveTexture_(GL_TEXTURE0 + type);
         }
-        glBindTexture(GL_TEXTURE_2D, cur.textures[type] = tex->id);
+        glBindTexture(target, cur.textures[type] = tex->id);
     }
 }
 
@@ -2241,8 +2241,8 @@ static void changeslottmus(decalrenderer &cur, int pass, DecalSlot &slot)
         switch(t.type)
         {
             case TEX_ENVMAP:
-                if(!t.t) break;
-                // fall-through
+                if(t.t) bindslottex(cur, t.type, t.t, GL_TEXTURE_CUBE_MAP);
+                break;
             case TEX_NORMAL:
             case TEX_GLOW:
                 bindslottex(cur, t.type, t.t);
