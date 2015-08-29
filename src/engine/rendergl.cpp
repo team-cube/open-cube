@@ -923,9 +923,12 @@ void gl_checkextensions()
     {
         glBindFragDataLocationIndexed_ = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)getprocaddress("glBindFragDataLocationIndexed");
 
-        GLint dualbufs = 0;
-        glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, &dualbufs);
-        maxdualdrawbufs = dualbufs;
+        if(hasGPU4)
+        {
+            GLint dualbufs = 0;
+            glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, &dualbufs);
+            maxdualdrawbufs = dualbufs;
+        }
 
         hasBFE = true;
         if(glversion < 330 && dbgexts) conoutf(CON_INIT, "Using GL_ARB_blend_func_extended extension.");
