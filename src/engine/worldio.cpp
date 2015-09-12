@@ -693,9 +693,9 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     freeocta(worldroot);
     worldroot = NULL;
 
-    setvar("mapsize", hdr.worldsize, true, false);
     int worldscale = 0;
     while(1<<worldscale < hdr.worldsize) worldscale++;
+    setvar("mapsize", 1<<worldscale, true, false);
     setvar("mapscale", worldscale, true, false);
 
     renderprogress(0, "loading vars...");
@@ -896,7 +896,6 @@ void writeobj(char *name)
     defformatstring(mtlname, "%s.mtl", name);
     path(mtlname);
     f->printf("mtllib %s\n\n", mtlname);
-    extern vector<vtxarray *> valist;
     vector<vec> verts, texcoords;
     hashtable<vec, int> shareverts(1<<16), sharetc(1<<16);
     hashtable<int, vector<ivec2> > mtls(1<<8);
@@ -1037,7 +1036,6 @@ void writecollideobj(char *name)
     xform.invert();
 
     ivec selmin = sel.o, selmax = ivec(sel.s).mul(sel.grid).add(sel.o);
-    extern vector<vtxarray *> valist;
     vector<vec> verts;
     hashtable<vec, int> shareverts;
     vector<int> tris;

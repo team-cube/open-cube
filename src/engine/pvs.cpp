@@ -860,7 +860,6 @@ static void calcpvsbounds()
 {
     loopk(3) pvsbounds.min[k] = USHRT_MAX;
     loopk(3) pvsbounds.max[k] = 0;
-    extern vector<vtxarray *> valist;
     loopv(valist)
     {
         vtxarray *va = valist[i];
@@ -1021,7 +1020,6 @@ COMMAND(clearpvs, "");
 
 static void findwaterplanes()
 {
-    extern vector<vtxarray *> valist;
     loopi(MAXWATERPVS)
     {
         waterplanes[i].height = -1;

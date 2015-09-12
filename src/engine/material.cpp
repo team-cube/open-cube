@@ -355,8 +355,6 @@ void preloadglassshaders(bool force = false)
     if(glassenv) useshaderbyname("glassenv");
 }
 
-extern vector<vtxarray *> valist;
-
 void setupmaterials(int start, int len)
 {
     int hasmat = 0;
@@ -571,8 +569,6 @@ float matliquidsx1 = -1, matliquidsy1 = -1, matliquidsx2 = 1, matliquidsy2 = 1;
 float matsolidsx1 = -1, matsolidsy1 = -1, matsolidsx2 = 1, matsolidsy2 = 1;
 float matrefractsx1 = -1, matrefractsy1 = -1, matrefractsx2 = 1, matrefractsy2 = 1;
 uint matliquidtiles[LIGHTTILE_MAXH], matsolidtiles[LIGHTTILE_MAXH];
-
-extern vtxarray *visibleva;
 
 int findmaterials()
 {

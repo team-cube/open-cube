@@ -20,8 +20,6 @@ static inline void drawvaskytris(vtxarray *va)
 
 ///////// view frustrum culling ///////////////////////
 
-extern vector<vtxarray *> varoot, valist;
-
 plane vfcP[5];  // perpindictular vectors to view frustrum bounding planes
 float vfcDfog;  // far plane culling distance (fog limit).
 float vfcDnear[5], vfcDfar[5];
@@ -82,6 +80,25 @@ int isvisiblecube(const ivec &o, int size)
     dist -= vfcDfog;
     if(dist > -vfcDnear[4]*size) return VFC_FOGGED;
     if(dist > -vfcDfar[4]*size) v = VFC_PART_VISIBLE;
+
+    return v;
+}
+
+int isvisiblebb(const ivec &bo, const ivec &br)
+{
+    int v = VFC_FULL_VISIBLE;
+    float dist;
+
+    loopi(5)
+    {
+        dist = bo.dist(vfcP[i]);
+        if(dist < -vfcDfar[i]*br[i>>1]) return VFC_NOT_VISIBLE;
+        if(dist < -vfcDnear[i]*br[i>>1]) v = VFC_PART_VISIBLE;
+    }
+
+    dist -= vfcDfog;
+    if(dist > -vfcDnear[4]*br.z) return VFC_FOGGED;
+    if(dist > -vfcDfar[4]*br.z) v = VFC_PART_VISIBLE;
 
     return v;
 }
@@ -2009,7 +2026,9 @@ CVARP(explicitskycolour, 0x800080);
 bool renderexplicitsky(bool outline)
 {
     vtxarray *prev = NULL;
-    for(vtxarray *va = visibleva; va; va = va->next) if(va->sky && va->occluded < OCCLUDE_BB)
+    for(vtxarray *va = visibleva; va; va = va->next) if(va->sky && va->occluded < OCCLUDE_BB &&
+        ((va->skymax.x >= 0 && isvisiblebb(va->skymin, ivec(va->skymax).sub(va->skymin)) != VFC_NOT_VISIBLE) ||
+         !insideworld(camera1->o)))
     {
         if(!prev || va->vbuf != prev->vbuf)
         {

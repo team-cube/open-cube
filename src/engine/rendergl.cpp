@@ -2049,7 +2049,6 @@ void drawminimap()
     while(size > sizelimit) size /= 2;
     if(!minimaptex) glGenTextures(1, &minimaptex);
 
-    extern vector<vtxarray *> valist;
     ivec bbmin(worldsize, worldsize, worldsize), bbmax(0, 0, 0);
     loopv(valist)
     {

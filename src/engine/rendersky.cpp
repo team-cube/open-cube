@@ -444,7 +444,18 @@ bool limitsky()
 
 void drawskybox(bool clear)
 {
-    if(limitsky())
+    bool limited = false;
+    if(limitsky()) for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        if(va->sky && va->occluded < OCCLUDE_BB &&
+           ((va->skymax.x >= 0 && isvisiblebb(va->skymin, ivec(va->skymax).sub(va->skymin)) != VFC_NOT_VISIBLE) ||
+            !insideworld(camera1->o)))
+        {
+            limited = true;
+            break;
+        }
+    }
+    if(limited)
     {
         glDisable(GL_DEPTH_TEST);
     }
@@ -550,7 +561,7 @@ void drawskybox(bool clear)
 
     if(clampsky) glDepthRange(0, 1);
 
-    if(limitsky())
+    if(limited)
     {
         glEnable(GL_DEPTH_TEST);
     }

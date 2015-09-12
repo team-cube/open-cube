@@ -400,6 +400,7 @@ extern void cleanupprefabs();
 // octarender
 extern ivec worldmin, worldmax, nogimin, nogimax;
 extern vector<tjoint> tjoints;
+extern vector<vtxarray *> varoot, valist;
 
 extern ushort encodenormal(const vec &n);
 extern vec decodenormal(ushort norm);
@@ -418,6 +419,7 @@ extern void updatevabbs(bool force = false);
 extern int oqfrags;
 extern float alphafrontsx1, alphafrontsx2, alphafrontsy1, alphafrontsy2, alphabacksx1, alphabacksx2, alphabacksy1, alphabacksy2, alpharefractsx1, alpharefractsx2, alpharefractsy1, alpharefractsy2;
 extern uint alphatiles[LIGHTTILE_MAXH];
+extern vtxarray *visibleva;
 
 extern void visiblecubes(bool cull = true);
 extern void setvfcP(const vec &bbmin = vec(-1, -1, -1), const vec &bbmax = vec(1, 1, 1));
@@ -433,6 +435,7 @@ extern void cleanupva();
 
 extern bool isfoggedsphere(float rad, const vec &cv);
 extern int isvisiblesphere(float rad, const vec &cv);
+extern int isvisiblebb(const ivec &bo, const ivec &br);
 extern bool bboccluded(const ivec &bo, const ivec &br);
 
 extern int deferquery;
