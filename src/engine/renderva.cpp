@@ -87,18 +87,21 @@ int isvisiblecube(const ivec &o, int size)
 int isvisiblebb(const ivec &bo, const ivec &br)
 {
     int v = VFC_FULL_VISIBLE;
-    float dist;
+    float dnear, dfar;
 
     loopi(5)
     {
-        dist = bo.dist(vfcP[i]);
-        if(dist < -vfcDfar[i]*br[i>>1]) return VFC_NOT_VISIBLE;
-        if(dist < -vfcDnear[i]*br[i>>1]) v = VFC_PART_VISIBLE;
+        const plane &p = vfcP[i];
+        dnear = dfar = bo.dist(p);
+        if(p.x > 0) dfar += p.x*br.x; else dnear += p.x*br.x;
+        if(p.y > 0) dfar += p.y*br.y; else dnear += p.y*br.y;
+        if(p.z > 0) dfar += p.z*br.z; else dnear += p.z*br.z;
+        if(dfar < 0) return VFC_NOT_VISIBLE;
+        if(dnear < 0) v = VFC_PART_VISIBLE;
     }
 
-    dist -= vfcDfog;
-    if(dist > -vfcDnear[4]*br.z) return VFC_FOGGED;
-    if(dist > -vfcDfar[4]*br.z) v = VFC_PART_VISIBLE;
+    if(dnear > vfcDfog) return VFC_FOGGED;
+    if(dfar > vfcDfog) v = VFC_PART_VISIBLE;
 
     return v;
 }

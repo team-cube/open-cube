@@ -1163,7 +1163,7 @@ vtxarray *newva(const ivec &o, int size)
         va->refractmax = ivec(vec(vc.refractmax).mul(8)).add(7).shr(3);
     }
 
-    if(va->sky)
+    if(va->sky && vc.skymax.x >= 0)
     {
         va->skymin = ivec(vec(vc.skymin).mul(8)).shr(3);
         va->skymax = ivec(vec(vc.skymax).mul(8)).add(7).shr(3);
