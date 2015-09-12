@@ -232,6 +232,8 @@ namespace entities
         }
     }
 
+    VARR(teleteam, 0, 1, 1);
+
     void trypickup(int n, gameent *d)
     {
         switch(ents[n]->type)
@@ -247,6 +249,7 @@ namespace entities
             case TELEPORT:
             {
                 if(d->lastpickup==ents[n]->type && lastmillis-d->lastpickupmillis<500) break;
+                if(!teleteam && m_teammode) break;
                 if(ents[n]->attr3 > 0)
                 {
                     defformatstring(hookname, "can_teleport_%d", ents[n]->attr3);
