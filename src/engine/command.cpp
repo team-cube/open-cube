@@ -3126,6 +3126,15 @@ void writecfg(const char *name)
 COMMAND(writecfg, "s");
 #endif
 
+void changedvars()
+{
+    vector<ident *> ids;
+    enumerate(idents, ident, id, if(id.flags&IDF_OVERRIDDEN) ids.add(&id));
+    ids.sortname();
+    loopv(ids) printvar(ids[i]);
+}
+COMMAND(changedvars, "");
+
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
