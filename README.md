@@ -27,7 +27,7 @@ It provides a bunch of new rendering features such as:
 * deferred MSAA, subpixel morphological anti-aliasing (SMAA 1x, T2x, S2x, and 4x), FXAA, and temporal AA
 * runs on both OpenGL Core (3.0+) and legacy (2.1+) contexts
 
-Editing:
+# Editing
 
 To make shadowmapped point lights, just make light entities as normal. Optionally you can control the shadowing properties of the light using attribute 5: 0 = shadows, 1 = no shadows, 2 = static shadows - world and mapmodels only (no playermodels or pickups). Shadowmaps are cached from frame to frame if no dynamic entities such as playermodels are rendered into them, so static lights (2) will generally be much faster than normal lights (0) during gameplay and should be used where possible. Unshadowed lights (1) are even faster as they further reduce shading costs, so they should also be used where possible.
 
@@ -61,7 +61,7 @@ To fix this you still need to use the calclight command, however, it no longer g
 It just does a remip optimization pass as well as calculates smoothed normals to make things look better.
 Eventually this may be done differently using some sort of background optimization while editing.
 
-To make decals:
+## To make decals
 
 newent decal SLOT YAW PITCH ROLL SIZE
 
@@ -69,7 +69,7 @@ If you don't specify the yaw, pitch, and roll, or leave them all 0, then newent 
 The slot refers to a decal slot in the map configuration, starting at offset 0.
 The size is specified in cube units.
 
-To make decal slots:
+## To make decal slots
 
 decelreset // functions like texture reset, clears all decal texture slots
 
@@ -78,7 +78,7 @@ texture decal "diffuse.png" // all decal slots start with the "decal" sub-slot i
 texture n "normals.png"
 texture s "spec.png"
 
-To make volumetric lights:
+## To make volumetric lights
 
 Set attribute 5 of a light entity to 4.
 
