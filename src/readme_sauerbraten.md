@@ -9,8 +9,7 @@ http://www.opensource.org/licenses/zlib-license.php
 (very similar to the BSD license):
 
 
-LICENSE
-=======
+# LICENSE
 
 Sauerbraten game engine source code, any release.
 
@@ -33,8 +32,8 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 
 
-LICENSE NOTES
-=============
+# LICENSE NOTES
+
 The license covers the source code found in the "src" directory of this
 archive as well as the .cfg files under the "data" directory. The included 
 ENet network library which Sauerbraten uses is covered by an MIT-style 
@@ -46,8 +45,8 @@ are NOT covered by this license, and may have individual copyrights and
 distribution restrictions (see individual readmes).
 
 
-USAGE
-=====
+# USAGE
+
 Compiling the sources should be straight forward.
 
 Unix users need to make sure to have the development version of all libs
@@ -76,8 +75,8 @@ keeping the implementation small and simple. Sauerbraten is not a commercial
 product, it is merely the author's idea of a fun little programming project.
 
 
-AUTHORS
-======
+# AUTHORS
+
 Wouter "Aardappel" van Oortmerssen
 http://strlen.com
 
