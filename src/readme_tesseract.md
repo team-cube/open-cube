@@ -1,5 +1,5 @@
 Note that this license is an extension of the original Sauerbraten source 
-code license which is included under the file "readme_sauerbraten.txt" for
+code license which is included under the file "readme_sauerbraten.md" for
 reference. Both are essentially the ZLIB license, but the Tesseract license 
 may include differing copyright owners and usage clarifications.
 
