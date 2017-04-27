@@ -1,6 +1,6 @@
-* Installing and Running Tesseract
+# Installing and Running Tesseract
 
-*nix versions of Tesseract clients and standalone servers.
+unix versions of Tesseract clients and standalone servers.
 The clients function identical to the win32 client, see config.html for more
 information about command-line options if necessary.
 
@@ -11,18 +11,18 @@ script is set up to write any files (saved maps, configs, etc.) into the user's 
 directory at "~/.tesseract".
 
 Clients will need the following dynamic link libraries present:
-* libGL (OpenGL)
-* SDL2 (>= 2.0.0)
-* SDL2_image
-* SDL2_mixer
-* libpng
-* libjpeg
-* zlib
+- libGL (OpenGL)
+- SDL2 (>= 2.0.0)
+- SDL2_image
+- SDL2_mixer
+- libpng
+- libjpeg
+- zlib
 
 If native binaries for your platform are not included, then try the following:
-1) Ensure you have the DEVELOPMENT VERSIONS of the above libraries installed.
-2) Type "make -C src install".
-3) Re-run the "tesseract_unix" script if it succeeded.
+1. Ensure you have the DEVELOPMENT VERSIONS of the above libraries installed.
+2. Type "make -C src install".
+3. Re-run the "tesseract_unix" script if it succeeded.
 
 The servers (bin_unix/linux_server or bin_unix/native_server) should need no libs 
 other than libstdc++ and zlib. Note that for the server to see the "config/server-init.cfg", 
@@ -32,11 +32,7 @@ run the standalone servers instead, then you may need to write an appropriate wr
 script to change to the appropriate data directory before running the standalone
 server binary, as described below in the packaging guide.
 
-
-
-
-
-* Packaging Guide for Unix-like Operating System Developers/Maintainers
+# Packaging Guide for Unix-like Operating System Developers/Maintainers
 
 If you are packaging Tesseract up for redistribution in a Linux distribution or other 
 similar OS, please avoid using the "tesseract_unix" script in its default/unmodified form.
@@ -76,6 +72,7 @@ Tesseract client after the "-u${HOME}/.tesseract" switch.
 A simple script such as the following (with directory/file names set as appropriate) would 
 ultimately suffice for the client:
 
+```
 #!/bin/sh
 TESS_DATA=/usr/share/games/tesseract
 TESS_BIN=/usr/bin/tesseract_client
@@ -83,10 +80,12 @@ TESS_OPTIONS="-u${HOME}/.tesseract"
 
 cd ${TESS_DATA}
 exec ${TESS_BIN} ${TESS_OPTIONS} "$@"
+```
 
 A simple script for the server, which assumes a global default "config/server-init.cfg" in TESS_DATA,
 but allows per-user overriding via the home directory, might be:
 
+```
 #!/bin/sh
 TESS_DATA=/usr/share/games/tesseract
 TESS_SERV_BIN=/usr/bin/tesseract_server
@@ -94,6 +93,7 @@ TESS_SERV_OPTIONS="-u${HOME}/.tesseract"
 
 cd ${TESS_DATA}
 exec ${TESS_SERV_BIN} ${TESS_SERV_OPTIONS} "$@"
+```
 
 With respect to libraries, make sure that you do not link Tesseract against any other ENet package
 than the one that comes included with the Tesseract, as it may be different from the official ENet
