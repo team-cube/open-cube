@@ -1,6 +1,6 @@
 # Open Cube
 Open Cube is a fork of Tesseract which is based on the Cube 2: Sauerbraten engine. 
-Both Tesseract and Cube 2 use SVN which makes branching and merging awkward and does not have the pull request feature that github offers. By removing the binary data and putting the media folder in a submodule getting the source is faster and less disc space is needed to obtain a copy of the source. Having the source code out in the open like this and making the time from cloning to running very short will encourage developers to join the development process.
+Both Tesseract and Cube 2 use SVN which makes branching and merging awkward and does not have the pull request feature that github offers. By removing the binary data and putting the media folder in a submodule getting the source is faster and less disc space is needed to obtain a copy of the source. Having the source code out in the open like this and making the time from cloning to running very short makes for happy developers.
 
 The goal of Open Cube is to make mapping more fun by using modern dynamic rendering techniques, so
 that you can get instant feedback on lighting changes, not just geometry.
